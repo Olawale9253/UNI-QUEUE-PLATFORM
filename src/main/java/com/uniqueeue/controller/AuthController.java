@@ -4,7 +4,6 @@ import com.uniqueeue.dto.request.LoginRequest;
 import com.uniqueeue.dto.request.RegisterRequest;
 import com.uniqueeue.dto.response.ApiResponse;
 import com.uniqueeue.dto.response.AuthResponse;
-import com.uniqueeue.model.University;
 import com.uniqueeue.repository.UniversityRepository;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.AuthService;

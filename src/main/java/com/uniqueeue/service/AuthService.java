@@ -55,7 +55,7 @@ public class AuthService {
             }
         }
 
-        // Matrix number pattern validation
+        // Matric number pattern validation
         if (university.getMatricPattern() != null && !university.getMatricPattern().isBlank()) {
             if (!Pattern.matches(university.getMatricPattern(), request.getMatricNumber())) {
                 String example = university.getMatricExample() != null

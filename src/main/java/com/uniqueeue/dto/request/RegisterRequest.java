@@ -23,7 +23,7 @@ public class RegisterRequest {
     @NotNull(message = "University is required")
     private Long universityId;
 
-    @NotBlank(message = "Matrix number is required")
+    @NotBlank(message = "Matric number is required")
     private String matricNumber;
 
     private String department;
