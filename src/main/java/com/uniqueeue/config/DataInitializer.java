@@ -1,10 +1,14 @@
 package com.uniqueeue.config;
 
+import com.uniqueeue.enums.Role;
 import com.uniqueeue.model.University;
+import com.uniqueeue.model.User;
 import com.uniqueeue.repository.UniversityRepository;
+import com.uniqueeue.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -13,9 +17,18 @@ import org.springframework.stereotype.Component;
 public class DataInitializer implements CommandLineRunner {
 
     private final UniversityRepository universityRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
+        seedUniversities();
+        seedAdmin();
+    }
+
+    // ---------- UNIVERSITIES ----------
+
+    private void seedUniversities() {
         if (universityRepository.count() > 0) {
             log.info("Universities already seeded. Skipping.");
             return;
@@ -53,5 +66,33 @@ public class DataInitializer implements CommandLineRunner {
         universityRepository.save(oau);
 
         log.info("✅ Seeded {} universities", universityRepository.count());
+    }
+
+    // ---------- ADMIN ----------
+
+    private void seedAdmin() {
+        String adminEmail = "admin@unilag.edu.ng";
+
+        if (userRepository.findByEmail(adminEmail).isPresent()) {
+            log.info("Admin user already exists. Skipping.");
+            return;
+        }
+
+        University unilag = universityRepository.findByCode("UNILAG")
+                .orElseThrow(() -> new IllegalStateException(
+                        "UNILAG must be seeded before admin. This should never happen."));
+
+        User admin = User.builder()
+                .email(adminEmail)
+                .password(passwordEncoder.encode("admin1234"))
+                .fullName("UNILAG Admin")
+                .role(Role.ADMIN)
+                .university(unilag)
+                .isActive(true)
+                .isVerified(true)
+                .build();
+
+        userRepository.save(admin);
+        log.info("✅ Seeded admin user: {} / admin1234", adminEmail);
     }
 }
