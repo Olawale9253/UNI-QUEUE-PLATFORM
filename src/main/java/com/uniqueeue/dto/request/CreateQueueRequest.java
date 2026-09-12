@@ -21,7 +21,6 @@ public class CreateQueueRequest {
     private String location;
 
     private LocalTime opensAt;
-
     private LocalTime closesAt;
 
     @Min(value = 1, message = "Max capacity must be at least 1")
@@ -29,4 +28,10 @@ public class CreateQueueRequest {
 
     @Min(value = 1, message = "Average service time must be at least 1 minute")
     private Integer averageServiceMinutes;
+
+    private Boolean allowWaitlist;
+    private Boolean autoPromoteWaitlist;
+
+    @Min(value = 0, message = "Max waitlist size can't be negative")
+    private Integer maxWaitlistSize;
 }

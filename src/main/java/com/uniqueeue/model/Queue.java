@@ -55,6 +55,31 @@ public class Queue {
     @Builder.Default
     private Integer averageServiceMinutes = 5;
 
+    /**
+     * If true, students can join even when the queue is at max capacity.
+     * They're placed on a waitlist and auto-promoted when a slot opens.
+     */
+    @Column(name = "allow_waitlist")
+    @Builder.Default
+    private Boolean allowWaitlist = false;
+
+    /**
+     * If true, waitlisted tickets are promoted as soon as a WAITING slot frees up.
+     * If false (and allowWaitlist is true), waitlisted tickets stay until the admin
+     * explicitly promotes them (manual control — future feature).
+     */
+    @Column(name = "auto_promote_waitlist")
+    @Builder.Default
+    private Boolean autoPromoteWaitlist = true;
+
+    /**
+     * If true, waitlisted tickets can exceed maxCapacity. Useful for overflow days.
+     * If false, waitlist itself also has a cap (maxCapacity + maxWaitlistSize).
+     */
+    @Column(name = "max_waitlist_size")
+    @Builder.Default
+    private Integer maxWaitlistSize = 100;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;

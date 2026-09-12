@@ -21,6 +21,10 @@ public class QueueResponse {
     private Integer maxCapacity;
     private Integer averageServiceMinutes;
 
+    private Boolean allowWaitlist;
+    private Boolean autoPromoteWaitlist;
+    private Integer maxWaitlistSize;
+
     private Long universityId;
     private String universityName;
 
@@ -52,6 +56,9 @@ public class QueueResponse {
                 .closesAt(q.getClosesAt())
                 .maxCapacity(q.getMaxCapacity())
                 .averageServiceMinutes(q.getAverageServiceMinutes())
+                .allowWaitlist(q.getAllowWaitlist())
+                .autoPromoteWaitlist(q.getAutoPromoteWaitlist())
+                .maxWaitlistSize(q.getMaxWaitlistSize())
                 .universityId(q.getUniversity() != null ? q.getUniversity().getId() : null)
                 .universityName(q.getUniversity() != null ? q.getUniversity().getName() : null)
                 .createdById(q.getCreatedBy() != null ? q.getCreatedBy().getId() : null)

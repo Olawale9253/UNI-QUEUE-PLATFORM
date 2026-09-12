@@ -8,6 +8,8 @@ public enum AuditAction {
 
     // ticket lifecycle
     TICKET_JOINED,
+    TICKET_WAITLISTED,
+    TICKET_WAITLIST_PROMOTED,
     TICKET_CALLED,
     TICKET_SERVED,
     TICKET_COMPLETED,
