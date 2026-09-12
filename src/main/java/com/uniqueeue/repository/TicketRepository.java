@@ -14,35 +14,60 @@ import java.util.Optional;
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
-    // Active ticket for a user (WAITING / CALLED / SERVING)
+    // ---------- existing queries ----------
+
     @Query("SELECT t FROM Ticket t WHERE t.user.id = :userId " +
             "AND t.status IN (com.uniqueeue.enums.TicketStatus.WAITING, " +
             "                 com.uniqueeue.enums.TicketStatus.CALLED, " +
             "                 com.uniqueeue.enums.TicketStatus.SERVING)")
     List<Ticket> findActiveByUserId(@Param("userId") Long userId);
 
-    // Full history for a user
     List<Ticket> findByUserIdOrderByJoinedAtDesc(Long userId);
 
-    // All tickets in a queue, oldest first
     List<Ticket> findByQueueIdOrderByJoinedAtAsc(Long queueId);
 
-    // Waiting tickets, ordered by priority then join time
     @Query("SELECT t FROM Ticket t WHERE t.queue.id = :queueId " +
             "AND t.status = com.uniqueeue.enums.TicketStatus.WAITING " +
             "ORDER BY t.priority DESC, t.joinedAt ASC")
     List<Ticket> findWaitingByQueueId(@Param("queueId") Long queueId);
 
-    // Tickets joined today in a queue (for ticket_number generation)
     @Query("SELECT COUNT(t) FROM Ticket t WHERE t.queue.id = :queueId AND t.joinedAt >= :startOfDay")
     long countTodayByQueueId(@Param("queueId") Long queueId,
                              @Param("startOfDay") LocalDateTime startOfDay);
 
-    // Called ticket in a queue (there should be at most one)
     @Query("SELECT t FROM Ticket t WHERE t.queue.id = :queueId " +
             "AND t.status = com.uniqueeue.enums.TicketStatus.CALLED " +
             "ORDER BY t.calledAt DESC")
     List<Ticket> findCalledByQueueId(@Param("queueId") Long queueId);
 
     Optional<Ticket> findByIdAndQueueId(Long id, Long queueId);
+
+    // ---------- analytics queries ----------
+
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.queue.university.id = :universityId AND t.joinedAt >= :since")
+    long countByUniversitySince(@Param("universityId") Long universityId,
+                                @Param("since") LocalDateTime since);
+
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.queue.university.id = :universityId")
+    long countByUniversity(@Param("universityId") Long universityId);
+
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.queue.id = :queueId AND t.status = :status")
+    long countByQueueAndStatus(@Param("queueId") Long queueId,
+                               @Param("status") TicketStatus status);
+
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.queue.university.id = :universityId AND t.status = :status")
+    long countByUniversityAndStatus(@Param("universityId") Long universityId,
+                                    @Param("status") TicketStatus status);
+
+    @Query("SELECT t FROM Ticket t WHERE t.queue.university.id = :universityId AND t.joinedAt >= :since")
+    List<Ticket> findRecentByUniversity(@Param("universityId") Long universityId,
+                                        @Param("since") LocalDateTime since);
+
+    @Query("SELECT t FROM Ticket t WHERE t.queue.id = :queueId AND t.joinedAt >= :since")
+    List<Ticket> findRecentByQueue(@Param("queueId") Long queueId,
+                                   @Param("since") LocalDateTime since);
+
+    @Query("SELECT t FROM Ticket t WHERE t.servedBy.id = :staffId AND t.joinedAt >= :since")
+    List<Ticket> findRecentByStaff(@Param("staffId") Long staffId,
+                                   @Param("since") LocalDateTime since);
 }
