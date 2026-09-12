@@ -4,6 +4,7 @@ import com.uniqueeue.dto.request.CreateAdminRequest;
 import com.uniqueeue.dto.request.CreateUniversityRequest;
 import com.uniqueeue.dto.request.UpdateUniversityRequest;
 import com.uniqueeue.dto.response.UniversityResponse;
+import com.uniqueeue.enums.AuditAction;
 import com.uniqueeue.enums.Role;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
@@ -31,12 +32,11 @@ public class UniversityService {
     private final QueueRepository queueRepository;
     private final TicketRepository ticketRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditService auditService;
 
     @Transactional(readOnly = true)
     public List<UniversityResponse> listAll() {
-        return universityRepository.findAll().stream()
-                .map(this::enrich)
-                .toList();
+        return universityRepository.findAll().stream().map(this::enrich).toList();
     }
 
     @Transactional(readOnly = true)
@@ -84,6 +84,10 @@ public class UniversityService {
                 .build();
         userRepository.save(admin);
 
+        auditService.record(null, university.getId(),
+                AuditAction.UNIVERSITY_CREATED, "University", university.getId(),
+                "{\"code\":\"" + code + "\",\"adminEmail\":\"" + request.getAdminEmail() + "\"}");
+
         return enrich(university);
     }
 
@@ -104,32 +108,33 @@ public class UniversityService {
         if (request.getMaxQueues() != null) u.setMaxQueues(request.getMaxQueues());
         if (request.getIsActive() != null) u.setIsActive(request.getIsActive());
 
-        return enrich(universityRepository.save(u));
+        University saved = universityRepository.save(u);
+
+        auditService.record(null, id, AuditAction.UNIVERSITY_UPDATED, "University", id, null);
+        return enrich(saved);
     }
 
-    /**
-     * Soft delete — preserves data, blocks logins.
-     */
     @Transactional
     public UniversityResponse deactivate(Long id) {
         University u = universityRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
         u.setIsActive(false);
         University saved = universityRepository.save(u);
-        log.info("Deactivated university id={} code={}", id, u.getCode());
+
+        auditService.record(null, id, AuditAction.UNIVERSITY_DEACTIVATED, "University", id,
+                "{\"code\":\"" + u.getCode() + "\"}");
+
         return enrich(saved);
     }
 
-    /**
-     * Reactivate a previously deactivated university.
-     */
     @Transactional
     public UniversityResponse reactivate(Long id) {
         University u = universityRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
         u.setIsActive(true);
         University saved = universityRepository.save(u);
-        log.info("Reactivated university id={} code={}", id, u.getCode());
+
+        auditService.record(null, id, AuditAction.UNIVERSITY_REACTIVATED, "University", id, null);
         return enrich(saved);
     }
 
@@ -154,6 +159,9 @@ public class UniversityService {
                 .isVerified(true)
                 .build();
         userRepository.save(admin);
+
+        auditService.record(null, universityId, AuditAction.ADMIN_CREATED, "User", admin.getId(),
+                "{\"email\":\"" + request.getEmail() + "\"}");
 
         return enrich(university);
     }

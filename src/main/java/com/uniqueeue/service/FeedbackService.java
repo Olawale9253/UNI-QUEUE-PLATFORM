@@ -2,6 +2,7 @@ package com.uniqueeue.service;
 
 import com.uniqueeue.dto.request.CreateFeedbackRequest;
 import com.uniqueeue.dto.response.FeedbackResponse;
+import com.uniqueeue.enums.AuditAction;
 import com.uniqueeue.enums.TicketStatus;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
@@ -21,6 +22,7 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
     private final TicketRepository ticketRepository;
+    private final AuditService auditService;
 
     @Transactional
     public FeedbackResponse submit(Long userId, CreateFeedbackRequest request) {
@@ -44,21 +46,25 @@ public class FeedbackService {
                 .comment(request.getComment())
                 .build();
 
-        return FeedbackResponse.from(feedbackRepository.save(feedback));
+        Feedback saved = feedbackRepository.save(feedback);
+
+        auditService.record(userId, ticket.getQueue().getUniversity().getId(),
+                AuditAction.FEEDBACK_SUBMITTED, "Feedback", saved.getId(),
+                "{\"rating\":" + request.getRating() + ",\"ticketId\":" + ticket.getId() + "}");
+
+        return FeedbackResponse.from(saved);
     }
 
     @Transactional(readOnly = true)
     public List<FeedbackResponse> listForUniversity(Long universityId) {
         return feedbackRepository.findByUniversityId(universityId).stream()
-                .map(FeedbackResponse::from)
-                .toList();
+                .map(FeedbackResponse::from).toList();
     }
 
     @Transactional(readOnly = true)
     public List<FeedbackResponse> listForStaff(Long staffId) {
         return feedbackRepository.findByServedById(staffId).stream()
-                .map(FeedbackResponse::from)
-                .toList();
+                .map(FeedbackResponse::from).toList();
     }
 
     @Transactional(readOnly = true)

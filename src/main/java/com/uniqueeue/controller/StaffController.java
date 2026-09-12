@@ -51,8 +51,7 @@ public class StaffController {
             @PathVariable Long ticketId,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.success(
-                "Ticket called",
-                ticketService.callTicket(principal.getId(), ticketId)));
+                "Ticket called", ticketService.callTicket(principal.getId(), ticketId)));
     }
 
     @PostMapping("/tickets/{ticketId}/serve")
@@ -60,8 +59,7 @@ public class StaffController {
             @PathVariable Long ticketId,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.success(
-                "Ticket served",
-                ticketService.serveTicket(principal.getId(), ticketId)));
+                "Ticket served", ticketService.serveTicket(principal.getId(), ticketId)));
     }
 
     @PostMapping("/tickets/{ticketId}/complete")
@@ -69,8 +67,7 @@ public class StaffController {
             @PathVariable Long ticketId,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.success(
-                "Ticket completed",
-                ticketService.completeTicket(principal.getId(), ticketId)));
+                "Ticket completed", ticketService.completeTicket(principal.getId(), ticketId)));
     }
 
     @PostMapping("/tickets/{ticketId}/no-show")
@@ -78,8 +75,7 @@ public class StaffController {
             @PathVariable Long ticketId,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.success(
-                "Ticket marked no-show",
-                ticketService.noShowTicket(principal.getId(), ticketId)));
+                "Ticket marked no-show", ticketService.noShowTicket(principal.getId(), ticketId)));
     }
 
     @PostMapping("/tickets/{ticketId}/transfer")
@@ -91,5 +87,19 @@ public class StaffController {
         return ResponseEntity.ok(ApiResponse.success(
                 "Ticket transferred",
                 ticketService.transferTicket(principal.getId(), ticketId, notes)));
+    }
+
+    @PostMapping("/tickets/{ticketId}/priority")
+    public ResponseEntity<ApiResponse<TicketResponse>> setPriority(
+            @PathVariable Long ticketId,
+            @RequestBody Map<String, Integer> body,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        Integer priority = body.get("priority");
+        if (priority == null) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("priority is required"));
+        }
+        return ResponseEntity.ok(ApiResponse.success(
+                "Priority updated",
+                ticketService.setPriority(principal.getId(), ticketId, priority)));
     }
 }

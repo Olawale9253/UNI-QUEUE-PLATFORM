@@ -3,6 +3,7 @@ package com.uniqueeue.service;
 import com.uniqueeue.dto.request.LoginRequest;
 import com.uniqueeue.dto.request.RegisterRequest;
 import com.uniqueeue.dto.response.AuthResponse;
+import com.uniqueeue.enums.AuditAction;
 import com.uniqueeue.enums.Role;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
@@ -14,6 +15,7 @@ import com.uniqueeue.repository.UserRepository;
 import com.uniqueeue.security.JwtTokenProvider;
 import com.uniqueeue.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -32,6 +34,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
+    private final AuditService auditService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -82,33 +85,44 @@ public class AuthService {
                 .build();
 
         User saved = userRepository.save(user);
+
+        auditService.record(saved.getId(), university.getId(),
+                AuditAction.USER_REGISTERED, "User", saved.getId(), null);
+
         return buildAuthResponse(saved);
     }
 
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail().toLowerCase(),
-                        request.getPassword()
-                )
-        );
+        String email = request.getEmail().toLowerCase();
+
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, request.getPassword()));
+        } catch (BadCredentialsException ex) {
+            auditService.record(null, null, AuditAction.USER_LOGIN_FAILED, "User", null,
+                    "{\"email\":\"" + email + "\"}");
+            throw ex;
+        }
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         User user = userRepository.findByEmail(principal.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // Block login if the user belongs to an inactive university.
         if (user.getUniversity() != null
                 && !Boolean.TRUE.equals(user.getUniversity().getIsActive())) {
             throw new UnauthorizedException(
                     "Your university's account is currently inactive. Contact support.");
         }
 
-        // Block login if the user account itself is inactive.
         if (!Boolean.TRUE.equals(user.getIsActive())) {
             throw new UnauthorizedException("Your account has been disabled.");
         }
+
+        auditService.record(user.getId(),
+                user.getUniversity() != null ? user.getUniversity().getId() : null,
+                AuditAction.USER_LOGIN, "User", user.getId(), null);
 
         return buildAuthResponse(user);
     }

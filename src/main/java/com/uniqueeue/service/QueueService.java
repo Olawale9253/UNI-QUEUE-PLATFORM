@@ -4,6 +4,7 @@ import com.uniqueeue.dto.request.CreateQueueRequest;
 import com.uniqueeue.dto.request.CreateStaffRequest;
 import com.uniqueeue.dto.request.UpdateQueueRequest;
 import com.uniqueeue.dto.response.QueueResponse;
+import com.uniqueeue.enums.AuditAction;
 import com.uniqueeue.enums.Role;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
@@ -31,6 +32,7 @@ public class QueueService {
     private final UniversityRepository universityRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditService auditService;
 
     // ---------- QUEUES ----------
 
@@ -65,12 +67,18 @@ public class QueueService {
                 .opensAt(request.getOpensAt() != null ? request.getOpensAt() : java.time.LocalTime.of(8, 0))
                 .closesAt(request.getClosesAt() != null ? request.getClosesAt() : java.time.LocalTime.of(17, 0))
                 .maxCapacity(request.getMaxCapacity() != null ? request.getMaxCapacity() : 100)
-                .averageServiceMinutes(request.getAverageServiceMinutes() != null ? request.getAverageServiceMinutes() : 5)
+                .averageServiceMinutes(request.getAverageServiceMinutes() != null
+                        ? request.getAverageServiceMinutes() : 5)
                 .isActive(true)
                 .createdBy(admin)
                 .build();
 
         Queue saved = queueRepository.save(queue);
+
+        auditService.record(adminUserId, universityId,
+                AuditAction.QUEUE_CREATED, "Queue", saved.getId(),
+                "{\"name\":\"" + saved.getName() + "\"}");
+
         return QueueResponse.from(saved);
     }
 
@@ -90,6 +98,10 @@ public class QueueService {
         if (request.getAverageServiceMinutes() != null) queue.setAverageServiceMinutes(request.getAverageServiceMinutes());
 
         Queue saved = queueRepository.save(queue);
+
+        auditService.record(null, universityId,
+                AuditAction.QUEUE_UPDATED, "Queue", queueId, null);
+
         return enrichWithStaff(saved);
     }
 
@@ -99,6 +111,10 @@ public class QueueService {
                 .orElseThrow(() -> new ResourceNotFoundException("Queue not found"));
         queueStaffRepository.deleteAll(queueStaffRepository.findByQueueId(queueId));
         queueRepository.delete(queue);
+
+        auditService.record(null, universityId,
+                AuditAction.QUEUE_DELETED, "Queue", queueId,
+                "{\"name\":\"" + queue.getName() + "\"}");
     }
 
     // ---------- STAFF ----------
@@ -125,6 +141,11 @@ public class QueueService {
                 .build();
 
         User saved = userRepository.save(staff);
+
+        auditService.record(null, universityId,
+                AuditAction.STAFF_CREATED, "User", saved.getId(),
+                "{\"email\":\"" + saved.getEmail() + "\"}");
+
         return QueueResponse.StaffInfo.builder()
                 .id(saved.getId())
                 .fullName(saved.getFullName())
@@ -150,10 +171,11 @@ public class QueueService {
             throw new BadRequestException("Staff already assigned to this queue");
         }
 
-        queueStaffRepository.save(QueueStaff.builder()
-                .queue(queue)
-                .user(staff)
-                .build());
+        queueStaffRepository.save(QueueStaff.builder().queue(queue).user(staff).build());
+
+        auditService.record(null, universityId,
+                AuditAction.STAFF_ASSIGNED, "QueueStaff", queueId,
+                "{\"staffId\":" + staffUserId + ",\"queueId\":" + queueId + "}");
 
         return enrichWithStaff(queue);
     }
@@ -167,6 +189,11 @@ public class QueueService {
             throw new ResourceNotFoundException("Assignment not found");
         }
         queueStaffRepository.deleteByQueueIdAndUserId(queueId, staffUserId);
+
+        auditService.record(null, universityId,
+                AuditAction.STAFF_UNASSIGNED, "QueueStaff", queueId,
+                "{\"staffId\":" + staffUserId + ",\"queueId\":" + queueId + "}");
+
         return enrichWithStaff(queue);
     }
 
@@ -174,14 +201,9 @@ public class QueueService {
     public List<QueueResponse.StaffInfo> listStaff(Long universityId) {
         return userRepository.findByUniversityIdAndRole(universityId, Role.STAFF).stream()
                 .map(u -> QueueResponse.StaffInfo.builder()
-                        .id(u.getId())
-                        .fullName(u.getFullName())
-                        .email(u.getEmail())
-                        .build())
+                        .id(u.getId()).fullName(u.getFullName()).email(u.getEmail()).build())
                 .toList();
     }
-
-    // ---------- HELPERS ----------
 
     private QueueResponse enrichWithStaff(Queue queue) {
         QueueResponse response = QueueResponse.from(queue);
