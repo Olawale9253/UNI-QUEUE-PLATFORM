@@ -1,6 +1,8 @@
 package com.uniqueeue.service;
 
+import com.uniqueeue.dto.response.QueueEstimateResponse;
 import com.uniqueeue.dto.response.TicketResponse;
+import com.uniqueeue.enums.AuditAction;
 import com.uniqueeue.enums.NotificationType;
 import com.uniqueeue.enums.TicketStatus;
 import com.uniqueeue.exception.BadRequestException;
@@ -16,8 +18,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,6 +34,7 @@ public class TicketService {
     private final UserRepository userRepository;
     private final QueueStaffRepository queueStaffRepository;
     private final NotificationService notificationService;
+    private final AuditService auditService;
 
     // ---------- STUDENT ----------
 
@@ -46,6 +51,10 @@ public class TicketService {
         }
         if (!Boolean.TRUE.equals(queue.getIsActive())) {
             throw new BadRequestException("Queue is not active");
+        }
+        if (!isWithinOperatingHours(queue)) {
+            throw new BadRequestException(
+                    "Queue is closed. Opens at " + queue.getOpensAt() + ", closes at " + queue.getClosesAt() + ".");
         }
 
         List<Ticket> active = ticketRepository.findActiveByUserId(userId);
@@ -80,6 +89,10 @@ public class TicketService {
                 "You've joined " + queue.getName(),
                 "Ticket " + ticketNumber + " · Position " + pos + ". We'll notify you when it's your turn.");
 
+        auditService.record(userId, queue.getUniversity().getId(),
+                AuditAction.TICKET_JOINED, "Ticket", ticket.getId(),
+                "{\"ticketNumber\":\"" + ticketNumber + "\",\"queueId\":" + queueId + "}");
+
         return enrichWithPosition(fresh);
     }
 
@@ -111,6 +124,9 @@ public class TicketService {
         ticket.setStatus(TicketStatus.CANCELLED);
         ticketRepository.save(ticket);
         recalculatePositions(ticket.getQueue().getId());
+
+        auditService.record(userId, ticket.getQueue().getUniversity().getId(),
+                AuditAction.TICKET_CANCELLED, "Ticket", ticketId, null);
     }
 
     // ---------- STAFF ----------
@@ -158,6 +174,10 @@ public class TicketService {
                 "It's your turn!",
                 "Ticket " + next.getTicketNumber() + " is now being called at " + next.getQueue().getName() + ".");
 
+        auditService.record(staffUserId, next.getQueue().getUniversity().getId(),
+                AuditAction.TICKET_CALLED, "Ticket", next.getId(),
+                "{\"ticketNumber\":\"" + next.getTicketNumber() + "\"}");
+
         return enrichWithPosition(next);
     }
 
@@ -176,12 +196,14 @@ public class TicketService {
         ticket.setCalledAt(LocalDateTime.now());
         ticket.setServedBy(staff);
         ticketRepository.save(ticket);
-
         recalculatePositions(ticket.getQueue().getId());
 
         notificationService.notify(ticket.getUser(), NotificationType.TICKET_CALLED,
                 "It's your turn!",
                 "Ticket " + ticket.getTicketNumber() + " is now being called.");
+
+        auditService.record(staffUserId, ticket.getQueue().getUniversity().getId(),
+                AuditAction.TICKET_CALLED, "Ticket", ticketId, null);
 
         return enrichWithPosition(ticket);
     }
@@ -198,6 +220,10 @@ public class TicketService {
         ticket.setStatus(TicketStatus.SERVING);
         ticket.setServedAt(LocalDateTime.now());
         ticketRepository.save(ticket);
+
+        auditService.record(staffUserId, ticket.getQueue().getUniversity().getId(),
+                AuditAction.TICKET_SERVED, "Ticket", ticketId, null);
+
         return enrichWithPosition(ticket);
     }
 
@@ -217,12 +243,14 @@ public class TicketService {
             ticket.setServedBy(userRepository.findById(staffUserId).orElseThrow());
         }
         ticketRepository.save(ticket);
-
         recalculatePositions(ticket.getQueue().getId());
 
         notificationService.notify(ticket.getUser(), NotificationType.TICKET_SERVED,
                 "Service complete",
                 "Thanks for using UniQueue. Please rate your experience.");
+
+        auditService.record(staffUserId, ticket.getQueue().getUniversity().getId(),
+                AuditAction.TICKET_COMPLETED, "Ticket", ticketId, null);
 
         return enrichWithPosition(ticket);
     }
@@ -245,6 +273,9 @@ public class TicketService {
                 "You missed your turn",
                 "Ticket " + ticket.getTicketNumber() + " was marked as a no-show.");
 
+        auditService.record(staffUserId, ticket.getQueue().getUniversity().getId(),
+                AuditAction.TICKET_NO_SHOW, "Ticket", ticketId, null);
+
         return enrichWithPosition(ticket);
     }
 
@@ -266,7 +297,81 @@ public class TicketService {
                 "Ticket transferred",
                 "Your ticket " + ticket.getTicketNumber() + " has been transferred to another desk.");
 
+        auditService.record(staffUserId, ticket.getQueue().getUniversity().getId(),
+                AuditAction.TICKET_TRANSFERRED, "Ticket", ticketId, null);
+
         return enrichWithPosition(ticket);
+    }
+
+    // ---------- PRIORITY ----------
+
+    @Transactional
+    public TicketResponse setPriority(Long staffUserId, Long ticketId, int priority) {
+        if (priority < 0 || priority > 100) {
+            throw new BadRequestException("Priority must be between 0 and 100");
+        }
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+        ensureStaffOwnsQueue(staffUserId, ticket.getQueue().getId());
+
+        if (ticket.getStatus() != TicketStatus.WAITING) {
+            throw new BadRequestException("Only WAITING tickets can have their priority changed");
+        }
+
+        ticket.setPriority(priority);
+        ticketRepository.save(ticket);
+        recalculatePositions(ticket.getQueue().getId());
+
+        auditService.record(staffUserId, ticket.getQueue().getUniversity().getId(),
+                AuditAction.TICKET_PRIORITY_CHANGED, "Ticket", ticketId,
+                "{\"priority\":" + priority + "}");
+
+        return enrichWithPosition(ticket);
+    }
+
+    // ---------- ESTIMATE ----------
+
+    @Transactional(readOnly = true)
+    public QueueEstimateResponse estimate(Long queueId) {
+        Queue queue = queueRepository.findById(queueId)
+                .orElseThrow(() -> new ResourceNotFoundException("Queue not found"));
+
+        List<Ticket> waiting = ticketRepository.findWaitingByQueueId(queueId);
+        List<Ticket> called = ticketRepository.findCalledByQueueId(queueId);
+
+        // actual avg for today from completed tickets
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        List<Ticket> todayDone = ticketRepository.findRecentByQueue(queueId, startOfDay).stream()
+                .filter(t -> t.getStatus() == TicketStatus.COMPLETED)
+                .filter(t -> t.getJoinedAt() != null && t.getCalledAt() != null)
+                .toList();
+
+        double actualAvg = todayDone.isEmpty() ? 0
+                : todayDone.stream()
+                .mapToLong(t -> Duration.between(t.getJoinedAt(), t.getCalledAt()).toMinutes())
+                .average().orElse(0);
+
+        int perTicketMinutes = queue.getAverageServiceMinutes() != null
+                ? queue.getAverageServiceMinutes() : 5;
+
+        // Estimate for a brand new joiner = waitingCount * perTicket
+        int estimateForNewJoiner = Math.max(0, waiting.size() * perTicketMinutes);
+
+        String currentlyServing = called.isEmpty() ? null : called.get(0).getTicketNumber();
+
+        return QueueEstimateResponse.builder()
+                .queueId(queue.getId())
+                .queueName(queue.getName())
+                .isOpen(isWithinOperatingHours(queue))
+                .opensAt(queue.getOpensAt() != null ? queue.getOpensAt().toString() : null)
+                .closesAt(queue.getClosesAt() != null ? queue.getClosesAt().toString() : null)
+                .waitingCount(waiting.size())
+                .activeCalledCount(called.size())
+                .currentlyServing(currentlyServing)
+                .configuredAvgMinutes(perTicketMinutes)
+                .actualAvgMinutesToday(Math.round(actualAvg * 10.0) / 10.0)
+                .estimatedMinutesForNewJoiner(estimateForNewJoiner)
+                .build();
     }
 
     // ---------- HELPERS ----------
@@ -288,6 +393,8 @@ public class TicketService {
 
     private TicketResponse enrichWithPosition(Ticket ticket) {
         Integer position = ticket.getPosition();
+        Integer estimated = null;
+
         if (ticket.getStatus() == TicketStatus.WAITING) {
             List<Ticket> waiting = ticketRepository.findWaitingByQueueId(ticket.getQueue().getId());
             for (int i = 0; i < waiting.size(); i++) {
@@ -296,8 +403,29 @@ public class TicketService {
                     break;
                 }
             }
+            int perTicket = ticket.getQueue().getAverageServiceMinutes() != null
+                    ? ticket.getQueue().getAverageServiceMinutes() : 5;
+            estimated = position != null ? position * perTicket : null;
         }
-        return TicketResponse.from(ticket, position);
+
+        return TicketResponse.from(ticket, position, estimated);
+    }
+
+    /** Returns true if current time is within [opensAt, closesAt]. Handles overnight windows. */
+    private boolean isWithinOperatingHours(Queue queue) {
+        if (queue.getOpensAt() == null || queue.getClosesAt() == null) return true;
+
+        LocalTime now = LocalTime.now();
+        LocalTime open = queue.getOpensAt();
+        LocalTime close = queue.getClosesAt();
+
+        if (open.equals(close)) return true;  // 24h
+        if (open.isBefore(close)) {
+            // same-day window, e.g. 08:00 – 17:00
+            return !now.isBefore(open) && !now.isAfter(close);
+        } else {
+            // overnight, e.g. 22:00 – 02:00
+            return !now.isBefore(open) || !now.isAfter(close);
+        }
     }
 }
-

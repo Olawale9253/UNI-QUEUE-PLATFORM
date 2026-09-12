@@ -14,6 +14,7 @@ public class TicketResponse {
     private TicketStatus status;
     private Integer position;
     private Integer priority;
+    private Integer estimatedMinutesRemaining;
 
     private Long queueId;
     private String queueName;
@@ -34,13 +35,14 @@ public class TicketResponse {
 
     private String notes;
 
-    public static TicketResponse from(Ticket t, Integer positionOverride) {
+    public static TicketResponse from(Ticket t, Integer positionOverride, Integer estimatedMinutes) {
         return TicketResponse.builder()
                 .id(t.getId())
                 .ticketNumber(t.getTicketNumber())
                 .status(t.getStatus())
                 .position(positionOverride != null ? positionOverride : t.getPosition())
                 .priority(t.getPriority())
+                .estimatedMinutesRemaining(estimatedMinutes)
                 .queueId(t.getQueue() != null ? t.getQueue().getId() : null)
                 .queueName(t.getQueue() != null ? t.getQueue().getName() : null)
                 .queueLocation(t.getQueue() != null ? t.getQueue().getLocation() : null)
@@ -58,7 +60,11 @@ public class TicketResponse {
                 .build();
     }
 
+    public static TicketResponse from(Ticket t, Integer positionOverride) {
+        return from(t, positionOverride, null);
+    }
+
     public static TicketResponse from(Ticket t) {
-        return from(t, null);
+        return from(t, null, null);
     }
 }
