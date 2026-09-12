@@ -21,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -64,11 +65,15 @@ public class QueueService {
                 .description(request.getDescription())
                 .department(request.getDepartment())
                 .location(request.getLocation())
-                .opensAt(request.getOpensAt() != null ? request.getOpensAt() : java.time.LocalTime.of(8, 0))
-                .closesAt(request.getClosesAt() != null ? request.getClosesAt() : java.time.LocalTime.of(17, 0))
+                .opensAt(request.getOpensAt() != null ? request.getOpensAt() : LocalTime.of(8, 0))
+                .closesAt(request.getClosesAt() != null ? request.getClosesAt() : LocalTime.of(17, 0))
                 .maxCapacity(request.getMaxCapacity() != null ? request.getMaxCapacity() : 100)
                 .averageServiceMinutes(request.getAverageServiceMinutes() != null
                         ? request.getAverageServiceMinutes() : 5)
+                .allowWaitlist(request.getAllowWaitlist() != null ? request.getAllowWaitlist() : false)
+                .autoPromoteWaitlist(request.getAutoPromoteWaitlist() != null
+                        ? request.getAutoPromoteWaitlist() : true)
+                .maxWaitlistSize(request.getMaxWaitlistSize() != null ? request.getMaxWaitlistSize() : 100)
                 .isActive(true)
                 .createdBy(admin)
                 .build();
@@ -96,6 +101,9 @@ public class QueueService {
         if (request.getClosesAt() != null) queue.setClosesAt(request.getClosesAt());
         if (request.getMaxCapacity() != null) queue.setMaxCapacity(request.getMaxCapacity());
         if (request.getAverageServiceMinutes() != null) queue.setAverageServiceMinutes(request.getAverageServiceMinutes());
+        if (request.getAllowWaitlist() != null) queue.setAllowWaitlist(request.getAllowWaitlist());
+        if (request.getAutoPromoteWaitlist() != null) queue.setAutoPromoteWaitlist(request.getAutoPromoteWaitlist());
+        if (request.getMaxWaitlistSize() != null) queue.setMaxWaitlistSize(request.getMaxWaitlistSize());
 
         Queue saved = queueRepository.save(queue);
 
@@ -201,9 +209,14 @@ public class QueueService {
     public List<QueueResponse.StaffInfo> listStaff(Long universityId) {
         return userRepository.findByUniversityIdAndRole(universityId, Role.STAFF).stream()
                 .map(u -> QueueResponse.StaffInfo.builder()
-                        .id(u.getId()).fullName(u.getFullName()).email(u.getEmail()).build())
+                        .id(u.getId())
+                        .fullName(u.getFullName())
+                        .email(u.getEmail())
+                        .build())
                 .toList();
     }
+
+    // ---------- HELPERS ----------
 
     private QueueResponse enrichWithStaff(Queue queue) {
         QueueResponse response = QueueResponse.from(queue);

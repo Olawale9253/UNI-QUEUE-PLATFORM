@@ -1,5 +1,6 @@
 package com.uniqueeue.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
@@ -7,15 +8,25 @@ public class QueueEstimateResponse {
 
     private Long queueId;
     private String queueName;
+
+    @JsonProperty("isOpen")
     private boolean isOpen;
+
     private String opensAt;
     private String closesAt;
 
     private long waitingCount;
-    private long activeCalledCount;         // 0 or 1
-    private String currentlyServing;        // ticket number or null
+    private long waitlistCount;
+    private long activeCalledCount;
+    private String currentlyServing;
 
-    private int configuredAvgMinutes;       // from Queue entity
-    private double actualAvgMinutesToday;   // measured from today's completed
+    private boolean allowWaitlist;
+
+    @JsonProperty("isFull")
+    private boolean isFull;
+
+    private int configuredAvgMinutes;
+    private double actualAvgMinutesToday;
     private int estimatedMinutesForNewJoiner;
+    private int estimatedMinutesForWaitlisters;
 }

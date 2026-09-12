@@ -1,5 +1,6 @@
 package com.uniqueeue.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.uniqueeue.model.University;
 import lombok.*;
 
@@ -17,14 +18,16 @@ public class UniversityResponse {
     private String matricDescription;
     private String logoUrl;
     private String primaryColor;
+
+    @JsonProperty("isActive")
     private Boolean isActive;
+
     private String plan;
     private Integer maxStaff;
     private Integer maxQueues;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // live counters (optional)
     private Long queueCount;
     private Long staffCount;
     private Long userCount;

@@ -62,9 +62,23 @@ public class TicketService {
             throw new BadRequestException("You already have an active ticket");
         }
 
-        long waiting = ticketRepository.findWaitingByQueueId(queueId).size();
-        if (waiting >= queue.getMaxCapacity()) {
-            throw new BadRequestException("Queue is full");
+        long waitingCount = ticketRepository.findWaitingByQueueId(queueId).size();
+        boolean queueFull = waitingCount >= queue.getMaxCapacity();
+
+        TicketStatus initialStatus;
+        if (!queueFull) {
+            initialStatus = TicketStatus.WAITING;
+        } else {
+            // Queue is full — decide between waitlist and rejection
+            if (!Boolean.TRUE.equals(queue.getAllowWaitlist())) {
+                throw new BadRequestException("Queue is full");
+            }
+            long waitlistCount = ticketRepository.findWaitlistedByQueueId(queueId).size();
+            int maxWaitlist = queue.getMaxWaitlistSize() != null ? queue.getMaxWaitlistSize() : 100;
+            if (waitlistCount >= maxWaitlist) {
+                throw new BadRequestException("Queue and waitlist are both full");
+            }
+            initialStatus = TicketStatus.WAITLISTED;
         }
 
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
@@ -76,7 +90,7 @@ public class TicketService {
                 .queue(queue)
                 .user(user)
                 .ticketNumber(ticketNumber)
-                .status(TicketStatus.WAITING)
+                .status(initialStatus)
                 .priority(0)
                 .build();
         ticket = ticketRepository.save(ticket);
@@ -85,13 +99,24 @@ public class TicketService {
 
         Ticket fresh = ticketRepository.findById(ticket.getId()).orElseThrow();
         int pos = fresh.getPosition() != null ? fresh.getPosition() : 1;
-        notificationService.notify(user, NotificationType.QUEUE_UPDATE,
-                "You've joined " + queue.getName(),
-                "Ticket " + ticketNumber + " · Position " + pos + ". We'll notify you when it's your turn.");
 
-        auditService.record(userId, queue.getUniversity().getId(),
-                AuditAction.TICKET_JOINED, "Ticket", ticket.getId(),
-                "{\"ticketNumber\":\"" + ticketNumber + "\",\"queueId\":" + queueId + "}");
+        if (initialStatus == TicketStatus.WAITING) {
+            notificationService.notify(user, NotificationType.QUEUE_UPDATE,
+                    "You've joined " + queue.getName(),
+                    "Ticket " + ticketNumber + " · Position " + pos + ". We'll notify you when it's your turn.");
+
+            auditService.record(userId, queue.getUniversity().getId(),
+                    AuditAction.TICKET_JOINED, "Ticket", ticket.getId(),
+                    "{\"ticketNumber\":\"" + ticketNumber + "\",\"queueId\":" + queueId + "}");
+        } else {
+            notificationService.notify(user, NotificationType.QUEUE_UPDATE,
+                    "You're on the waitlist for " + queue.getName(),
+                    "Ticket " + ticketNumber + " · Waitlist #" + pos + ". We'll notify you when a slot opens.");
+
+            auditService.record(userId, queue.getUniversity().getId(),
+                    AuditAction.TICKET_WAITLISTED, "Ticket", ticket.getId(),
+                    "{\"ticketNumber\":\"" + ticketNumber + "\",\"queueId\":" + queueId + "}");
+        }
 
         return enrichWithPosition(fresh);
     }
@@ -118,12 +143,19 @@ public class TicketService {
             throw new BadRequestException("Not your ticket");
         }
         if (ticket.getStatus() != TicketStatus.WAITING
+                && ticket.getStatus() != TicketStatus.WAITLISTED
                 && ticket.getStatus() != TicketStatus.CALLED) {
             throw new BadRequestException("Cannot leave a ticket that is " + ticket.getStatus());
         }
+        TicketStatus oldStatus = ticket.getStatus();
         ticket.setStatus(TicketStatus.CANCELLED);
         ticketRepository.save(ticket);
         recalculatePositions(ticket.getQueue().getId());
+
+        // If a WAITING slot just freed up, promote from waitlist
+        if (oldStatus == TicketStatus.WAITING) {
+            promoteFromWaitlist(ticket.getQueue().getId());
+        }
 
         auditService.record(userId, ticket.getQueue().getUniversity().getId(),
                 AuditAction.TICKET_CANCELLED, "Ticket", ticketId, null);
@@ -169,6 +201,7 @@ public class TicketService {
         ticketRepository.save(next);
 
         recalculatePositions(queueId);
+        promoteFromWaitlist(queueId);
 
         notificationService.notify(next.getUser(), NotificationType.TICKET_CALLED,
                 "It's your turn!",
@@ -197,6 +230,7 @@ public class TicketService {
         ticket.setServedBy(staff);
         ticketRepository.save(ticket);
         recalculatePositions(ticket.getQueue().getId());
+        promoteFromWaitlist(ticket.getQueue().getId());
 
         notificationService.notify(ticket.getUser(), NotificationType.TICKET_CALLED,
                 "It's your turn!",
@@ -265,9 +299,14 @@ public class TicketService {
                 && ticket.getStatus() != TicketStatus.WAITING) {
             throw new BadRequestException("Only WAITING or CALLED tickets can be marked no-show");
         }
+        TicketStatus oldStatus = ticket.getStatus();
         ticket.setStatus(TicketStatus.NO_SHOW);
         ticketRepository.save(ticket);
         recalculatePositions(ticket.getQueue().getId());
+
+        if (oldStatus == TicketStatus.WAITING) {
+            promoteFromWaitlist(ticket.getQueue().getId());
+        }
 
         notificationService.notify(ticket.getUser(), NotificationType.SYSTEM,
                 "You missed your turn",
@@ -292,6 +331,7 @@ public class TicketService {
         if (notes != null) ticket.setNotes(notes);
         ticketRepository.save(ticket);
         recalculatePositions(ticket.getQueue().getId());
+        promoteFromWaitlist(ticket.getQueue().getId());
 
         notificationService.notify(ticket.getUser(), NotificationType.SYSTEM,
                 "Ticket transferred",
@@ -314,8 +354,9 @@ public class TicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
         ensureStaffOwnsQueue(staffUserId, ticket.getQueue().getId());
 
-        if (ticket.getStatus() != TicketStatus.WAITING) {
-            throw new BadRequestException("Only WAITING tickets can have their priority changed");
+        if (ticket.getStatus() != TicketStatus.WAITING
+                && ticket.getStatus() != TicketStatus.WAITLISTED) {
+            throw new BadRequestException("Only WAITING or WAITLISTED tickets can have their priority changed");
         }
 
         ticket.setPriority(priority);
@@ -337,9 +378,9 @@ public class TicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("Queue not found"));
 
         List<Ticket> waiting = ticketRepository.findWaitingByQueueId(queueId);
+        List<Ticket> waitlisted = ticketRepository.findWaitlistedByQueueId(queueId);
         List<Ticket> called = ticketRepository.findCalledByQueueId(queueId);
 
-        // actual avg for today from completed tickets
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         List<Ticket> todayDone = ticketRepository.findRecentByQueue(queueId, startOfDay).stream()
                 .filter(t -> t.getStatus() == TicketStatus.COMPLETED)
@@ -351,13 +392,13 @@ public class TicketService {
                 .mapToLong(t -> Duration.between(t.getJoinedAt(), t.getCalledAt()).toMinutes())
                 .average().orElse(0);
 
-        int perTicketMinutes = queue.getAverageServiceMinutes() != null
-                ? queue.getAverageServiceMinutes() : 5;
+        int perTicket = queue.getAverageServiceMinutes() != null ? queue.getAverageServiceMinutes() : 5;
+        int estimateJoiner = Math.max(0, waiting.size() * perTicket);
 
-        // Estimate for a brand new joiner = waitingCount * perTicket
-        int estimateForNewJoiner = Math.max(0, waiting.size() * perTicketMinutes);
+        // Waitlisted tickets wait for the full current queue + their position in line
+        int estimateWaitlist = (waiting.size() + waitlisted.size()) * perTicket;
 
-        String currentlyServing = called.isEmpty() ? null : called.get(0).getTicketNumber();
+        boolean isFull = waiting.size() >= queue.getMaxCapacity();
 
         return QueueEstimateResponse.builder()
                 .queueId(queue.getId())
@@ -366,11 +407,15 @@ public class TicketService {
                 .opensAt(queue.getOpensAt() != null ? queue.getOpensAt().toString() : null)
                 .closesAt(queue.getClosesAt() != null ? queue.getClosesAt().toString() : null)
                 .waitingCount(waiting.size())
+                .waitlistCount(waitlisted.size())
                 .activeCalledCount(called.size())
-                .currentlyServing(currentlyServing)
-                .configuredAvgMinutes(perTicketMinutes)
+                .currentlyServing(called.isEmpty() ? null : called.get(0).getTicketNumber())
+                .allowWaitlist(Boolean.TRUE.equals(queue.getAllowWaitlist()))
+                .isFull(isFull)
+                .configuredAvgMinutes(perTicket)
                 .actualAvgMinutesToday(Math.round(actualAvg * 10.0) / 10.0)
-                .estimatedMinutesForNewJoiner(estimateForNewJoiner)
+                .estimatedMinutesForNewJoiner(estimateJoiner)
+                .estimatedMinutesForWaitlisters(estimateWaitlist)
                 .build();
     }
 
@@ -382,13 +427,56 @@ public class TicketService {
         }
     }
 
+    /**
+     * Recalculate `position` for both WAITING and WAITLISTED tickets in the queue.
+     * WAITING tickets get 1..N. WAITLISTED tickets get 1..M (their own numbering).
+     */
     private void recalculatePositions(Long queueId) {
         List<Ticket> waiting = ticketRepository.findWaitingByQueueId(queueId);
         int pos = 1;
-        for (Ticket t : waiting) {
-            t.setPosition(pos++);
-        }
+        for (Ticket t : waiting) t.setPosition(pos++);
         ticketRepository.saveAll(waiting);
+
+        List<Ticket> waitlisted = ticketRepository.findWaitlistedByQueueId(queueId);
+        int wpos = 1;
+        for (Ticket t : waitlisted) t.setPosition(wpos++);
+        ticketRepository.saveAll(waitlisted);
+    }
+
+    /**
+     * Promote the first WAITLISTED ticket(s) to WAITING, filling up any free slots.
+     * Only runs if the queue has auto-promote enabled.
+     */
+    private void promoteFromWaitlist(Long queueId) {
+        Queue queue = queueRepository.findById(queueId).orElse(null);
+        if (queue == null) return;
+        if (!Boolean.TRUE.equals(queue.getAllowWaitlist())) return;
+        if (!Boolean.TRUE.equals(queue.getAutoPromoteWaitlist())) return;
+
+        List<Ticket> waiting = ticketRepository.findWaitingByQueueId(queueId);
+        int freeSlots = queue.getMaxCapacity() - waiting.size();
+        if (freeSlots <= 0) return;
+
+        List<Ticket> waitlisted = ticketRepository.findWaitlistedByQueueId(queueId);
+        if (waitlisted.isEmpty()) return;
+
+        int toPromote = Math.min(freeSlots, waitlisted.size());
+        for (int i = 0; i < toPromote; i++) {
+            Ticket t = waitlisted.get(i);
+            t.setStatus(TicketStatus.WAITING);
+            ticketRepository.save(t);
+
+            notificationService.notify(t.getUser(), NotificationType.QUEUE_UPDATE,
+                    "A slot opened in " + queue.getName(),
+                    "You've been moved off the waitlist. Ticket " + t.getTicketNumber()
+                            + " is now in the active queue.");
+
+            auditService.record(null, queue.getUniversity().getId(),
+                    AuditAction.TICKET_WAITLIST_PROMOTED, "Ticket", t.getId(),
+                    "{\"ticketNumber\":\"" + t.getTicketNumber() + "\"}");
+        }
+
+        recalculatePositions(queueId);
     }
 
     private TicketResponse enrichWithPosition(Ticket ticket) {
@@ -398,20 +486,26 @@ public class TicketService {
         if (ticket.getStatus() == TicketStatus.WAITING) {
             List<Ticket> waiting = ticketRepository.findWaitingByQueueId(ticket.getQueue().getId());
             for (int i = 0; i < waiting.size(); i++) {
-                if (waiting.get(i).getId().equals(ticket.getId())) {
-                    position = i + 1;
-                    break;
-                }
+                if (waiting.get(i).getId().equals(ticket.getId())) { position = i + 1; break; }
             }
-            int perTicket = ticket.getQueue().getAverageServiceMinutes() != null
+            int per = ticket.getQueue().getAverageServiceMinutes() != null
                     ? ticket.getQueue().getAverageServiceMinutes() : 5;
-            estimated = position != null ? position * perTicket : null;
+            estimated = position != null ? position * per : null;
+        } else if (ticket.getStatus() == TicketStatus.WAITLISTED) {
+            List<Ticket> waitlisted = ticketRepository.findWaitlistedByQueueId(ticket.getQueue().getId());
+            for (int i = 0; i < waitlisted.size(); i++) {
+                if (waitlisted.get(i).getId().equals(ticket.getId())) { position = i + 1; break; }
+            }
+            int per = ticket.getQueue().getAverageServiceMinutes() != null
+                    ? ticket.getQueue().getAverageServiceMinutes() : 5;
+            int ahead = ticketRepository.findWaitingByQueueId(ticket.getQueue().getId()).size()
+                    + (position != null ? position - 1 : 0);
+            estimated = ahead * per;
         }
 
         return TicketResponse.from(ticket, position, estimated);
     }
 
-    /** Returns true if current time is within [opensAt, closesAt]. Handles overnight windows. */
     private boolean isWithinOperatingHours(Queue queue) {
         if (queue.getOpensAt() == null || queue.getClosesAt() == null) return true;
 
@@ -419,12 +513,10 @@ public class TicketService {
         LocalTime open = queue.getOpensAt();
         LocalTime close = queue.getClosesAt();
 
-        if (open.equals(close)) return true;  // 24h
+        if (open.equals(close)) return true;
         if (open.isBefore(close)) {
-            // same-day window, e.g. 08:00 – 17:00
             return !now.isBefore(open) && !now.isAfter(close);
         } else {
-            // overnight, e.g. 22:00 – 02:00
             return !now.isBefore(open) || !now.isAfter(close);
         }
     }

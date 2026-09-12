@@ -16,8 +16,10 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     // ---------- existing queries ----------
 
+    /** Active = WAITING, WAITLISTED, CALLED, SERVING. */
     @Query("SELECT t FROM Ticket t WHERE t.user.id = :userId " +
             "AND t.status IN (com.uniqueeue.enums.TicketStatus.WAITING, " +
+            "                 com.uniqueeue.enums.TicketStatus.WAITLISTED, " +
             "                 com.uniqueeue.enums.TicketStatus.CALLED, " +
             "                 com.uniqueeue.enums.TicketStatus.SERVING)")
     List<Ticket> findActiveByUserId(@Param("userId") Long userId);
@@ -30,6 +32,12 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
             "AND t.status = com.uniqueeue.enums.TicketStatus.WAITING " +
             "ORDER BY t.priority DESC, t.joinedAt ASC")
     List<Ticket> findWaitingByQueueId(@Param("queueId") Long queueId);
+
+    /** NEW — waitlisted tickets, priority first, then FIFO. */
+    @Query("SELECT t FROM Ticket t WHERE t.queue.id = :queueId " +
+            "AND t.status = com.uniqueeue.enums.TicketStatus.WAITLISTED " +
+            "ORDER BY t.priority DESC, t.joinedAt ASC")
+    List<Ticket> findWaitlistedByQueueId(@Param("queueId") Long queueId);
 
     @Query("SELECT COUNT(t) FROM Ticket t WHERE t.queue.id = :queueId AND t.joinedAt >= :startOfDay")
     long countTodayByQueueId(@Param("queueId") Long queueId,

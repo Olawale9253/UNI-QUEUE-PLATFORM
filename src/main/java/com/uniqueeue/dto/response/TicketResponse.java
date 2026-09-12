@@ -15,6 +15,7 @@ public class TicketResponse {
     private Integer position;
     private Integer priority;
     private Integer estimatedMinutesRemaining;
+    private Boolean onWaitlist;
 
     private Long queueId;
     private String queueName;
@@ -43,6 +44,7 @@ public class TicketResponse {
                 .position(positionOverride != null ? positionOverride : t.getPosition())
                 .priority(t.getPriority())
                 .estimatedMinutesRemaining(estimatedMinutes)
+                .onWaitlist(t.getStatus() == TicketStatus.WAITLISTED)
                 .queueId(t.getQueue() != null ? t.getQueue().getId() : null)
                 .queueName(t.getQueue() != null ? t.getQueue().getName() : null)
                 .queueLocation(t.getQueue() != null ? t.getQueue().getLocation() : null)
