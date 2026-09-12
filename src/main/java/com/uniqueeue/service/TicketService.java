@@ -1,6 +1,7 @@
 package com.uniqueeue.service;
 
 import com.uniqueeue.dto.response.TicketResponse;
+import com.uniqueeue.enums.NotificationType;
 import com.uniqueeue.enums.TicketStatus;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
@@ -17,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,6 +29,7 @@ public class TicketService {
     private final QueueRepository queueRepository;
     private final UserRepository userRepository;
     private final QueueStaffRepository queueStaffRepository;
+    private final NotificationService notificationService;
 
     // ---------- STUDENT ----------
 
@@ -47,19 +48,16 @@ public class TicketService {
             throw new BadRequestException("Queue is not active");
         }
 
-        // one active ticket total
         List<Ticket> active = ticketRepository.findActiveByUserId(userId);
         if (!active.isEmpty()) {
             throw new BadRequestException("You already have an active ticket");
         }
 
-        // capacity check
         long waiting = ticketRepository.findWaitingByQueueId(queueId).size();
         if (waiting >= queue.getMaxCapacity()) {
             throw new BadRequestException("Queue is full");
         }
 
-        // ticket number generation
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         long todayCount = ticketRepository.countTodayByQueueId(queueId, startOfDay);
         String prefix = String.valueOf(queue.getName().charAt(0)).toUpperCase();
@@ -76,7 +74,13 @@ public class TicketService {
 
         recalculatePositions(queueId);
 
-        return enrichWithPosition(ticketRepository.findById(ticket.getId()).orElseThrow());
+        Ticket fresh = ticketRepository.findById(ticket.getId()).orElseThrow();
+        int pos = fresh.getPosition() != null ? fresh.getPosition() : 1;
+        notificationService.notify(user, NotificationType.QUEUE_UPDATE,
+                "You've joined " + queue.getName(),
+                "Ticket " + ticketNumber + " · Position " + pos + ". We'll notify you when it's your turn.");
+
+        return enrichWithPosition(fresh);
     }
 
     @Transactional(readOnly = true)
@@ -132,7 +136,6 @@ public class TicketService {
         ensureStaffOwnsQueue(staffUserId, queueId);
         User staff = userRepository.findById(staffUserId).orElseThrow();
 
-        // Reject if a ticket is already CALLED in this queue
         List<Ticket> called = ticketRepository.findCalledByQueueId(queueId);
         if (!called.isEmpty()) {
             throw new BadRequestException("A ticket is already being called. Serve or no-show it first.");
@@ -150,6 +153,11 @@ public class TicketService {
         ticketRepository.save(next);
 
         recalculatePositions(queueId);
+
+        notificationService.notify(next.getUser(), NotificationType.TICKET_CALLED,
+                "It's your turn!",
+                "Ticket " + next.getTicketNumber() + " is now being called at " + next.getQueue().getName() + ".");
+
         return enrichWithPosition(next);
     }
 
@@ -170,6 +178,11 @@ public class TicketService {
         ticketRepository.save(ticket);
 
         recalculatePositions(ticket.getQueue().getId());
+
+        notificationService.notify(ticket.getUser(), NotificationType.TICKET_CALLED,
+                "It's your turn!",
+                "Ticket " + ticket.getTicketNumber() + " is now being called.");
+
         return enrichWithPosition(ticket);
     }
 
@@ -206,6 +219,11 @@ public class TicketService {
         ticketRepository.save(ticket);
 
         recalculatePositions(ticket.getQueue().getId());
+
+        notificationService.notify(ticket.getUser(), NotificationType.TICKET_SERVED,
+                "Service complete",
+                "Thanks for using UniQueue. Please rate your experience.");
+
         return enrichWithPosition(ticket);
     }
 
@@ -222,6 +240,11 @@ public class TicketService {
         ticket.setStatus(TicketStatus.NO_SHOW);
         ticketRepository.save(ticket);
         recalculatePositions(ticket.getQueue().getId());
+
+        notificationService.notify(ticket.getUser(), NotificationType.SYSTEM,
+                "You missed your turn",
+                "Ticket " + ticket.getTicketNumber() + " was marked as a no-show.");
+
         return enrichWithPosition(ticket);
     }
 
@@ -238,6 +261,11 @@ public class TicketService {
         if (notes != null) ticket.setNotes(notes);
         ticketRepository.save(ticket);
         recalculatePositions(ticket.getQueue().getId());
+
+        notificationService.notify(ticket.getUser(), NotificationType.SYSTEM,
+                "Ticket transferred",
+                "Your ticket " + ticket.getTicketNumber() + " has been transferred to another desk.");
+
         return enrichWithPosition(ticket);
     }
 
@@ -249,9 +277,6 @@ public class TicketService {
         }
     }
 
-    /**
-     * Recalculate `position` for all WAITING tickets in the given queue.
-     */
     private void recalculatePositions(Long queueId) {
         List<Ticket> waiting = ticketRepository.findWaitingByQueueId(queueId);
         int pos = 1;
@@ -261,9 +286,6 @@ public class TicketService {
         ticketRepository.saveAll(waiting);
     }
 
-    /**
-     * For WAITING tickets, compute fresh position from the current queue.
-     */
     private TicketResponse enrichWithPosition(Ticket ticket) {
         Integer position = ticket.getPosition();
         if (ticket.getStatus() == TicketStatus.WAITING) {
