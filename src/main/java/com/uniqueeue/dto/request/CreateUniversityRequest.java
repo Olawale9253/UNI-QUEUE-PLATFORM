@@ -1,0 +1,39 @@
+package com.uniqueeue.dto.request;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.*;
+
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+public class CreateUniversityRequest {
+
+    @NotBlank(message = "Name is required")
+    @Size(max = 255)
+    private String name;
+
+    @NotBlank(message = "Code is required")
+    @Size(max = 50)
+    private String code;
+
+    @NotBlank(message = "Admin email is required")
+    @Email(message = "Admin email must be valid")
+    private String adminEmail;
+
+    @NotBlank(message = "Admin password is required")
+    @Size(min = 8, message = "Admin password must be at least 8 characters")
+    private String adminPassword;
+
+    @NotBlank(message = "Admin full name is required")
+    private String adminFullName;
+
+    private String emailDomain;
+    private String matricPattern;
+    private String matricExample;
+    private String matricDescription;
+    private String logoUrl;
+    private String primaryColor;
+    private String plan;
+    private Integer maxStaff;
+    private Integer maxQueues;
+}
