@@ -6,6 +6,7 @@ import com.uniqueeue.dto.response.AuthResponse;
 import com.uniqueeue.enums.Role;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
+import com.uniqueeue.exception.UnauthorizedException;
 import com.uniqueeue.model.University;
 import com.uniqueeue.model.User;
 import com.uniqueeue.repository.UniversityRepository;
@@ -45,7 +46,6 @@ public class AuthService {
             throw new BadRequestException("University is not active");
         }
 
-        // Email domain validation
         if (university.getEmailDomain() != null && !university.getEmailDomain().isBlank()) {
             String domain = university.getEmailDomain().startsWith("@")
                     ? university.getEmailDomain()
@@ -55,7 +55,6 @@ public class AuthService {
             }
         }
 
-        // Matric number pattern validation
         if (university.getMatricPattern() != null && !university.getMatricPattern().isBlank()) {
             if (!Pattern.matches(university.getMatricPattern(), request.getMatricNumber())) {
                 String example = university.getMatricExample() != null
@@ -65,7 +64,6 @@ public class AuthService {
             }
         }
 
-        // Matric uniqueness per university
         if (userRepository.existsByUniversityIdAndMatricNumber(university.getId(), request.getMatricNumber())) {
             throw new BadRequestException("Matric number already registered at this university");
         }
@@ -99,6 +97,18 @@ public class AuthService {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         User user = userRepository.findByEmail(principal.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Block login if the user belongs to an inactive university.
+        if (user.getUniversity() != null
+                && !Boolean.TRUE.equals(user.getUniversity().getIsActive())) {
+            throw new UnauthorizedException(
+                    "Your university's account is currently inactive. Contact support.");
+        }
+
+        // Block login if the user account itself is inactive.
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
+            throw new UnauthorizedException("Your account has been disabled.");
+        }
 
         return buildAuthResponse(user);
     }

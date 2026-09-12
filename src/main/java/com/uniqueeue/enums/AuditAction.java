@@ -1,0 +1,38 @@
+package com.uniqueeue.enums;
+
+public enum AuditAction {
+    // auth
+    USER_REGISTERED,
+    USER_LOGIN,
+    USER_LOGIN_FAILED,
+
+    // ticket lifecycle
+    TICKET_JOINED,
+    TICKET_CALLED,
+    TICKET_SERVED,
+    TICKET_COMPLETED,
+    TICKET_NO_SHOW,
+    TICKET_TRANSFERRED,
+    TICKET_CANCELLED,
+    TICKET_PRIORITY_CHANGED,
+
+    // queue
+    QUEUE_CREATED,
+    QUEUE_UPDATED,
+    QUEUE_DELETED,
+
+    // staff
+    STAFF_CREATED,
+    STAFF_ASSIGNED,
+    STAFF_UNASSIGNED,
+
+    // tenant
+    UNIVERSITY_CREATED,
+    UNIVERSITY_UPDATED,
+    UNIVERSITY_DEACTIVATED,
+    UNIVERSITY_REACTIVATED,
+    ADMIN_CREATED,
+
+    // feedback
+    FEEDBACK_SUBMITTED
+}

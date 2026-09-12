@@ -24,9 +24,8 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         seedUniversities();
         seedAdmin();
+        seedSuperAdmin();
     }
-
-    // ---------- UNIVERSITIES ----------
 
     private void seedUniversities() {
         if (universityRepository.count() > 0) {
@@ -35,8 +34,7 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         University unilag = University.builder()
-                .name("University of Lagos")
-                .code("UNILAG")
+                .name("University of Lagos").code("UNILAG")
                 .emailDomain("@unilag.edu.ng")
                 .matricPattern("^\\d{2}/\\d{5}/\\d{3}$")
                 .matricExample("21/12345/001")
@@ -44,8 +42,7 @@ public class DataInitializer implements CommandLineRunner {
                 .build();
 
         University ui = University.builder()
-                .name("University of Ibadan")
-                .code("UI")
+                .name("University of Ibadan").code("UI")
                 .emailDomain("@ui.edu.ng")
                 .matricPattern("^\\d{6}$")
                 .matricExample("123456")
@@ -53,8 +50,7 @@ public class DataInitializer implements CommandLineRunner {
                 .build();
 
         University oau = University.builder()
-                .name("Obafemi Awolowo University")
-                .code("OAU")
+                .name("Obafemi Awolowo University").code("OAU")
                 .emailDomain("@oau.edu.ng")
                 .matricPattern("^[A-Z]{3}/\\d{4}/\\d{3}$")
                 .matricExample("ABC/1234/567")
@@ -68,31 +64,39 @@ public class DataInitializer implements CommandLineRunner {
         log.info("✅ Seeded {} universities", universityRepository.count());
     }
 
-    // ---------- ADMIN ----------
-
     private void seedAdmin() {
-        String adminEmail = "admin@unilag.edu.ng";
-
-        if (userRepository.findByEmail(adminEmail).isPresent()) {
+        String email = "admin@unilag.edu.ng";
+        if (userRepository.findByEmail(email).isPresent()) {
             log.info("Admin user already exists. Skipping.");
             return;
         }
-
         University unilag = universityRepository.findByCode("UNILAG")
-                .orElseThrow(() -> new IllegalStateException(
-                        "UNILAG must be seeded before admin. This should never happen."));
+                .orElseThrow(() -> new IllegalStateException("UNILAG missing"));
 
-        User admin = User.builder()
-                .email(adminEmail)
+        userRepository.save(User.builder()
+                .email(email)
                 .password(passwordEncoder.encode("admin1234"))
                 .fullName("UNILAG Admin")
                 .role(Role.ADMIN)
                 .university(unilag)
-                .isActive(true)
-                .isVerified(true)
-                .build();
+                .isActive(true).isVerified(true).build());
 
-        userRepository.save(admin);
-        log.info("✅ Seeded admin user: {} / admin1234", adminEmail);
+        log.info("✅ Seeded admin user: {} / admin1234", email);
+    }
+
+    private void seedSuperAdmin() {
+        String email = "superadmin@uniqueue.com";
+        if (userRepository.findByEmail(email).isPresent()) {
+            log.info("Super Admin already exists. Skipping.");
+            return;
+        }
+        userRepository.save(User.builder()
+                .email(email)
+                .password(passwordEncoder.encode("super1234"))
+                .fullName("Super Admin")
+                .role(Role.SUPER_ADMIN)
+                .isActive(true).isVerified(true).build());
+
+        log.info("✅ Seeded SUPER ADMIN: {} / super1234", email);
     }
 }
