@@ -29,7 +29,7 @@ public class AuditLog {
     private Long universityId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 100, columnDefinition = "VARCHAR(100)")
     private AuditAction action;
 
     @Column(name = "entity_type", length = 50)

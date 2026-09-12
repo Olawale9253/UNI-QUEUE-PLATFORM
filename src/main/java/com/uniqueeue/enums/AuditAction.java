@@ -36,5 +36,9 @@ public enum AuditAction {
     ADMIN_CREATED,
 
     // feedback
-    FEEDBACK_SUBMITTED
+    FEEDBACK_SUBMITTED,
+
+    // documents
+    DOCUMENT_UPLOADED,
+    DOCUMENT_DELETED
 }

@@ -29,7 +29,7 @@ public class Notification {
     private String message;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 50)
+    @Column(length = 50, columnDefinition = "VARCHAR(50)")
     private NotificationType type;
 
     @Column(name = "is_read")

@@ -11,7 +11,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 
@@ -21,26 +24,35 @@ import java.time.LocalDateTime;
 public class AuditService {
 
     private final AuditLogRepository auditLogRepository;
+    private final PlatformTransactionManager transactionManager;
 
     /**
-     * Records an audit event. Never throws — logging must never break the caller.
+     * Records an audit event in a fully isolated transaction.
+     *
+     * Uses TransactionTemplate directly — bypasses AOP so a failure cannot
+     * mark the caller's transaction as rollback-only, regardless of how the
+     * underlying JPA provider handles constraint violations.
      */
-    @Transactional
     public void record(Long userId, Long universityId, AuditAction action,
                        String entityType, Long entityId, String details) {
+        TransactionTemplate template = new TransactionTemplate(transactionManager);
+        template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         try {
-            AuditLog entry = AuditLog.builder()
-                    .userId(userId)
-                    .universityId(universityId)
-                    .action(action)
-                    .entityType(entityType)
-                    .entityId(entityId)
-                    .details(details)
-                    .ipAddress(RequestUtils.getClientIp())
-                    .build();
-            auditLogRepository.save(entry);
+            template.executeWithoutResult(status -> {
+                AuditLog entry = AuditLog.builder()
+                        .userId(userId)
+                        .universityId(universityId)
+                        .action(action)
+                        .entityType(entityType)
+                        .entityId(entityId)
+                        .details(details)
+                        .ipAddress(RequestUtils.getClientIp())
+                        .build();
+                auditLogRepository.saveAndFlush(entry);
+            });
         } catch (Exception ex) {
-            log.error("Audit log failed for action={}: {}", action, ex.getMessage());
+            log.error("Audit log failed for action={} entity={}:{} — {}",
+                    action, entityType, entityId, ex.getMessage());
         }
     }
 

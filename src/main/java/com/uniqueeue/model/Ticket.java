@@ -30,7 +30,7 @@ public class Ticket {
     private String ticketNumber;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 20, columnDefinition = "VARCHAR(20)")
     @Builder.Default
     private TicketStatus status = TicketStatus.WAITING;
 

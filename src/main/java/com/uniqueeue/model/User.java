@@ -37,7 +37,7 @@ public class User {
     private String fullName;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 50, columnDefinition = "VARCHAR(50)")
     private Role role;
 
     @ManyToOne(fetch = FetchType.LAZY)
