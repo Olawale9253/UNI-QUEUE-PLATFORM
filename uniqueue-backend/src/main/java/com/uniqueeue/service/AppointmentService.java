@@ -65,7 +65,17 @@ public class AppointmentService {
                 .staff(staff)
                 .title(request.getTitle())
                 .description(request.getDescription())
+                .category(request.getCategory() != null
+                        ? request.getCategory()
+                        : com.uniqueeue.enums.AppointmentCategory.OTHER)
+                .faculty(request.getFaculty())
+                .department(request.getDepartment())
                 .location(request.getLocation())
+                .roomDetail(request.getRoomDetail())
+                .staffRole(request.getStaffRole())
+                .durationMinutes(request.getDurationMinutes() != null
+                        ? request.getDurationMinutes() : 30)
+                .whatToBring(request.getWhatToBring())
                 .startTime(request.getStartTime())
                 .endTime(request.getEndTime())
                 .capacity(request.getCapacity() != null ? request.getCapacity() : 1)

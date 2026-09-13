@@ -6,13 +6,13 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import Profile from './pages/Profile'
 import StudentDashboard from './pages/StudentDashboard'
 import StaffDashboard from './pages/StaffDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import SuperAdminDashboard from './pages/SuperAdminDashboard'
 import NotFound from './pages/NotFound'
 
-// Routes where the main navbar should be hidden (auth pages have their own branding)
 const AUTH_ROUTES = ['/login', '/register']
 
 export default function App() {
@@ -28,6 +28,15 @@ export default function App() {
                         <Route path="/" element={<Home />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
+
+                        <Route
+                            path="/profile"
+                            element={
+                                <ProtectedRoute>
+                                    <Profile />
+                                </ProtectedRoute>
+                            }
+                        />
 
                         <Route
                             path="/student/*"

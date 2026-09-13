@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { Bell, Check, CheckCheck } from 'lucide-react'
+import { Bell, Check, CheckCheck, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../../api/axios'
 import { useAuthStore } from '../../store/authStore'
@@ -19,7 +19,7 @@ export default function NotificationBell() {
             const res = await api.get('/api/notifications/unread/count')
             setUnread(res.data.data?.count ?? 0)
         } catch {
-            // silent — bell shouldn't break anything
+            // silent
         }
     }, [token])
 
@@ -41,6 +41,7 @@ export default function NotificationBell() {
         return () => clearInterval(interval)
     }, [loadUnreadCount])
 
+    // Close on outside click
     useEffect(() => {
         const onClick = (e) => {
             if (ref.current && !ref.current.contains(e.target)) setOpen(false)
@@ -48,6 +49,25 @@ export default function NotificationBell() {
         document.addEventListener('mousedown', onClick)
         return () => document.removeEventListener('mousedown', onClick)
     }, [])
+
+    // Close on Escape
+    useEffect(() => {
+        const onKey = (e) => {
+            if (e.key === 'Escape') setOpen(false)
+        }
+        document.addEventListener('keydown', onKey)
+        return () => document.removeEventListener('keydown', onKey)
+    }, [])
+
+    // Prevent body scroll on mobile when open
+    useEffect(() => {
+        if (open && window.innerWidth < 640) {
+            document.body.style.overflow = 'hidden'
+        } else {
+            document.body.style.overflow = ''
+        }
+        return () => { document.body.style.overflow = '' }
+    }, [open])
 
     useEffect(() => {
         if (open) loadNotifications()
@@ -99,79 +119,119 @@ export default function NotificationBell() {
 
             <AnimatePresence>
                 {open && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -8, scale: 0.97 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -8, scale: 0.97 }}
-                        transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                        className="absolute right-0 mt-2 w-96 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg"
-                    >
-                        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-                            <h3 className="text-sm font-semibold text-slate-900">
-                                Notifications
-                            </h3>
-                            {unread > 0 && (
-                                <button
-                                    onClick={markAllRead}
-                                    className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700"
-                                >
-                                    <CheckCheck className="h-3.5 w-3.5" />
-                                    Mark all read
-                                </button>
-                            )}
-                        </div>
+                    <>
+                        {/* Mobile backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                            onClick={() => setOpen(false)}
+                            className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm sm:hidden"
+                        />
 
-                        <div className="max-h-96 overflow-y-auto">
-                            {loading ? (
-                                <div className="px-4 py-12 text-center text-sm text-slate-500">
-                                    Loading…
-                                </div>
-                            ) : notifications.length === 0 ? (
-                                <div className="px-4 py-12 text-center text-sm text-slate-500">
-                                    No notifications yet.
-                                </div>
-                            ) : (
-                                <ul className="divide-y divide-slate-100">
-                                    {notifications.slice(0, 20).map((n) => (
-                                        <li
-                                            key={n.id}
-                                            className={`px-4 py-3 transition-colors ${
-                                                !n.isRead ? 'bg-indigo-50/40' : ''
-                                            }`}
+                        <motion.div
+                            initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                            className="
+                fixed inset-x-3 top-20 z-50 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl
+                sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-96 sm:rounded-lg sm:shadow-lg
+              "
+                        >
+                            {/* Header */}
+                            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+                                <h3 className="text-sm font-semibold text-slate-900">
+                                    Notifications
+                                    {unread > 0 && (
+                                        <span className="ml-2 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                      {unread} new
+                    </span>
+                                    )}
+                                </h3>
+                                <div className="flex items-center gap-1">
+                                    {unread > 0 && (
+                                        <button
+                                            onClick={markAllRead}
+                                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-50"
                                         >
-                                            <div className="flex items-start gap-3">
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="truncate text-sm font-medium text-slate-900">
-                                                            {n.title}
+                                            <CheckCheck className="h-3.5 w-3.5" />
+                                            <span className="hidden sm:inline">Mark all read</span>
+                                            <span className="sm:hidden">All read</span>
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => setOpen(false)}
+                                        className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 sm:hidden"
+                                        aria-label="Close"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Body */}
+                            <div className="max-h-[calc(100vh-8rem)] overflow-y-auto sm:max-h-96">
+                                {loading ? (
+                                    <div className="px-4 py-12 text-center text-sm text-slate-500">
+                                        Loading…
+                                    </div>
+                                ) : notifications.length === 0 ? (
+                                    <div className="px-4 py-12 text-center">
+                                        <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+                                            <Bell className="h-5 w-5 text-slate-400" />
+                                        </div>
+                                        <p className="text-sm font-medium text-slate-900">
+                                            No notifications
+                                        </p>
+                                        <p className="mt-1 text-xs text-slate-500">
+                                            You're all caught up.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <ul className="divide-y divide-slate-100">
+                                        {notifications.slice(0, 20).map((n) => (
+                                            <li
+                                                key={n.id}
+                                                className={`px-4 py-3 transition-colors ${
+                                                    !n.isRead ? 'bg-indigo-50/40' : ''
+                                                }`}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="truncate text-sm font-medium text-slate-900">
+                                                                {n.title}
+                                                            </p>
+                                                            {!n.isRead && (
+                                                                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
+                                                            )}
+                                                        </div>
+                                                        <p className="mt-0.5 line-clamp-2 text-xs text-slate-600">
+                                                            {n.message}
                                                         </p>
-                                                        {!n.isRead && (
-                                                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
-                                                        )}
+                                                        <p className="mt-1 text-[10px] uppercase tracking-wide text-slate-400">
+                                                            {formatTimeAgo(n.createdAt)}
+                                                        </p>
                                                     </div>
-                                                    <p className="mt-0.5 line-clamp-2 text-xs text-slate-600">
-                                                        {n.message}
-                                                    </p>
-                                                    <p className="mt-1 text-[10px] uppercase tracking-wide text-slate-400">
-                                                        {formatTimeAgo(n.createdAt)}
-                                                    </p>
+                                                    {!n.isRead && (
+                                                        <button
+                                                            onClick={() => markOneRead(n.id)}
+                                                            className="shrink-0 rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-indigo-600"
+                                                            aria-label="Mark read"
+                                                        >
+                                                            <Check className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    )}
                                                 </div>
-                                                {!n.isRead && (
-                                                    <button
-                                                        onClick={() => markOneRead(n.id)}
-                                                        className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-indigo-600"
-                                                        aria-label="Mark read"
-                                                    >
-                                                        <Check className="h-3.5 w-3.5" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                    </motion.div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        </motion.div>
+                    </>
                 )}
             </AnimatePresence>
         </div>

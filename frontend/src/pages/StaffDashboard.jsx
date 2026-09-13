@@ -1,6 +1,13 @@
 import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, User, CheckCircle2, ListOrdered } from 'lucide-react'
+import {
+    ChevronRight,
+    User,
+    CheckCircle2,
+    ListOrdered,
+    Clock,
+    Info,
+} from 'lucide-react'
 import api from '../api/axios'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
@@ -21,6 +28,17 @@ const statusVariant = {
     NO_SHOW: 'danger',
     CANCELLED: 'default',
     TRANSFERRED: 'default',
+}
+
+const statusDescription = {
+    WAITING: 'Waiting to be called',
+    WAITLISTED: 'On the overflow waitlist',
+    CALLED: 'Called but not yet serving',
+    SERVING: 'Currently being served',
+    COMPLETED: 'Service finished',
+    NO_SHOW: 'Missed their turn',
+    CANCELLED: 'Left the queue',
+    TRANSFERRED: 'Sent to another desk',
 }
 
 export default function StaffDashboard() {
@@ -108,7 +126,9 @@ export default function StaffDashboard() {
             <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
                 <div className="mb-8 h-12 w-1/3 animate-pulse rounded-lg bg-slate-200" />
                 <div className="rounded-xl border border-slate-200 bg-white">
-                    {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <SkeletonRow key={i} />
+                    ))}
                 </div>
             </div>
         )
@@ -121,7 +141,7 @@ export default function StaffDashboard() {
                 <EmptyState
                     icon={ListOrdered}
                     title="No queues assigned"
-                    description="You haven't been assigned to any queues yet. Contact your administrator."
+                    description="You haven't been assigned to any queues yet. Contact your administrator to get started."
                 />
             </div>
         )
@@ -137,17 +157,34 @@ export default function StaffDashboard() {
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             <PageHeader
                 title="Staff Dashboard"
-                description={`Signed in as ${user?.fullName}`}
+                description={`Serving students at ${activeQueue?.name || 'your queue'}`}
                 action={
                     <Button
                         onClick={callNext}
-                        disabled={!activeQueue || acting === 'next'}
+                        disabled={!activeQueue || acting === 'next' || !!called}
                         loading={acting === 'next'}
+                        title={called ? 'Complete the current ticket first' : 'Call the next waiting ticket'}
                     >
-                        Call next ticket
+                        {called ? 'Serving…' : 'Call next ticket'}
                     </Button>
                 }
             />
+
+            <div className="mb-6 flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
+                <div>
+                    <p className="font-medium">How this works</p>
+                    <p className="mt-1 text-xs text-sky-800">
+                        Each ticket shows the student's place in line. Click{' '}
+                        <span className="rounded bg-white px-1.5 py-0.5 font-medium">Call next ticket</span>{' '}
+                        to bring the next person up. Then mark them as{' '}
+                        <span className="rounded bg-white px-1.5 py-0.5 font-medium">Serving</span> and{' '}
+                        <span className="rounded bg-white px-1.5 py-0.5 font-medium">Complete</span> when
+                        finished. If a student doesn't show up after being called, mark them as{' '}
+                        <span className="rounded bg-white px-1.5 py-0.5 font-medium">No-show</span>.
+                    </p>
+                </div>
+            </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
                 <div className="lg:col-span-1">
@@ -174,16 +211,18 @@ export default function StaffDashboard() {
                                 }`}
                             >
                                 <div className="flex items-center justify-between">
-                                    <div>
+                                    <div className="min-w-0">
                                         <div
-                                            className={`text-sm font-medium ${
+                                            className={`truncate text-sm font-medium ${
                                                 activeQueue?.id === q.id ? 'text-indigo-900' : 'text-slate-900'
                                             }`}
                                         >
                                             {q.name}
                                         </div>
                                         {q.location && (
-                                            <div className="mt-0.5 text-xs text-slate-500">{q.location}</div>
+                                            <div className="mt-0.5 truncate text-xs text-slate-500">
+                                                {q.location}
+                                            </div>
                                         )}
                                     </div>
                                     {activeQueue?.id === q.id && (
@@ -213,18 +252,25 @@ export default function StaffDashboard() {
                             >
                                 <Card className="border-indigo-200 bg-indigo-50/50">
                                     <div className="mb-3 flex items-center justify-between">
-                                        <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
-                                            Now serving
-                                        </h3>
+                                        <div className="flex items-center gap-2">
+                      <span className="relative flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-indigo-500" />
+                      </span>
+                                            <h3 className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                                                Now serving
+                                            </h3>
+                                        </div>
                                         <Badge variant="indigo">{called.status}</Badge>
                                     </div>
+
                                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                        <div>
+                                        <div className="min-w-0">
                                             <motion.div
                                                 initial={{ opacity: 0, y: 6 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.4, delay: 0.1 }}
-                                                className="font-mono text-3xl font-semibold text-slate-900"
+                                                className="font-mono text-3xl font-semibold text-slate-900 sm:text-4xl"
                                             >
                                                 {called.ticketNumber}
                                             </motion.div>
@@ -234,19 +280,36 @@ export default function StaffDashboard() {
                             {called.userFullName}
                         </span>
                                                 {called.matricNumber && (
-                                                    <span className="font-mono text-xs">{called.matricNumber}</span>
+                                                    <span className="font-mono text-xs">
+                            Matric: {called.matricNumber}
+                          </span>
                                                 )}
                                             </div>
+                                            <p className="mt-2 text-xs text-slate-500">
+                                                {statusDescription[called.status]}
+                                            </p>
                                         </div>
-                                        <div className="flex gap-2">
+
+                                        <div className="flex flex-wrap gap-2">
                                             {called.status === 'CALLED' && (
-                                                <Button
-                                                    onClick={() => serve(called.id)}
-                                                    disabled={acting === `serve-${called.id}`}
-                                                    loading={acting === `serve-${called.id}`}
-                                                >
-                                                    Start service
-                                                </Button>
+                                                <>
+                                                    <Button
+                                                        onClick={() => serve(called.id)}
+                                                        disabled={acting === `serve-${called.id}`}
+                                                        loading={acting === `serve-${called.id}`}
+                                                    >
+                                                        Start service
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        onClick={() => noShow(called.id)}
+                                                        disabled={acting === `noshow-${called.id}`}
+                                                        loading={acting === `noshow-${called.id}`}
+                                                        className="text-rose-600 hover:bg-rose-50"
+                                                    >
+                                                        No-show
+                                                    </Button>
+                                                </>
                                             )}
                                             {(called.status === 'SERVING' || called.status === 'CALLED') && (
                                                 <Button
@@ -256,7 +319,7 @@ export default function StaffDashboard() {
                                                     disabled={acting === `complete-${called.id}`}
                                                     loading={acting === `complete-${called.id}`}
                                                 >
-                                                    Complete
+                                                    Complete service
                                                 </Button>
                                             )}
                                         </div>
@@ -267,20 +330,33 @@ export default function StaffDashboard() {
                     </AnimatePresence>
 
                     <Card padded={false}>
-                        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-                            <h3 className="text-sm font-semibold text-slate-900">Waiting in queue</h3>
-                            <span className="text-xs text-slate-500">
-                {waiting.length} ticket{waiting.length === 1 ? '' : 's'}
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-6 py-4">
+                            <div>
+                                <h3 className="text-sm font-semibold text-slate-900">Waiting in queue</h3>
+                                <p className="mt-0.5 text-xs text-slate-500">
+                                    Sorted by priority, then by join time (FIFO).
+                                </p>
+                            </div>
+                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                {waiting.length} {waiting.length === 1 ? 'ticket' : 'tickets'}
               </span>
                         </div>
 
                         {ticketsLoading ? (
                             <div>
-                                {Array.from({ length: 3 }).map((_, i) => <SkeletonRow key={i} />)}
+                                {Array.from({ length: 3 }).map((_, i) => (
+                                    <SkeletonRow key={i} />
+                                ))}
                             </div>
                         ) : waiting.length === 0 ? (
-                            <div className="px-6 py-12 text-center text-sm text-slate-500">
-                                No waiting tickets.
+                            <div className="px-6 py-12 text-center">
+                                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+                                    <ListOrdered className="h-6 w-6 text-slate-400" />
+                                </div>
+                                <p className="text-sm font-medium text-slate-900">No one is waiting</p>
+                                <p className="mt-1 text-xs text-slate-500">
+                                    New tickets will appear here automatically.
+                                </p>
                             </div>
                         ) : (
                             <motion.ul
@@ -294,28 +370,39 @@ export default function StaffDashboard() {
                                         key={t.id}
                                         variants={staggerItem}
                                         layout
-                                        className="flex items-center justify-between px-6 py-4"
+                                        className="flex items-center justify-between gap-3 px-4 py-4 sm:px-6"
                                     >
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-sm font-semibold text-slate-700">
+                                        <div className="flex min-w-0 items-center gap-4">
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-sm font-semibold text-slate-700">
                                                 {t.position ?? i + 1}
                                             </div>
-                                            <div>
-                                                <div className="font-mono text-sm font-semibold text-slate-900">
-                                                    {t.ticketNumber}
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-2">
+                          <span className="font-mono text-sm font-semibold text-slate-900">
+                            {t.ticketNumber}
+                          </span>
+                                                    <Badge variant={statusVariant[t.status] || 'default'}>
+                                                        {t.status}
+                                                    </Badge>
                                                 </div>
-                                                <div className="text-xs text-slate-500">
+                                                <div className="mt-0.5 truncate text-xs text-slate-500">
                                                     {t.userFullName}
                                                     {t.matricNumber ? ` · ${t.matricNumber}` : ''}
                                                 </div>
+                                                {t.estimatedMinutesRemaining != null && (
+                                                    <div className="mt-0.5 flex items-center gap-1 text-xs text-slate-400">
+                                                        <Clock className="h-3 w-3" />
+                                                        ~{t.estimatedMinutesRemaining} min remaining
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            <Badge variant={statusVariant[t.status] || 'default'}>{t.status}</Badge>
+
+                                        <div className="flex shrink-0 items-center gap-2">
                                             <button
                                                 onClick={() => noShow(t.id)}
                                                 disabled={acting === `noshow-${t.id}`}
-                                                className="text-xs text-slate-500 transition-colors hover:text-rose-600"
+                                                className="rounded-md px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
                                             >
                                                 No-show
                                             </button>
@@ -330,11 +417,24 @@ export default function StaffDashboard() {
                         <Card padded={false}>
                             <div className="border-b border-slate-100 px-6 py-4">
                                 <h3 className="text-sm font-semibold text-slate-900">Recently resolved</h3>
+                                <p className="mt-0.5 text-xs text-slate-500">
+                                    The last few tickets you've handled today.
+                                </p>
                             </div>
                             <ul className="divide-y divide-slate-100">
                                 {resolved.slice(0, 5).map((t) => (
-                                    <li key={t.id} className="flex items-center justify-between px-6 py-3">
-                                        <span className="font-mono text-sm text-slate-700">{t.ticketNumber}</span>
+                                    <li
+                                        key={t.id}
+                                        className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6"
+                                    >
+                                        <div className="flex min-w-0 items-center gap-3">
+                      <span className="font-mono text-sm font-medium text-slate-700">
+                        {t.ticketNumber}
+                      </span>
+                                            <span className="truncate text-xs text-slate-500">
+                        {t.userFullName}
+                      </span>
+                                        </div>
                                         <Badge variant={statusVariant[t.status]}>{t.status}</Badge>
                                     </li>
                                 ))}

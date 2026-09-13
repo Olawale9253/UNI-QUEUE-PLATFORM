@@ -1,5 +1,6 @@
 package com.uniqueeue.model;
 
+import com.uniqueeue.enums.AppointmentCategory;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -12,7 +13,8 @@ import java.time.LocalDateTime;
 @Table(name = "appointment_slots", indexes = {
         @Index(name = "idx_slot_university", columnList = "university_id"),
         @Index(name = "idx_slot_staff", columnList = "staff_id"),
-        @Index(name = "idx_slot_start", columnList = "start_time")
+        @Index(name = "idx_slot_start", columnList = "start_time"),
+        @Index(name = "idx_slot_category", columnList = "category")
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
@@ -26,7 +28,6 @@ public class AppointmentSlot {
     @JoinColumn(name = "university_id", nullable = false)
     private University university;
 
-    /** The staff member offering this slot. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "staff_id", nullable = false)
     private User staff;
@@ -37,8 +38,32 @@ public class AppointmentSlot {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 50, columnDefinition = "VARCHAR(50)")
+    @Builder.Default
+    private AppointmentCategory category = AppointmentCategory.OTHER;
+
+    @Column(length = 255)
+    private String faculty;
+
+    @Column(length = 255)
+    private String department;
+
     @Column(length = 255)
     private String location;
+
+    @Column(name = "room_detail", length = 255)
+    private String roomDetail;
+
+    @Column(name = "staff_role", length = 100)
+    private String staffRole;
+
+    @Column(name = "duration_minutes")
+    @Builder.Default
+    private Integer durationMinutes = 30;
+
+    @Column(name = "what_to_bring", columnDefinition = "TEXT")
+    private String whatToBring;
 
     @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
@@ -46,12 +71,10 @@ public class AppointmentSlot {
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
-    /** How many students can book this slot. 1 = 1-on-1, >1 = group. */
     @Column(nullable = false)
     @Builder.Default
     private Integer capacity = 1;
 
-    /** Staff can close a slot even if it hasn't started. */
     @Column(name = "is_active")
     @Builder.Default
     private Boolean isActive = true;

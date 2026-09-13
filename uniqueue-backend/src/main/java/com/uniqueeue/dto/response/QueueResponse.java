@@ -25,6 +25,12 @@ public class QueueResponse {
     private Boolean autoPromoteWaitlist;
     private Integer maxWaitlistSize;
 
+    // Live counts
+    private long waitingCount;
+    private long waitlistCount;
+    private String currentlyServing;
+    private int estimatedMinutes;
+
     private Long universityId;
     private String universityName;
 

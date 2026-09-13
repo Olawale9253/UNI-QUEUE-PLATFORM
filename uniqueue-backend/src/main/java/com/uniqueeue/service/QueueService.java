@@ -6,6 +6,7 @@ import com.uniqueeue.dto.request.UpdateQueueRequest;
 import com.uniqueeue.dto.response.QueueResponse;
 import com.uniqueeue.enums.AuditAction;
 import com.uniqueeue.enums.Role;
+import com.uniqueeue.enums.TicketStatus;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
 import com.uniqueeue.model.Queue;
@@ -14,6 +15,7 @@ import com.uniqueeue.model.University;
 import com.uniqueeue.model.User;
 import com.uniqueeue.repository.QueueRepository;
 import com.uniqueeue.repository.QueueStaffRepository;
+import com.uniqueeue.repository.TicketRepository;
 import com.uniqueeue.repository.UniversityRepository;
 import com.uniqueeue.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,10 +34,9 @@ public class QueueService {
     private final QueueStaffRepository queueStaffRepository;
     private final UniversityRepository universityRepository;
     private final UserRepository userRepository;
+    private final TicketRepository ticketRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
-
-    // ---------- QUEUES ----------
 
     @Transactional(readOnly = true)
     public List<QueueResponse> listQueues(Long universityId, boolean onlyActive) {
@@ -84,7 +85,7 @@ public class QueueService {
                 AuditAction.QUEUE_CREATED, "Queue", saved.getId(),
                 "{\"name\":\"" + saved.getName() + "\"}");
 
-        return QueueResponse.from(saved);
+        return enrichWithStaff(saved);
     }
 
     @Transactional
@@ -124,8 +125,6 @@ public class QueueService {
                 AuditAction.QUEUE_DELETED, "Queue", queueId,
                 "{\"name\":\"" + queue.getName() + "\"}");
     }
-
-    // ---------- STAFF ----------
 
     @Transactional
     public QueueResponse.StaffInfo createStaff(Long universityId, CreateStaffRequest request) {
@@ -220,6 +219,8 @@ public class QueueService {
 
     private QueueResponse enrichWithStaff(Queue queue) {
         QueueResponse response = QueueResponse.from(queue);
+
+        // Staff
         List<QueueStaff> assignments = queueStaffRepository.findByQueueId(queue.getId());
         List<QueueResponse.StaffInfo> staffList = assignments.stream()
                 .map(qs -> QueueResponse.StaffInfo.builder()
@@ -230,6 +231,20 @@ public class QueueService {
                 .toList();
         response.setStaff(staffList);
         response.setStaffCount(staffList.size());
+
+        // Live queue stats
+        long waiting = ticketRepository.countByQueueAndStatus(queue.getId(), TicketStatus.WAITING);
+        long waitlisted = ticketRepository.countByQueueAndStatus(queue.getId(), TicketStatus.WAITLISTED);
+        response.setWaitingCount(waiting);
+        response.setWaitlistCount(waitlisted);
+
+        List<com.uniqueeue.model.Ticket> called =
+                ticketRepository.findCalledByQueueId(queue.getId());
+        response.setCurrentlyServing(called.isEmpty() ? null : called.get(0).getTicketNumber());
+
+        int avg = queue.getAverageServiceMinutes() != null ? queue.getAverageServiceMinutes() : 5;
+        response.setEstimatedMinutes((int) (waiting * avg));
+
         return response;
     }
 }

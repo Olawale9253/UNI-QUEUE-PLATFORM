@@ -1,42 +1,55 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Mail, Lock, ArrowRight } from 'lucide-react'
+import { Mail, Lock, ArrowRight, LogOut, CheckCircle2, Loader2 } from 'lucide-react'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
 import { useAuthStore } from '../store/authStore'
 import { useToastStore } from '../store/toastStore'
 import { ease, fadeUp } from '../lib/motion'
 
+const dashboards = {
+    SUPER_ADMIN: '/super-admin',
+    ADMIN: '/admin',
+    STAFF: '/staff',
+    USER: '/student',
+}
+
 export default function Login() {
     const navigate = useNavigate()
-    const { login, loading } = useAuthStore()
+    const { login, loading, user, logout } = useAuthStore()
     const { push } = useToastStore()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-
-    const dashboards = {
-        SUPER_ADMIN: '/super-admin',
-        ADMIN: '/admin',
-        STAFF: '/staff',
-        USER: '/student',
-    }
+    const [redirecting, setRedirecting] = useState(false)
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        setRedirecting(true)
         const res = await login(email, password)
         if (res.success) {
             push({ type: 'success', message: 'Signed in successfully' })
             navigate(dashboards[res.role] || '/')
         } else {
+            setRedirecting(false)
             push({ type: 'error', message: res.error })
         }
     }
 
+    const handleSwitchAccount = () => {
+        logout()
+        push({ type: 'info', message: 'Signed out — sign in with another account' })
+        setEmail('')
+        setPassword('')
+    }
+
+    // Show the "already signed in" banner only when NOT currently logging in
+    const showAlreadySignedInBanner = user && !redirecting
+
     return (
         <div className="flex min-h-screen">
+            {/* Left brand panel */}
             <div className="relative hidden w-1/2 overflow-hidden bg-slate-900 lg:flex lg:flex-col lg:justify-between lg:p-12">
-                {/* Soft gradient orb */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -65,15 +78,7 @@ export default function Login() {
                         waiting lines and deliver a better service experience.
                     </p>
 
-                    <motion.div
-                        initial="initial"
-                        animate="animate"
-                        variants={{
-                            initial: {},
-                            animate: { transition: { delayChildren: 0.3, staggerChildren: 0.08 } },
-                        }}
-                        className="mt-10 space-y-4"
-                    >
+                    <div className="mt-10 space-y-4">
                         {[
                             'Virtual tickets with live position tracking',
                             'Real-time notifications for students and staff',
@@ -81,10 +86,9 @@ export default function Login() {
                         ].map((item) => (
                             <motion.div
                                 key={item}
-                                variants={{
-                                    initial: { opacity: 0, x: -10 },
-                                    animate: { opacity: 1, x: 0, transition: { duration: 0.4, ease } },
-                                }}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.4, delay: 0.3, ease }}
                                 className="flex items-start gap-3"
                             >
                                 <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600/20">
@@ -95,13 +99,17 @@ export default function Login() {
                                         stroke="currentColor"
                                         strokeWidth={3}
                                     >
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M5 13l4 4L19 7"
+                                        />
                                     </svg>
                                 </div>
                                 <span className="text-sm text-slate-300">{item}</span>
                             </motion.div>
                         ))}
-                    </motion.div>
+                    </div>
                 </motion.div>
 
                 <div className="relative text-xs text-slate-500">
@@ -109,6 +117,7 @@ export default function Login() {
                 </div>
             </div>
 
+            {/* Right form panel */}
             <div className="flex flex-1 items-center justify-center px-6 py-12">
                 <motion.div
                     variants={fadeUp}
@@ -126,6 +135,38 @@ export default function Login() {
                         </Link>
                     </div>
 
+                    {showAlreadySignedInBanner && (
+                        <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+                            <div className="flex items-start gap-3">
+                                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                                <div className="flex-1">
+                                    <p className="text-sm font-medium text-emerald-900">
+                                        You're already signed in
+                                    </p>
+                                    <p className="mt-0.5 text-xs text-emerald-700">
+                                        Signed in as <strong>{user.email}</strong>
+                                    </p>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        <Link
+                                            to={dashboards[user.role] || '/'}
+                                            className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700"
+                                        >
+                                            Go to dashboard
+                                            <ArrowRight className="h-3 w-3" />
+                                        </Link>
+                                        <button
+                                            onClick={handleSwitchAccount}
+                                            className="inline-flex items-center gap-1.5 rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-50"
+                                        >
+                                            <LogOut className="h-3 w-3" />
+                                            Switch account
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
                         Sign in
                     </h2>
@@ -137,31 +178,54 @@ export default function Login() {
                         <Input
                             label="Email"
                             type="email"
+                            name="email"
+                            autoComplete="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="you@university.edu.ng"
                             icon={Mail}
                             required
+                            disabled={redirecting}
                         />
                         <Input
                             label="Password"
                             type="password"
+                            name="password"
+                            autoComplete="current-password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="••••••••"
                             icon={Lock}
                             required
+                            disabled={redirecting}
                         />
 
-                        <Button type="submit" fullWidth disabled={loading} className="mt-2">
-                            {loading ? 'Signing in…' : 'Sign in'}
-                            {!loading && <ArrowRight className="h-4 w-4" />}
+                        <Button
+                            type="submit"
+                            fullWidth
+                            disabled={loading || redirecting}
+                            className="mt-2"
+                        >
+                            {loading || redirecting ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Signing in…
+                                </>
+                            ) : (
+                                <>
+                                    Sign in
+                                    <ArrowRight className="h-4 w-4" />
+                                </>
+                            )}
                         </Button>
                     </form>
 
                     <p className="mt-6 text-center text-sm text-slate-500">
                         Don't have an account?{' '}
-                        <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-700">
+                        <Link
+                            to="/register"
+                            className="font-medium text-indigo-600 hover:text-indigo-700"
+                        >
                             Register as a student
                         </Link>
                     </p>

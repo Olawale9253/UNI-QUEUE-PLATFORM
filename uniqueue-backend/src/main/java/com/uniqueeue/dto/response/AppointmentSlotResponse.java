@@ -1,6 +1,7 @@
 package com.uniqueeue.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.uniqueeue.enums.AppointmentCategory;
 import com.uniqueeue.model.AppointmentSlot;
 import lombok.*;
 
@@ -12,13 +13,24 @@ public class AppointmentSlotResponse {
     private Long id;
     private String title;
     private String description;
+    private AppointmentCategory category;
+
+    private String faculty;
+    private String department;
     private String location;
+    private String roomDetail;
+
+    private String staffRole;
+    private Integer durationMinutes;
+    private String whatToBring;
+
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+
     private Integer capacity;
     private long bookedCount;
     private long remaining;
-    private String status;         // "FULL", "AVAILABLE", "PAST", "CLOSED"
+    private String status;
 
     @JsonProperty("isActive")
     private Boolean isActive;
@@ -48,7 +60,14 @@ public class AppointmentSlotResponse {
                 .id(s.getId())
                 .title(s.getTitle())
                 .description(s.getDescription())
+                .category(s.getCategory())
+                .faculty(s.getFaculty())
+                .department(s.getDepartment())
                 .location(s.getLocation())
+                .roomDetail(s.getRoomDetail())
+                .staffRole(s.getStaffRole())
+                .durationMinutes(s.getDurationMinutes())
+                .whatToBring(s.getWhatToBring())
                 .startTime(s.getStartTime())
                 .endTime(s.getEndTime())
                 .capacity(s.getCapacity())

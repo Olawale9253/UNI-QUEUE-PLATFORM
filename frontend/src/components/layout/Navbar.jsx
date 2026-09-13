@@ -1,8 +1,9 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { LogOut, Menu, X } from 'lucide-react'
+import { LogOut, Menu, X, User as UserIcon, Settings as SettingsIcon } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../../store/authStore'
+import { useUniversityStore } from '../../store/universityStore'
 import { getInitials } from '../../lib/format'
 import NotificationBell from './NotificationBell'
 
@@ -22,11 +23,16 @@ const dashboards = {
 
 export default function Navbar() {
     const { user, logout } = useAuthStore()
+    const { university, load: loadUniversity, loaded } = useUniversityStore()
     const navigate = useNavigate()
     const [open, setOpen] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
     const [scrolled, setScrolled] = useState(false)
     const menuRef = useRef(null)
+
+    useEffect(() => {
+        if (user && !loaded) loadUniversity()
+    }, [user, loaded, loadUniversity])
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 8)
@@ -42,16 +48,21 @@ export default function Navbar() {
         return () => document.removeEventListener('mousedown', onClick)
     }, [])
 
-    // Close mobile menu when route changes
-    useEffect(() => {
-        setMobileOpen(false)
-    }, [navigate])
-
     const handleLogout = () => {
         logout()
         setMobileOpen(false)
         navigate('/login')
     }
+
+    const handleNavClick = () => {
+        setMobileOpen(false)
+        setOpen(false)
+    }
+
+    const hasUniversity = !!university?.name
+    const hasLogo = !!university?.logoUrl
+    const initials = university?.code || university?.name?.slice(0, 2).toUpperCase() || 'UQ'
+    const isAdmin = user?.role === 'ADMIN'
 
     return (
         <header
@@ -61,97 +72,117 @@ export default function Navbar() {
                     : 'border-transparent bg-white'
             }`}
         >
-            <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-                <Link to="/" className="flex items-center gap-2">
-                    <motion.div
-                        whileHover={{ rotate: -6, scale: 1.05 }}
-                        transition={{ duration: 0.2 }}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white"
-                    >
-                        UQ
-                    </motion.div>
-                    <span className="text-lg font-semibold tracking-tight text-slate-900">
-            UniQueue
-          </span>
-                </Link>
-
-                {/* Desktop right side */}
-                <div className="hidden items-center gap-1 md:flex">
-                    {user && (
-                        <NavLink
-                            to={dashboards[user.role]}
-                            className={({ isActive }) =>
-                                `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                                    isActive ? 'text-indigo-600' : 'text-slate-600 hover:bg-slate-100'
-                                }`
-                            }
-                        >
-                            Dashboard
-                        </NavLink>
-                    )}
-
-                    {user && <NotificationBell />}
-
-                    {user ? (
-                        <div className="relative" ref={menuRef}>
-                            <motion.button
-                                whileTap={{ scale: 0.97 }}
-                                onClick={() => setOpen((v) => !v)}
-                                className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-slate-100"
-                            >
-                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
-                                    {getInitials(user.fullName)}
-                                </div>
-                                <div className="text-left">
-                                    <div className="text-sm font-medium text-slate-900">
-                                        {user.fullName}
-                                    </div>
-                                    <div className="text-xs text-slate-500">
-                                        {roleLabels[user.role]}
-                                    </div>
-                                </div>
-                            </motion.button>
-
-                            <AnimatePresence>
-                                {open && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -8, scale: 0.97 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: -8, scale: 0.97 }}
-                                        transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                                        className="absolute right-0 mt-2 w-56 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg"
-                                    >
-                                        <div className="border-b border-slate-100 px-4 py-3">
-                                            <div className="text-sm font-medium text-slate-900">
-                                                {user.fullName}
-                                            </div>
-                                            <div className="truncate text-xs text-slate-500">
-                                                {user.email}
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={handleLogout}
-                                            className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50"
-                                        >
-                                            <LogOut className="h-4 w-4 text-slate-500" />
-                                            Sign out
-                                        </button>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+            <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+                <Link to="/" className="flex min-w-0 items-center gap-3" onClick={handleNavClick}>
+                    {hasLogo ? (
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 ring-1 ring-slate-200 sm:h-14 sm:w-14">
+                            <img
+                                src={university.logoUrl}
+                                alt={university.name}
+                                className="h-full w-full object-contain p-1"
+                                onError={(e) => { e.target.style.display = 'none' }}
+                            />
                         </div>
                     ) : (
-                        <div className="flex items-center gap-2">
-                            <Link
-                                to="/login"
-                                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-base font-bold text-white sm:h-14 sm:w-14 sm:text-lg">
+                            {hasUniversity ? initials : 'UQ'}
+                        </div>
+                    )}
+
+                    <div className="min-w-0 leading-tight">
+                        <div className="truncate text-sm font-bold uppercase tracking-wide text-slate-900 sm:text-base">
+                            {hasUniversity ? university.name : 'UniQueue'}
+                        </div>
+                        <div className="mt-0.5 truncate text-[10px] font-medium uppercase tracking-wider text-slate-500 sm:text-xs">
+                            {hasUniversity ? 'Digital Queue System' : 'University Queue Management'}
+                        </div>
+                    </div>
+                </Link>
+
+                <div className="hidden items-center gap-1 md:flex">
+                    {user && (
+                        <>
+                            <NavLink
+                                to={dashboards[user.role]}
+                                className={({ isActive }) =>
+                                    `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                                        isActive ? 'text-indigo-600' : 'text-slate-600 hover:bg-slate-100'
+                                    }`
+                                }
                             >
+                                Dashboard
+                            </NavLink>
+                            <NotificationBell />
+
+                            <div className="relative" ref={menuRef}>
+                                <motion.button
+                                    whileTap={{ scale: 0.97 }}
+                                    onClick={() => setOpen((v) => !v)}
+                                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-slate-100"
+                                >
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
+                                        {getInitials(user.fullName)}
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="text-sm font-medium text-slate-900">{user.fullName}</div>
+                                        <div className="text-xs text-slate-500">{roleLabels[user.role]}</div>
+                                    </div>
+                                </motion.button>
+
+                                <AnimatePresence>
+                                    {open && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                                            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                                            className="absolute right-0 mt-2 w-56 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg"
+                                        >
+                                            <div className="border-b border-slate-100 px-4 py-3">
+                                                <div className="text-sm font-medium text-slate-900">{user.fullName}</div>
+                                                <div className="truncate text-xs text-slate-500">{user.email}</div>
+                                            </div>
+                                            <Link
+                                                to="/profile"
+                                                onClick={handleNavClick}
+                                                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50"
+                                            >
+                                                <UserIcon className="h-4 w-4 text-slate-500" />
+                                                Profile
+                                            </Link>
+                                            {isAdmin && (
+                                                <Link
+                                                    to="/admin/settings"
+                                                    onClick={handleNavClick}
+                                                    className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50"
+                                                >
+                                                    <SettingsIcon className="h-4 w-4 text-slate-500" />
+                                                    University Settings
+                                                </Link>
+                                            )}
+                                            <button
+                                                onClick={handleLogout}
+                                                className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50"
+                                            >
+                                                <LogOut className="h-4 w-4 text-slate-500" />
+                                                Sign out
+                                            </button>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        </>
+                    )}
+
+                    {!user && (
+                        <div className="flex items-center gap-2">
+                            <Link to="/login" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">
                                 Sign in
                             </Link>
                             <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
                                 <Link
                                     to="/register"
-                                    className="inline-block rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700"
+                                    className="inline-block rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700"
                                 >
                                     Get started
                                 </Link>
@@ -160,12 +191,11 @@ export default function Navbar() {
                     )}
                 </div>
 
-                {/* Mobile right side */}
                 <div className="flex items-center gap-1 md:hidden">
                     {user && <NotificationBell />}
                     <button
                         onClick={() => setMobileOpen((v) => !v)}
-                        className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100"
+                        className="rounded-lg p-2 text-slate-600 hover:bg-slate-100"
                         aria-label="Menu"
                     >
                         {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -173,7 +203,6 @@ export default function Navbar() {
                 </div>
             </div>
 
-            {/* Mobile menu */}
             <AnimatePresence>
                 {mobileOpen && (
                     <motion.div
@@ -191,31 +220,54 @@ export default function Navbar() {
                                             {getInitials(user.fullName)}
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <div className="truncate text-sm font-medium text-slate-900">
-                                                {user.fullName}
-                                            </div>
-                                            <div className="truncate text-xs text-slate-500">
-                                                {roleLabels[user.role]}
-                                            </div>
+                                            <div className="truncate text-sm font-medium text-slate-900">{user.fullName}</div>
+                                            <div className="truncate text-xs text-slate-500">{roleLabels[user.role]}</div>
                                         </div>
                                     </div>
 
                                     <NavLink
                                         to={dashboards[user.role]}
+                                        onClick={handleNavClick}
                                         className={({ isActive }) =>
-                                            `block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                                                isActive
-                                                    ? 'bg-indigo-50 text-indigo-700'
-                                                    : 'text-slate-700 hover:bg-slate-100'
+                                            `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
+                                                isActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-100'
                                             }`
                                         }
                                     >
                                         Dashboard
                                     </NavLink>
 
+                                    <NavLink
+                                        to="/profile"
+                                        onClick={handleNavClick}
+                                        className={({ isActive }) =>
+                                            `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
+                                                isActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-100'
+                                            }`
+                                        }
+                                    >
+                                        <UserIcon className="h-4 w-4" />
+                                        Profile
+                                    </NavLink>
+
+                                    {isAdmin && (
+                                        <NavLink
+                                            to="/admin/settings"
+                                            onClick={handleNavClick}
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
+                                                    isActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-100'
+                                                }`
+                                            }
+                                        >
+                                            <SettingsIcon className="h-4 w-4" />
+                                            University Settings
+                                        </NavLink>
+                                    )}
+
                                     <button
                                         onClick={handleLogout}
-                                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50"
+                                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-rose-600 hover:bg-rose-50"
                                     >
                                         <LogOut className="h-4 w-4" />
                                         Sign out
@@ -223,16 +275,10 @@ export default function Navbar() {
                                 </>
                             ) : (
                                 <>
-                                    <Link
-                                        to="/login"
-                                        className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
-                                    >
+                                    <Link to="/login" onClick={handleNavClick} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">
                                         Sign in
                                     </Link>
-                                    <Link
-                                        to="/register"
-                                        className="block rounded-lg bg-indigo-600 px-3 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-indigo-700"
-                                    >
+                                    <Link to="/register" onClick={handleNavClick} className="block rounded-lg bg-indigo-600 px-3 py-2 text-center text-sm font-medium text-white hover:bg-indigo-700">
                                         Get started
                                     </Link>
                                 </>

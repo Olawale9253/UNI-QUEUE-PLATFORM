@@ -16,6 +16,7 @@ import Input from '../components/ui/Input'
 import Badge from '../components/ui/Badge'
 import StatCard from '../components/ui/StatCard'
 import PageHeader from '../components/layout/PageHeader'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
 import { SkeletonStats } from '../components/ui/Skeleton'
 import { useAuthStore } from '../store/authStore'
 import { useToastStore } from '../store/toastStore'
@@ -43,6 +44,7 @@ export default function SuperAdminDashboard() {
     const [creating, setCreating] = useState(false)
     const [form, setForm] = useState(emptyForm)
     const [toggling, setToggling] = useState(null)
+    const [confirmTarget, setConfirmTarget] = useState(null)
 
     const load = useCallback(async () => {
         try {
@@ -82,7 +84,15 @@ export default function SuperAdminDashboard() {
         }
     }
 
-    const toggleActive = async (u) => {
+    const handleToggle = (u) => {
+        if (u.isActive) {
+            setConfirmTarget(u)
+        } else {
+            performToggle(u)
+        }
+    }
+
+    const performToggle = async (u) => {
         setToggling(u.id)
         try {
             if (u.isActive) {
@@ -92,6 +102,7 @@ export default function SuperAdminDashboard() {
                 await api.post(`/api/super-admin/universities/${u.id}/reactivate`)
                 push({ type: 'success', message: `${u.name} reactivated` })
             }
+            setConfirmTarget(null)
             await load()
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed' })
@@ -296,7 +307,7 @@ export default function SuperAdminDashboard() {
                                         <motion.button
                                             whileHover={{ y: -1 }}
                                             whileTap={{ scale: 0.97 }}
-                                            onClick={() => toggleActive(u)}
+                                            onClick={() => handleToggle(u)}
                                             disabled={toggling === u.id}
                                             className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
                                                 u.isActive
@@ -323,6 +334,17 @@ export default function SuperAdminDashboard() {
                     </table>
                 </div>
             </Card>
+
+            <ConfirmDialog
+                open={!!confirmTarget}
+                onClose={() => !toggling && setConfirmTarget(null)}
+                onConfirm={() => performToggle(confirmTarget)}
+                title={`Deactivate ${confirmTarget?.name}?`}
+                description="All users of this university will be blocked from logging in. Data is preserved and you can reactivate at any time."
+                confirmLabel="Deactivate"
+                variant="danger"
+                loading={toggling === confirmTarget?.id}
+            />
         </div>
     )
 }
