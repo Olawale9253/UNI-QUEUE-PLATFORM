@@ -1,4 +1,4 @@
-import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
+import { motion, animate } from 'framer-motion'
 import { useEffect, useState } from 'react'
 
 function AnimatedNumber({ value }) {
@@ -14,7 +14,6 @@ function AnimatedNumber({ value }) {
         return controls.stop
     }, [numeric])
 
-    // If not numeric, just render the raw value
     if (typeof value !== 'number' && isNaN(parseFloat(value))) return value ?? '—'
     return display
 }
@@ -42,9 +41,9 @@ export default function StatCard({ label, value, icon: Icon, hint, delay = 0 }) 
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ duration: 0.35, delay: delay + 0.1, ease: [0.16, 1, 0.3, 1] }}
-                        className="rounded-lg bg-indigo-50 p-2"
+                        className="rounded-lg bg-brand-50 p-2"
                     >
-                        <Icon className="h-5 w-5 text-indigo-600" />
+                        <Icon className="h-5 w-5 text-brand-600" />
                     </motion.div>
                 )}
             </div>

@@ -1,10 +1,12 @@
 import { NavLink, Routes, Route, Navigate } from 'react-router-dom'
-import { LayoutGrid, Settings as SettingsIcon } from 'lucide-react'
+import { LayoutGrid, Route as RouteIcon, Settings as SettingsIcon } from 'lucide-react'
 import Overview from './admin/Overview'
+import Workflows from './admin/Workflows'
 import Settings from './admin/Settings'
 
 const tabs = [
     { to: '/admin', label: 'Overview', icon: LayoutGrid, end: true },
+    { to: '/admin/workflows', label: 'Workflows', icon: RouteIcon },
     { to: '/admin/settings', label: 'Settings', icon: SettingsIcon },
 ]
 
@@ -21,7 +23,7 @@ export default function AdminDashboard() {
                             className={({ isActive }) =>
                                 `inline-flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-sm font-medium transition-colors sm:px-4 ${
                                     isActive
-                                        ? 'border-indigo-600 text-indigo-600'
+                                        ? 'border-brand-600 text-brand-600'
                                         : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
                                 }`
                             }
@@ -35,6 +37,7 @@ export default function AdminDashboard() {
 
             <Routes>
                 <Route index element={<Overview />} />
+                <Route path="workflows" element={<Workflows />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
             </Routes>

@@ -84,7 +84,7 @@ export default function Navbar() {
                             />
                         </div>
                     ) : (
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-base font-bold text-white sm:h-14 sm:w-14 sm:text-lg">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-base font-bold text-white sm:h-14 sm:w-14 sm:text-lg">
                             {hasUniversity ? initials : 'UQ'}
                         </div>
                     )}
@@ -106,7 +106,7 @@ export default function Navbar() {
                                 to={dashboards[user.role]}
                                 className={({ isActive }) =>
                                     `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                                        isActive ? 'text-indigo-600' : 'text-slate-600 hover:bg-slate-100'
+                                        isActive ? 'text-brand-600' : 'text-slate-600 hover:bg-slate-100'
                                     }`
                                 }
                             >
@@ -182,7 +182,7 @@ export default function Navbar() {
                             <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
                                 <Link
                                     to="/register"
-                                    className="inline-block rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700"
+                                    className="inline-block rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
                                 >
                                     Get started
                                 </Link>
@@ -230,7 +230,7 @@ export default function Navbar() {
                                         onClick={handleNavClick}
                                         className={({ isActive }) =>
                                             `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
-                                                isActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-100'
+                                                isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-700 hover:bg-slate-100'
                                             }`
                                         }
                                     >
@@ -242,7 +242,7 @@ export default function Navbar() {
                                         onClick={handleNavClick}
                                         className={({ isActive }) =>
                                             `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
-                                                isActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-100'
+                                                isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-700 hover:bg-slate-100'
                                             }`
                                         }
                                     >
@@ -256,7 +256,7 @@ export default function Navbar() {
                                             onClick={handleNavClick}
                                             className={({ isActive }) =>
                                                 `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
-                                                    isActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-100'
+                                                    isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-700 hover:bg-slate-100'
                                                 }`
                                             }
                                         >
@@ -278,7 +278,7 @@ export default function Navbar() {
                                     <Link to="/login" onClick={handleNavClick} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">
                                         Sign in
                                     </Link>
-                                    <Link to="/register" onClick={handleNavClick} className="block rounded-lg bg-indigo-600 px-3 py-2 text-center text-sm font-medium text-white hover:bg-indigo-700">
+                                    <Link to="/register" onClick={handleNavClick} className="block rounded-lg bg-brand-600 px-3 py-2 text-center text-sm font-medium text-white hover:bg-brand-700">
                                         Get started
                                     </Link>
                                 </>

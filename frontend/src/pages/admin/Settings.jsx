@@ -24,6 +24,8 @@ const PRESET_COLORS = [
     { label: 'Amber', value: '#d97706' },
     { label: 'Violet', value: '#7c3aed' },
     { label: 'Slate', value: '#0f172a' },
+    { label: 'Crimson', value: '#b91c1c' },
+    { label: 'Teal', value: '#0d9488' },
 ]
 
 export default function Settings() {
@@ -72,6 +74,42 @@ export default function Settings() {
         load()
     }, [load])
 
+    // Live color preview — updates CSS variables as user picks colors
+    useEffect(() => {
+        const root = document.documentElement
+        const base = form.primaryColor || '#4f46e5'
+        // Lazy import the shade generator from the ThemeProvider
+        // (defined as inline function there; we duplicate the logic here to keep it simple)
+        const hexToRgb = (hex) => {
+            const h = hex.replace('#', '')
+            const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h
+            const n = parseInt(full, 16)
+            return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }
+        }
+        const rgbToHex = (r, g, b) =>
+            `#${[r, g, b].map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('')}`
+        const mix = (color, target, amount) => {
+            const c = hexToRgb(color)
+            const t = target === 'white' ? { r: 255, g: 255, b: 255 } : { r: 0, g: 0, b: 0 }
+            const a = Math.abs(amount)
+            return rgbToHex(c.r + (t.r - c.r) * a, c.g + (t.g - c.g) * a, c.b + (t.b - c.b) * a)
+        }
+        const shades = {
+            50:  mix(base, 'white', 0.95),
+            100: mix(base, 'white', 0.88),
+            200: mix(base, 'white', 0.72),
+            300: mix(base, 'white', 0.5),
+            400: mix(base, 'white', 0.24),
+            500: mix(base, 'white', 0.1),
+            600: base,
+            700: mix(base, 'black', 0.18),
+            800: mix(base, 'black', 0.32),
+            900: mix(base, 'black', 0.48),
+            950: mix(base, 'black', 0.65),
+        }
+        Object.entries(shades).forEach(([k, v]) => root.style.setProperty(`--color-brand-${k}`, v))
+    }, [form.primaryColor])
+
     const save = async (e) => {
         e.preventDefault()
         setSaving(true)
@@ -114,11 +152,10 @@ export default function Settings() {
             />
 
             <form onSubmit={save} className="space-y-6">
-                {/* ─── BRANDING ─── */}
                 <Card>
                     <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50">
-                            <Palette className="h-4 w-4 text-indigo-600" />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50">
+                            <Palette className="h-4 w-4 text-brand-600" />
                         </div>
                         <div>
                             <h2 className="text-base font-semibold text-slate-900">Branding</h2>
@@ -128,7 +165,6 @@ export default function Settings() {
                         </div>
                     </div>
 
-                    {/* Logo URL + preview */}
                     <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start">
                         <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 ring-1 ring-slate-200">
                             {form.logoUrl && !logoError ? (
@@ -154,8 +190,8 @@ export default function Settings() {
                                     setLogoError(false)
                                     setField('logoUrl')(e)
                                 }}
-                                placeholder="https://example.edu/logo.png"
-                                hint="Paste a public image URL. Leave blank to show your university initials instead."
+                                placeholder="/logos/unilag.png"
+                                hint="Use /logos/your-file.png for a file in public/logos, or paste a public image URL."
                             />
                         </div>
                     </div>
@@ -169,7 +205,6 @@ export default function Settings() {
                         icon={Building2}
                     />
 
-                    {/* Color picker */}
                     <div className="mb-4">
                         <label className="mb-1.5 block text-sm font-medium text-slate-700">
                             Primary color
@@ -191,7 +226,6 @@ export default function Settings() {
                                 />
                             ))}
 
-                            {/* Custom color input */}
                             <label className="ml-2 flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50">
                                 <input
                                     type="color"
@@ -205,21 +239,18 @@ export default function Settings() {
                             </label>
                         </div>
                         <p className="mt-1.5 text-xs text-slate-500">
-                            Used for accents, buttons, and highlights.
+                            Applied live — buttons, tabs, and accents update as you pick.
                         </p>
                     </div>
                 </Card>
 
-                {/* ─── REGISTRATION RULES ─── */}
                 <Card>
                     <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50">
-                            <GraduationCap className="h-4 w-4 text-indigo-600" />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50">
+                            <GraduationCap className="h-4 w-4 text-brand-600" />
                         </div>
                         <div>
-                            <h2 className="text-base font-semibold text-slate-900">
-                                Registration rules
-                            </h2>
+                            <h2 className="text-base font-semibold text-slate-900">Registration rules</h2>
                             <p className="text-xs text-slate-500">
                                 How students validate their identity when signing up.
                             </p>
@@ -258,11 +289,10 @@ export default function Settings() {
                     </div>
                 </Card>
 
-                {/* ─── LIMITS ─── */}
                 <Card>
                     <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50">
-                            <Users className="h-4 w-4 text-indigo-600" />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50">
+                            <Users className="h-4 w-4 text-brand-600" />
                         </div>
                         <div>
                             <h2 className="text-base font-semibold text-slate-900">Account limits</h2>
@@ -290,7 +320,6 @@ export default function Settings() {
                     </div>
                 </Card>
 
-                {/* ─── ACTIONS ─── */}
                 <div className="sticky bottom-0 -mx-4 flex items-center justify-end gap-3 border-t border-slate-200 bg-white/90 px-4 py-4 backdrop-blur sm:-mx-6 sm:px-6">
                     <Button
                         type="button"
