@@ -5,6 +5,7 @@ import {
     X,
     User as UserIcon,
     Settings as SettingsIcon,
+    Shield,
 } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -37,9 +38,12 @@ export default function Navbar() {
     const [scrolled, setScrolled] = useState(false)
     const menuRef = useRef(null)
 
+    // Only load university branding for users that belong to a university
+    const isSuperAdmin = user?.role === 'SUPER_ADMIN'
+
     useEffect(() => {
-        if (user && !loaded) loadUniversity()
-    }, [user, loaded, loadUniversity])
+        if (user && !isSuperAdmin && !loaded) loadUniversity()
+    }, [user, isSuperAdmin, loaded, loadUniversity])
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 8)
@@ -66,8 +70,8 @@ export default function Navbar() {
         setOpen(false)
     }
 
-    const hasUniversity = !!university?.name
-    const hasLogo = !!university?.logoUrl
+    const hasUniversity = !isSuperAdmin && !!university?.name
+    const hasLogo = !isSuperAdmin && !!university?.logoUrl
     const initials = university?.code || university?.name?.slice(0, 2).toUpperCase() || 'UQ'
     const isAdmin = user?.role === 'ADMIN'
 
@@ -75,14 +79,24 @@ export default function Navbar() {
         <header
             className={`sticky top-0 z-40 border-b transition-all duration-300 ${
                 scrolled
-                    ? 'border-slate-200 bg-white/80 backdrop-blur-md shadow-sm dark:border-slate-700'
-                    : 'border-transparent bg-white dark:bg-slate-800'
+                    ? 'border-slate-200 bg-white/80 backdrop-blur-md shadow-sm'
+                    : 'border-transparent bg-white'
             }`}
         >
             <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-                <Link to="/" className="flex min-w-0 items-center gap-3" onClick={handleNavClick}>
-                    {hasLogo ? (
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 ring-1 ring-slate-200 sm:h-14 sm:w-14">
+                {/* ════════ BRAND BLOCK ════════ */}
+                <Link
+                    to="/"
+                    className="group flex min-w-0 items-center gap-3"
+                    onClick={handleNavClick}
+                >
+                    {/* Super Admin gets a distinct shield icon on slate background */}
+                    {isSuperAdmin ? (
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white transition-transform group-hover:scale-105 sm:h-14 sm:w-14">
+                            <Shield className="h-5 w-5 sm:h-6 sm:w-6" />
+                        </div>
+                    ) : hasLogo ? (
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 ring-1 ring-slate-200 transition-transform group-hover:scale-105 sm:h-14 sm:w-14">
                             <img
                                 src={university.logoUrl}
                                 alt={university.name}
@@ -91,21 +105,31 @@ export default function Navbar() {
                             />
                         </div>
                     ) : (
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-base font-bold text-white sm:h-14 sm:w-14 sm:text-lg">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-base font-bold text-white transition-transform group-hover:scale-105 sm:h-14 sm:w-14 sm:text-lg">
                             {hasUniversity ? initials : 'UQ'}
                         </div>
                     )}
 
+                    {/* Text block */}
                     <div className="min-w-0 leading-tight">
                         <div className="truncate text-sm font-bold uppercase tracking-wide text-slate-900 sm:text-base">
-                            {hasUniversity ? university.name : 'UniQueue'}
+                            {isSuperAdmin
+                                ? 'UniQueue'
+                                : hasUniversity
+                                    ? university.name
+                                    : 'UniQueue'}
                         </div>
                         <div className="mt-0.5 truncate text-[10px] font-medium uppercase tracking-wider text-slate-500 sm:text-xs">
-                            {hasUniversity ? 'Digital Queue System' : 'University Queue Management'}
+                            {isSuperAdmin
+                                ? 'Platform Console'
+                                : hasUniversity
+                                    ? 'Digital Queue System'
+                                    : 'University Queue Management'}
                         </div>
                     </div>
                 </Link>
 
+                {/* ════════ DESKTOP RIGHT ════════ */}
                 <div className="hidden items-center gap-1 md:flex">
                     {user && (
                         <>
@@ -186,7 +210,10 @@ export default function Navbar() {
                     {!user && (
                         <div className="flex items-center gap-2">
                             <ThemeToggle />
-                            <Link to="/login" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">
+                            <Link
+                                to="/login"
+                                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                            >
                                 Sign in
                             </Link>
                             <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
@@ -201,6 +228,7 @@ export default function Navbar() {
                     )}
                 </div>
 
+                {/* ════════ MOBILE RIGHT ════════ */}
                 <div className="flex items-center gap-1 md:hidden">
                     <ThemeToggle />
                     {user && <NotificationBell />}
@@ -214,6 +242,7 @@ export default function Navbar() {
                 </div>
             </div>
 
+            {/* ════════ MOBILE DROPDOWN ════════ */}
             <AnimatePresence>
                 {mobileOpen && (
                     <motion.div

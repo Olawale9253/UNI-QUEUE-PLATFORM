@@ -1,5 +1,6 @@
 package com.uniqueeue.security;
 
+import com.uniqueeue.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -41,6 +42,15 @@ public class JwtTokenProvider {
     public String generateRefreshToken(Authentication authentication) {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         return generateTokenFromPrincipal(principal, refreshExpirationMs);
+    }
+
+    /**
+     * Generate an access token directly for any user entity.
+     * Used for impersonation — super admin can mint a token for any user.
+     */
+    public String generateTokenForUser(User user) {
+        UserPrincipal principal = new UserPrincipal(user);
+        return generateTokenFromPrincipal(principal, jwtExpirationMs);
     }
 
     private String generateTokenFromPrincipal(UserPrincipal principal, long expirationMs) {

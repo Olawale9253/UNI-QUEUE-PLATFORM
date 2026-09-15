@@ -64,9 +64,17 @@ export const useAuthStore = create((set, get) => ({
         }
     },
 
+    /** Used by impersonation to swap tokens without a full re-login. */
+    setAuth: (token, user) => {
+        localStorage.setItem('uniqueue_token', token)
+        localStorage.setItem('uniqueue_user', JSON.stringify(user))
+        set({ token, user })
+    },
+
     logout: () => {
         localStorage.removeItem('uniqueue_token')
         localStorage.removeItem('uniqueue_user')
+        localStorage.removeItem('uniqueue_impersonation')
         set({ user: null, token: null })
     },
 

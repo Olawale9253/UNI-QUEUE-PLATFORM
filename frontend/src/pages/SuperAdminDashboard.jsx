@@ -1,17 +1,19 @@
 import { useEffect, useState, useCallback } from 'react'
-import { NavLink, Routes, Route, Navigate } from 'react-router-dom'
+import { NavLink, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Building2,
     Users,
-    LayoutGrid,
-    Ticket,
+    BarChart3,
     Plus,
     Power,
     PowerOff,
     History,
     UserPlus,
     X,
+    Layers,
+    Megaphone,
+    Eye,
 } from 'lucide-react'
 import api from '../api/axios'
 import Card from '../components/ui/Card'
@@ -23,8 +25,15 @@ import ConfirmDialog from '../components/ui/ConfirmDialog'
 import PageHeader from '../components/layout/PageHeader'
 import { SkeletonStats } from '../components/ui/Skeleton'
 import { useToastStore } from '../store/toastStore'
+import { useAuthStore } from '../store/authStore'
+import { useUniversityStore } from '../store/universityStore'
+import { startImpersonation, clearImpersonation } from '../components/layout/ImpersonationBanner'
 import { stagger, staggerItem, expand } from '../lib/motion'
 import AuditLogs from './super-admin/AuditLogs'
+import SystemAnalytics from './super-admin/SystemAnalytics'
+import UsersPage from './super-admin/Users'
+import TiersAndFeatures from './super-admin/TiersAndFeatures'
+import Broadcast from './super-admin/Broadcast'
 
 const emptyForm = {
     name: '',
@@ -48,11 +57,19 @@ const emptyAdminForm = {
 
 const tabs = [
     { to: '/super-admin', label: 'Universities', icon: Building2, end: true },
+    { to: '/super-admin/tiers', label: 'Tiers & Features', icon: Layers },
+    { to: '/super-admin/broadcast', label: 'Broadcast', icon: Megaphone },
+    { to: '/super-admin/analytics', label: 'Analytics', icon: BarChart3 },
+    { to: '/super-admin/users', label: 'All Users', icon: Users },
     { to: '/super-admin/audit-logs', label: 'Audit Logs', icon: History },
 ]
 
 function UniversitiesTab() {
     const { push } = useToastStore()
+    const { user, token, setAuth } = useAuthStore()
+    const { refresh: refreshUniversity } = useUniversityStore()
+    const navigate = useNavigate()
+
     const [universities, setUniversities] = useState([])
     const [analytics, setAnalytics] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -61,10 +78,10 @@ function UniversitiesTab() {
     const [form, setForm] = useState(emptyForm)
     const [toggling, setToggling] = useState(null)
     const [confirmTarget, setConfirmTarget] = useState(null)
-
     const [addAdminTarget, setAddAdminTarget] = useState(null)
     const [adminForm, setAdminForm] = useState(emptyAdminForm)
     const [addingAdmin, setAddingAdmin] = useState(false)
+    const [impersonating, setImpersonating] = useState(null)
 
     const load = useCallback(async () => {
         try {
@@ -145,6 +162,60 @@ function UniversitiesTab() {
         }
     }
 
+    const handleImpersonate = async (university) => {
+        setImpersonating(university.id)
+        try {
+            // Find the first admin for this university
+            const usersRes = await api.get(
+                `/api/super-admin/users?universityId=${university.id}&role=ADMIN&size=1&isActive=true`
+            )
+            const admins = usersRes.data.data?.content || []
+            if (admins.length === 0) {
+                push({ type: 'error', message: 'No active admin found for this university' })
+                return
+            }
+            const admin = admins[0]
+
+            // Get impersonation token
+            const res = await api.post(`/api/super-admin/impersonate/${admin.id}`)
+            const d = res.data.data
+
+            // Save current super admin session
+            startImpersonation(token, user, {
+                userId: d.userId,
+                email: d.email,
+                fullName: d.fullName,
+                role: d.role,
+                universityId: d.universityId,
+            })
+
+            // Swap to impersonated auth
+            setAuth(d.accessToken, {
+                userId: d.userId,
+                email: d.email,
+                fullName: d.fullName,
+                role: d.role,
+                universityId: d.universityId,
+            })
+            refreshUniversity()
+
+            push({ type: 'success', message: `Now viewing as ${d.fullName}` })
+
+            // Navigate to the admin dashboard
+            const dashboards = {
+                SUPER_ADMIN: '/super-admin',
+                ADMIN: '/admin',
+                STAFF: '/staff',
+                USER: '/student',
+            }
+            navigate(dashboards[d.role] || '/')
+        } catch (err) {
+            push({ type: 'error', message: err.response?.data?.message || 'Impersonation failed' })
+        } finally {
+            setImpersonating(null)
+        }
+    }
+
     if (loading) return <SkeletonStats count={4} />
 
     return (
@@ -163,11 +234,11 @@ function UniversitiesTab() {
                 <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <StatCard label="Universities" value={analytics.totalUniversities} icon={Building2} delay={0} />
                     <StatCard label="Total users" value={analytics.totalUsers} icon={Users} delay={0.05} />
-                    <StatCard label="Active queues" value={analytics.activeQueues} icon={LayoutGrid} delay={0.1} />
+                    <StatCard label="Active queues" value={analytics.activeQueues} icon={BarChart3} delay={0.1} />
                     <StatCard
                         label="Tickets today"
                         value={analytics.ticketsToday}
-                        icon={Ticket}
+                        icon={BarChart3}
                         delay={0.15}
                         hint={`${analytics.ticketsAllTime ?? 0} all time`}
                     />
@@ -241,6 +312,16 @@ function UniversitiesTab() {
                                     </td>
                                     <td className="px-6 py-3">
                                         <div className="flex items-center justify-end gap-3">
+                                            <button
+                                                onClick={() => handleImpersonate(u)}
+                                                disabled={impersonating === u.id}
+                                                className="inline-flex items-center gap-1.5 text-xs font-medium text-sky-600 transition-colors hover:text-sky-700 disabled:opacity-50"
+                                                title="Log in as this university's admin"
+                                            >
+                                                <Eye className="h-3.5 w-3.5" />
+                                                {impersonating === u.id ? 'Loading…' : 'Login as admin'}
+                                            </button>
+
                                             <button
                                                 onClick={() => {
                                                     setAddAdminTarget(u)
@@ -327,43 +408,13 @@ function UniversitiesTab() {
                                 </p>
 
                                 <form onSubmit={submitNewAdmin} className="mt-5 space-y-1">
-                                    <Input
-                                        label="Full name"
-                                        value={adminForm.fullName}
-                                        onChange={(e) => setAdminForm({ ...adminForm, fullName: e.target.value })}
-                                        placeholder="Jane Doe"
-                                        required
-                                    />
-                                    <Input
-                                        label="Email"
-                                        type="email"
-                                        value={adminForm.email}
-                                        onChange={(e) => setAdminForm({ ...adminForm, email: e.target.value })}
-                                        placeholder="admin2@unilag.edu.ng"
-                                        required
-                                    />
-                                    <Input
-                                        label="Password"
-                                        type="password"
-                                        value={adminForm.password}
-                                        onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })}
-                                        placeholder="At least 8 characters"
-                                        required
-                                    />
-                                    <Input
-                                        label="Department (optional)"
-                                        value={adminForm.department}
-                                        onChange={(e) => setAdminForm({ ...adminForm, department: e.target.value })}
-                                        placeholder="e.g. Registry"
-                                    />
+                                    <Input label="Full name" value={adminForm.fullName} onChange={(e) => setAdminForm({ ...adminForm, fullName: e.target.value })} placeholder="Jane Doe" required />
+                                    <Input label="Email" type="email" value={adminForm.email} onChange={(e) => setAdminForm({ ...adminForm, email: e.target.value })} placeholder="admin2@unilag.edu.ng" required />
+                                    <Input label="Password" type="password" value={adminForm.password} onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })} placeholder="At least 8 characters" required />
+                                    <Input label="Department (optional)" value={adminForm.department} onChange={(e) => setAdminForm({ ...adminForm, department: e.target.value })} placeholder="e.g. Registry" />
 
                                     <div className="flex justify-end gap-2 pt-2">
-                                        <Button
-                                            type="button"
-                                            variant="secondary"
-                                            onClick={() => setAddAdminTarget(null)}
-                                            disabled={addingAdmin}
-                                        >
+                                        <Button type="button" variant="secondary" onClick={() => setAddAdminTarget(null)} disabled={addingAdmin}>
                                             Cancel
                                         </Button>
                                         <Button type="submit" loading={addingAdmin} disabled={addingAdmin}>
@@ -385,7 +436,7 @@ export default function SuperAdminDashboard() {
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
             <PageHeader
                 title="Platform Console"
-                description="Manage universities and monitor platform activity"
+                description="Manage universities, users, and monitor platform activity"
             />
 
             <div className="mb-6 border-b border-slate-200 sm:mb-8">
@@ -412,6 +463,10 @@ export default function SuperAdminDashboard() {
 
             <Routes>
                 <Route index element={<UniversitiesTab />} />
+                <Route path="tiers" element={<TiersAndFeatures />} />
+                <Route path="broadcast" element={<Broadcast />} />
+                <Route path="analytics" element={<SystemAnalytics />} />
+                <Route path="users" element={<UsersPage />} />
                 <Route path="audit-logs" element={<AuditLogs />} />
                 <Route path="*" element={<Navigate to="/super-admin" replace />} />
             </Routes>

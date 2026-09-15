@@ -11,6 +11,7 @@ export default function NotificationBell() {
     const [unread, setUnread] = useState(0)
     const [notifications, setNotifications] = useState([])
     const [loading, setLoading] = useState(false)
+    const [processing, setProcessing] = useState(null) // id being processed
     const ref = useRef(null)
 
     const loadUnreadCount = useCallback(async () => {
@@ -73,15 +74,19 @@ export default function NotificationBell() {
         if (open) loadNotifications()
     }, [open, loadNotifications])
 
-    const markOneRead = async (id) => {
+    const markOneRead = async (notification) => {
+        if (notification.isRead) return // already read
+        setProcessing(notification.id)
         try {
-            await api.post(`/api/notifications/${id}/read`)
+            await api.post(`/api/notifications/${notification.id}/read`)
             setNotifications((prev) =>
-                prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+                prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n))
             )
             setUnread((v) => Math.max(0, v - 1))
         } catch {
-            // ignore
+            // ignore — will retry on next poll
+        } finally {
+            setProcessing(null)
         }
     }
 
@@ -94,6 +99,8 @@ export default function NotificationBell() {
             // ignore
         }
     }
+
+    const unreadCount = notifications.filter((n) => !n.isRead).length
 
     return (
         <div className="relative" ref={ref}>
@@ -137,28 +144,30 @@ export default function NotificationBell() {
                             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
                             className="
                 fixed inset-x-3 top-20 z-50 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl
-                sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-96 sm:rounded-lg sm:shadow-lg
+                sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[420px] sm:rounded-lg sm:shadow-lg
               "
                         >
                             {/* Header */}
                             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-                                <h3 className="text-sm font-semibold text-slate-900">
-                                    Notifications
-                                    {unread > 0 && (
-                                        <span className="ml-2 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
-                      {unread} new
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-sm font-semibold text-slate-900">
+                                        Notifications
+                                    </h3>
+                                    {unreadCount > 0 && (
+                                        <span className="rounded-full bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700">
+                      {unreadCount} new
                     </span>
                                     )}
-                                </h3>
+                                </div>
                                 <div className="flex items-center gap-1">
-                                    {unread > 0 && (
+                                    {unreadCount > 0 && (
                                         <button
                                             onClick={markAllRead}
-                                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-50"
+                                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-brand-600 transition-colors hover:bg-brand-50"
                                         >
                                             <CheckCheck className="h-3.5 w-3.5" />
                                             <span className="hidden sm:inline">Mark all read</span>
-                                            <span className="sm:hidden">All read</span>
+                                            <span className="sm:hidden">All</span>
                                         </button>
                                     )}
                                     <button
@@ -172,15 +181,21 @@ export default function NotificationBell() {
                             </div>
 
                             {/* Body */}
-                            <div className="max-h-[calc(100vh-8rem)] overflow-y-auto sm:max-h-96">
+                            <div className="max-h-[calc(100vh-8rem)] overflow-y-auto sm:max-h-[500px]">
                                 {loading ? (
-                                    <div className="px-4 py-12 text-center text-sm text-slate-500">
-                                        Loading…
+                                    <div className="space-y-3 p-4">
+                                        {[1, 2, 3].map((i) => (
+                                            <div key={i} className="animate-pulse space-y-2 rounded-lg bg-slate-50 p-3">
+                                                <div className="h-3 w-1/3 rounded bg-slate-200" />
+                                                <div className="h-3 w-full rounded bg-slate-200" />
+                                                <div className="h-3 w-2/3 rounded bg-slate-200" />
+                                            </div>
+                                        ))}
                                     </div>
                                 ) : notifications.length === 0 ? (
                                     <div className="px-4 py-12 text-center">
-                                        <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
-                                            <Bell className="h-5 w-5 text-slate-400" />
+                                        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+                                            <Bell className="h-6 w-6 text-slate-400" />
                                         </div>
                                         <p className="text-sm font-medium text-slate-900">
                                             No notifications
@@ -191,45 +206,97 @@ export default function NotificationBell() {
                                     </div>
                                 ) : (
                                     <ul className="divide-y divide-slate-100">
-                                        {notifications.slice(0, 20).map((n) => (
-                                            <li
-                                                key={n.id}
-                                                className={`px-4 py-3 transition-colors ${
-                                                    !n.isRead ? 'bg-indigo-50/40' : ''
-                                                }`}
-                                            >
-                                                <div className="flex items-start gap-3">
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className="flex items-center gap-2">
-                                                            <p className="truncate text-sm font-medium text-slate-900">
-                                                                {n.title}
-                                                            </p>
-                                                            {!n.isRead && (
-                                                                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
-                                                            )}
-                                                        </div>
-                                                        <p className="mt-0.5 line-clamp-2 text-xs text-slate-600">
-                                                            {n.message}
-                                                        </p>
-                                                        <p className="mt-1 text-[10px] uppercase tracking-wide text-slate-400">
-                                                            {formatTimeAgo(n.createdAt)}
-                                                        </p>
-                                                    </div>
-                                                    {!n.isRead && (
-                                                        <button
-                                                            onClick={() => markOneRead(n.id)}
-                                                            className="shrink-0 rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-indigo-600"
-                                                            aria-label="Mark read"
-                                                        >
-                                                            <Check className="h-3.5 w-3.5" />
-                                                        </button>
+                                        {notifications.slice(0, 30).map((n) => {
+                                            const isUnread = !n.isRead
+                                            const isProcessing = processing === n.id
+
+                                            return (
+                                                <li
+                                                    key={n.id}
+                                                    onClick={() => markOneRead(n)}
+                                                    className={`relative cursor-pointer px-4 py-3 transition-colors ${
+                                                        isUnread
+                                                            ? 'bg-brand-50/40 hover:bg-brand-50/70'
+                                                            : 'bg-white hover:bg-slate-50'
+                                                    }`}
+                                                >
+                                                    {/* Unread indicator bar */}
+                                                    {isUnread && (
+                                                        <motion.div
+                                                            layoutId={`unread-bar-${n.id}`}
+                                                            className="absolute left-0 top-0 h-full w-1 bg-brand-600"
+                                                        />
                                                     )}
-                                                </div>
-                                            </li>
-                                        ))}
+
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="min-w-0 flex-1">
+                                                            {/* Title row */}
+                                                            <div className="flex items-start justify-between gap-2">
+                                                                <div className="flex min-w-0 items-center gap-2">
+                                                                    {isUnread && (
+                                                                        <span className="h-2 w-2 shrink-0 rounded-full bg-brand-600" />
+                                                                    )}
+                                                                    <p
+                                                                        className={`truncate ${
+                                                                            isUnread
+                                                                                ? 'text-sm font-semibold text-slate-900'
+                                                                                : 'text-sm font-medium text-slate-700'
+                                                                        }`}
+                                                                    >
+                                                                        {n.title}
+                                                                    </p>
+                                                                </div>
+
+                                                                {isUnread ? (
+                                                                    isProcessing ? (
+                                                                        <div className="shrink-0 rounded-full bg-slate-100 p-1">
+                                                                            <Check className="h-3.5 w-3.5 text-slate-400" />
+                                                                        </div>
+                                                                    ) : null
+                                                                ) : (
+                                                                    <CheckCheck className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                                                                )}
+                                                            </div>
+
+                                                            {/* Full message — no truncation */}
+                                                            <p
+                                                                className={`mt-1 whitespace-pre-wrap text-xs leading-relaxed ${
+                                                                    isUnread
+                                                                        ? 'text-slate-700'
+                                                                        : 'text-slate-500'
+                                                                }`}
+                                                            >
+                                                                {n.message}
+                                                            </p>
+
+                                                            {/* Footer */}
+                                                            <div className="mt-2 flex items-center justify-between gap-2">
+                                                                <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                                                                    {formatTimeAgo(n.createdAt)}
+                                                                </p>
+                                                                {n.type && (
+                                                                    <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                                    {String(n.type).replace(/_/g, ' ')}
+                                  </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            )
+                                        })}
                                     </ul>
                                 )}
                             </div>
+
+                            {/* Footer */}
+                            {notifications.length > 0 && (
+                                <div className="border-t border-slate-100 px-4 py-2 text-center">
+                  <span className="text-xs text-slate-500">
+                    Click a notification to mark it as read
+                  </span>
+                                </div>
+                            )}
                         </motion.div>
                     </>
                 )}

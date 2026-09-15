@@ -2,6 +2,8 @@ package com.uniqueeue.service;
 
 import com.uniqueeue.dto.request.CreateAdminRequest;
 import com.uniqueeue.dto.request.CreateUniversityRequest;
+import com.uniqueeue.dto.request.UpdateFeaturesRequest;
+import com.uniqueeue.dto.request.UpdatePlanRequest;
 import com.uniqueeue.dto.request.UpdateUniversityRequest;
 import com.uniqueeue.dto.response.UniversityResponse;
 import com.uniqueeue.enums.AuditAction;
@@ -34,6 +36,10 @@ public class UniversityService {
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
 
+    // ============================================================
+    //  READ
+    // ============================================================
+
     @Transactional(readOnly = true)
     public List<UniversityResponse> listAll() {
         return universityRepository.findAll().stream().map(this::enrich).toList();
@@ -45,6 +51,10 @@ public class UniversityService {
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
         return enrich(u);
     }
+
+    // ============================================================
+    //  CREATE
+    // ============================================================
 
     @Transactional
     public UniversityResponse create(CreateUniversityRequest request) {
@@ -90,6 +100,10 @@ public class UniversityService {
 
         return enrich(university);
     }
+
+    // ============================================================
+    //  UPDATE
+    // ============================================================
 
     @Transactional
     public UniversityResponse update(Long id, UpdateUniversityRequest request) {
@@ -138,6 +152,71 @@ public class UniversityService {
         return enrich(saved);
     }
 
+    // ============================================================
+    //  FEATURE FLAGS
+    // ============================================================
+
+    @Transactional
+    public UniversityResponse updateFeatures(Long id, UpdateFeaturesRequest request) {
+        University u = universityRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("University not found"));
+
+        if (request.getFeatureWaitlist() != null) u.setFeatureWaitlist(request.getFeatureWaitlist());
+        if (request.getFeatureAppointments() != null) u.setFeatureAppointments(request.getFeatureAppointments());
+        if (request.getFeatureWorkflows() != null) u.setFeatureWorkflows(request.getFeatureWorkflows());
+        if (request.getFeatureDocuments() != null) u.setFeatureDocuments(request.getFeatureDocuments());
+
+        University saved = universityRepository.save(u);
+        auditService.record(null, id,
+                AuditAction.UNIVERSITY_UPDATED,
+                "University", id,
+                "{\"source\":\"super-admin-features\"}");
+
+        return enrich(saved);
+    }
+
+    // ============================================================
+    //  PLAN MANAGEMENT
+    // ============================================================
+
+    @Transactional
+    public UniversityResponse updatePlan(Long id, UpdatePlanRequest request) {
+        University u = universityRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("University not found"));
+
+        String plan = request.getPlan().toUpperCase();
+        PlanLimits limits = PlanLimits.forPlan(plan);
+
+        u.setPlan(plan);
+        u.setMaxQueues(limits.maxQueues());
+        u.setMaxStaff(limits.maxStaff());
+        u.setMaxTicketsPerDay(limits.maxTicketsPerDay());
+
+        University saved = universityRepository.save(u);
+
+        auditService.record(null, id,
+                AuditAction.UNIVERSITY_UPDATED,
+                "University", id,
+                "{\"source\":\"super-admin-plan\",\"plan\":\"" + plan + "\"}");
+
+        return enrich(saved);
+    }
+
+    public record PlanLimits(int maxQueues, int maxStaff, int maxTicketsPerDay) {
+        public static PlanLimits forPlan(String plan) {
+            return switch (plan == null ? "FREE" : plan.toUpperCase()) {
+                case "BASIC" -> new PlanLimits(15, 30, 1000);
+                case "PREMIUM" -> new PlanLimits(50, 100, 5000);
+                case "ENTERPRISE" -> new PlanLimits(500, 1000, 50000);
+                default -> new PlanLimits(5, 10, 200);
+            };
+        }
+    }
+
+    // ============================================================
+    //  ADMINS
+    // ============================================================
+
     @Transactional
     public UniversityResponse createAdmin(Long universityId, CreateAdminRequest request) {
         University university = universityRepository.findById(universityId)
@@ -165,6 +244,10 @@ public class UniversityService {
 
         return enrich(university);
     }
+
+    // ============================================================
+    //  HELPERS
+    // ============================================================
 
     private UniversityResponse enrich(University u) {
         UniversityResponse response = UniversityResponse.from(u);

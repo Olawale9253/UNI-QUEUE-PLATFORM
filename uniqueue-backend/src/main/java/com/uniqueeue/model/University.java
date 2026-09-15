@@ -59,6 +59,27 @@ public class University {
     @Builder.Default
     private Integer maxQueues = 5;
 
+    @Column(name = "max_tickets_per_day")
+    @Builder.Default
+    private Integer maxTicketsPerDay = 500;
+
+    // ───────── Feature flags ─────────
+    @Column(name = "feature_waitlist")
+    @Builder.Default
+    private Boolean featureWaitlist = true;
+
+    @Column(name = "feature_appointments")
+    @Builder.Default
+    private Boolean featureAppointments = true;
+
+    @Column(name = "feature_workflows")
+    @Builder.Default
+    private Boolean featureWorkflows = true;
+
+    @Column(name = "feature_documents")
+    @Builder.Default
+    private Boolean featureDocuments = true;
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

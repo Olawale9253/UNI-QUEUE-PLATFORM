@@ -25,9 +25,18 @@ public class UniversityResponse {
     private String plan;
     private Integer maxStaff;
     private Integer maxQueues;
+    private Integer maxTicketsPerDay;
+
+    // Feature flags
+    private Boolean featureWaitlist;
+    private Boolean featureAppointments;
+    private Boolean featureWorkflows;
+    private Boolean featureDocuments;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    // Live counters
     private Long queueCount;
     private Long staffCount;
     private Long userCount;
@@ -48,6 +57,11 @@ public class UniversityResponse {
                 .plan(u.getPlan())
                 .maxStaff(u.getMaxStaff())
                 .maxQueues(u.getMaxQueues())
+                .maxTicketsPerDay(u.getMaxTicketsPerDay())
+                .featureWaitlist(u.getFeatureWaitlist())
+                .featureAppointments(u.getFeatureAppointments())
+                .featureWorkflows(u.getFeatureWorkflows())
+                .featureDocuments(u.getFeatureDocuments())
                 .createdAt(u.getCreatedAt())
                 .updatedAt(u.getUpdatedAt())
                 .build();

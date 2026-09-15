@@ -6,5 +6,6 @@ public enum NotificationType {
     TICKET_SERVED,
     QUEUE_UPDATE,
     SYSTEM,
-    EMAIL_VERIFICATION
+    EMAIL_VERIFICATION,
+    BROADCAST
 }

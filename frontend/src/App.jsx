@@ -3,6 +3,7 @@ import Navbar from './components/layout/Navbar'
 import ToastContainer from './components/ui/Toast'
 import ErrorBoundary from './components/common/ErrorBoundary'
 import ThemeProvider from './components/common/ThemeProvider'
+import ImpersonationBanner from './components/layout/ImpersonationBanner'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -26,6 +27,7 @@ export default function App() {
         <ErrorBoundary>
             <ThemeProvider>
                 <div className="flex min-h-screen flex-col bg-slate-50">
+                    <ImpersonationBanner />
                     {!hideNavbar && <Navbar />}
                     <main className="flex-1">
                         <Routes>

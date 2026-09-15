@@ -38,7 +38,6 @@ public class AuditLog {
     @Column(name = "entity_id")
     private Long entityId;
 
-    /** JSON string (stored as TEXT for H2/Postgres portability). */
     @Column(columnDefinition = "TEXT")
     private String details;
 
