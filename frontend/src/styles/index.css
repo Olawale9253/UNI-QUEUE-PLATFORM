@@ -1,9 +1,12 @@
 @import "tailwindcss";
 
+/* Enable dark mode via .dark class on <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
-    /* Brand color scale — defaults to indigo, overridden at runtime by ThemeProvider */
+    /* Brand color scale — overridden at runtime by ThemeProvider */
     --color-brand-50:  #eef2ff;
     --color-brand-100: #e0e7ff;
     --color-brand-200: #c7d2fe;
@@ -33,6 +36,7 @@ body {
     background-color: #f8fafc;
     color: #0f172a;
     overscroll-behavior-y: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 :focus-visible {
@@ -57,4 +61,186 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES
+   Applies to common Tailwind utility classes so we don't have
+   to add `dark:` variants to every single component.
+   ═══════════════════════════════════════════════════════════ */
+
+.dark body {
+    background-color: #0f172a;   /* slate-900 */
+    color: #e2e8f0;              /* slate-200 */
+}
+
+/* ─── Backgrounds ─── */
+.dark .bg-white {
+    background-color: #1e293b;   /* slate-800 */
+}
+.dark .bg-slate-50 {
+    background-color: #0f172a;   /* slate-900 */
+}
+.dark .bg-slate-100 {
+    background-color: #1e293b;   /* slate-800 */
+}
+.dark .bg-slate-200 {
+    background-color: #334155;   /* slate-700 */
+}
+.dark .hover\:bg-slate-50:hover {
+    background-color: #1e293b;
+}
+.dark .hover\:bg-slate-100:hover {
+    background-color: #334155;
+}
+.dark .hover\:bg-slate-200:hover {
+    background-color: #475569;
+}
+
+/* Slate-50 / slate-50/50 backgrounds become dark surface */
+.dark .bg-slate-50\/50,
+.dark .bg-slate-50\/70 {
+    background-color: rgba(30, 41, 59, 0.5);
+}
+
+/* ─── Text ─── */
+.dark .text-slate-900 {
+    color: #f1f5f9;              /* slate-100 */
+}
+.dark .text-slate-800 {
+    color: #e2e8f0;
+}
+.dark .text-slate-700 {
+    color: #cbd5e1;
+}
+.dark .text-slate-600 {
+    color: #94a3b8;              /* slate-400 */
+}
+.dark .text-slate-500 {
+    color: #94a3b8;
+}
+.dark .text-slate-400 {
+    color: #64748b;              /* slate-500 */
+}
+
+/* ─── Borders ─── */
+.dark .border-slate-100 {
+    border-color: #334155;
+}
+.dark .border-slate-200 {
+    border-color: #334155;
+}
+.dark .border-slate-300 {
+    border-color: #475569;
+}
+.dark .divide-slate-100 > * + * {
+    border-color: #334155;
+}
+.dark .divide-slate-200 > * + * {
+    border-color: #334155;
+}
+
+/* ─── Inputs & Selects ─── */
+.dark input,
+.dark select,
+.dark textarea {
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border-color: #475569;
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+    color: #64748b;
+}
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+    border-color: var(--color-brand-500);
+}
+
+/* ─── Buttons: secondary variant ─── */
+.dark .bg-white.text-slate-700 {
+    background-color: #334155;
+    color: #e2e8f0;
+}
+.dark .hover\:bg-slate-50:hover.text-slate-700 {
+    background-color: #475569;
+}
+
+/* ─── Cards ─── */
+.dark .shadow-sm,
+.dark .shadow,
+.dark .shadow-md,
+.dark .shadow-lg,
+.dark .shadow-xl {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* ─── Navbar sticky scrolled state ─── */
+.dark .bg-white\/80 {
+    background-color: rgba(30, 41, 59, 0.85);
+}
+.dark .bg-white\/90 {
+    background-color: rgba(30, 41, 59, 0.9);
+}
+
+/* ─── Brand backgrounds become more saturated in dark mode ─── */
+.dark .bg-brand-50 {
+    background-color: rgba(79, 70, 229, 0.15);
+}
+.dark .bg-brand-100 {
+    background-color: rgba(79, 70, 229, 0.25);
+}
+
+/* ─── Semantic colors ─── */
+.dark .bg-emerald-50 {
+    background-color: rgba(5, 150, 105, 0.15);
+}
+.dark .bg-amber-50 {
+    background-color: rgba(217, 119, 6, 0.15);
+}
+.dark .bg-rose-50 {
+    background-color: rgba(225, 29, 72, 0.15);
+}
+.dark .bg-sky-50 {
+    background-color: rgba(2, 132, 199, 0.15);
+}
+
+.dark .text-emerald-700,
+.dark .text-emerald-800 {
+    color: #6ee7b7;
+}
+.dark .text-amber-700,
+.dark .text-amber-800,
+.dark .text-amber-900 {
+    color: #fcd34d;
+}
+.dark .text-rose-600,
+.dark .text-rose-700 {
+    color: #fda4af;
+}
+.dark .text-sky-700,
+.dark .text-sky-800 {
+    color: #7dd3fc;
+}
+
+.dark .border-emerald-200 {
+    border-color: rgba(5, 150, 105, 0.4);
+}
+.dark .border-amber-200 {
+    border-color: rgba(217, 119, 6, 0.4);
+}
+.dark .border-rose-200 {
+    border-color: rgba(225, 29, 72, 0.4);
+}
+.dark .border-sky-200 {
+    border-color: rgba(2, 132, 199, 0.4);
+}
+
+/* ─── Scrollbar in dark mode ─── */
+.dark ::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
 }

@@ -1,11 +1,18 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { LogOut, Menu, X, User as UserIcon, Settings as SettingsIcon } from 'lucide-react'
+import {
+    LogOut,
+    Menu,
+    X,
+    User as UserIcon,
+    Settings as SettingsIcon,
+} from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../../store/authStore'
 import { useUniversityStore } from '../../store/universityStore'
 import { getInitials } from '../../lib/format'
 import NotificationBell from './NotificationBell'
+import ThemeToggle from '../ui/ThemeToggle'
 
 const roleLabels = {
     SUPER_ADMIN: 'Super Admin',
@@ -68,8 +75,8 @@ export default function Navbar() {
         <header
             className={`sticky top-0 z-40 border-b transition-all duration-300 ${
                 scrolled
-                    ? 'border-slate-200 bg-white/80 backdrop-blur-md shadow-sm'
-                    : 'border-transparent bg-white'
+                    ? 'border-slate-200 bg-white/80 backdrop-blur-md shadow-sm dark:border-slate-700'
+                    : 'border-transparent bg-white dark:bg-slate-800'
             }`}
         >
             <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -112,6 +119,8 @@ export default function Navbar() {
                             >
                                 Dashboard
                             </NavLink>
+
+                            <ThemeToggle />
                             <NotificationBell />
 
                             <div className="relative" ref={menuRef}>
@@ -176,6 +185,7 @@ export default function Navbar() {
 
                     {!user && (
                         <div className="flex items-center gap-2">
+                            <ThemeToggle />
                             <Link to="/login" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">
                                 Sign in
                             </Link>
@@ -192,6 +202,7 @@ export default function Navbar() {
                 </div>
 
                 <div className="flex items-center gap-1 md:hidden">
+                    <ThemeToggle />
                     {user && <NotificationBell />}
                     <button
                         onClick={() => setMobileOpen((v) => !v)}

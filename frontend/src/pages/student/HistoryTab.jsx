@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { History, MapPin, Star, CheckCircle2 } from 'lucide-react'
+import { History, MapPin, Star, CheckCircle2, Search } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
+import Input from '../../components/ui/Input'
 import EmptyState from '../../components/ui/EmptyState'
 import FeedbackModal from '../../components/student/FeedbackModal'
 import { SkeletonRow } from '../../components/ui/Skeleton'
@@ -22,11 +23,22 @@ const statusVariant = {
     TRANSFERRED: 'default',
 }
 
+const STATUS_FILTERS = [
+    { value: '', label: 'All' },
+    { value: 'COMPLETED', label: 'Completed' },
+    { value: 'WAITING', label: 'Waiting' },
+    { value: 'CALLED', label: 'Called' },
+    { value: 'CANCELLED', label: 'Cancelled' },
+    { value: 'NO_SHOW', label: 'No-show' },
+]
+
 export default function HistoryTab() {
     const [tickets, setTickets] = useState([])
     const [loading, setLoading] = useState(true)
     const [feedbackTicket, setFeedbackTicket] = useState(null)
     const [ratedIds, setRatedIds] = useState(new Set())
+    const [search, setSearch] = useState('')
+    const [statusFilter, setStatusFilter] = useState('')
 
     const load = async () => {
         try {
@@ -47,6 +59,16 @@ export default function HistoryTab() {
         setRatedIds((prev) => new Set(prev).add(ticketId))
     }
 
+    const filtered = tickets.filter((t) => {
+        if (statusFilter && t.status !== statusFilter) return false
+        if (!search.trim()) return true
+        const q = search.toLowerCase()
+        return (
+            t.ticketNumber?.toLowerCase().includes(q) ||
+            t.queueName?.toLowerCase().includes(q)
+        )
+    })
+
     return (
         <div>
             <div className="mb-6">
@@ -54,10 +76,36 @@ export default function HistoryTab() {
                     Request History
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                    Every queue you've joined, with timestamps. Rate completed tickets to help
-                    improve service.
+                    Every queue you've joined. Rate completed tickets to help improve service.
                 </p>
             </div>
+
+            {tickets.length > 0 && (
+                <div className="mb-4 space-y-3">
+                    <Input
+                        placeholder="Search by ticket number or queue name…"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        icon={Search}
+                    />
+
+                    <div className="flex flex-wrap gap-1.5">
+                        {STATUS_FILTERS.map((f) => (
+                            <button
+                                key={f.value}
+                                onClick={() => setStatusFilter(f.value)}
+                                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                                    statusFilter === f.value
+                                        ? 'bg-brand-600 text-white'
+                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                }`}
+                            >
+                                {f.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {loading ? (
                 <Card padded={false}>
@@ -71,6 +119,23 @@ export default function HistoryTab() {
                     title="No ticket history yet"
                     description="Once you join a queue, your tickets will appear here."
                 />
+            ) : filtered.length === 0 ? (
+                <EmptyState
+                    icon={History}
+                    title="No tickets match your filters"
+                    description="Try adjusting your search or status filter."
+                    action={
+                        <Button
+                            variant="secondary"
+                            onClick={() => {
+                                setSearch('')
+                                setStatusFilter('')
+                            }}
+                        >
+                            Clear filters
+                        </Button>
+                    }
+                />
             ) : (
                 <Card padded={false}>
                     <motion.ul
@@ -79,7 +144,7 @@ export default function HistoryTab() {
                         animate="animate"
                         className="divide-y divide-slate-100"
                     >
-                        {tickets.map((t) => {
+                        {filtered.map((t) => {
                             const isCompleted = t.status === 'COMPLETED'
                             const alreadyRated = ratedIds.has(t.id)
 

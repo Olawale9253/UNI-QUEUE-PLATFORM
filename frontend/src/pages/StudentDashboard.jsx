@@ -1,15 +1,23 @@
 import { NavLink, Routes, Route, Navigate } from 'react-router-dom'
-import { ListOrdered, History, Calendar, Route as RouteIcon } from 'lucide-react'
+import {
+    ListOrdered,
+    History,
+    Calendar,
+    Route as RouteIcon,
+    FileText,
+} from 'lucide-react'
 import QueuesTab from './student/QueuesTab'
 import HistoryTab from './student/HistoryTab'
 import AppointmentsTab from './student/AppointmentsTab'
 import WorkflowsTab from './student/WorkflowsTab'
+import DocumentsTab from './student/DocumentsTab'
 
 const tabs = [
     { to: '/student', label: 'Queues', icon: ListOrdered, end: true },
     { to: '/student/history', label: 'History', icon: History },
     { to: '/student/appointments', label: 'Appointments', icon: Calendar },
     { to: '/student/workflows', label: 'Workflows', icon: RouteIcon },
+    { to: '/student/documents', label: 'Documents', icon: FileText },
 ]
 
 export default function StudentDashboard() {
@@ -42,6 +50,7 @@ export default function StudentDashboard() {
                 <Route path="history" element={<HistoryTab />} />
                 <Route path="appointments" element={<AppointmentsTab />} />
                 <Route path="workflows" element={<WorkflowsTab />} />
+                <Route path="documents" element={<DocumentsTab />} />
                 <Route path="*" element={<Navigate to="/student" replace />} />
             </Routes>
         </div>

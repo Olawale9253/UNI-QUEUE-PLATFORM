@@ -43,22 +43,20 @@ export default function Login() {
         setPassword('')
     }
 
-    // Show the "already signed in" banner only when NOT currently logging in
     const showAlreadySignedInBanner = user && !redirecting
 
     return (
         <div className="flex min-h-screen">
-            {/* Left brand panel */}
             <div className="relative hidden w-1/2 overflow-hidden bg-slate-900 lg:flex lg:flex-col lg:justify-between lg:p-12">
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 1.2, ease }}
-                    className="pointer-events-none absolute -top-20 -right-20 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl"
+                    className="pointer-events-none absolute -top-20 -right-20 h-96 w-96 rounded-full bg-brand-600/20 blur-3xl"
                 />
 
                 <Link to="/" className="relative flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
                         UQ
                     </div>
                     <span className="text-lg font-semibold text-white">UniQueue</span>
@@ -91,19 +89,15 @@ export default function Login() {
                                 transition={{ duration: 0.4, delay: 0.3, ease }}
                                 className="flex items-start gap-3"
                             >
-                                <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600/20">
+                                <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-600/20">
                                     <svg
-                                        className="h-3 w-3 text-indigo-400"
+                                        className="h-3 w-3 text-brand-400"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
                                         strokeWidth={3}
                                     >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M5 13l4 4L19 7"
-                                        />
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                     </svg>
                                 </div>
                                 <span className="text-sm text-slate-300">{item}</span>
@@ -117,7 +111,6 @@ export default function Login() {
                 </div>
             </div>
 
-            {/* Right form panel */}
             <div className="flex flex-1 items-center justify-center px-6 py-12">
                 <motion.div
                     variants={fadeUp}
@@ -128,7 +121,7 @@ export default function Login() {
                 >
                     <div className="mb-8 lg:hidden">
                         <Link to="/" className="flex items-center gap-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
                                 UQ
                             </div>
                             <span className="text-lg font-semibold text-slate-900">UniQueue</span>
@@ -187,6 +180,7 @@ export default function Login() {
                             required
                             disabled={redirecting}
                         />
+
                         <Input
                             label="Password"
                             type="password"
@@ -200,12 +194,16 @@ export default function Login() {
                             disabled={redirecting}
                         />
 
-                        <Button
-                            type="submit"
-                            fullWidth
-                            disabled={loading || redirecting}
-                            className="mt-2"
-                        >
+                        <div className="-mt-2 mb-4 flex justify-end">
+                            <Link
+                                to="/forgot-password"
+                                className="text-xs font-medium text-brand-600 transition-colors hover:text-brand-700"
+                            >
+                                Forgot password?
+                            </Link>
+                        </div>
+
+                        <Button type="submit" fullWidth disabled={loading || redirecting} className="mt-2">
                             {loading || redirecting ? (
                                 <>
                                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -222,10 +220,7 @@ export default function Login() {
 
                     <p className="mt-6 text-center text-sm text-slate-500">
                         Don't have an account?{' '}
-                        <Link
-                            to="/register"
-                            className="font-medium text-indigo-600 hover:text-indigo-700"
-                        >
+                        <Link to="/register" className="font-medium text-brand-600 hover:text-brand-700">
                             Register as a student
                         </Link>
                     </p>

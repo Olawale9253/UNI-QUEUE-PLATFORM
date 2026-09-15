@@ -17,6 +17,7 @@ import PageHeader from '../../components/layout/PageHeader'
 import { SkeletonRow } from '../../components/ui/Skeleton'
 import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../store/toastStore'
+import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { ease, stagger, staggerItem } from '../../lib/motion'
 
 const statusVariant = {
@@ -89,11 +90,13 @@ export default function ServingQueue() {
             setTicketsLoading(true)
             loadTickets(activeQueue.id, true)
         }
-        const interval = setInterval(() => {
-            if (activeQueue) loadTickets(activeQueue.id, false)
-        }, 10000)
-        return () => clearInterval(interval)
     }, [activeQueue, loadTickets])
+
+    // Adaptive polling: 5s visible, 30s hidden, immediate refresh on tab focus
+    useAdaptivePoll(
+        () => (activeQueue ? loadTickets(activeQueue.id, false) : Promise.resolve()),
+        { fastMs: 5000, slowMs: 30000, enabled: !!activeQueue }
+    )
 
     const act = async (fn, successMessage, actionKey) => {
         setActing(actionKey)
@@ -148,7 +151,9 @@ export default function ServingQueue() {
     }
 
     const called = tickets.find((t) => t.status === 'CALLED' || t.status === 'SERVING')
-    const waiting = tickets.filter((t) => t.status === 'WAITING' || t.status === 'WAITLISTED')
+    const waiting = tickets.filter(
+        (t) => t.status === 'WAITING' || t.status === 'WAITLISTED'
+    )
     const resolved = tickets.filter((t) =>
         ['COMPLETED', 'NO_SHOW', 'CANCELLED', 'TRANSFERRED'].includes(t.status)
     )
@@ -179,8 +184,11 @@ export default function ServingQueue() {
               Call next ticket
             </span>{' '}
                         to bring the next student up. Then{' '}
-                        <span className="rounded bg-white px-1.5 py-0.5 font-medium">Start service</span>{' '}
-                        and <span className="rounded bg-white px-1.5 py-0.5 font-medium">Complete</span>{' '}
+                        <span className="rounded bg-white px-1.5 py-0.5 font-medium">
+              Start service
+            </span>{' '}
+                        and{' '}
+                        <span className="rounded bg-white px-1.5 py-0.5 font-medium">Complete</span>{' '}
                         when done.
                     </p>
                 </div>
@@ -321,7 +329,9 @@ export default function ServingQueue() {
                     <Card padded={false}>
                         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-6 py-4">
                             <div>
-                                <h3 className="text-sm font-semibold text-slate-900">Waiting in queue</h3>
+                                <h3 className="text-sm font-semibold text-slate-900">
+                                    Waiting in queue
+                                </h3>
                                 <p className="mt-0.5 text-xs text-slate-500">
                                     Sorted by priority, then by join time (FIFO).
                                 </p>
@@ -405,7 +415,9 @@ export default function ServingQueue() {
                     {resolved.length > 0 && (
                         <Card padded={false}>
                             <div className="border-b border-slate-100 px-6 py-4">
-                                <h3 className="text-sm font-semibold text-slate-900">Recently resolved</h3>
+                                <h3 className="text-sm font-semibold text-slate-900">
+                                    Recently resolved
+                                </h3>
                             </div>
                             <ul className="divide-y divide-slate-100">
                                 {resolved.slice(0, 5).map((t) => (

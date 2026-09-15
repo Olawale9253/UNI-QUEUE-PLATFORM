@@ -7,6 +7,8 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import Profile from './pages/Profile'
 import StudentDashboard from './pages/StudentDashboard'
 import StaffDashboard from './pages/StaffDashboard'
@@ -14,7 +16,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import SuperAdminDashboard from './pages/SuperAdminDashboard'
 import NotFound from './pages/NotFound'
 
-const AUTH_ROUTES = ['/login', '/register']
+const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password']
 
 export default function App() {
     const location = useLocation()
@@ -30,6 +32,9 @@ export default function App() {
                             <Route path="/" element={<Home />} />
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />
+                            <Route path="/forgot-password" element={<ForgotPassword />} />
+                            <Route path="/reset-password" element={<ResetPassword />} />
+
                             <Route
                                 path="/profile"
                                 element={

@@ -11,7 +11,7 @@ import {
     CheckCircle2,
     Lock,
     ArrowRight,
-    Route,
+    Route as RouteIcon,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -22,6 +22,7 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import { SkeletonQueueGrid } from '../../components/ui/Skeleton'
 import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../store/toastStore'
+import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { ease, stagger, staggerItem } from '../../lib/motion'
 
 export default function QueuesTab() {
@@ -54,9 +55,10 @@ export default function QueuesTab() {
 
     useEffect(() => {
         load()
-        const interval = setInterval(load, 15000)
-        return () => clearInterval(interval)
     }, [load])
+
+    // Adaptive polling: 5s visible, 30s hidden, immediate refresh on tab focus
+    useAdaptivePoll(load, { fastMs: 5000, slowMs: 30000 })
 
     const joinQueue = async (queueId) => {
         setJoining(queueId)
@@ -86,18 +88,13 @@ export default function QueuesTab() {
         }
     }
 
-    // Compute workflow constraints
     const activeWorkflow = workflows.find((w) => w.status === 'IN_PROGRESS')
-
-    // Which queue IDs are locked by the active workflow?
-    const lockedQueueIds = new Map() // queueId → workflow step
+    const lockedQueueIds = new Map()
     const currentStepQueueId = activeWorkflow?.currentQueueId || null
 
     if (activeWorkflow) {
         activeWorkflow.steps.forEach((s) => {
-            if (s.state === 'LOCKED') {
-                lockedQueueIds.set(s.queueId, s)
-            }
+            if (s.state === 'LOCKED') lockedQueueIds.set(s.queueId, s)
         })
     }
 
@@ -106,7 +103,6 @@ export default function QueuesTab() {
 
     return (
         <div>
-            {/* Header */}
             <div className="mb-6">
                 <h2 className="text-xl font-semibold tracking-tight text-slate-900">
                     Hi, {user?.fullName?.split(' ')[0] || 'there'}
@@ -116,7 +112,6 @@ export default function QueuesTab() {
                 </p>
             </div>
 
-            {/* Active ticket */}
             <AnimatePresence mode="wait">
                 {activeTicket && (
                     <motion.div
@@ -125,7 +120,7 @@ export default function QueuesTab() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -12, scale: 0.98 }}
                         transition={{ duration: 0.4, ease }}
-                        className="relative mb-6 overflow-hidden rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-600 to-indigo-700 p-6 text-white shadow-lg sm:p-8"
+                        className="relative mb-6 overflow-hidden rounded-xl border border-brand-200 bg-gradient-to-br from-brand-600 to-brand-700 p-6 text-white shadow-lg sm:p-8"
                     >
                         <motion.div
                             initial={{ x: '-100%' }}
@@ -136,7 +131,7 @@ export default function QueuesTab() {
 
                         <div className="relative flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
                             <div>
-                                <p className="text-xs font-medium uppercase tracking-wider text-indigo-200">
+                                <p className="text-xs font-medium uppercase tracking-wider text-white/80">
                                     Your active ticket
                                 </p>
                                 <motion.div
@@ -147,29 +142,29 @@ export default function QueuesTab() {
                                 >
                                     {activeTicket.ticketNumber}
                                 </motion.div>
-                                <p className="mt-2 text-xs text-indigo-200">
+                                <p className="mt-2 text-xs text-white/80">
                                     "{activeTicket.ticketNumber}" = {activeTicket.queueName} ticket #
                                     {activeTicket.ticketNumber.split('-')[1]}
                                 </p>
                                 <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-                  <span className="flex items-center gap-1.5 text-indigo-100">
+                  <span className="flex items-center gap-1.5 text-white/90">
                     <MapPin className="h-4 w-4" />
                       {activeTicket.queueName}
                   </span>
                                     {activeTicket.position && (
-                                        <span className="flex items-center gap-1.5 text-indigo-100">
+                                        <span className="flex items-center gap-1.5 text-white/90">
                       <ListOrdered className="h-4 w-4" />
                       Position {activeTicket.position} of the queue
                     </span>
                                     )}
                                     {activeTicket.estimatedMinutesRemaining != null && (
-                                        <span className="flex items-center gap-1.5 text-indigo-100">
+                                        <span className="flex items-center gap-1.5 text-white/90">
                       <Clock className="h-4 w-4" />
                       Est. wait ~{activeTicket.estimatedMinutesRemaining} min
                     </span>
                                     )}
                                 </div>
-                                <div className="mt-4 flex items-start gap-2 rounded-lg bg-white/10 px-3 py-2 text-xs text-indigo-100 backdrop-blur">
+                                <div className="mt-4 flex items-start gap-2 rounded-lg bg-white/10 px-3 py-2 text-xs text-white/90 backdrop-blur">
                                     <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                                     <span>
                     {activeTicket.status === 'WAITING'
@@ -206,7 +201,6 @@ export default function QueuesTab() {
                 )}
             </AnimatePresence>
 
-            {/* Active workflow banner */}
             {activeWorkflow && (
                 <motion.div
                     initial={{ opacity: 0, y: -8 }}
@@ -216,21 +210,20 @@ export default function QueuesTab() {
                     <div className="p-5 sm:p-6">
                         <div className="mb-4 flex items-start gap-3">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
-                                <Route className="h-5 w-5 text-amber-700" />
+                                <RouteIcon className="h-5 w-5 text-amber-700" />
                             </div>
                             <div className="flex-1">
                                 <h3 className="text-sm font-semibold text-amber-900">
                                     You're completing: {activeWorkflow.workflowName}
                                 </h3>
                                 <p className="mt-1 text-xs text-amber-800">
-                                    This is a required {activeWorkflow.totalSteps}-step clearance. You
-                                    must complete each step in order. Only the{' '}
+                                    This is a required {activeWorkflow.totalSteps}-step clearance. You must
+                                    complete each step in order. Only the{' '}
                                     <strong>current step's queue</strong> can be joined until you finish.
                                 </p>
                             </div>
                         </div>
 
-                        {/* Step progress */}
                         <ol className="space-y-2">
                             {activeWorkflow.steps.map((step, idx) => (
                                 <li
@@ -284,7 +277,6 @@ export default function QueuesTab() {
                 </motion.div>
             )}
 
-            {/* Available queues */}
             <div className="mb-4">
                 <h3 className="text-base font-semibold text-slate-900">Available queues</h3>
                 <p className="mt-1 text-xs text-slate-500">
@@ -321,7 +313,7 @@ export default function QueuesTab() {
                                 transition={{ duration: 0.2 }}
                             >
                                 <Card
-                                    className={`flex h-full flex-col relative ${
+                                    className={`relative flex h-full flex-col ${
                                         locked
                                             ? 'border-slate-200 bg-slate-50 opacity-75'
                                             : current
@@ -329,7 +321,6 @@ export default function QueuesTab() {
                                                 : ''
                                     }`}
                                 >
-                                    {/* Lock overlay badge */}
                                     {locked && (
                                         <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase text-slate-600">
                                             <Lock className="h-3 w-3" />
@@ -342,9 +333,17 @@ export default function QueuesTab() {
                                         </div>
                                     )}
 
-                                    <div className={`flex items-start justify-between gap-3 ${locked || current ? 'pr-20' : ''}`}>
+                                    <div
+                                        className={`flex items-start justify-between gap-3 ${
+                                            locked || current ? 'pr-24' : ''
+                                        }`}
+                                    >
                                         <div className="min-w-0">
-                                            <h3 className={`text-base font-semibold ${locked ? 'text-slate-500' : 'text-slate-900'}`}>
+                                            <h3
+                                                className={`text-base font-semibold ${
+                                                    locked ? 'text-slate-500' : 'text-slate-900'
+                                                }`}
+                                            >
                                                 {q.name}
                                             </h3>
                                             {q.department && (
@@ -398,9 +397,9 @@ export default function QueuesTab() {
                                     </div>
 
                                     {q.currentlyServing && !locked && (
-                                        <div className="mt-3 rounded-lg bg-indigo-50 px-3 py-2 text-xs">
+                                        <div className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-xs">
                                             <span className="text-slate-600">Now serving: </span>
-                                            <span className="font-mono font-semibold text-indigo-700">
+                                            <span className="font-mono font-semibold text-brand-700">
                         {q.currentlyServing}
                       </span>
                                         </div>
@@ -414,7 +413,6 @@ export default function QueuesTab() {
                                         ) : (
                                             <Button
                                                 fullWidth
-                                                variant={current ? 'primary' : 'primary'}
                                                 onClick={() => joinQueue(q.id)}
                                                 disabled={!!activeTicket || joining === q.id}
                                                 loading={joining === q.id}

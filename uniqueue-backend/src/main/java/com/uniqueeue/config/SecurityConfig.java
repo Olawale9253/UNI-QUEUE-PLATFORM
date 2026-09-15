@@ -49,7 +49,6 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    /** Called when an unauthenticated request hits a protected route → 401. */
     @Bean
     public AuthenticationEntryPoint authenticationEntryPoint() {
         return (request, response, authException) -> {
@@ -62,7 +61,6 @@ public class SecurityConfig {
         };
     }
 
-    /** Called when an authenticated request lacks the required role → 403. */
     @Bean
     public AccessDeniedHandler accessDeniedHandler() {
         return (request, response, accessDeniedException) -> {
@@ -86,23 +84,25 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler())
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
+                        // ─── PUBLIC ENDPOINTS ───
                         .requestMatchers(
                                 "/api/auth/register",
                                 "/api/auth/login",
                                 "/api/auth/universities",
                                 "/api/auth/validate-matric",
+                                "/api/auth/forgot-password",     // ← NEW
+                                "/api/auth/reset-password",      // ← NEW
                                 "/h2-console/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Role-scoped endpoints
+                        // ─── ROLE-SCOPED ───
                         .requestMatchers("/api/super-admin/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/staff/**").hasRole("STAFF")
                         .requestMatchers("/api/user/**").hasRole("USER")
 
-                        // Everything else requires authentication
+                        // ─── EVERYTHING ELSE ───
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

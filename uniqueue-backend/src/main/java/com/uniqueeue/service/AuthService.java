@@ -8,13 +8,16 @@ import com.uniqueeue.enums.Role;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
 import com.uniqueeue.exception.UnauthorizedException;
+import com.uniqueeue.model.PasswordResetToken;
 import com.uniqueeue.model.University;
 import com.uniqueeue.model.User;
+import com.uniqueeue.repository.PasswordResetTokenRepository;
 import com.uniqueeue.repository.UniversityRepository;
 import com.uniqueeue.repository.UserRepository;
 import com.uniqueeue.security.JwtTokenProvider;
 import com.uniqueeue.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,11 +26,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
+
+    private static final long RESET_TOKEN_TTL_MINUTES = 30;
 
     private final UserRepository userRepository;
     private final UniversityRepository universityRepository;
@@ -35,6 +43,11 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
     private final AuditService auditService;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+
+    // ============================================================
+    //  REGISTER
+    // ============================================================
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -92,6 +105,10 @@ public class AuthService {
         return buildAuthResponse(saved);
     }
 
+    // ============================================================
+    //  LOGIN
+    // ============================================================
+
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
         String email = request.getEmail().toLowerCase();
@@ -126,6 +143,66 @@ public class AuthService {
 
         return buildAuthResponse(user);
     }
+
+    // ============================================================
+    //  PASSWORD RESET
+    // ============================================================
+
+    @Transactional
+    public String requestPasswordReset(String email) {
+        String lowerEmail = email.toLowerCase();
+        var userOpt = userRepository.findByEmail(lowerEmail);
+
+        if (userOpt.isEmpty()) {
+            log.info("Password reset requested for unknown email: {}", lowerEmail);
+            return null;
+        }
+
+        User user = userOpt.get();
+
+        passwordResetTokenRepository.deleteByUserId(user.getId());
+
+        String token = UUID.randomUUID().toString().replace("-", "")
+                + UUID.randomUUID().toString().replace("-", "");
+
+        PasswordResetToken prt = PasswordResetToken.builder()
+                .token(token)
+                .user(user)
+                .expiresAt(LocalDateTime.now().plusMinutes(RESET_TOKEN_TTL_MINUTES))
+                .build();
+        passwordResetTokenRepository.save(prt);
+
+        log.info("🔐 Password reset link for {}: /reset-password?token={}",
+                user.getEmail(), token);
+
+        return token;
+    }
+
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        PasswordResetToken prt = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new BadRequestException("Invalid or expired reset link"));
+
+        if (prt.isUsed()) {
+            throw new BadRequestException("This reset link has already been used");
+        }
+        if (prt.isExpired()) {
+            throw new BadRequestException("This reset link has expired. Please request a new one.");
+        }
+
+        User user = prt.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        prt.setUsedAt(LocalDateTime.now());
+        passwordResetTokenRepository.save(prt);
+
+        log.info("Password reset successfully for {}", user.getEmail());
+    }
+
+    // ============================================================
+    //  HELPERS
+    // ============================================================
 
     private AuthResponse buildAuthResponse(User user) {
         UserPrincipal principal = new UserPrincipal(user);

@@ -1,7 +1,9 @@
 package com.uniqueeue.controller;
 
+import com.uniqueeue.dto.request.ForgotPasswordRequest;
 import com.uniqueeue.dto.request.LoginRequest;
 import com.uniqueeue.dto.request.RegisterRequest;
+import com.uniqueeue.dto.request.ResetPasswordRequest;
 import com.uniqueeue.dto.response.ApiResponse;
 import com.uniqueeue.dto.response.AuthResponse;
 import com.uniqueeue.repository.UniversityRepository;
@@ -37,6 +39,30 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        String token = authService.requestPasswordReset(request.getEmail());
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("message",
+                "If an account exists with that email, a reset link has been sent.");
+        // Dev mode: expose token so you can test without email setup
+        if (token != null) {
+            data.put("resetToken", token);
+            data.put("resetUrl", "/reset-password?token=" + token);
+        }
+        return ResponseEntity.ok(ApiResponse.success("Reset requested", data));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Object>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok(ApiResponse.success(
+                "Password reset successful. You can now sign in.", null));
     }
 
     @GetMapping("/me")
