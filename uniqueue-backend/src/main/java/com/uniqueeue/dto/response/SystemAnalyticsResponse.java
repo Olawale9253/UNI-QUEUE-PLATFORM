@@ -21,8 +21,16 @@ public class SystemAnalyticsResponse {
     private double avgWaitMinutes;
     private double avgServiceMinutes;
 
+    // Week-over-week metrics
+    private long ticketsThisWeek;
+    private long ticketsLastWeek;
+    private long completedThisWeek;
+    private long completedLastWeek;
+    private long newUsersThisWeek;
+    private long newUsersLastWeek;
+
     private List<UniversitySummary> universities;
-    private List<DailyPoint> dailyTrend;
+    private List<DailyPoint> dailyTrend; // 14 points
 
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
     public static class UniversitySummary {
@@ -42,5 +50,6 @@ public class SystemAnalyticsResponse {
         private LocalDate date;
         private long joined;
         private long completed;
+        private long newUsers;
     }
 }

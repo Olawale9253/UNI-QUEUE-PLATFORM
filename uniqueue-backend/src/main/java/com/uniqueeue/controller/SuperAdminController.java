@@ -4,9 +4,11 @@ import com.uniqueeue.dto.request.BroadcastRequest;
 import com.uniqueeue.dto.request.CreateAdminRequest;
 import com.uniqueeue.dto.request.CreateUniversityRequest;
 import com.uniqueeue.dto.request.UpdateFeaturesRequest;
+import com.uniqueeue.dto.request.UpdatePlanConfigRequest;
 import com.uniqueeue.dto.request.UpdatePlanRequest;
 import com.uniqueeue.dto.request.UpdateUniversityRequest;
 import com.uniqueeue.dto.response.ApiResponse;
+import com.uniqueeue.dto.response.PlanConfigResponse;
 import com.uniqueeue.dto.response.SystemAnalyticsResponse;
 import com.uniqueeue.dto.response.UniversityResponse;
 import com.uniqueeue.exception.BadRequestException;
@@ -16,6 +18,7 @@ import com.uniqueeue.repository.UserRepository;
 import com.uniqueeue.security.JwtTokenProvider;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.BroadcastService;
+import com.uniqueeue.service.PlanConfigService;
 import com.uniqueeue.service.SystemAnalyticsService;
 import com.uniqueeue.service.UniversityService;
 import jakarta.validation.Valid;
@@ -39,6 +42,7 @@ public class SuperAdminController {
     private final UniversityService universityService;
     private final SystemAnalyticsService systemAnalyticsService;
     private final BroadcastService broadcastService;
+    private final PlanConfigService planConfigService;
     private final UserRepository userRepository;
     private final JwtTokenProvider tokenProvider;
 
@@ -109,6 +113,23 @@ public class SuperAdminController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Admin created",
                         universityService.createAdmin(id, request)));
+    }
+
+    // ============================================================
+    //  PLAN CONFIGS
+    // ============================================================
+
+    @GetMapping("/plans")
+    public ResponseEntity<ApiResponse<List<PlanConfigResponse>>> listPlans() {
+        return ResponseEntity.ok(ApiResponse.success("Plans", planConfigService.listAll()));
+    }
+
+    @PutMapping("/plans/{id}")
+    public ResponseEntity<ApiResponse<PlanConfigResponse>> updatePlanConfig(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdatePlanConfigRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Plan updated", planConfigService.update(id, request)));
     }
 
     // ============================================================

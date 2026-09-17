@@ -1,18 +1,31 @@
 import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
-    Building2,
     Users,
-    LayoutGrid,
     Ticket,
-    Clock,
+    CheckCircle2,
+    Building2,
     TrendingUp,
-    Star,
+    TrendingDown,
+    Clock,
     Trophy,
+    ArrowUpRight,
+    ArrowDownRight,
 } from 'lucide-react'
+import {
+    ResponsiveContainer,
+    AreaChart,
+    Area,
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+} from 'recharts'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
-import StatCard from '../../components/ui/StatCard'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import PageHeader from '../../components/layout/PageHeader'
@@ -20,6 +33,87 @@ import ExportButton from '../../components/ui/ExportButton'
 import { SkeletonStats, SkeletonCard } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { stagger, staggerItem } from '../../lib/motion'
+
+function percentChange(current, previous) {
+    if (previous === 0) {
+        return current > 0 ? 100 : 0
+    }
+    return Math.round(((current - previous) / previous) * 1000) / 10
+}
+
+function KpiCard({ label, value, delta, icon: Icon, accent }) {
+    const isPositive = delta >= 0
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="rounded-xl border border-slate-200 bg-white p-5"
+        >
+            <div className="flex items-start justify-between">
+                <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600">
+                        <span>{label}</span>
+                        <svg
+                            className="h-3 w-3 text-slate-400"
+                            viewBox="0 0 12 12"
+                            fill="currentColor"
+                        >
+                            <path d="M3 5l3 3 3-3z" />
+                        </svg>
+                    </div>
+                    <div className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+                        {value}
+                    </div>
+                    <div
+                        className={`mt-1.5 inline-flex items-center gap-1 text-xs font-medium ${
+                            isPositive ? 'text-emerald-600' : 'text-rose-600'
+                        }`}
+                    >
+                        {isPositive ? (
+                            <ArrowUpRight className="h-3 w-3" />
+                        ) : (
+                            <ArrowDownRight className="h-3 w-3" />
+                        )}
+                        {isPositive ? '+' : ''}
+                        {delta}%
+                        <span className="text-slate-400">vs last week</span>
+                    </div>
+                </div>
+                {Icon && (
+                    <div className={`rounded-lg p-2 ${accent}`}>
+                        <Icon className="h-5 w-5" />
+                    </div>
+                )}
+            </div>
+        </motion.div>
+    )
+}
+
+function ChartTooltip({ active, payload, label }) {
+    if (!active || !payload?.length) return null
+    return (
+        <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs shadow-lg">
+            <div className="mb-1.5 font-medium text-slate-900">
+                {new Date(label).toLocaleDateString('en-GB', {
+                    weekday: 'short',
+                    day: '2-digit',
+                    month: 'short',
+                })}
+            </div>
+            {payload.map((entry) => (
+                <div key={entry.name} className="flex items-center gap-2">
+          <span
+              className="h-2 w-2 rounded-full"
+              style={{ backgroundColor: entry.color }}
+          />
+                    <span className="text-slate-500">{entry.name}:</span>
+                    <span className="font-medium text-slate-900">{entry.value}</span>
+                </div>
+            ))}
+        </div>
+    )
+}
 
 export default function SystemAnalytics() {
     const { push } = useToastStore()
@@ -31,7 +125,7 @@ export default function SystemAnalytics() {
             const res = await api.get('/api/super-admin/analytics')
             setAnalytics(res.data.data)
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load analytics' })
+            push({ type: 'error', message: err.response?.data?.message || 'Failed to load' })
         } finally {
             setLoading(false)
         }
@@ -61,12 +155,17 @@ export default function SystemAnalytics() {
         )
     }
 
-    const maxDaily = Math.max(
-        1,
-        ...(analytics.dailyTrend || []).map((d) => Math.max(d.joined, d.completed))
-    )
+    const ticketsDelta = percentChange(analytics.ticketsThisWeek, analytics.ticketsLastWeek)
+    const completedDelta = percentChange(analytics.completedThisWeek, analytics.completedLastWeek)
+    const newUsersDelta = percentChange(analytics.newUsersThisWeek, analytics.newUsersLastWeek)
 
-    // Sort universities by activity for leaderboard
+    const trendData = (analytics.dailyTrend || []).map((d) => ({
+        date: d.date,
+        Joined: d.joined,
+        Completed: d.completed,
+        'New users': d.newUsers,
+    }))
+
     const sortedUniversities = [...(analytics.universities || [])].sort(
         (a, b) => (b.ticketsAllTime || 0) - (a.ticketsAllTime || 0)
     )
@@ -95,40 +194,133 @@ export default function SystemAnalytics() {
                 }
             />
 
-            {/* Overview */}
-            <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <StatCard
-                    label="Universities"
-                    value={analytics.totalUniversities}
-                    icon={Building2}
-                    delay={0}
-                    hint={`${analytics.activeUniversities} active`}
-                />
-                <StatCard
-                    label="Total users"
-                    value={analytics.totalUsers}
-                    icon={Users}
-                    delay={0.05}
-                    hint={`${analytics.totalAdmins} admins · ${analytics.totalStaff} staff`}
-                />
-                <StatCard
-                    label="Active queues"
-                    value={analytics.activeQueues}
-                    icon={LayoutGrid}
-                    delay={0.1}
-                    hint={`${analytics.totalQueues} total`}
-                />
-                <StatCard
-                    label="Tickets today"
-                    value={analytics.ticketsToday}
+            {/* ─── KPI ROW ─── */}
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <KpiCard
+                    label="Tickets (7d)"
+                    value={analytics.ticketsThisWeek?.toLocaleString() || '0'}
+                    delta={ticketsDelta}
                     icon={Ticket}
-                    delay={0.15}
-                    hint={`${analytics.ticketsAllTime} all-time`}
+                    accent="bg-brand-50 text-brand-600"
+                />
+                <KpiCard
+                    label="Completed (7d)"
+                    value={analytics.completedThisWeek?.toLocaleString() || '0'}
+                    delta={completedDelta}
+                    icon={CheckCircle2}
+                    accent="bg-emerald-50 text-emerald-600"
+                />
+                <KpiCard
+                    label="New users (7d)"
+                    value={analytics.newUsersThisWeek?.toLocaleString() || '0'}
+                    delta={newUsersDelta}
+                    icon={Users}
+                    accent="bg-sky-50 text-sky-600"
+                />
+                <KpiCard
+                    label="Active universities"
+                    value={analytics.activeUniversities?.toLocaleString() || '0'}
+                    delta={0}
+                    icon={Building2}
+                    accent="bg-violet-50 text-violet-600"
                 />
             </div>
 
-            {/* Platform averages */}
-            <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {/* ─── BIG TREND CHART ─── */}
+            <Card className="mb-6">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h3 className="text-base font-semibold text-slate-900">
+                            Platform activity
+                        </h3>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                            Tickets joined, completed, and new users — last 14 days
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs">
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-brand-600" />
+              Joined
+            </span>
+                        <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              Completed
+            </span>
+                        <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-sky-500" />
+              New users
+            </span>
+                    </div>
+                </div>
+
+                <div className="h-72 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart
+                            data={trendData}
+                            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                        >
+                            <defs>
+                                <linearGradient id="colorJoined" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.25} />
+                                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
+                                </linearGradient>
+                                <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
+                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                </linearGradient>
+                                <linearGradient id="colorNewUsers" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.25} />
+                                    <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                            <XAxis
+                                dataKey="date"
+                                tick={{ fontSize: 11, fill: '#64748b' }}
+                                tickLine={false}
+                                axisLine={{ stroke: '#e2e8f0' }}
+                                tickFormatter={(d) =>
+                                    new Date(d).toLocaleDateString('en-GB', {
+                                        day: '2-digit',
+                                        month: 'short',
+                                    })
+                                }
+                            />
+                            <YAxis
+                                tick={{ fontSize: 11, fill: '#64748b' }}
+                                tickLine={false}
+                                axisLine={false}
+                                allowDecimals={false}
+                            />
+                            <Tooltip content={<ChartTooltip />} />
+                            <Area
+                                type="monotone"
+                                dataKey="Joined"
+                                stroke="#4f46e5"
+                                strokeWidth={2}
+                                fill="url(#colorJoined)"
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="Completed"
+                                stroke="#10b981"
+                                strokeWidth={2}
+                                fill="url(#colorCompleted)"
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="New users"
+                                stroke="#0ea5e9"
+                                strokeWidth={2}
+                                fill="url(#colorNewUsers)"
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            </Card>
+
+            {/* ─── SECONDARY METRICS ─── */}
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <Card>
                     <div className="flex items-start justify-between">
                         <div>
@@ -180,76 +372,54 @@ export default function SystemAnalytics() {
                 </Card>
             </div>
 
-            {/* 7-day trend */}
-            {analytics.dailyTrend && analytics.dailyTrend.length > 0 && (
-                <Card className="mb-8">
-                    <div className="mb-4 flex items-center justify-between">
-                        <div>
-                            <h3 className="text-sm font-semibold text-slate-900">
-                                Platform activity (last 7 days)
-                            </h3>
-                            <p className="mt-0.5 text-xs text-slate-500">
-                                Tickets joined vs completed across all universities.
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-3 text-xs">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-brand-600" />
-                Joined
-              </span>
-                            <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Completed
-              </span>
-                        </div>
-                    </div>
-
-                    <div className="space-y-3">
-                        {analytics.dailyTrend.map((d) => (
-                            <div key={d.date} className="flex items-center gap-3">
-                                <div className="w-20 shrink-0 text-xs font-medium text-slate-500">
-                                    {new Date(d.date).toLocaleDateString('en-GB', {
-                                        weekday: 'short',
+            {/* ─── USER GROWTH CHART ─── */}
+            <Card className="mb-6">
+                <div className="mb-4">
+                    <h3 className="text-base font-semibold text-slate-900">New user signups</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">Last 14 days</p>
+                </div>
+                <div className="h-56 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                            data={trendData}
+                            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                        >
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                            <XAxis
+                                dataKey="date"
+                                tick={{ fontSize: 11, fill: '#64748b' }}
+                                tickLine={false}
+                                axisLine={{ stroke: '#e2e8f0' }}
+                                tickFormatter={(d) =>
+                                    new Date(d).toLocaleDateString('en-GB', {
                                         day: '2-digit',
-                                    })}
-                                </div>
-                                <div className="flex flex-1 flex-col gap-1">
-                                    <div className="flex items-center gap-2">
-                                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
-                                            <motion.div
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${(d.joined / maxDaily) * 100}%` }}
-                                                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                                                className="h-full rounded-full bg-brand-600"
-                                            />
-                                        </div>
-                                        <span className="w-8 text-right text-xs font-medium text-slate-600">
-                      {d.joined}
-                    </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
-                                            <motion.div
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${(d.completed / maxDaily) * 100}%` }}
-                                                transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-                                                className="h-full rounded-full bg-emerald-500"
-                                            />
-                                        </div>
-                                        <span className="w-8 text-right text-xs font-medium text-slate-600">
-                      {d.completed}
-                    </span>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </Card>
-            )}
+                                        month: 'short',
+                                    })
+                                }
+                            />
+                            <YAxis
+                                tick={{ fontSize: 11, fill: '#64748b' }}
+                                tickLine={false}
+                                axisLine={false}
+                                allowDecimals={false}
+                            />
+                            <Tooltip content={<ChartTooltip />} />
+                            <Line
+                                type="monotone"
+                                dataKey="New users"
+                                stroke="#0ea5e9"
+                                strokeWidth={2.5}
+                                dot={{ r: 3, fill: '#0ea5e9', strokeWidth: 0 }}
+                                activeDot={{ r: 5 }}
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            </Card>
 
-            {/* Top universities leaderboard */}
+            {/* ─── LEADERBOARD ─── */}
             {topUniversities.length > 0 && (
-                <Card className="mb-8">
+                <Card className="mb-6">
                     <div className="mb-4 flex items-center gap-2">
                         <Trophy className="h-4 w-4 text-amber-500" />
                         <h3 className="text-sm font-semibold text-slate-900">
@@ -309,7 +479,7 @@ export default function SystemAnalytics() {
                 </Card>
             )}
 
-            {/* Full breakdown table */}
+            {/* ─── FULL BREAKDOWN TABLE ─── */}
             {analytics.universities && analytics.universities.length > 0 && (
                 <Card padded={false}>
                     <div className="border-b border-slate-100 px-6 py-4">

@@ -7,6 +7,7 @@ import com.uniqueeue.enums.Role;
 import com.uniqueeue.enums.TicketStatus;
 import com.uniqueeue.model.Ticket;
 import com.uniqueeue.model.University;
+import com.uniqueeue.model.User;
 import com.uniqueeue.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,51 +34,83 @@ public class SystemAnalyticsService {
     public SystemAnalyticsResponse overview() {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime fourteenDaysAgo = today.minusDays(13).atStartOfDay();
         LocalDateTime sevenDaysAgo = today.minusDays(6).atStartOfDay();
+        LocalDateTime fourteenDaysAgoStart = today.minusDays(13).atStartOfDay();
 
         List<University> universities = universityRepository.findAll();
+        List<User> allUsers = userRepository.findAll();
 
         long activeUniversities = universities.stream()
                 .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                 .count();
 
-        long totalUsers = userRepository.count();
-        long totalStaff = userRepository.findAll().stream()
-                .filter(u -> u.getRole() == Role.STAFF).count();
-        long totalAdmins = userRepository.findAll().stream()
-                .filter(u -> u.getRole() == Role.ADMIN).count();
+        long totalUsers = allUsers.size();
+        long totalStaff = allUsers.stream().filter(u -> u.getRole() == Role.STAFF).count();
+        long totalAdmins = allUsers.stream().filter(u -> u.getRole() == Role.ADMIN).count();
         long totalQueues = queueRepository.count();
         long activeQueues = queueRepository.findAll().stream()
                 .filter(q -> Boolean.TRUE.equals(q.getIsActive()))
                 .count();
 
-        long ticketsToday = 0;
         long ticketsAllTime = ticketRepository.count();
+        long ticketsToday = 0;
         long waitingNow = 0;
-        long completedLast7 = 0;
+        long ticketsThisWeek = 0;
+        long ticketsLastWeek = 0;
+        long completedThisWeek = 0;
+        long completedLastWeek = 0;
+        long newUsersThisWeek = 0;
+        long newUsersLastWeek = 0;
+
+        // Per-day bucket: [joined, completed, newUsers]
+        Map<LocalDate, long[]> daily = new HashMap<>();
+        for (int i = 13; i >= 0; i--) {
+            daily.put(today.minusDays(i), new long[3]);
+        }
+
         double sumWait = 0, sumService = 0;
         long waitCount = 0, serviceCount = 0;
 
         List<UniversitySummary> summaries = new ArrayList<>();
-        Map<LocalDate, long[]> daily = new HashMap<>();
 
         for (University u : universities) {
             long uTicketsToday = ticketRepository.countByUniversitySince(u.getId(), startOfDay);
             long uTicketsAllTime = ticketRepository.countByUniversity(u.getId());
             long uWaiting = ticketRepository.countByUniversityAndStatus(u.getId(), TicketStatus.WAITING);
-            long uUsers = userRepository.findAll().stream()
+            long uUsers = allUsers.stream()
                     .filter(x -> x.getUniversity() != null && x.getUniversity().getId().equals(u.getId()))
                     .count();
-            long uStaff = userRepository.findByUniversityIdAndRole(u.getId(), Role.STAFF).size();
+            long uStaff = allUsers.stream()
+                    .filter(x -> x.getUniversity() != null
+                            && x.getUniversity().getId().equals(u.getId())
+                            && x.getRole() == Role.STAFF)
+                    .count();
             long uQueues = queueRepository.countByUniversityId(u.getId());
 
             ticketsToday += uTicketsToday;
             waitingNow += uWaiting;
 
-            List<Ticket> recent = ticketRepository.findRecentByUniversity(u.getId(), sevenDaysAgo);
+            List<Ticket> recent = ticketRepository.findRecentByUniversity(u.getId(), fourteenDaysAgo);
             for (Ticket t : recent) {
+                if (t.getJoinedAt() != null) {
+                    LocalDate d = t.getJoinedAt().toLocalDate();
+                    long[] bucket = daily.get(d);
+                    if (bucket != null) bucket[0]++;
+
+                    if (!t.getJoinedAt().isBefore(sevenDaysAgo)) ticketsThisWeek++;
+                    else if (!t.getJoinedAt().isBefore(fourteenDaysAgoStart)) ticketsLastWeek++;
+                }
+
                 if (t.getStatus() == TicketStatus.COMPLETED) {
-                    completedLast7++;
+                    if (t.getCompletedAt() != null) {
+                        LocalDate d = t.getCompletedAt().toLocalDate();
+                        long[] bucket = daily.get(d);
+                        if (bucket != null) bucket[1]++;
+
+                        if (!t.getCompletedAt().isBefore(sevenDaysAgo)) completedThisWeek++;
+                        else if (!t.getCompletedAt().isBefore(fourteenDaysAgoStart)) completedLastWeek++;
+                    }
                     if (t.getJoinedAt() != null && t.getCalledAt() != null) {
                         sumWait += Duration.between(t.getJoinedAt(), t.getCalledAt()).toMinutes();
                         waitCount++;
@@ -86,12 +119,6 @@ public class SystemAnalyticsService {
                         sumService += Duration.between(t.getServedAt(), t.getCompletedAt()).toMinutes();
                         serviceCount++;
                     }
-                }
-                if (t.getJoinedAt() != null) {
-                    daily.computeIfAbsent(t.getJoinedAt().toLocalDate(), k -> new long[2])[0]++;
-                }
-                if (t.getCompletedAt() != null) {
-                    daily.computeIfAbsent(t.getCompletedAt().toLocalDate(), k -> new long[2])[1]++;
                 }
             }
 
@@ -108,12 +135,28 @@ public class SystemAnalyticsService {
                     .build());
         }
 
+        // Count new users per day
+        for (User u : allUsers) {
+            if (u.getCreatedAt() == null) continue;
+            LocalDate d = u.getCreatedAt().toLocalDate();
+            long[] bucket = daily.get(d);
+            if (bucket != null) bucket[2]++;
+
+            if (!u.getCreatedAt().isBefore(sevenDaysAgo)) newUsersThisWeek++;
+            else if (!u.getCreatedAt().isBefore(fourteenDaysAgoStart)) newUsersLastWeek++;
+        }
+
+        // Build 14-day trend oldest → newest
         List<DailyPoint> trend = new ArrayList<>();
-        for (int i = 6; i >= 0; i--) {
+        for (int i = 13; i >= 0; i--) {
             LocalDate d = today.minusDays(i);
-            long[] counts = daily.getOrDefault(d, new long[2]);
+            long[] c = daily.getOrDefault(d, new long[3]);
             trend.add(DailyPoint.builder()
-                    .date(d).joined(counts[0]).completed(counts[1]).build());
+                    .date(d)
+                    .joined(c[0])
+                    .completed(c[1])
+                    .newUsers(c[2])
+                    .build());
         }
 
         return SystemAnalyticsResponse.builder()
@@ -129,6 +172,12 @@ public class SystemAnalyticsService {
                 .waitingNow(waitingNow)
                 .avgWaitMinutes(round1(waitCount > 0 ? sumWait / waitCount : 0))
                 .avgServiceMinutes(round1(serviceCount > 0 ? sumService / serviceCount : 0))
+                .ticketsThisWeek(ticketsThisWeek)
+                .ticketsLastWeek(ticketsLastWeek)
+                .completedThisWeek(completedThisWeek)
+                .completedLastWeek(completedLastWeek)
+                .newUsersThisWeek(newUsersThisWeek)
+                .newUsersLastWeek(newUsersLastWeek)
                 .universities(summaries)
                 .dailyTrend(trend)
                 .build();

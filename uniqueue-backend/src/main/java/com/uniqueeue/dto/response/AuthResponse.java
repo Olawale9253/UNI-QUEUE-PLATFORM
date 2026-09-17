@@ -14,4 +14,11 @@ public class AuthResponse {
     private String fullName;
     private Role role;
     private Long universityId;
+    private Boolean isVerified;
+
+    /**
+     * Only returned in dev mode after registration — normally the code is emailed.
+     * Frontend shows it in a banner so you can verify without email setup.
+     */
+    private String devVerificationCode;
 }

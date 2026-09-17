@@ -10,12 +10,10 @@ import com.uniqueeue.enums.AuditAction;
 import com.uniqueeue.enums.Role;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
+import com.uniqueeue.model.PlanConfig;
 import com.uniqueeue.model.University;
 import com.uniqueeue.model.User;
-import com.uniqueeue.repository.QueueRepository;
-import com.uniqueeue.repository.TicketRepository;
-import com.uniqueeue.repository.UniversityRepository;
-import com.uniqueeue.repository.UserRepository;
+import com.uniqueeue.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,6 +33,7 @@ public class UniversityService {
     private final TicketRepository ticketRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
+    private final PlanConfigRepository planConfigRepository;
 
     // ============================================================
     //  READ
@@ -185,12 +184,14 @@ public class UniversityService {
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
 
         String plan = request.getPlan().toUpperCase();
-        PlanLimits limits = PlanLimits.forPlan(plan);
+
+        PlanConfig config = planConfigRepository.findByCode(plan)
+                .orElseThrow(() -> new BadRequestException("Unknown plan: " + plan));
 
         u.setPlan(plan);
-        u.setMaxQueues(limits.maxQueues());
-        u.setMaxStaff(limits.maxStaff());
-        u.setMaxTicketsPerDay(limits.maxTicketsPerDay());
+        u.setMaxQueues(config.getMaxQueues());
+        u.setMaxStaff(config.getMaxStaff());
+        u.setMaxTicketsPerDay(config.getMaxTicketsPerDay());
 
         University saved = universityRepository.save(u);
 

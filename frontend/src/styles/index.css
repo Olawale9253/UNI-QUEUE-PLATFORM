@@ -177,11 +177,17 @@ body {
 }
 
 /* ─── Navbar sticky scrolled state ─── */
+/* ─── Navbar sticky scrolled state ─── */
 .dark .bg-white\/80 {
     background-color: rgba(30, 41, 59, 0.85);
 }
 .dark .bg-white\/90 {
     background-color: rgba(30, 41, 59, 0.9);
+}
+
+/* ─── Sticky tab bar (frosted, opaque-ish) ─── */
+.dark .bg-slate-50\/95 {
+    background-color: rgba(15, 23, 42, 0.95);
 }
 
 /* ─── Brand backgrounds become more saturated in dark mode ─── */

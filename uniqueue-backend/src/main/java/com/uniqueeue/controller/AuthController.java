@@ -3,7 +3,9 @@ package com.uniqueeue.controller;
 import com.uniqueeue.dto.request.ForgotPasswordRequest;
 import com.uniqueeue.dto.request.LoginRequest;
 import com.uniqueeue.dto.request.RegisterRequest;
+import com.uniqueeue.dto.request.ResendVerificationRequest;
 import com.uniqueeue.dto.request.ResetPasswordRequest;
+import com.uniqueeue.dto.request.VerifyEmailRequest;
 import com.uniqueeue.dto.response.ApiResponse;
 import com.uniqueeue.dto.response.AuthResponse;
 import com.uniqueeue.repository.UniversityRepository;
@@ -32,13 +34,32 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Registration successful", response));
+                .body(ApiResponse.success("Registration successful. Check your email for a verification code.", response));
     }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<ApiResponse<AuthResponse>> verifyEmail(
+            @Valid @RequestBody VerifyEmailRequest request) {
+        AuthResponse response = authService.verifyEmail(request.getEmail(), request.getCode());
+        return ResponseEntity.ok(ApiResponse.success("Email verified successfully", response));
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> resendVerification(
+            @Valid @RequestBody ResendVerificationRequest request) {
+        String code = authService.resendVerification(request.getEmail());
+        Map<String, Object> data = new HashMap<>();
+        data.put("message", "A new verification code has been sent to your email.");
+        if (code != null) {
+            data.put("devVerificationCode", code);
+        }
+        return ResponseEntity.ok(ApiResponse.success("Verification code resent", data));
     }
 
     @PostMapping("/forgot-password")
@@ -49,7 +70,6 @@ public class AuthController {
         Map<String, Object> data = new HashMap<>();
         data.put("message",
                 "If an account exists with that email, a reset link has been sent.");
-        // Dev mode: expose token so you can test without email setup
         if (token != null) {
             data.put("resetToken", token);
             data.put("resetUrl", "/reset-password?token=" + token);

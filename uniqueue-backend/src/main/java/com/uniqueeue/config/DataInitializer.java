@@ -1,8 +1,10 @@
 package com.uniqueeue.config;
 
 import com.uniqueeue.enums.Role;
+import com.uniqueeue.model.PlanConfig;
 import com.uniqueeue.model.University;
 import com.uniqueeue.model.User;
+import com.uniqueeue.repository.PlanConfigRepository;
 import com.uniqueeue.repository.UniversityRepository;
 import com.uniqueeue.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,13 +20,44 @@ public class DataInitializer implements CommandLineRunner {
 
     private final UniversityRepository universityRepository;
     private final UserRepository userRepository;
+    private final PlanConfigRepository planConfigRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
+        seedPlanConfigs();
         seedUniversities();
         seedAdmin();
         seedSuperAdmin();
+    }
+
+    private void seedPlanConfigs() {
+        if (planConfigRepository.count() > 0) {
+            log.info("Plan configs already seeded. Skipping.");
+            return;
+        }
+
+        planConfigRepository.save(PlanConfig.builder()
+                .code("FREE").label("Free").priceUsd(0.0)
+                .maxQueues(5).maxStaff(10).maxTicketsPerDay(200)
+                .displayOrder(1).isActive(true).build());
+
+        planConfigRepository.save(PlanConfig.builder()
+                .code("BASIC").label("Basic").priceUsd(49.0)
+                .maxQueues(15).maxStaff(30).maxTicketsPerDay(1000)
+                .displayOrder(2).isActive(true).build());
+
+        planConfigRepository.save(PlanConfig.builder()
+                .code("PREMIUM").label("Premium").priceUsd(199.0)
+                .maxQueues(50).maxStaff(100).maxTicketsPerDay(5000)
+                .displayOrder(3).isActive(true).build());
+
+        planConfigRepository.save(PlanConfig.builder()
+                .code("ENTERPRISE").label("Enterprise").priceUsd(799.0)
+                .maxQueues(500).maxStaff(1000).maxTicketsPerDay(50000)
+                .displayOrder(4).isActive(true).build());
+
+        log.info("✅ Seeded {} plan configs", planConfigRepository.count());
     }
 
     private void seedUniversities() {

@@ -16,8 +16,9 @@ import StaffDashboard from './pages/StaffDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import SuperAdminDashboard from './pages/SuperAdminDashboard'
 import NotFound from './pages/NotFound'
+import VerifyEmail from './pages/VerifyEmail'
 
-const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password']
+const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email']
 
 export default function App() {
     const location = useLocation()
@@ -36,6 +37,7 @@ export default function App() {
                             <Route path="/register" element={<Register />} />
                             <Route path="/forgot-password" element={<ForgotPassword />} />
                             <Route path="/reset-password" element={<ResetPassword />} />
+                            <Route path="/verify-email" element={<VerifyEmail />} />
 
                             <Route
                                 path="/profile"

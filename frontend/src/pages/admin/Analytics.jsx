@@ -1,17 +1,33 @@
 import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
-    LayoutGrid,
-    Users,
     Ticket,
-    Clock,
+    CheckCircle2,
+    Users,
+    LayoutGrid,
     TrendingUp,
+    Clock,
     Star,
     AlertCircle,
+    ArrowUpRight,
+    ArrowDownRight,
+    Trophy,
 } from 'lucide-react'
+import {
+    ResponsiveContainer,
+    AreaChart,
+    Area,
+    PieChart,
+    Pie,
+    Cell,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+} from 'recharts'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
-import StatCard from '../../components/ui/StatCard'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import PageHeader from '../../components/layout/PageHeader'
@@ -19,6 +35,144 @@ import ExportButton from '../../components/ui/ExportButton'
 import { SkeletonStats, SkeletonCard } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { stagger, staggerItem } from '../../lib/motion'
+
+// ─────────────────────────────────────────────────────────────
+//  Helpers
+// ─────────────────────────────────────────────────────────────
+
+function percentChange(current, previous) {
+    if (previous === 0) return current > 0 ? 100 : 0
+    return Math.round(((current - previous) / previous) * 1000) / 10
+}
+
+const ROLE_COLORS = {
+    Students: '#4f46e5',
+    Staff: '#f59e0b',
+    Admins: '#8b5cf6',
+}
+
+const STATUS_COLORS = {
+    WAITING: '#f59e0b',
+    WAITLISTED: '#0ea5e9',
+    CALLED: '#4f46e5',
+    SERVING: '#6366f1',
+    COMPLETED: '#10b981',
+    NO_SHOW: '#ef4444',
+    CANCELLED: '#94a3b8',
+    TRANSFERRED: '#8b5cf6',
+}
+
+const STATUS_LABELS = {
+    WAITING: 'Waiting',
+    WAITLISTED: 'Waitlisted',
+    CALLED: 'Called',
+    SERVING: 'Serving',
+    COMPLETED: 'Completed',
+    NO_SHOW: 'No-show',
+    CANCELLED: 'Cancelled',
+    TRANSFERRED: 'Transferred',
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Sub-components
+// ─────────────────────────────────────────────────────────────
+
+function KpiCard({ label, value, delta, icon: Icon, accent }) {
+    const isPositive = delta >= 0
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="rounded-xl border border-slate-200 bg-white p-5"
+        >
+            <div className="flex items-start justify-between">
+                <div className="min-w-0">
+                    <div className="text-sm font-medium text-slate-600">{label}</div>
+                    <div className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+                        {value}
+                    </div>
+                    {delta !== null && delta !== undefined && (
+                        <div
+                            className={`mt-1.5 inline-flex items-center gap-1 text-xs font-medium ${
+                                isPositive ? 'text-emerald-600' : 'text-rose-600'
+                            }`}
+                        >
+                            {isPositive ? (
+                                <ArrowUpRight className="h-3 w-3" />
+                            ) : (
+                                <ArrowDownRight className="h-3 w-3" />
+                            )}
+                            {isPositive ? '+' : ''}
+                            {delta}%
+                            <span className="text-slate-400">vs last week</span>
+                        </div>
+                    )}
+                </div>
+                {Icon && (
+                    <div className={`rounded-lg p-2 ${accent}`}>
+                        <Icon className="h-5 w-5" />
+                    </div>
+                )}
+            </div>
+        </motion.div>
+    )
+}
+
+function ChartTooltip({ active, payload, label }) {
+    if (!active || !payload?.length) return null
+    return (
+        <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs shadow-lg">
+            {label && (
+                <div className="mb-1.5 font-medium text-slate-900">
+                    {typeof label === 'string' && label.includes('-')
+                        ? new Date(label).toLocaleDateString('en-GB', {
+                            weekday: 'short',
+                            day: '2-digit',
+                            month: 'short',
+                        })
+                        : label}
+                </div>
+            )}
+            {payload.map((entry) => (
+                <div key={entry.name} className="flex items-center gap-2">
+          <span
+              className="h-2 w-2 rounded-full"
+              style={{ backgroundColor: entry.color || entry.payload?.fill }}
+          />
+                    <span className="text-slate-500">{entry.name}:</span>
+                    <span className="font-medium text-slate-900">{entry.value}</span>
+                </div>
+            ))}
+        </div>
+    )
+}
+
+function PieLegend({ data, colors }) {
+    const total = data.reduce((sum, d) => sum + d.value, 0)
+    return (
+        <ul className="space-y-2">
+            {data.map((item) => {
+                const pct = total > 0 ? Math.round((item.value / total) * 100) : 0
+                return (
+                    <li key={item.name} className="flex items-center gap-2 text-sm">
+            <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: colors[item.name] || '#94a3b8' }}
+            />
+                        <span className="flex-1 truncate text-slate-600">{item.name}</span>
+                        <span className="font-medium text-slate-900">{item.value}</span>
+                        <span className="w-10 text-right text-xs text-slate-500">{pct}%</span>
+                    </li>
+                )
+            })}
+        </ul>
+    )
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Main
+// ─────────────────────────────────────────────────────────────
 
 export default function Analytics() {
     const { push } = useToastStore()
@@ -60,10 +214,30 @@ export default function Analytics() {
         )
     }
 
-    const maxDaily = Math.max(
-        1,
-        ...(analytics.dailyTrend || []).map((d) => Math.max(d.joined, d.completed))
-    )
+    const ticketsDelta = percentChange(analytics.ticketsThisWeek, analytics.ticketsLastWeek)
+    const completedDelta = percentChange(analytics.completedThisWeek, analytics.completedLastWeek)
+    const newUsersDelta = percentChange(analytics.newUsersThisWeek, analytics.newUsersLastWeek)
+
+    const trendData = (analytics.dailyTrend || []).map((d) => ({
+        date: d.date,
+        Joined: d.joined,
+        Completed: d.completed,
+        'New users': d.newUsers,
+    }))
+
+    // Role pie data
+    const roleData = Object.entries(analytics.roleDistribution || {})
+        .map(([name, value]) => ({ name, value }))
+        .filter((d) => d.value > 0)
+
+    // Status pie data (only non-zero statuses)
+    const statusData = Object.entries(analytics.statusBreakdown || {})
+        .map(([key, value]) => ({
+            name: STATUS_LABELS[key] || key,
+            value,
+            color: STATUS_COLORS[key] || '#94a3b8',
+        }))
+        .filter((d) => d.value > 0)
 
     return (
         <>
@@ -89,51 +263,243 @@ export default function Analytics() {
                 }
             />
 
-            {/* Overview stats */}
-            <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <StatCard
-                    label="Total queues"
-                    value={analytics.totalQueues}
-                    icon={LayoutGrid}
-                    delay={0}
-                    hint={`${analytics.activeQueues} active`}
-                />
-                <StatCard
-                    label="Staff members"
-                    value={analytics.totalStaff}
-                    icon={Users}
-                    delay={0.05}
-                />
-                <StatCard
-                    label="Tickets today"
-                    value={analytics.ticketsToday}
+            {/* ─── KPI ROW ─── */}
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <KpiCard
+                    label="Tickets (7d)"
+                    value={analytics.ticketsThisWeek?.toLocaleString() || '0'}
+                    delta={ticketsDelta}
                     icon={Ticket}
-                    delay={0.1}
-                    hint={`${analytics.ticketsAllTime} all time`}
+                    accent="bg-brand-50 text-brand-600"
                 />
-                <StatCard
+                <KpiCard
+                    label="Completed (7d)"
+                    value={analytics.completedThisWeek?.toLocaleString() || '0'}
+                    delta={completedDelta}
+                    icon={CheckCircle2}
+                    accent="bg-emerald-50 text-emerald-600"
+                />
+                <KpiCard
+                    label="New users (7d)"
+                    value={analytics.newUsersThisWeek?.toLocaleString() || '0'}
+                    delta={newUsersDelta}
+                    icon={Users}
+                    accent="bg-sky-50 text-sky-600"
+                />
+                <KpiCard
                     label="Currently waiting"
-                    value={analytics.waitingNow}
+                    value={analytics.waitingNow?.toLocaleString() || '0'}
+                    delta={null}
                     icon={Clock}
-                    delay={0.15}
-                    hint={
-                        analytics.avgWaitMinutes
-                            ? `Avg. wait ${analytics.avgWaitMinutes} min`
-                            : undefined
-                    }
+                    accent="bg-amber-50 text-amber-600"
                 />
             </div>
 
-            {/* Secondary stats */}
-            <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {/* ─── ACTIVITY CHART ─── */}
+            <Card className="mb-6">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h3 className="text-base font-semibold text-slate-900">Activity trend</h3>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                            Tickets joined, completed, and new users — last 14 days
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs">
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-brand-600" />
+              Joined
+            </span>
+                        <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              Completed
+            </span>
+                        <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-sky-500" />
+              New users
+            </span>
+                    </div>
+                </div>
+
+                <div className="h-72 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart
+                            data={trendData}
+                            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                        >
+                            <defs>
+                                <linearGradient id="aJoined" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.25} />
+                                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
+                                </linearGradient>
+                                <linearGradient id="aCompleted" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
+                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                </linearGradient>
+                                <linearGradient id="aNewUsers" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.25} />
+                                    <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                            <XAxis
+                                dataKey="date"
+                                tick={{ fontSize: 11, fill: '#64748b' }}
+                                tickLine={false}
+                                axisLine={{ stroke: '#e2e8f0' }}
+                                tickFormatter={(d) =>
+                                    new Date(d).toLocaleDateString('en-GB', {
+                                        day: '2-digit',
+                                        month: 'short',
+                                    })
+                                }
+                            />
+                            <YAxis
+                                tick={{ fontSize: 11, fill: '#64748b' }}
+                                tickLine={false}
+                                axisLine={false}
+                                allowDecimals={false}
+                            />
+                            <Tooltip content={<ChartTooltip />} />
+                            <Area
+                                type="monotone"
+                                dataKey="Joined"
+                                stroke="#4f46e5"
+                                strokeWidth={2}
+                                fill="url(#aJoined)"
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="Completed"
+                                stroke="#10b981"
+                                strokeWidth={2}
+                                fill="url(#aCompleted)"
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="New users"
+                                stroke="#0ea5e9"
+                                strokeWidth={2}
+                                fill="url(#aNewUsers)"
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            </Card>
+
+            {/* ─── PIE CHARTS ROW ─── */}
+            <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                {/* Role distribution */}
+                <Card>
+                    <div className="mb-4">
+                        <h3 className="text-base font-semibold text-slate-900">User distribution</h3>
+                        <p className="mt-0.5 text-xs text-slate-500">By role</p>
+                    </div>
+
+                    {roleData.length === 0 ? (
+                        <div className="py-8 text-center text-sm text-slate-500">No users yet</div>
+                    ) : (
+                        <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-2">
+                            <div className="h-52">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={roleData}
+                                            dataKey="value"
+                                            nameKey="name"
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={45}
+                                            outerRadius={75}
+                                            paddingAngle={2}
+                                            strokeWidth={0}
+                                        >
+                                            {roleData.map((entry) => (
+                                                <Cell
+                                                    key={entry.name}
+                                                    fill={ROLE_COLORS[entry.name] || '#94a3b8'}
+                                                />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip content={<ChartTooltip />} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            <PieLegend data={roleData} colors={ROLE_COLORS} />
+                        </div>
+                    )}
+                </Card>
+
+                {/* Ticket status breakdown */}
+                <Card>
+                    <div className="mb-4">
+                        <h3 className="text-base font-semibold text-slate-900">Ticket status</h3>
+                        <p className="mt-0.5 text-xs text-slate-500">Last 14 days</p>
+                    </div>
+
+                    {statusData.length === 0 ? (
+                        <div className="py-8 text-center text-sm text-slate-500">No tickets yet</div>
+                    ) : (
+                        <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-2">
+                            <div className="h-52">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={statusData}
+                                            dataKey="value"
+                                            nameKey="name"
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={45}
+                                            outerRadius={75}
+                                            paddingAngle={2}
+                                            strokeWidth={0}
+                                        >
+                                            {statusData.map((entry) => (
+                                                <Cell key={entry.name} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip content={<ChartTooltip />} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            <ul className="space-y-2">
+                                {statusData.map((item) => {
+                                    const total = statusData.reduce((s, d) => s + d.value, 0)
+                                    const pct = total > 0 ? Math.round((item.value / total) * 100) : 0
+                                    return (
+                                        <li key={item.name} className="flex items-center gap-2 text-sm">
+                      <span
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: item.color }}
+                      />
+                                            <span className="flex-1 truncate text-slate-600">
+                        {item.name}
+                      </span>
+                                            <span className="font-medium text-slate-900">{item.value}</span>
+                                            <span className="w-10 text-right text-xs text-slate-500">
+                        {pct}%
+                      </span>
+                                        </li>
+                                    )
+                                })}
+                            </ul>
+                        </div>
+                    )}
+                </Card>
+            </div>
+
+            {/* ─── SECONDARY METRICS ─── */}
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <Card>
                     <div className="flex items-start justify-between">
                         <div>
                             <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                                Avg service time
+                                Avg wait time
                             </div>
                             <div className="mt-2 text-2xl font-semibold text-slate-900">
-                                {analytics.avgServiceMinutes ?? 0}
+                                {analytics.avgWaitMinutes ?? 0}
                                 <span className="ml-1 text-sm font-normal text-slate-500">min</span>
                             </div>
                         </div>
@@ -147,15 +513,15 @@ export default function Analytics() {
                     <div className="flex items-start justify-between">
                         <div>
                             <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                                No-show rate
+                                Avg service time
                             </div>
                             <div className="mt-2 text-2xl font-semibold text-slate-900">
-                                {analytics.noShowRate ?? 0}
-                                <span className="ml-1 text-sm font-normal text-slate-500">%</span>
+                                {analytics.avgServiceMinutes ?? 0}
+                                <span className="ml-1 text-sm font-normal text-slate-500">min</span>
                             </div>
                         </div>
-                        <div className="rounded-lg bg-rose-50 p-2">
-                            <AlertCircle className="h-5 w-5 text-rose-600" />
+                        <div className="rounded-lg bg-emerald-50 p-2">
+                            <TrendingUp className="h-5 w-5 text-emerald-600" />
                         </div>
                     </div>
                 </Card>
@@ -164,7 +530,7 @@ export default function Analytics() {
                     <div className="flex items-start justify-between">
                         <div>
                             <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                                Avg feedback rating
+                                Avg rating
                             </div>
                             <div className="mt-2 flex items-baseline gap-1">
                 <span className="text-2xl font-semibold text-slate-900">
@@ -180,102 +546,25 @@ export default function Analytics() {
                 </Card>
             </div>
 
-            {/* Daily trend */}
-            {analytics.dailyTrend && analytics.dailyTrend.length > 0 && (
-                <Card className="mb-8">
-                    <div className="mb-4 flex items-center justify-between">
-                        <div>
-                            <h3 className="text-sm font-semibold text-slate-900">7-day trend</h3>
-                            <p className="mt-0.5 text-xs text-slate-500">
-                                Tickets joined vs completed each day.
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-3 text-xs">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-brand-600" />
-                Joined
-              </span>
-                            <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Completed
-              </span>
-                        </div>
-                    </div>
-
-                    <div className="space-y-3">
-                        {analytics.dailyTrend.map((d) => (
-                            <div key={d.date} className="flex items-center gap-3">
-                                <div className="w-20 shrink-0 text-xs font-medium text-slate-500">
-                                    {new Date(d.date).toLocaleDateString('en-GB', {
-                                        weekday: 'short',
-                                        day: '2-digit',
-                                    })}
-                                </div>
-                                <div className="flex flex-1 flex-col gap-1">
-                                    <div className="flex items-center gap-2">
-                                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
-                                            <motion.div
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${(d.joined / maxDaily) * 100}%` }}
-                                                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                                                className="h-full rounded-full bg-brand-600"
-                                            />
-                                        </div>
-                                        <span className="w-8 text-right text-xs font-medium text-slate-600">
-                      {d.joined}
-                    </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
-                                            <motion.div
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${(d.completed / maxDaily) * 100}%` }}
-                                                transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-                                                className="h-full rounded-full bg-emerald-500"
-                                            />
-                                        </div>
-                                        <span className="w-8 text-right text-xs font-medium text-slate-600">
-                      {d.completed}
-                    </span>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </Card>
-            )}
-
-            {/* Per-queue breakdown */}
+            {/* ─── PER-QUEUE TABLE ─── */}
             {analytics.queues && analytics.queues.length > 0 && (
-                <Card padded={false} className="mb-8">
+                <Card padded={false} className="mb-6">
                     <div className="border-b border-slate-100 px-6 py-4">
                         <h3 className="text-sm font-semibold text-slate-900">Per-queue breakdown</h3>
                         <p className="mt-0.5 text-xs text-slate-500">
-                            Performance for each queue over the past 7 days.
+                            Performance for each queue over the past 14 days.
                         </p>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead className="bg-slate-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
-                                    Queue
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
-                                    Today
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
-                                    Served
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
-                                    Waiting
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
-                                    Avg wait
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
-                                    Rating
-                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Queue</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">Today</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">Served</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">Waiting</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">Avg wait</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">Rating</th>
                             </tr>
                             </thead>
                             <motion.tbody
@@ -286,27 +575,15 @@ export default function Analytics() {
                             >
                                 {analytics.queues.map((q) => (
                                     <motion.tr key={q.queueId} variants={staggerItem}>
-                                        <td className="px-6 py-3 text-sm font-medium text-slate-900">
-                                            {q.queueName}
-                                        </td>
-                                        <td className="px-6 py-3 text-right text-sm text-slate-600">
-                                            {q.ticketsToday}
-                                        </td>
-                                        <td className="px-6 py-3 text-right text-sm text-slate-600">
-                                            {q.servedToday}
-                                        </td>
-                                        <td className="px-6 py-3 text-right text-sm text-slate-600">
-                                            {q.waitingNow}
-                                        </td>
-                                        <td className="px-6 py-3 text-right text-sm text-slate-600">
-                                            {q.avgWaitMinutes} min
-                                        </td>
+                                        <td className="px-6 py-3 text-sm font-medium text-slate-900">{q.queueName}</td>
+                                        <td className="px-6 py-3 text-right text-sm text-slate-600">{q.ticketsToday}</td>
+                                        <td className="px-6 py-3 text-right text-sm text-slate-600">{q.servedToday}</td>
+                                        <td className="px-6 py-3 text-right text-sm text-slate-600">{q.waitingNow}</td>
+                                        <td className="px-6 py-3 text-right text-sm text-slate-600">{q.avgWaitMinutes} min</td>
                                         <td className="px-6 py-3 text-right">
                                             {q.avgRating > 0 ? (
                                                 <span className="inline-flex items-center gap-1">
-                          <span className="text-sm font-medium text-slate-900">
-                            {q.avgRating}
-                          </span>
+                          <span className="text-sm font-medium text-slate-900">{q.avgRating}</span>
                           <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                         </span>
                                             ) : (
@@ -321,7 +598,7 @@ export default function Analytics() {
                 </Card>
             )}
 
-            {/* Staff performance */}
+            {/* ─── STAFF PERFORMANCE ─── */}
             {analytics.staff && analytics.staff.length > 0 && (
                 <Card padded={false}>
                     <div className="border-b border-slate-100 px-6 py-4">
@@ -329,7 +606,7 @@ export default function Analytics() {
                             <div>
                                 <h3 className="text-sm font-semibold text-slate-900">Staff performance</h3>
                                 <p className="mt-0.5 text-xs text-slate-500">
-                                    Tickets served and feedback received in the last 7 days.
+                                    Tickets served and feedback received in the last 14 days.
                                 </p>
                             </div>
                             <ExportButton
@@ -349,18 +626,10 @@ export default function Analytics() {
                         <table className="w-full">
                             <thead className="bg-slate-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
-                                    Staff
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
-                                    Served
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
-                                    Avg service
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
-                                    Rating
-                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Staff</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">Served</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">Avg service</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">Rating</th>
                             </tr>
                             </thead>
                             <motion.tbody
@@ -371,21 +640,13 @@ export default function Analytics() {
                             >
                                 {analytics.staff.map((s) => (
                                     <motion.tr key={s.staffId} variants={staggerItem}>
-                                        <td className="px-6 py-3 text-sm font-medium text-slate-900">
-                                            {s.fullName}
-                                        </td>
-                                        <td className="px-6 py-3 text-right text-sm text-slate-600">
-                                            {s.ticketsServed}
-                                        </td>
-                                        <td className="px-6 py-3 text-right text-sm text-slate-600">
-                                            {s.avgServiceMinutes} min
-                                        </td>
+                                        <td className="px-6 py-3 text-sm font-medium text-slate-900">{s.fullName}</td>
+                                        <td className="px-6 py-3 text-right text-sm text-slate-600">{s.ticketsServed}</td>
+                                        <td className="px-6 py-3 text-right text-sm text-slate-600">{s.avgServiceMinutes} min</td>
                                         <td className="px-6 py-3 text-right">
                                             {s.avgRating > 0 ? (
                                                 <span className="inline-flex items-center gap-1">
-                          <span className="text-sm font-medium text-slate-900">
-                            {s.avgRating}
-                          </span>
+                          <span className="text-sm font-medium text-slate-900">{s.avgRating}</span>
                           <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                         </span>
                                             ) : (
@@ -399,58 +660,6 @@ export default function Analytics() {
                     </div>
                 </Card>
             )}
-
-            {/* All-time summary */}
-            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Card>
-                    <div className="flex items-start gap-3">
-                        <div className="rounded-lg bg-brand-50 p-2">
-                            <TrendingUp className="h-5 w-5 text-brand-600" />
-                        </div>
-                        <div>
-                            <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                                Total tickets ever
-                            </div>
-                            <div className="mt-1 text-2xl font-semibold text-slate-900">
-                                {analytics.ticketsAllTime}
-                            </div>
-                        </div>
-                    </div>
-                </Card>
-
-                <Card>
-                    <div className="flex items-start gap-3">
-                        <div className="rounded-lg bg-emerald-50 p-2">
-                            <Ticket className="h-5 w-5 text-emerald-600" />
-                        </div>
-                        <div>
-                            <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                                Tickets today
-                            </div>
-                            <div className="mt-1 text-2xl font-semibold text-slate-900">
-                                {analytics.ticketsToday}
-                            </div>
-                        </div>
-                    </div>
-                </Card>
-
-                <Card>
-                    <div className="flex items-start gap-3">
-                        <div className="rounded-lg bg-amber-50 p-2">
-                            <Clock className="h-5 w-5 text-amber-600" />
-                        </div>
-                        <div>
-                            <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                                Avg wait time
-                            </div>
-                            <div className="mt-1 text-2xl font-semibold text-slate-900">
-                                {analytics.avgWaitMinutes}
-                                <span className="ml-1 text-sm font-normal text-slate-500">min</span>
-                            </div>
-                        </div>
-                    </div>
-                </Card>
-            </div>
         </>
     )
 }

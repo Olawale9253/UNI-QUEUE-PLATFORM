@@ -22,6 +22,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,20 +39,26 @@ public class AnalyticsService {
     public AdminAnalyticsResponse forUniversity(Long universityId) {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime fourteenDaysAgo = today.minusDays(13).atStartOfDay();
         LocalDateTime sevenDaysAgo = today.minusDays(6).atStartOfDay();
+        LocalDateTime fourteenDaysAgoStart = today.minusDays(13).atStartOfDay();
 
-        // ---------- overview ----------
+        // ───────── overview ─────────
         List<Queue> queues = queueRepository.findByUniversityId(universityId);
         long activeQueues = queues.stream()
                 .filter(q -> Boolean.TRUE.equals(q.getIsActive()))
                 .count();
 
-        long totalStaff = userRepository.findByUniversityIdAndRole(universityId, Role.STAFF).size();
+        List<User> allUsersOfUniversity = userRepository.findByUniversityId(universityId);
+        long totalStaff = allUsersOfUniversity.stream().filter(u -> u.getRole() == Role.STAFF).count();
+        long totalStudents = allUsersOfUniversity.stream().filter(u -> u.getRole() == Role.USER).count();
+        long totalAdmins = allUsersOfUniversity.stream().filter(u -> u.getRole() == Role.ADMIN).count();
+
         long ticketsToday = ticketRepository.countByUniversitySince(universityId, startOfDay);
         long ticketsAllTime = ticketRepository.countByUniversity(universityId);
         long waitingNow = ticketRepository.countByUniversityAndStatus(universityId, TicketStatus.WAITING);
 
-        List<Ticket> recent = ticketRepository.findRecentByUniversity(universityId, sevenDaysAgo);
+        List<Ticket> recent = ticketRepository.findRecentByUniversity(universityId, fourteenDaysAgo);
         List<Ticket> completed = recent.stream()
                 .filter(t -> t.getStatus() == TicketStatus.COMPLETED)
                 .toList();
@@ -68,10 +75,49 @@ public class AnalyticsService {
         Double ratingRaw = feedbackRepository.avgRatingByUniversityId(universityId);
         double avgRating = round1(ratingRaw != null ? ratingRaw : 0);
 
-        // ---------- per-queue ----------
+        // ───────── week-over-week ─────────
+        long ticketsThisWeek = 0, ticketsLastWeek = 0;
+        long completedThisWeek = 0, completedLastWeek = 0;
+        for (Ticket t : recent) {
+            if (t.getJoinedAt() != null) {
+                if (!t.getJoinedAt().isBefore(sevenDaysAgo)) ticketsThisWeek++;
+                else if (!t.getJoinedAt().isBefore(fourteenDaysAgoStart)) ticketsLastWeek++;
+            }
+            if (t.getStatus() == TicketStatus.COMPLETED && t.getCompletedAt() != null) {
+                if (!t.getCompletedAt().isBefore(sevenDaysAgo)) completedThisWeek++;
+                else if (!t.getCompletedAt().isBefore(fourteenDaysAgoStart)) completedLastWeek++;
+            }
+        }
+
+        long newUsersThisWeek = 0, newUsersLastWeek = 0;
+        Map<LocalDate, long[]> daily = new HashMap<>();
+        for (int i = 13; i >= 0; i--) daily.put(today.minusDays(i), new long[3]);
+
+        for (User u : allUsersOfUniversity) {
+            if (u.getCreatedAt() == null) continue;
+            LocalDate d = u.getCreatedAt().toLocalDate();
+            long[] bucket = daily.get(d);
+            if (bucket != null) bucket[2]++;
+
+            if (!u.getCreatedAt().isBefore(sevenDaysAgo)) newUsersThisWeek++;
+            else if (!u.getCreatedAt().isBefore(fourteenDaysAgoStart)) newUsersLastWeek++;
+        }
+
+        for (Ticket t : recent) {
+            if (t.getJoinedAt() != null) {
+                long[] bucket = daily.get(t.getJoinedAt().toLocalDate());
+                if (bucket != null) bucket[0]++;
+            }
+            if (t.getCompletedAt() != null) {
+                long[] bucket = daily.get(t.getCompletedAt().toLocalDate());
+                if (bucket != null) bucket[1]++;
+            }
+        }
+
+        // ───────── per-queue ─────────
         List<QueueStats> queueStats = new ArrayList<>();
         for (Queue q : queues) {
-            List<Ticket> qRecent = ticketRepository.findRecentByQueue(q.getId(), sevenDaysAgo);
+            List<Ticket> qRecent = ticketRepository.findRecentByQueue(q.getId(), fourteenDaysAgo);
 
             long qToday = qRecent.stream()
                     .filter(t -> t.getJoinedAt() != null && t.getJoinedAt().toLocalDate().equals(today))
@@ -90,9 +136,7 @@ public class AnalyticsService {
             double qAvgWait = avgMinutes(qCompleted, Ticket::getJoinedAt, Ticket::getCalledAt);
             double qAvgService = avgMinutes(qCompleted, Ticket::getServedAt, Ticket::getCompletedAt);
 
-            long qNoShows = qRecent.stream()
-                    .filter(t -> t.getStatus() == TicketStatus.NO_SHOW)
-                    .count();
+            long qNoShows = qRecent.stream().filter(t -> t.getStatus() == TicketStatus.NO_SHOW).count();
             long qResolved = qNoShows + qCompleted.size();
             double qNoShowRate = qResolved > 0 ? (qNoShows * 100.0 / qResolved) : 0;
 
@@ -111,15 +155,14 @@ public class AnalyticsService {
                     .build());
         }
 
-        // ---------- per-staff ----------
+        // ───────── per-staff ─────────
         List<User> staff = userRepository.findByUniversityIdAndRole(universityId, Role.STAFF);
         List<StaffPerformance> staffStats = new ArrayList<>();
         for (User s : staff) {
-            List<Ticket> sTickets = ticketRepository.findRecentByStaff(s.getId(), sevenDaysAgo);
+            List<Ticket> sTickets = ticketRepository.findRecentByStaff(s.getId(), fourteenDaysAgo);
             List<Ticket> sCompleted = sTickets.stream()
                     .filter(t -> t.getStatus() == TicketStatus.COMPLETED)
                     .toList();
-
             double sAvgService = avgMinutes(sCompleted, Ticket::getServedAt, Ticket::getCompletedAt);
             Double sRatingRaw = feedbackRepository.avgRatingByStaffId(s.getId());
 
@@ -132,32 +175,37 @@ public class AnalyticsService {
                     .build());
         }
 
-        // ---------- daily trend (last 7 days) ----------
-        Map<LocalDate, long[]> grouped = new HashMap<>();  // date -> [joined, completed]
-        for (Ticket t : recent) {
-            if (t.getJoinedAt() != null) {
-                grouped.computeIfAbsent(t.getJoinedAt().toLocalDate(), k -> new long[2])[0]++;
-            }
-            if (t.getCompletedAt() != null) {
-                grouped.computeIfAbsent(t.getCompletedAt().toLocalDate(), k -> new long[2])[1]++;
-            }
-        }
-
+        // ───────── daily trend (14 days) ─────────
         List<DailyPoint> trend = new ArrayList<>();
-        for (int i = 6; i >= 0; i--) {
+        for (int i = 13; i >= 0; i--) {
             LocalDate d = today.minusDays(i);
-            long[] counts = grouped.getOrDefault(d, new long[2]);
+            long[] c = daily.getOrDefault(d, new long[3]);
             trend.add(DailyPoint.builder()
                     .date(d)
-                    .joined(counts[0])
-                    .completed(counts[1])
+                    .joined(c[0])
+                    .completed(c[1])
+                    .newUsers(c[2])
                     .build());
+        }
+
+        // ───────── role distribution ─────────
+        Map<String, Long> roleDist = new LinkedHashMap<>();
+        roleDist.put("Students", totalStudents);
+        roleDist.put("Staff", totalStaff);
+        roleDist.put("Admins", totalAdmins);
+
+        // ───────── ticket status breakdown (last 14 days) ─────────
+        Map<String, Long> statusBreakdown = new LinkedHashMap<>();
+        for (TicketStatus status : TicketStatus.values()) {
+            long count = recent.stream().filter(t -> t.getStatus() == status).count();
+            statusBreakdown.put(status.name(), count);
         }
 
         return AdminAnalyticsResponse.builder()
                 .totalQueues(queues.size())
                 .activeQueues(activeQueues)
                 .totalStaff(totalStaff)
+                .totalStudents(totalStudents)
                 .ticketsToday(ticketsToday)
                 .ticketsAllTime(ticketsAllTime)
                 .waitingNow(waitingNow)
@@ -165,13 +213,19 @@ public class AnalyticsService {
                 .avgServiceMinutes(round1(avgService))
                 .noShowRate(round1(noShowRate))
                 .avgRating(avgRating)
+                .ticketsThisWeek(ticketsThisWeek)
+                .ticketsLastWeek(ticketsLastWeek)
+                .completedThisWeek(completedThisWeek)
+                .completedLastWeek(completedLastWeek)
+                .newUsersThisWeek(newUsersThisWeek)
+                .newUsersLastWeek(newUsersLastWeek)
                 .queues(queueStats)
                 .staff(staffStats)
                 .dailyTrend(trend)
+                .roleDistribution(roleDist)
+                .statusBreakdown(statusBreakdown)
                 .build();
     }
-
-    // ---------- helpers ----------
 
     private double avgMinutes(List<Ticket> tickets,
                               java.util.function.Function<Ticket, LocalDateTime> start,

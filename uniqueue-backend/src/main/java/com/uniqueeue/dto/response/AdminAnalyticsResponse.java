@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class AdminAnalyticsResponse {
@@ -12,18 +13,34 @@ public class AdminAnalyticsResponse {
     private long totalQueues;
     private long activeQueues;
     private long totalStaff;
+    private long totalStudents;
     private long ticketsToday;
     private long ticketsAllTime;
     private long waitingNow;
+
     private double avgWaitMinutes;
     private double avgServiceMinutes;
-    private double noShowRate;         // percentage, e.g. 3.5 means 3.5%
+    private double noShowRate;
     private double avgRating;
+
+    // ---------- week-over-week ----------
+    private long ticketsThisWeek;
+    private long ticketsLastWeek;
+    private long completedThisWeek;
+    private long completedLastWeek;
+    private long newUsersThisWeek;
+    private long newUsersLastWeek;
 
     // ---------- breakdowns ----------
     private List<QueueStats> queues;
     private List<StaffPerformance> staff;
-    private List<DailyPoint> dailyTrend;
+    private List<DailyPoint> dailyTrend; // 14 days
+
+    /** { students, staff, admins } */
+    private Map<String, Long> roleDistribution;
+
+    /** { WAITING, CALLED, SERVING, COMPLETED, NO_SHOW, CANCELLED, TRANSFERRED, WAITLISTED } */
+    private Map<String, Long> statusBreakdown;
 
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
     public static class QueueStats {
@@ -42,7 +59,7 @@ public class AdminAnalyticsResponse {
     public static class StaffPerformance {
         private Long staffId;
         private String fullName;
-        private long ticketsServed;         // in last 7 days
+        private long ticketsServed;
         private double avgServiceMinutes;
         private double avgRating;
     }
@@ -52,5 +69,6 @@ public class AdminAnalyticsResponse {
         private LocalDate date;
         private long joined;
         private long completed;
+        private long newUsers;
     }
 }

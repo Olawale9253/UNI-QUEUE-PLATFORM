@@ -91,7 +91,9 @@ public class SecurityConfig {
                                 "/api/auth/universities",
                                 "/api/auth/validate-matric",
                                 "/api/auth/forgot-password",     // ← NEW
-                                "/api/auth/reset-password",      // ← NEW
+                                "/api/auth/reset-password",
+                                "/api/auth/verify-email",
+                                "/api/auth/resend-verification", // ← NEW
                                 "/h2-console/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

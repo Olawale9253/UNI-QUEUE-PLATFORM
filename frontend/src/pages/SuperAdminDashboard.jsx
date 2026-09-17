@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { NavLink, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Building2,
@@ -14,6 +14,7 @@ import {
     Layers,
     Megaphone,
     Eye,
+    DollarSign,
 } from 'lucide-react'
 import api from '../api/axios'
 import Card from '../components/ui/Card'
@@ -23,17 +24,19 @@ import Badge from '../components/ui/Badge'
 import StatCard from '../components/ui/StatCard'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import PageHeader from '../components/layout/PageHeader'
+import MobileTabSelect from '../components/layout/MobileTabSelect'
 import { SkeletonStats } from '../components/ui/Skeleton'
 import { useToastStore } from '../store/toastStore'
 import { useAuthStore } from '../store/authStore'
 import { useUniversityStore } from '../store/universityStore'
-import { startImpersonation, clearImpersonation } from '../components/layout/ImpersonationBanner'
+import { startImpersonation } from '../components/layout/ImpersonationBanner'
 import { stagger, staggerItem, expand } from '../lib/motion'
 import AuditLogs from './super-admin/AuditLogs'
 import SystemAnalytics from './super-admin/SystemAnalytics'
 import UsersPage from './super-admin/Users'
 import TiersAndFeatures from './super-admin/TiersAndFeatures'
 import Broadcast from './super-admin/Broadcast'
+import Plans from './super-admin/Plans'
 
 const emptyForm = {
     name: '',
@@ -57,6 +60,7 @@ const emptyAdminForm = {
 
 const tabs = [
     { to: '/super-admin', label: 'Universities', icon: Building2, end: true },
+    { to: '/super-admin/plans', label: 'Plans', icon: DollarSign },
     { to: '/super-admin/tiers', label: 'Tiers & Features', icon: Layers },
     { to: '/super-admin/broadcast', label: 'Broadcast', icon: Megaphone },
     { to: '/super-admin/analytics', label: 'Analytics', icon: BarChart3 },
@@ -165,7 +169,6 @@ function UniversitiesTab() {
     const handleImpersonate = async (university) => {
         setImpersonating(university.id)
         try {
-            // Find the first admin for this university
             const usersRes = await api.get(
                 `/api/super-admin/users?universityId=${university.id}&role=ADMIN&size=1&isActive=true`
             )
@@ -175,12 +178,9 @@ function UniversitiesTab() {
                 return
             }
             const admin = admins[0]
-
-            // Get impersonation token
             const res = await api.post(`/api/super-admin/impersonate/${admin.id}`)
             const d = res.data.data
 
-            // Save current super admin session
             startImpersonation(token, user, {
                 userId: d.userId,
                 email: d.email,
@@ -189,7 +189,6 @@ function UniversitiesTab() {
                 universityId: d.universityId,
             })
 
-            // Swap to impersonated auth
             setAuth(d.accessToken, {
                 userId: d.userId,
                 email: d.email,
@@ -201,7 +200,6 @@ function UniversitiesTab() {
 
             push({ type: 'success', message: `Now viewing as ${d.fullName}` })
 
-            // Navigate to the admin dashboard
             const dashboards = {
                 SUPER_ADMIN: '/super-admin',
                 ADMIN: '/admin',
@@ -316,7 +314,6 @@ function UniversitiesTab() {
                                                 onClick={() => handleImpersonate(u)}
                                                 disabled={impersonating === u.id}
                                                 className="inline-flex items-center gap-1.5 text-xs font-medium text-sky-600 transition-colors hover:text-sky-700 disabled:opacity-50"
-                                                title="Log in as this university's admin"
                                             >
                                                 <Eye className="h-3.5 w-3.5" />
                                                 {impersonating === u.id ? 'Loading…' : 'Login as admin'}
@@ -439,30 +436,11 @@ export default function SuperAdminDashboard() {
                 description="Manage universities, users, and monitor platform activity"
             />
 
-            <div className="mb-6 border-b border-slate-200 sm:mb-8">
-                <nav className="-mb-px flex gap-1 overflow-x-auto">
-                    {tabs.map((t) => (
-                        <NavLink
-                            key={t.to}
-                            to={t.to}
-                            end={t.end}
-                            className={({ isActive }) =>
-                                `inline-flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-sm font-medium transition-colors sm:px-4 ${
-                                    isActive
-                                        ? 'border-brand-600 text-brand-600'
-                                        : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
-                                }`
-                            }
-                        >
-                            <t.icon className="h-4 w-4" />
-                            {t.label}
-                        </NavLink>
-                    ))}
-                </nav>
-            </div>
+            <MobileTabSelect tabs={tabs} />
 
             <Routes>
                 <Route index element={<UniversitiesTab />} />
+                <Route path="plans" element={<Plans />} />
                 <Route path="tiers" element={<TiersAndFeatures />} />
                 <Route path="broadcast" element={<Broadcast />} />
                 <Route path="analytics" element={<SystemAnalytics />} />

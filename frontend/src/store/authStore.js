@@ -56,7 +56,12 @@ export const useAuthStore = create((set, get) => ({
             localStorage.setItem('uniqueue_token', d.accessToken)
             localStorage.setItem('uniqueue_user', JSON.stringify(user))
             set({ token: d.accessToken, user, loading: false })
-            return { success: true, role: d.role }
+            return {
+                success: true,
+                role: d.role,
+                devVerificationCode: d.devVerificationCode,
+                isVerified: d.isVerified,
+            }
         } catch (err) {
             const message = err.response?.data?.message || 'Registration failed'
             set({ loading: false, error: message })
@@ -64,7 +69,6 @@ export const useAuthStore = create((set, get) => ({
         }
     },
 
-    /** Used by impersonation to swap tokens without a full re-login. */
     setAuth: (token, user) => {
         localStorage.setItem('uniqueue_token', token)
         localStorage.setItem('uniqueue_user', JSON.stringify(user))
