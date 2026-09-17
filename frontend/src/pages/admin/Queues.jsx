@@ -7,6 +7,8 @@ import {
     MapPin,
     Clock,
     LayoutGrid,
+    Search,
+    Building2,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -18,9 +20,10 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import PageHeader from '../../components/layout/PageHeader'
 import { SkeletonQueueGrid } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
+import { groupQueuesByDepartment } from '../../lib/groupQueues'
 import { stagger, staggerItem, expand } from '../../lib/motion'
 
-const initialForm = {
+const emptyForm = {
     name: '',
     description: '',
     department: '',
@@ -41,9 +44,10 @@ export default function Queues() {
     const [showForm, setShowForm] = useState(false)
     const [editingId, setEditingId] = useState(null)
     const [saving, setSaving] = useState(false)
-    const [form, setForm] = useState(initialForm)
+    const [form, setForm] = useState(emptyForm)
     const [deleteTarget, setDeleteTarget] = useState(null)
     const [deleting, setDeleting] = useState(false)
+    const [search, setSearch] = useState('')
 
     const load = useCallback(async () => {
         try {
@@ -62,10 +66,17 @@ export default function Queues() {
 
     const setField = (f) => (e) => setForm({ ...form, [f]: e.target.value })
 
-    const openCreate = () => {
-        setForm(initialForm)
+    const openCreate = (prefillDepartment = '') => {
+        setForm({ ...emptyForm, department: prefillDepartment })
         setEditingId(null)
         setShowForm(true)
+        // Scroll to form
+        setTimeout(() => {
+            document.getElementById('queue-form')?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+            })
+        }, 50)
     }
 
     const openEdit = (queue) => {
@@ -84,12 +95,18 @@ export default function Queues() {
         })
         setEditingId(queue.id)
         setShowForm(true)
+        setTimeout(() => {
+            document.getElementById('queue-form')?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+            })
+        }, 50)
     }
 
     const closeForm = () => {
         setShowForm(false)
         setEditingId(null)
-        setForm(initialForm)
+        setForm(emptyForm)
     }
 
     const save = async (e) => {
@@ -148,6 +165,19 @@ export default function Queues() {
         )
     }
 
+    // Search filter first
+    const filteredQueues = queues.filter((q) => {
+        if (!search.trim()) return true
+        const s = search.toLowerCase()
+        return (
+            q.name?.toLowerCase().includes(s) ||
+            q.department?.toLowerCase().includes(s) ||
+            q.location?.toLowerCase().includes(s)
+        )
+    })
+
+    const groups = groupQueuesByDepartment(filteredQueues)
+
     return (
         <>
             <PageHeader
@@ -156,7 +186,7 @@ export default function Queues() {
                 action={
                     <Button
                         icon={Plus}
-                        onClick={showForm ? closeForm : openCreate}
+                        onClick={() => (showForm ? closeForm() : openCreate())}
                         variant={showForm ? 'secondary' : 'primary'}
                     >
                         {showForm ? 'Cancel' : 'New queue'}
@@ -167,6 +197,7 @@ export default function Queues() {
             <AnimatePresence>
                 {showForm && (
                     <motion.div
+                        id="queue-form"
                         variants={expand}
                         initial="initial"
                         animate="animate"
@@ -183,7 +214,7 @@ export default function Queues() {
                                         label="Queue name"
                                         value={form.name}
                                         onChange={setField('name')}
-                                        placeholder="e.g. Bursary Payments"
+                                        placeholder="e.g. Fee Payments"
                                         required
                                     />
                                     <Input
@@ -191,6 +222,7 @@ export default function Queues() {
                                         value={form.department}
                                         onChange={setField('department')}
                                         placeholder="e.g. Bursary"
+                                        hint="Queues in the same department are grouped together."
                                     />
                                     <Input
                                         label="Location"
@@ -246,9 +278,7 @@ export default function Queues() {
                                         <input
                                             type="checkbox"
                                             checked={form.allowWaitlist}
-                                            onChange={(e) =>
-                                                setForm({ ...form, allowWaitlist: e.target.checked })
-                                            }
+                                            onChange={(e) => setForm({ ...form, allowWaitlist: e.target.checked })}
                                             className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                                         />
                                         Allow students to join a waitlist when the queue is full
@@ -280,12 +310,7 @@ export default function Queues() {
                                 </div>
 
                                 <div className="flex justify-end gap-2 pt-2">
-                                    <Button
-                                        type="button"
-                                        variant="secondary"
-                                        onClick={closeForm}
-                                        disabled={saving}
-                                    >
+                                    <Button type="button" variant="secondary" onClick={closeForm} disabled={saving}>
                                         Cancel
                                     </Button>
                                     <Button type="submit" loading={saving} disabled={saving}>
@@ -298,95 +323,155 @@ export default function Queues() {
                 )}
             </AnimatePresence>
 
+            {queues.length > 0 && (
+                <div className="mb-4">
+                    <Input
+                        placeholder="Search by name, department, or location…"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        icon={Search}
+                    />
+                </div>
+            )}
+
             {queues.length === 0 ? (
                 <EmptyState
                     icon={LayoutGrid}
                     title="No queues yet"
                     description="Create your first queue to start serving students."
                     action={
-                        <Button icon={Plus} onClick={openCreate}>
+                        <Button icon={Plus} onClick={() => openCreate()}>
                             Create queue
                         </Button>
                     }
                 />
+            ) : filteredQueues.length === 0 ? (
+                <EmptyState
+                    icon={Search}
+                    title="No queues match your search"
+                    description="Try a different name, department, or location."
+                    action={
+                        <Button variant="secondary" onClick={() => setSearch('')}>
+                            Clear search
+                        </Button>
+                    }
+                />
             ) : (
-                <motion.div
-                    variants={stagger(0, 0.05)}
-                    initial="initial"
-                    animate="animate"
-                    className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
-                >
-                    {queues.map((q) => (
-                        <motion.div key={q.id} variants={staggerItem}>
-                            <Card className="flex h-full flex-col">
-                                <div className="mb-3 flex items-start justify-between gap-3">
-                                    <h3 className="text-base font-semibold text-slate-900">{q.name}</h3>
-                                    <Badge variant={q.isActive ? 'success' : 'default'}>
-                                        {q.isActive ? 'Active' : 'Inactive'}
-                                    </Badge>
+                <div className="space-y-8">
+                    {groups.map((group, groupIdx) => (
+                        <motion.section
+                            key={group.key}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: groupIdx * 0.05 }}
+                        >
+                            {/* Department header with add button */}
+                            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                                <div className="flex items-center gap-2">
+                                    <Building2 className="h-4 w-4 text-brand-600" />
+                                    <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-700">
+                                        {group.label}
+                                    </h4>
+                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+                    {group.queues.length}{' '}
+                                        {group.queues.length === 1 ? 'queue' : 'queues'}
+                  </span>
                                 </div>
 
-                                {q.location && (
-                                    <p className="flex items-center gap-1.5 text-sm text-slate-500">
-                                        <MapPin className="h-3.5 w-3.5" />
-                                        {q.location}
-                                    </p>
-                                )}
-
-                                {q.description && (
-                                    <p className="mt-2 line-clamp-2 text-sm text-slate-600">{q.description}</p>
-                                )}
-
-                                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-xs">
-                                    <div>
-                                        <div className="text-slate-500">Capacity</div>
-                                        <div className="mt-0.5 text-sm font-medium text-slate-900">
-                                            {q.maxCapacity}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-slate-500">Avg. min</div>
-                                        <div className="mt-0.5 text-sm font-medium text-slate-900">
-                                            {q.averageServiceMinutes}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-slate-500">Staff</div>
-                                        <div className="mt-0.5 text-sm font-medium text-slate-900">
-                                            {q.staffCount ?? 0}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {q.opensAt && q.closesAt && (
-                                    <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
-                                        <Clock className="h-3.5 w-3.5" />
-                                        Open {String(q.opensAt).slice(0, 5)} – {String(q.closesAt).slice(0, 5)}
-                                    </div>
-                                )}
-
-                                <div className="mt-auto flex items-center gap-2 pt-5">
-                                    <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        icon={Pencil}
-                                        onClick={() => openEdit(q)}
-                                        fullWidth
-                                    >
-                                        Edit
-                                    </Button>
+                                {!group.isOther && (
                                     <button
-                                        onClick={() => setDeleteTarget(q)}
-                                        className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
-                                        aria-label="Delete queue"
+                                        onClick={() => openCreate(group.label)}
+                                        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-brand-600 transition-colors hover:bg-brand-50"
                                     >
-                                        <Trash2 className="h-4 w-4" />
+                                        <Plus className="h-3.5 w-3.5" />
+                                        Add to {group.label}
                                     </button>
-                                </div>
-                            </Card>
-                        </motion.div>
+                                )}
+                            </div>
+
+                            <motion.div
+                                variants={stagger(0, 0.05)}
+                                initial="initial"
+                                animate="animate"
+                                className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+                            >
+                                {group.queues.map((q) => (
+                                    <motion.div key={q.id} variants={staggerItem}>
+                                        <Card className="flex h-full flex-col">
+                                            <div className="mb-3 flex items-start justify-between gap-3">
+                                                <h3 className="text-base font-semibold text-slate-900">{q.name}</h3>
+                                                <Badge variant={q.isActive ? 'success' : 'default'}>
+                                                    {q.isActive ? 'Active' : 'Inactive'}
+                                                </Badge>
+                                            </div>
+
+                                            {q.location && (
+                                                <p className="flex items-center gap-1.5 text-sm text-slate-500">
+                                                    <MapPin className="h-3.5 w-3.5" />
+                                                    {q.location}
+                                                </p>
+                                            )}
+
+                                            {q.description && (
+                                                <p className="mt-2 line-clamp-2 text-sm text-slate-600">
+                                                    {q.description}
+                                                </p>
+                                            )}
+
+                                            <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-xs">
+                                                <div>
+                                                    <div className="text-slate-500">Capacity</div>
+                                                    <div className="mt-0.5 text-sm font-medium text-slate-900">
+                                                        {q.maxCapacity}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-slate-500">Avg. min</div>
+                                                    <div className="mt-0.5 text-sm font-medium text-slate-900">
+                                                        {q.averageServiceMinutes}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-slate-500">Staff</div>
+                                                    <div className="mt-0.5 text-sm font-medium text-slate-900">
+                                                        {q.staffCount ?? 0}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {q.opensAt && q.closesAt && (
+                                                <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
+                                                    <Clock className="h-3.5 w-3.5" />
+                                                    Open {String(q.opensAt).slice(0, 5)} –{' '}
+                                                    {String(q.closesAt).slice(0, 5)}
+                                                </div>
+                                            )}
+
+                                            <div className="mt-auto flex items-center gap-2 pt-5">
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    icon={Pencil}
+                                                    onClick={() => openEdit(q)}
+                                                    fullWidth
+                                                >
+                                                    Edit
+                                                </Button>
+                                                <button
+                                                    onClick={() => setDeleteTarget(q)}
+                                                    className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                                                    aria-label="Delete queue"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        </Card>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        </motion.section>
                     ))}
-                </motion.div>
+                </div>
             )}
 
             <ConfirmDialog

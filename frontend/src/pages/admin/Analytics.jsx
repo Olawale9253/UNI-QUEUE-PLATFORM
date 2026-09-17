@@ -12,6 +12,7 @@ import {
     ArrowUpRight,
     ArrowDownRight,
     Trophy,
+    Building2,
 } from 'lucide-react'
 import {
     ResponsiveContainer,
@@ -34,6 +35,7 @@ import PageHeader from '../../components/layout/PageHeader'
 import ExportButton from '../../components/ui/ExportButton'
 import { SkeletonStats, SkeletonCard } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
+import { groupQueuesByDepartment } from '../../lib/groupQueues'
 import { stagger, staggerItem } from '../../lib/motion'
 
 // ─────────────────────────────────────────────────────────────
@@ -148,28 +150,6 @@ function ChartTooltip({ active, payload, label }) {
     )
 }
 
-function PieLegend({ data, colors }) {
-    const total = data.reduce((sum, d) => sum + d.value, 0)
-    return (
-        <ul className="space-y-2">
-            {data.map((item) => {
-                const pct = total > 0 ? Math.round((item.value / total) * 100) : 0
-                return (
-                    <li key={item.name} className="flex items-center gap-2 text-sm">
-            <span
-                className="h-2.5 w-2.5 shrink-0 rounded-full"
-                style={{ backgroundColor: colors[item.name] || '#94a3b8' }}
-            />
-                        <span className="flex-1 truncate text-slate-600">{item.name}</span>
-                        <span className="font-medium text-slate-900">{item.value}</span>
-                        <span className="w-10 text-right text-xs text-slate-500">{pct}%</span>
-                    </li>
-                )
-            })}
-        </ul>
-    )
-}
-
 // ─────────────────────────────────────────────────────────────
 //  Main
 // ─────────────────────────────────────────────────────────────
@@ -238,6 +218,18 @@ export default function Analytics() {
             color: STATUS_COLORS[key] || '#94a3b8',
         }))
         .filter((d) => d.value > 0)
+
+    // Group queues by department for the summary table
+    const departmentGroups =
+        analytics.queues && analytics.queues.length > 0
+            ? groupQueuesByDepartment(
+                analytics.queues.map((q) => ({
+                    ...q,
+                    // helper expects `waitingCount`
+                    waitingCount: q.waitingNow,
+                }))
+            )
+            : []
 
     return (
         <>
@@ -425,7 +417,25 @@ export default function Analytics() {
                                 </ResponsiveContainer>
                             </div>
 
-                            <PieLegend data={roleData} colors={ROLE_COLORS} />
+                            <ul className="space-y-2">
+                                {roleData.map((item) => {
+                                    const total = roleData.reduce((s, d) => s + d.value, 0)
+                                    const pct = total > 0 ? Math.round((item.value / total) * 100) : 0
+                                    return (
+                                        <li key={item.name} className="flex items-center gap-2 text-sm">
+                      <span
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: ROLE_COLORS[item.name] || '#94a3b8' }}
+                      />
+                                            <span className="flex-1 truncate text-slate-600">{item.name}</span>
+                                            <span className="font-medium text-slate-900">{item.value}</span>
+                                            <span className="w-10 text-right text-xs text-slate-500">
+                        {pct}%
+                      </span>
+                                        </li>
+                                    )
+                                })}
+                            </ul>
                         </div>
                     )}
                 </Card>
@@ -546,6 +556,126 @@ export default function Analytics() {
                 </Card>
             </div>
 
+            {/* ─── PER-DEPARTMENT SUMMARY ─── */}
+            {departmentGroups.length > 0 && (
+                <Card padded={false} className="mb-6">
+                    <div className="border-b border-slate-100 px-6 py-4">
+                        <h3 className="text-sm font-semibold text-slate-900">Department summary</h3>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                            Rolled up by department — past 14 days.
+                        </p>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-slate-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Department
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Queues
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Tickets today
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Served today
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Waiting
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Avg wait
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Avg rating
+                                </th>
+                            </tr>
+                            </thead>
+                            <motion.tbody
+                                variants={stagger(0, 0.04)}
+                                initial="initial"
+                                animate="animate"
+                                className="divide-y divide-slate-100"
+                            >
+                                {departmentGroups.map((group) => {
+                                    const totalToday = group.queues.reduce(
+                                        (sum, q) => sum + (q.ticketsToday || 0),
+                                        0
+                                    )
+                                    const totalServed = group.queues.reduce(
+                                        (sum, q) => sum + (q.servedToday || 0),
+                                        0
+                                    )
+                                    const totalWaiting = group.queues.reduce(
+                                        (sum, q) => sum + (q.waitingNow || 0),
+                                        0
+                                    )
+                                    const withWait = group.queues.filter((q) => q.avgWaitMinutes > 0)
+                                    const avgWait = withWait.length
+                                        ? Math.round(
+                                        (withWait.reduce((sum, q) => sum + q.avgWaitMinutes, 0) /
+                                            withWait.length) *
+                                        10
+                                    ) / 10
+                                        : 0
+                                    const withRating = group.queues.filter((q) => q.avgRating > 0)
+                                    const avgRating = withRating.length
+                                        ? Math.round(
+                                        (withRating.reduce((sum, q) => sum + q.avgRating, 0) /
+                                            withRating.length) *
+                                        10
+                                    ) / 10
+                                        : 0
+
+                                    return (
+                                        <motion.tr
+                                            key={group.key}
+                                            variants={staggerItem}
+                                            className="bg-slate-50/40"
+                                        >
+                                            <td className="px-6 py-3 text-sm font-semibold text-slate-900">
+                                                <div className="flex items-center gap-2">
+                                                    <Building2 className="h-4 w-4 text-brand-600" />
+                                                    {group.label}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-3 text-right text-sm text-slate-600">
+                                                {group.queues.length}
+                                            </td>
+                                            <td className="px-6 py-3 text-right text-sm font-medium text-slate-900">
+                                                {totalToday}
+                                            </td>
+                                            <td className="px-6 py-3 text-right text-sm text-slate-600">
+                                                {totalServed}
+                                            </td>
+                                            <td className="px-6 py-3 text-right text-sm text-slate-600">
+                                                {totalWaiting}
+                                            </td>
+                                            <td className="px-6 py-3 text-right text-sm text-slate-600">
+                                                {avgWait} min
+                                            </td>
+                                            <td className="px-6 py-3 text-right">
+                                                {avgRating > 0 ? (
+                                                    <span className="inline-flex items-center gap-1">
+                            <span className="text-sm font-medium text-slate-900">
+                              {avgRating}
+                            </span>
+                            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                          </span>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400">—</span>
+                                                )}
+                                            </td>
+                                        </motion.tr>
+                                    )
+                                })}
+                            </motion.tbody>
+                        </table>
+                    </div>
+                </Card>
+            )}
+
             {/* ─── PER-QUEUE TABLE ─── */}
             {analytics.queues && analytics.queues.length > 0 && (
                 <Card padded={false} className="mb-6">
@@ -559,12 +689,27 @@ export default function Analytics() {
                         <table className="w-full">
                             <thead className="bg-slate-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Queue</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">Today</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">Served</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">Waiting</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">Avg wait</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">Rating</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Queue
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Department
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Today
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Served
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Waiting
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Avg wait
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Rating
+                                </th>
                             </tr>
                             </thead>
                             <motion.tbody
@@ -575,15 +720,30 @@ export default function Analytics() {
                             >
                                 {analytics.queues.map((q) => (
                                     <motion.tr key={q.queueId} variants={staggerItem}>
-                                        <td className="px-6 py-3 text-sm font-medium text-slate-900">{q.queueName}</td>
-                                        <td className="px-6 py-3 text-right text-sm text-slate-600">{q.ticketsToday}</td>
-                                        <td className="px-6 py-3 text-right text-sm text-slate-600">{q.servedToday}</td>
-                                        <td className="px-6 py-3 text-right text-sm text-slate-600">{q.waitingNow}</td>
-                                        <td className="px-6 py-3 text-right text-sm text-slate-600">{q.avgWaitMinutes} min</td>
+                                        <td className="px-6 py-3 text-sm font-medium text-slate-900">
+                                            {q.queueName}
+                                        </td>
+                                        <td className="px-6 py-3 text-sm text-slate-500">
+                                            {q.department || '—'}
+                                        </td>
+                                        <td className="px-6 py-3 text-right text-sm text-slate-600">
+                                            {q.ticketsToday}
+                                        </td>
+                                        <td className="px-6 py-3 text-right text-sm text-slate-600">
+                                            {q.servedToday}
+                                        </td>
+                                        <td className="px-6 py-3 text-right text-sm text-slate-600">
+                                            {q.waitingNow}
+                                        </td>
+                                        <td className="px-6 py-3 text-right text-sm text-slate-600">
+                                            {q.avgWaitMinutes} min
+                                        </td>
                                         <td className="px-6 py-3 text-right">
                                             {q.avgRating > 0 ? (
                                                 <span className="inline-flex items-center gap-1">
-                          <span className="text-sm font-medium text-slate-900">{q.avgRating}</span>
+                          <span className="text-sm font-medium text-slate-900">
+                            {q.avgRating}
+                          </span>
                           <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                         </span>
                                             ) : (
@@ -626,10 +786,18 @@ export default function Analytics() {
                         <table className="w-full">
                             <thead className="bg-slate-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Staff</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">Served</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">Avg service</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">Rating</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Staff
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Served
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Avg service
+                                </th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    Rating
+                                </th>
                             </tr>
                             </thead>
                             <motion.tbody
@@ -640,13 +808,21 @@ export default function Analytics() {
                             >
                                 {analytics.staff.map((s) => (
                                     <motion.tr key={s.staffId} variants={staggerItem}>
-                                        <td className="px-6 py-3 text-sm font-medium text-slate-900">{s.fullName}</td>
-                                        <td className="px-6 py-3 text-right text-sm text-slate-600">{s.ticketsServed}</td>
-                                        <td className="px-6 py-3 text-right text-sm text-slate-600">{s.avgServiceMinutes} min</td>
+                                        <td className="px-6 py-3 text-sm font-medium text-slate-900">
+                                            {s.fullName}
+                                        </td>
+                                        <td className="px-6 py-3 text-right text-sm text-slate-600">
+                                            {s.ticketsServed}
+                                        </td>
+                                        <td className="px-6 py-3 text-right text-sm text-slate-600">
+                                            {s.avgServiceMinutes} min
+                                        </td>
                                         <td className="px-6 py-3 text-right">
                                             {s.avgRating > 0 ? (
                                                 <span className="inline-flex items-center gap-1">
-                          <span className="text-sm font-medium text-slate-900">{s.avgRating}</span>
+                          <span className="text-sm font-medium text-slate-900">
+                            {s.avgRating}
+                          </span>
                           <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                         </span>
                                             ) : (

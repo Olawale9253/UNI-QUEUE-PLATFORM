@@ -7,6 +7,7 @@ import {
     ListOrdered,
     Clock,
     Info,
+    Building2,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -18,6 +19,7 @@ import { SkeletonRow } from '../../components/ui/Skeleton'
 import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
+import { groupQueuesByDepartment } from '../../lib/groupQueues'
 import { ease, stagger, staggerItem } from '../../lib/motion'
 
 const statusVariant = {
@@ -92,7 +94,6 @@ export default function ServingQueue() {
         }
     }, [activeQueue, loadTickets])
 
-    // Adaptive polling: 5s visible, 30s hidden, immediate refresh on tab focus
     useAdaptivePoll(
         () => (activeQueue ? loadTickets(activeQueue.id, false) : Promise.resolve()),
         { fastMs: 5000, slowMs: 30000, enabled: !!activeQueue }
@@ -158,6 +159,8 @@ export default function ServingQueue() {
         ['COMPLETED', 'NO_SHOW', 'CANCELLED', 'TRANSFERRED'].includes(t.status)
     )
 
+    const queueGroups = groupQueuesByDepartment(queues)
+
     return (
         <>
             <PageHeader
@@ -195,53 +198,68 @@ export default function ServingQueue() {
             </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+                {/* Sidebar: grouped by department */}
                 <div className="lg:col-span-1">
                     <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                         My queues
                     </h2>
-                    <motion.div
-                        variants={stagger(0, 0.05)}
-                        initial="initial"
-                        animate="animate"
-                        className="space-y-2"
-                    >
-                        {queues.map((q) => (
-                            <motion.button
-                                key={q.id}
-                                variants={staggerItem}
-                                whileHover={{ x: 2 }}
-                                transition={{ duration: 0.15 }}
-                                onClick={() => setActiveQueue(q)}
-                                className={`w-full rounded-lg border px-4 py-3 text-left transition-colors ${
-                                    activeQueue?.id === q.id
-                                        ? 'border-brand-300 bg-brand-50'
-                                        : 'border-slate-200 bg-white hover:bg-slate-50'
-                                }`}
-                            >
-                                <div className="flex items-center justify-between">
-                                    <div className="min-w-0">
-                                        <div
-                                            className={`truncate text-sm font-medium ${
-                                                activeQueue?.id === q.id ? 'text-brand-900' : 'text-slate-900'
+
+                    <div className="space-y-5">
+                        {queueGroups.map((group) => (
+                            <div key={group.key}>
+                                {/* Department header */}
+                                <div className="mb-1.5 flex items-center gap-1.5 px-1">
+                                    <Building2 className="h-3 w-3 text-slate-400" />
+                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                    {group.label}
+                  </span>
+                                    <span className="text-[10px] text-slate-400">
+                    ({group.queues.length})
+                  </span>
+                                </div>
+
+                                {/* Queues in this department */}
+                                <div className="space-y-2">
+                                    {group.queues.map((q) => (
+                                        <button
+                                            key={q.id}
+                                            onClick={() => setActiveQueue(q)}
+                                            className={`w-full rounded-lg border px-4 py-3 text-left transition-colors ${
+                                                activeQueue?.id === q.id
+                                                    ? 'border-brand-300 bg-brand-50'
+                                                    : 'border-slate-200 bg-white hover:bg-slate-50'
                                             }`}
                                         >
-                                            {q.name}
-                                        </div>
-                                        {q.location && (
-                                            <div className="mt-0.5 truncate text-xs text-slate-500">
-                                                {q.location}
+                                            <div className="flex items-center justify-between">
+                                                <div className="min-w-0">
+                                                    <div
+                                                        className={`truncate text-sm font-medium ${
+                                                            activeQueue?.id === q.id
+                                                                ? 'text-brand-900'
+                                                                : 'text-slate-900'
+                                                        }`}
+                                                    >
+                                                        {q.name}
+                                                    </div>
+                                                    {q.location && (
+                                                        <div className="mt-0.5 truncate text-xs text-slate-500">
+                                                            {q.location}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {activeQueue?.id === q.id && (
+                                                    <ChevronRight className="h-4 w-4 text-brand-600" />
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
-                                    {activeQueue?.id === q.id && (
-                                        <ChevronRight className="h-4 w-4 text-brand-600" />
-                                    )}
+                                        </button>
+                                    ))}
                                 </div>
-                            </motion.button>
+                            </div>
                         ))}
-                    </motion.div>
+                    </div>
                 </div>
 
+                {/* Main panel */}
                 <div className="space-y-6 lg:col-span-3">
                     <AnimatePresence mode="wait">
                         {called && (

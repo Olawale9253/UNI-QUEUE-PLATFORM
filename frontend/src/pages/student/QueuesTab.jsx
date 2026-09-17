@@ -12,6 +12,7 @@ import {
     Lock,
     ArrowRight,
     Route as RouteIcon,
+    Building2,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -23,6 +24,7 @@ import { SkeletonQueueGrid } from '../../components/ui/Skeleton'
 import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
+import { groupQueuesByDepartment } from '../../lib/groupQueues'
 import { ease, stagger, staggerItem } from '../../lib/motion'
 
 export default function QueuesTab() {
@@ -57,7 +59,6 @@ export default function QueuesTab() {
         load()
     }, [load])
 
-    // Adaptive polling: 5s visible, 30s hidden, immediate refresh on tab focus
     useAdaptivePoll(load, { fastMs: 5000, slowMs: 30000 })
 
     const joinQueue = async (queueId) => {
@@ -100,6 +101,8 @@ export default function QueuesTab() {
 
     const isQueueLocked = (queueId) => lockedQueueIds.has(queueId)
     const isQueueCurrent = (queueId) => queueId === currentStepQueueId
+
+    const groups = groupQueuesByDepartment(queues)
 
     return (
         <div>
@@ -295,137 +298,170 @@ export default function QueuesTab() {
                     description="Your university hasn't opened any queues yet. Check back shortly."
                 />
             ) : (
-                <motion.div
-                    variants={stagger(0, 0.05)}
-                    initial="initial"
-                    animate="animate"
-                    className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
-                >
-                    {queues.map((q) => {
-                        const locked = isQueueLocked(q.id)
-                        const current = isQueueCurrent(q.id)
+                <div className="space-y-8">
+                    {groups.map((group, groupIdx) => (
+                        <motion.section
+                            key={group.key}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: groupIdx * 0.05 }}
+                        >
+                            {/* Department header */}
+                            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                                <div className="flex items-center gap-2">
+                                    <Building2 className="h-4 w-4 text-brand-600" />
+                                    <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-700">
+                                        {group.label}
+                                    </h4>
+                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+                    {group.queues.length}{' '}
+                                        {group.queues.length === 1 ? 'queue' : 'queues'}
+                  </span>
+                                </div>
+                                {group.waitingTotal > 0 && (
+                                    <span className="flex items-center gap-1 text-xs text-slate-500">
+                    <Users className="h-3 w-3" />
+                                        {group.waitingTotal} waiting
+                  </span>
+                                )}
+                            </div>
 
-                        return (
+                            {/* Queues in this department */}
                             <motion.div
-                                key={q.id}
-                                variants={staggerItem}
-                                whileHover={!locked ? { y: -3 } : {}}
-                                transition={{ duration: 0.2 }}
+                                variants={stagger(0, 0.04)}
+                                initial="initial"
+                                animate="animate"
+                                className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
                             >
-                                <Card
-                                    className={`relative flex h-full flex-col ${
-                                        locked
-                                            ? 'border-slate-200 bg-slate-50 opacity-75'
-                                            : current
-                                                ? 'border-amber-300 ring-2 ring-amber-200'
-                                                : ''
-                                    }`}
-                                >
-                                    {locked && (
-                                        <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase text-slate-600">
-                                            <Lock className="h-3 w-3" />
-                                            Locked
-                                        </div>
-                                    )}
-                                    {current && (
-                                        <div className="absolute right-3 top-3 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold uppercase text-white">
-                                            Your next step
-                                        </div>
-                                    )}
+                                {group.queues.map((q) => {
+                                    const locked = isQueueLocked(q.id)
+                                    const current = isQueueCurrent(q.id)
 
-                                    <div
-                                        className={`flex items-start justify-between gap-3 ${
-                                            locked || current ? 'pr-24' : ''
-                                        }`}
-                                    >
-                                        <div className="min-w-0">
-                                            <h3
-                                                className={`text-base font-semibold ${
-                                                    locked ? 'text-slate-500' : 'text-slate-900'
+                                    return (
+                                        <motion.div
+                                            key={q.id}
+                                            variants={staggerItem}
+                                            whileHover={!locked ? { y: -3 } : {}}
+                                            transition={{ duration: 0.2 }}
+                                        >
+                                            <Card
+                                                className={`relative flex h-full flex-col ${
+                                                    locked
+                                                        ? 'border-slate-200 bg-slate-50 opacity-75'
+                                                        : current
+                                                            ? 'border-amber-300 ring-2 ring-amber-200'
+                                                            : ''
                                                 }`}
                                             >
-                                                {q.name}
-                                            </h3>
-                                            {q.department && (
-                                                <p className="mt-0.5 text-xs text-slate-500">{q.department}</p>
-                                            )}
-                                        </div>
-                                    </div>
+                                                {locked && (
+                                                    <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase text-slate-600">
+                                                        <Lock className="h-3 w-3" />
+                                                        Locked
+                                                    </div>
+                                                )}
+                                                {current && (
+                                                    <div className="absolute right-3 top-3 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold uppercase text-white">
+                                                        Your next step
+                                                    </div>
+                                                )}
 
-                                    {q.location && (
-                                        <p className="mt-2 flex items-center gap-1.5 text-sm text-slate-500">
-                                            <MapPin className="h-3.5 w-3.5" />
-                                            {q.location}
-                                        </p>
-                                    )}
+                                                <div
+                                                    className={`flex items-start justify-between gap-3 ${
+                                                        locked || current ? 'pr-24' : ''
+                                                    }`}
+                                                >
+                                                    <div className="min-w-0">
+                                                        <h3
+                                                            className={`text-base font-semibold ${
+                                                                locked ? 'text-slate-500' : 'text-slate-900'
+                                                            }`}
+                                                        >
+                                                            {q.name}
+                                                        </h3>
+                                                    </div>
+                                                </div>
 
-                                    {q.description && (
-                                        <p className="mt-3 line-clamp-2 text-sm text-slate-600">
-                                            {q.description}
-                                        </p>
-                                    )}
+                                                {q.location && (
+                                                    <p className="mt-2 flex items-center gap-1.5 text-sm text-slate-500">
+                                                        <MapPin className="h-3.5 w-3.5" />
+                                                        {q.location}
+                                                    </p>
+                                                )}
 
-                                    <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4">
-                                        <div>
-                                            <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
-                                                <Users className="h-3 w-3" />
-                                                In queue
-                                            </div>
-                                            <div className="mt-1 text-lg font-semibold text-slate-900">
-                                                {q.waitingCount ?? 0}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
-                                                <Clock className="h-3 w-3" />
-                                                ~Wait
-                                            </div>
-                                            <div className="mt-1 text-lg font-semibold text-slate-900">
-                                                {q.estimatedMinutes ?? 0}
-                                                <span className="ml-0.5 text-xs font-normal text-slate-500">m</span>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
-                                                <ListOrdered className="h-3 w-3" />
-                                                Cap.
-                                            </div>
-                                            <div className="mt-1 text-lg font-semibold text-slate-900">
-                                                {q.maxCapacity}
-                                            </div>
-                                        </div>
-                                    </div>
+                                                {q.description && (
+                                                    <p className="mt-3 line-clamp-2 text-sm text-slate-600">
+                                                        {q.description}
+                                                    </p>
+                                                )}
 
-                                    {q.currentlyServing && !locked && (
-                                        <div className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-xs">
-                                            <span className="text-slate-600">Now serving: </span>
-                                            <span className="font-mono font-semibold text-brand-700">
-                        {q.currentlyServing}
-                      </span>
-                                        </div>
-                                    )}
+                                                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4">
+                                                    <div>
+                                                        <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                                            <Users className="h-3 w-3" />
+                                                            In queue
+                                                        </div>
+                                                        <div className="mt-1 text-lg font-semibold text-slate-900">
+                                                            {q.waitingCount ?? 0}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                                            <Clock className="h-3 w-3" />
+                                                            ~Wait
+                                                        </div>
+                                                        <div className="mt-1 text-lg font-semibold text-slate-900">
+                                                            {q.estimatedMinutes ?? 0}
+                                                            <span className="ml-0.5 text-xs font-normal text-slate-500">
+                                m
+                              </span>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                                            <ListOrdered className="h-3 w-3" />
+                                                            Cap.
+                                                        </div>
+                                                        <div className="mt-1 text-lg font-semibold text-slate-900">
+                                                            {q.maxCapacity}
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                                    <div className="mt-auto pt-5">
-                                        {locked ? (
-                                            <div className="rounded-lg bg-slate-200 px-4 py-2 text-center text-sm font-medium text-slate-500">
-                                                Complete the current step to unlock
-                                            </div>
-                                        ) : (
-                                            <Button
-                                                fullWidth
-                                                onClick={() => joinQueue(q.id)}
-                                                disabled={!!activeTicket || joining === q.id}
-                                                loading={joining === q.id}
-                                            >
-                                                {activeTicket ? 'Finish current ticket first' : 'Join queue'}
-                                            </Button>
-                                        )}
-                                    </div>
-                                </Card>
+                                                {q.currentlyServing && !locked && (
+                                                    <div className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-xs">
+                                                        <span className="text-slate-600">Now serving: </span>
+                                                        <span className="font-mono font-semibold text-brand-700">
+                              {q.currentlyServing}
+                            </span>
+                                                    </div>
+                                                )}
+
+                                                <div className="mt-auto pt-5">
+                                                    {locked ? (
+                                                        <div className="rounded-lg bg-slate-200 px-4 py-2 text-center text-sm font-medium text-slate-500">
+                                                            Complete the current step to unlock
+                                                        </div>
+                                                    ) : (
+                                                        <Button
+                                                            fullWidth
+                                                            onClick={() => joinQueue(q.id)}
+                                                            disabled={!!activeTicket || joining === q.id}
+                                                            loading={joining === q.id}
+                                                        >
+                                                            {activeTicket
+                                                                ? 'Finish current ticket first'
+                                                                : 'Join queue'}
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </Card>
+                                        </motion.div>
+                                    )
+                                })}
                             </motion.div>
-                        )
-                    })}
-                </motion.div>
+                        </motion.section>
+                    ))}
+                </div>
             )}
 
             <ConfirmDialog
