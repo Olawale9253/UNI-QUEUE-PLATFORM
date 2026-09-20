@@ -250,3 +250,12 @@ body {
 .dark ::-webkit-scrollbar-thumb:hover {
     background: #64748b;
 }
+/* Hide scrollbar on the sidebar nav (it stays scrollable via mouse wheel
+   if content ever overflows, but no visible scrollbar) */
+.scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+    display: none;
+}

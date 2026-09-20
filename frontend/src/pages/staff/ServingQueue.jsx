@@ -207,10 +207,10 @@ export default function ServingQueue() {
                     <div className="space-y-5">
                         {queueGroups.map((group) => (
                             <div key={group.key}>
-                                {/* Department header */}
+                                {/* Department label */}
                                 <div className="mb-1.5 flex items-center gap-1.5 px-1">
-                                    <Building2 className="h-3 w-3 text-slate-400" />
-                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                    <Building2 className="h-3 w-3 text-brand-600" />
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700">
                     {group.label}
                   </span>
                                     <span className="text-[10px] text-slate-400">

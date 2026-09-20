@@ -104,6 +104,123 @@ export default function QueuesTab() {
 
     const groups = groupQueuesByDepartment(queues)
 
+    const QueueCard = ({ q }) => {
+        const locked = isQueueLocked(q.id)
+        const current = isQueueCurrent(q.id)
+
+        return (
+            <motion.div
+                variants={staggerItem}
+                whileHover={!locked ? { y: -3 } : {}}
+                transition={{ duration: 0.2 }}
+            >
+                <Card
+                    className={`relative flex h-full flex-col ${
+                        locked
+                            ? 'border-slate-200 bg-slate-50 opacity-75'
+                            : current
+                                ? 'border-amber-300 ring-2 ring-amber-200'
+                                : ''
+                    }`}
+                >
+                    {locked && (
+                        <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase text-slate-600">
+                            <Lock className="h-3 w-3" />
+                            Locked
+                        </div>
+                    )}
+                    {current && (
+                        <div className="absolute right-3 top-3 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold uppercase text-white">
+                            Your next step
+                        </div>
+                    )}
+
+                    <div
+                        className={`flex items-start justify-between gap-3 ${
+                            locked || current ? 'pr-24' : ''
+                        }`}
+                    >
+                        <h3
+                            className={`text-base font-semibold ${
+                                locked ? 'text-slate-500' : 'text-slate-900'
+                            }`}
+                        >
+                            {q.name}
+                        </h3>
+                    </div>
+
+                    {q.location && (
+                        <p className="mt-2 flex items-center gap-1.5 text-sm text-slate-500">
+                            <MapPin className="h-3.5 w-3.5" />
+                            {q.location}
+                        </p>
+                    )}
+
+                    {q.description && (
+                        <p className="mt-3 line-clamp-2 text-sm text-slate-600">{q.description}</p>
+                    )}
+
+                    <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4">
+                        <div>
+                            <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                <Users className="h-3 w-3" />
+                                In queue
+                            </div>
+                            <div className="mt-1 text-lg font-semibold text-slate-900">
+                                {q.waitingCount ?? 0}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                <Clock className="h-3 w-3" />
+                                ~Wait
+                            </div>
+                            <div className="mt-1 text-lg font-semibold text-slate-900">
+                                {q.estimatedMinutes ?? 0}
+                                <span className="ml-0.5 text-xs font-normal text-slate-500">m</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                <ListOrdered className="h-3 w-3" />
+                                Cap.
+                            </div>
+                            <div className="mt-1 text-lg font-semibold text-slate-900">
+                                {q.maxCapacity}
+                            </div>
+                        </div>
+                    </div>
+
+                    {q.currentlyServing && !locked && (
+                        <div className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-xs">
+                            <span className="text-slate-600">Now serving: </span>
+                            <span className="font-mono font-semibold text-brand-700">
+                {q.currentlyServing}
+              </span>
+                        </div>
+                    )}
+
+                    <div className="mt-auto pt-5">
+                        {locked ? (
+                            <div className="rounded-lg bg-slate-200 px-4 py-2 text-center text-sm font-medium text-slate-500">
+                                Complete the current step to unlock
+                            </div>
+                        ) : (
+                            <Button
+                                fullWidth
+                                onClick={() => joinQueue(q.id)}
+                                disabled={!!activeTicket || joining === q.id}
+                                loading={joining === q.id}
+                            >
+                                {activeTicket ? 'Finish current ticket first' : 'Join queue'}
+                            </Button>
+                        )}
+                    </div>
+                </Card>
+            </motion.div>
+        )
+    }
+
     return (
         <div>
             <div className="mb-6">
@@ -171,7 +288,7 @@ export default function QueuesTab() {
                                     <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                                     <span>
                     {activeTicket.status === 'WAITING'
-                        ? "Keep this page open or check back — you'll be notified when it's your turn. Head to the service point when your position reaches 1."
+                        ? "Keep this page open or check back — you'll be notified when it's your turn."
                         : activeTicket.status === 'CALLED'
                             ? "It's your turn! Proceed to the service point now."
                             : activeTicket.status === 'SERVING'
@@ -221,8 +338,7 @@ export default function QueuesTab() {
                                 </h3>
                                 <p className="mt-1 text-xs text-amber-800">
                                     This is a required {activeWorkflow.totalSteps}-step clearance. You must
-                                    complete each step in order. Only the{' '}
-                                    <strong>current step's queue</strong> can be joined until you finish.
+                                    complete each step in order.
                                 </p>
                             </div>
                         </div>
@@ -273,7 +389,7 @@ export default function QueuesTab() {
                             <ArrowRight className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                             <span>
                 Join the <strong>{activeWorkflow.currentQueueName}</strong> queue below
-                to continue. The other queues are locked until you complete this step.
+                to continue.
               </span>
                         </div>
                     </div>
@@ -284,7 +400,7 @@ export default function QueuesTab() {
                 <h3 className="text-base font-semibold text-slate-900">Available queues</h3>
                 <p className="mt-1 text-xs text-slate-500">
                     {activeWorkflow
-                        ? `Locked queues are part of your active workflow. Complete the current step first.`
+                        ? 'Locked queues are part of your active workflow. Complete the current step first.'
                         : `Pick a queue below to join. When you join, you get a ticket number like B-001 — the letter is the queue's initial, the number is your place in line for today.`}
                 </p>
             </div>
@@ -326,138 +442,15 @@ export default function QueuesTab() {
                                 )}
                             </div>
 
-                            {/* Queues in this department */}
                             <motion.div
                                 variants={stagger(0, 0.04)}
                                 initial="initial"
                                 animate="animate"
                                 className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
                             >
-                                {group.queues.map((q) => {
-                                    const locked = isQueueLocked(q.id)
-                                    const current = isQueueCurrent(q.id)
-
-                                    return (
-                                        <motion.div
-                                            key={q.id}
-                                            variants={staggerItem}
-                                            whileHover={!locked ? { y: -3 } : {}}
-                                            transition={{ duration: 0.2 }}
-                                        >
-                                            <Card
-                                                className={`relative flex h-full flex-col ${
-                                                    locked
-                                                        ? 'border-slate-200 bg-slate-50 opacity-75'
-                                                        : current
-                                                            ? 'border-amber-300 ring-2 ring-amber-200'
-                                                            : ''
-                                                }`}
-                                            >
-                                                {locked && (
-                                                    <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase text-slate-600">
-                                                        <Lock className="h-3 w-3" />
-                                                        Locked
-                                                    </div>
-                                                )}
-                                                {current && (
-                                                    <div className="absolute right-3 top-3 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold uppercase text-white">
-                                                        Your next step
-                                                    </div>
-                                                )}
-
-                                                <div
-                                                    className={`flex items-start justify-between gap-3 ${
-                                                        locked || current ? 'pr-24' : ''
-                                                    }`}
-                                                >
-                                                    <div className="min-w-0">
-                                                        <h3
-                                                            className={`text-base font-semibold ${
-                                                                locked ? 'text-slate-500' : 'text-slate-900'
-                                                            }`}
-                                                        >
-                                                            {q.name}
-                                                        </h3>
-                                                    </div>
-                                                </div>
-
-                                                {q.location && (
-                                                    <p className="mt-2 flex items-center gap-1.5 text-sm text-slate-500">
-                                                        <MapPin className="h-3.5 w-3.5" />
-                                                        {q.location}
-                                                    </p>
-                                                )}
-
-                                                {q.description && (
-                                                    <p className="mt-3 line-clamp-2 text-sm text-slate-600">
-                                                        {q.description}
-                                                    </p>
-                                                )}
-
-                                                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4">
-                                                    <div>
-                                                        <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
-                                                            <Users className="h-3 w-3" />
-                                                            In queue
-                                                        </div>
-                                                        <div className="mt-1 text-lg font-semibold text-slate-900">
-                                                            {q.waitingCount ?? 0}
-                                                        </div>
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
-                                                            <Clock className="h-3 w-3" />
-                                                            ~Wait
-                                                        </div>
-                                                        <div className="mt-1 text-lg font-semibold text-slate-900">
-                                                            {q.estimatedMinutes ?? 0}
-                                                            <span className="ml-0.5 text-xs font-normal text-slate-500">
-                                m
-                              </span>
-                                                        </div>
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
-                                                            <ListOrdered className="h-3 w-3" />
-                                                            Cap.
-                                                        </div>
-                                                        <div className="mt-1 text-lg font-semibold text-slate-900">
-                                                            {q.maxCapacity}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {q.currentlyServing && !locked && (
-                                                    <div className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-xs">
-                                                        <span className="text-slate-600">Now serving: </span>
-                                                        <span className="font-mono font-semibold text-brand-700">
-                              {q.currentlyServing}
-                            </span>
-                                                    </div>
-                                                )}
-
-                                                <div className="mt-auto pt-5">
-                                                    {locked ? (
-                                                        <div className="rounded-lg bg-slate-200 px-4 py-2 text-center text-sm font-medium text-slate-500">
-                                                            Complete the current step to unlock
-                                                        </div>
-                                                    ) : (
-                                                        <Button
-                                                            fullWidth
-                                                            onClick={() => joinQueue(q.id)}
-                                                            disabled={!!activeTicket || joining === q.id}
-                                                            loading={joining === q.id}
-                                                        >
-                                                            {activeTicket
-                                                                ? 'Finish current ticket first'
-                                                                : 'Join queue'}
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </Card>
-                                        </motion.div>
-                                    )
-                                })}
+                                {group.queues.map((q) => (
+                                    <QueueCard key={q.id} q={q} />
+                                ))}
                             </motion.div>
                         </motion.section>
                     ))}

@@ -10,15 +10,21 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import VerifyEmail from './pages/VerifyEmail'
 import Profile from './pages/Profile'
 import StudentDashboard from './pages/StudentDashboard'
 import StaffDashboard from './pages/StaffDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import SuperAdminDashboard from './pages/SuperAdminDashboard'
 import NotFound from './pages/NotFound'
-import VerifyEmail from './pages/VerifyEmail'
 
-const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email']
+const AUTH_ROUTES = [
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/reset-password',
+    '/verify-email',
+]
 
 export default function App() {
     const location = useLocation()
@@ -27,7 +33,7 @@ export default function App() {
     return (
         <ErrorBoundary>
             <ThemeProvider>
-                <div className="flex min-h-screen flex-col bg-slate-50">
+                <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
                     <ImpersonationBanner />
                     {!hideNavbar && <Navbar />}
                     <main className="flex-1">

@@ -38,6 +38,10 @@ public class QueueService {
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
 
+    // ============================================================
+    //  QUEUES
+    // ============================================================
+
     @Transactional(readOnly = true)
     public List<QueueResponse> listQueues(Long universityId, boolean onlyActive) {
         List<Queue> queues = onlyActive
@@ -64,7 +68,8 @@ public class QueueService {
                 .university(university)
                 .name(request.getName())
                 .description(request.getDescription())
-                .department(request.getDepartment())
+                .department(request.getDepartment() != null ? request.getDepartment().trim() : null)
+                .subDepartment(request.getSubDepartment() != null ? request.getSubDepartment().trim() : null)
                 .location(request.getLocation())
                 .opensAt(request.getOpensAt() != null ? request.getOpensAt() : LocalTime.of(8, 0))
                 .closesAt(request.getClosesAt() != null ? request.getClosesAt() : LocalTime.of(17, 0))
@@ -95,7 +100,8 @@ public class QueueService {
 
         if (request.getName() != null) queue.setName(request.getName());
         if (request.getDescription() != null) queue.setDescription(request.getDescription());
-        if (request.getDepartment() != null) queue.setDepartment(request.getDepartment());
+        if (request.getDepartment() != null) queue.setDepartment(request.getDepartment().trim());
+        if (request.getSubDepartment() != null) queue.setSubDepartment(request.getSubDepartment().trim());
         if (request.getLocation() != null) queue.setLocation(request.getLocation());
         if (request.getIsActive() != null) queue.setIsActive(request.getIsActive());
         if (request.getOpensAt() != null) queue.setOpensAt(request.getOpensAt());
@@ -125,6 +131,10 @@ public class QueueService {
                 AuditAction.QUEUE_DELETED, "Queue", queueId,
                 "{\"name\":\"" + queue.getName() + "\"}");
     }
+
+    // ============================================================
+    //  STAFF
+    // ============================================================
 
     @Transactional
     public QueueResponse.StaffInfo createStaff(Long universityId, CreateStaffRequest request) {
@@ -215,12 +225,13 @@ public class QueueService {
                 .toList();
     }
 
-    // ---------- HELPERS ----------
+    // ============================================================
+    //  HELPERS
+    // ============================================================
 
     private QueueResponse enrichWithStaff(Queue queue) {
         QueueResponse response = QueueResponse.from(queue);
 
-        // Staff
         List<QueueStaff> assignments = queueStaffRepository.findByQueueId(queue.getId());
         List<QueueResponse.StaffInfo> staffList = assignments.stream()
                 .map(qs -> QueueResponse.StaffInfo.builder()
@@ -232,7 +243,6 @@ public class QueueService {
         response.setStaff(staffList);
         response.setStaffCount(staffList.size());
 
-        // Live queue stats
         long waiting = ticketRepository.countByQueueAndStatus(queue.getId(), TicketStatus.WAITING);
         long waitlisted = ticketRepository.countByQueueAndStatus(queue.getId(), TicketStatus.WAITLISTED);
         response.setWaitingCount(waiting);

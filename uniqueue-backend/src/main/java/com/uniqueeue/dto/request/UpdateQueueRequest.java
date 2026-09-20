@@ -17,6 +17,9 @@ public class UpdateQueueRequest {
     @Size(max = 100)
     private String department;
 
+    @Size(max = 100)
+    private String subDepartment;
+
     @Size(max = 255)
     private String location;
 

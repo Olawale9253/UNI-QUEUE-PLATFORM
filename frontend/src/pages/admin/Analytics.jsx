@@ -4,14 +4,12 @@ import {
     Ticket,
     CheckCircle2,
     Users,
-    LayoutGrid,
     TrendingUp,
     Clock,
     Star,
     AlertCircle,
     ArrowUpRight,
     ArrowDownRight,
-    Trophy,
     Building2,
 } from 'lucide-react'
 import {
@@ -25,11 +23,9 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    Legend,
 } from 'recharts'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
-import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import PageHeader from '../../components/layout/PageHeader'
 import ExportButton from '../../components/ui/ExportButton'
@@ -37,10 +33,6 @@ import { SkeletonStats, SkeletonCard } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { groupQueuesByDepartment } from '../../lib/groupQueues'
 import { stagger, staggerItem } from '../../lib/motion'
-
-// ─────────────────────────────────────────────────────────────
-//  Helpers
-// ─────────────────────────────────────────────────────────────
 
 function percentChange(current, previous) {
     if (previous === 0) return current > 0 ? 100 : 0
@@ -74,10 +66,6 @@ const STATUS_LABELS = {
     CANCELLED: 'Cancelled',
     TRANSFERRED: 'Transferred',
 }
-
-// ─────────────────────────────────────────────────────────────
-//  Sub-components
-// ─────────────────────────────────────────────────────────────
 
 function KpiCard({ label, value, delta, icon: Icon, accent }) {
     const isPositive = delta >= 0
@@ -150,10 +138,6 @@ function ChartTooltip({ active, payload, label }) {
     )
 }
 
-// ─────────────────────────────────────────────────────────────
-//  Main
-// ─────────────────────────────────────────────────────────────
-
 export default function Analytics() {
     const { push } = useToastStore()
     const [analytics, setAnalytics] = useState(null)
@@ -205,12 +189,10 @@ export default function Analytics() {
         'New users': d.newUsers,
     }))
 
-    // Role pie data
     const roleData = Object.entries(analytics.roleDistribution || {})
         .map(([name, value]) => ({ name, value }))
         .filter((d) => d.value > 0)
 
-    // Status pie data (only non-zero statuses)
     const statusData = Object.entries(analytics.statusBreakdown || {})
         .map(([key, value]) => ({
             name: STATUS_LABELS[key] || key,
@@ -219,13 +201,11 @@ export default function Analytics() {
         }))
         .filter((d) => d.value > 0)
 
-    // Group queues by department for the summary table
     const departmentGroups =
         analytics.queues && analytics.queues.length > 0
             ? groupQueuesByDepartment(
                 analytics.queues.map((q) => ({
                     ...q,
-                    // helper expects `waitingCount`
                     waitingCount: q.waitingNow,
                 }))
             )
@@ -241,6 +221,7 @@ export default function Analytics() {
                         rows={analytics.queues || []}
                         columns={[
                             { key: 'queueName', label: 'Queue' },
+                            { key: 'department', label: 'Department' },
                             { key: 'ticketsToday', label: 'Tickets Today' },
                             { key: 'servedToday', label: 'Served Today' },
                             { key: 'waitingNow', label: 'Waiting Now' },
@@ -352,27 +333,9 @@ export default function Analytics() {
                                 allowDecimals={false}
                             />
                             <Tooltip content={<ChartTooltip />} />
-                            <Area
-                                type="monotone"
-                                dataKey="Joined"
-                                stroke="#4f46e5"
-                                strokeWidth={2}
-                                fill="url(#aJoined)"
-                            />
-                            <Area
-                                type="monotone"
-                                dataKey="Completed"
-                                stroke="#10b981"
-                                strokeWidth={2}
-                                fill="url(#aCompleted)"
-                            />
-                            <Area
-                                type="monotone"
-                                dataKey="New users"
-                                stroke="#0ea5e9"
-                                strokeWidth={2}
-                                fill="url(#aNewUsers)"
-                            />
+                            <Area type="monotone" dataKey="Joined" stroke="#4f46e5" strokeWidth={2} fill="url(#aJoined)" />
+                            <Area type="monotone" dataKey="Completed" stroke="#10b981" strokeWidth={2} fill="url(#aCompleted)" />
+                            <Area type="monotone" dataKey="New users" stroke="#0ea5e9" strokeWidth={2} fill="url(#aNewUsers)" />
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>
@@ -380,7 +343,6 @@ export default function Analytics() {
 
             {/* ─── PIE CHARTS ROW ─── */}
             <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {/* Role distribution */}
                 <Card>
                     <div className="mb-4">
                         <h3 className="text-base font-semibold text-slate-900">User distribution</h3>
@@ -406,10 +368,7 @@ export default function Analytics() {
                                             strokeWidth={0}
                                         >
                                             {roleData.map((entry) => (
-                                                <Cell
-                                                    key={entry.name}
-                                                    fill={ROLE_COLORS[entry.name] || '#94a3b8'}
-                                                />
+                                                <Cell key={entry.name} fill={ROLE_COLORS[entry.name] || '#94a3b8'} />
                                             ))}
                                         </Pie>
                                         <Tooltip content={<ChartTooltip />} />
@@ -429,9 +388,7 @@ export default function Analytics() {
                       />
                                             <span className="flex-1 truncate text-slate-600">{item.name}</span>
                                             <span className="font-medium text-slate-900">{item.value}</span>
-                                            <span className="w-10 text-right text-xs text-slate-500">
-                        {pct}%
-                      </span>
+                                            <span className="w-10 text-right text-xs text-slate-500">{pct}%</span>
                                         </li>
                                     )
                                 })}
@@ -440,7 +397,6 @@ export default function Analytics() {
                     )}
                 </Card>
 
-                {/* Ticket status breakdown */}
                 <Card>
                     <div className="mb-4">
                         <h3 className="text-base font-semibold text-slate-900">Ticket status</h3>
@@ -484,13 +440,9 @@ export default function Analytics() {
                           className="h-2.5 w-2.5 shrink-0 rounded-full"
                           style={{ backgroundColor: item.color }}
                       />
-                                            <span className="flex-1 truncate text-slate-600">
-                        {item.name}
-                      </span>
+                                            <span className="flex-1 truncate text-slate-600">{item.name}</span>
                                             <span className="font-medium text-slate-900">{item.value}</span>
-                                            <span className="w-10 text-right text-xs text-slate-500">
-                        {pct}%
-                      </span>
+                                            <span className="w-10 text-right text-xs text-slate-500">{pct}%</span>
                                         </li>
                                     )
                                 })}
@@ -556,7 +508,7 @@ export default function Analytics() {
                 </Card>
             </div>
 
-            {/* ─── PER-DEPARTMENT SUMMARY ─── */}
+            {/* ─── DEPARTMENT SUMMARY ─── */}
             {departmentGroups.length > 0 && (
                 <Card padded={false} className="mb-6">
                     <div className="border-b border-slate-100 px-6 py-4">

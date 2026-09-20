@@ -8,6 +8,7 @@ import {
     Plus,
     MapPin,
     UserCheck,
+    Building2,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -20,6 +21,7 @@ import PageHeader from '../../components/layout/PageHeader'
 import { SkeletonStats, SkeletonQueueGrid } from '../../components/ui/Skeleton'
 import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../store/toastStore'
+import { groupQueuesByDepartment } from '../../lib/groupQueues'
 import { stagger, staggerItem, expand } from '../../lib/motion'
 
 export default function Overview() {
@@ -33,6 +35,7 @@ export default function Overview() {
     const [creating, setCreating] = useState(false)
     const [form, setForm] = useState({
         name: '',
+        department: '',
         location: '',
         maxCapacity: 50,
         averageServiceMinutes: 5,
@@ -66,13 +69,21 @@ export default function Overview() {
         try {
             await api.post('/api/admin/queues', {
                 ...form,
+                department: form.department?.trim() || null,
                 maxCapacity: Number(form.maxCapacity),
                 averageServiceMinutes: Number(form.averageServiceMinutes),
                 opensAt: '00:00:00',
                 closesAt: '23:59:59',
             })
             push({ type: 'success', message: 'Queue created' })
-            setForm({ name: '', location: '', maxCapacity: 50, averageServiceMinutes: 5, allowWaitlist: true })
+            setForm({
+                name: '',
+                department: '',
+                location: '',
+                maxCapacity: 50,
+                averageServiceMinutes: 5,
+                allowWaitlist: true,
+            })
             setShowCreate(false)
             await load()
         } catch (err) {
@@ -92,6 +103,47 @@ export default function Overview() {
             </>
         )
     }
+
+    const groups = groupQueuesByDepartment(queues)
+
+    const QueueCard = ({ q }) => (
+        <motion.div variants={staggerItem}>
+            <Card className="h-full">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                    <h3 className="text-base font-semibold text-slate-900">{q.name}</h3>
+                    <Badge variant={q.isActive ? 'success' : 'default'}>
+                        {q.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                </div>
+                {q.location && (
+                    <p className="flex items-center gap-1.5 text-sm text-slate-500">
+                        <MapPin className="h-3.5 w-3.5" />
+                        {q.location}
+                    </p>
+                )}
+                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-xs">
+                    <div>
+                        <div className="text-slate-500">Capacity</div>
+                        <div className="mt-0.5 text-sm font-medium text-slate-900">
+                            {q.maxCapacity}
+                        </div>
+                    </div>
+                    <div>
+                        <div className="text-slate-500">Avg. min</div>
+                        <div className="mt-0.5 text-sm font-medium text-slate-900">
+                            {q.averageServiceMinutes}
+                        </div>
+                    </div>
+                    <div>
+                        <div className="text-slate-500">Staff</div>
+                        <div className="mt-0.5 text-sm font-medium text-slate-900">
+                            {q.staffCount ?? 0}
+                        </div>
+                    </div>
+                </div>
+            </Card>
+        </motion.div>
+    )
 
     return (
         <>
@@ -146,7 +198,7 @@ export default function Overview() {
                                     label="Queue name"
                                     value={form.name}
                                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                                    placeholder="e.g. Bursary Payments"
+                                    placeholder="e.g. Fee Payments"
                                     required
                                 />
                                 <Input
@@ -154,6 +206,13 @@ export default function Overview() {
                                     value={form.location}
                                     onChange={(e) => setForm({ ...form, location: e.target.value })}
                                     placeholder="e.g. Block A, Room 12"
+                                />
+                                <Input
+                                    label="Department"
+                                    value={form.department}
+                                    onChange={(e) => setForm({ ...form, department: e.target.value })}
+                                    placeholder="e.g. Bursary"
+                                    icon={Building2}
                                 />
                                 <Input
                                     label="Capacity per day"
@@ -177,7 +236,7 @@ export default function Overview() {
                                             onChange={(e) =>
                                                 setForm({ ...form, allowWaitlist: e.target.checked })
                                             }
-                                            className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                            className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                                         />
                                         Allow students to join a waitlist when the queue is full
                                     </label>
@@ -193,76 +252,67 @@ export default function Overview() {
                 )}
             </AnimatePresence>
 
-            <div className="mb-8">
-                <h2 className="mb-4 text-base font-semibold text-slate-900">Queues</h2>
-                {queues.length === 0 ? (
-                    <EmptyState
-                        icon={LayoutGrid}
-                        title="No queues yet"
-                        description="Create your first queue to start serving students."
-                        action={
-                            <Button icon={Plus} onClick={() => setShowCreate(true)}>
-                                Create queue
-                            </Button>
-                        }
-                    />
-                ) : (
-                    <motion.div
-                        variants={stagger(0, 0.05)}
-                        initial="initial"
-                        animate="animate"
-                        className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
-                    >
-                        {queues.map((q) => (
-                            <motion.div
-                                key={q.id}
-                                variants={staggerItem}
-                                whileHover={{ y: -3 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                <Card className="h-full">
-                                    <div className="mb-3 flex items-start justify-between gap-3">
-                                        <h3 className="text-base font-semibold text-slate-900">
-                                            {q.name}
-                                        </h3>
-                                        <Badge variant={q.isActive ? 'success' : 'default'}>
-                                            {q.isActive ? 'Active' : 'Inactive'}
-                                        </Badge>
-                                    </div>
-                                    {q.location && (
-                                        <p className="flex items-center gap-1.5 text-sm text-slate-500">
-                                            <MapPin className="h-3.5 w-3.5" />
-                                            {q.location}
-                                        </p>
-                                    )}
-                                    <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-xs">
-                                        <div>
-                                            <div className="text-slate-500">Capacity</div>
-                                            <div className="mt-0.5 text-sm font-medium text-slate-900">
-                                                {q.maxCapacity}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div className="text-slate-500">Avg. min</div>
-                                            <div className="mt-0.5 text-sm font-medium text-slate-900">
-                                                {q.averageServiceMinutes}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div className="text-slate-500">Staff</div>
-                                            <div className="mt-0.5 text-sm font-medium text-slate-900">
-                                                {q.staffCount ?? 0}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Card>
-                            </motion.div>
-                        ))}
-                    </motion.div>
-                )}
+            <div className="mb-4">
+                <h2 className="text-base font-semibold text-slate-900">Queues</h2>
             </div>
 
-            <div>
+            {queues.length === 0 ? (
+                <EmptyState
+                    icon={LayoutGrid}
+                    title="No queues yet"
+                    description="Create your first queue to start serving students."
+                    action={
+                        <Button icon={Plus} onClick={() => setShowCreate(true)}>
+                            Create queue
+                        </Button>
+                    }
+                />
+            ) : (
+                <div className="space-y-8">
+                    {groups.map((group, groupIdx) => (
+                        <motion.section
+                            key={group.key}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: groupIdx * 0.05 }}
+                        >
+                            {/* Department header */}
+                            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                                <div className="flex items-center gap-2">
+                                    <Building2 className="h-4 w-4 text-brand-600" />
+                                    <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-700">
+                                        {group.label}
+                                    </h4>
+                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+                    {group.queues.length}{' '}
+                                        {group.queues.length === 1 ? 'queue' : 'queues'}
+                  </span>
+                                </div>
+                                {group.waitingTotal > 0 && (
+                                    <span className="flex items-center gap-1 text-xs text-slate-500">
+                    <Users className="h-3 w-3" />
+                                        {group.waitingTotal} waiting
+                  </span>
+                                )}
+                            </div>
+
+                            <motion.div
+                                variants={stagger(0, 0.05)}
+                                initial="initial"
+                                animate="animate"
+                                className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+                            >
+                                {group.queues.map((q) => (
+                                    <QueueCard key={q.id} q={q} />
+                                ))}
+                            </motion.div>
+                        </motion.section>
+                    ))}
+                </div>
+            )}
+
+            {/* Staff list */}
+            <div className="mt-10">
                 <h2 className="mb-4 text-base font-semibold text-slate-900">Staff members</h2>
                 {staff.length === 0 ? (
                     <EmptyState

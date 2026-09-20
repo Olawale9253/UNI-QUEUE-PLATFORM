@@ -14,6 +14,7 @@ public class QueueResponse {
     private String name;
     private String description;
     private String department;
+    private String subDepartment;
     private String location;
     private Boolean isActive;
     private LocalTime opensAt;
@@ -56,6 +57,7 @@ public class QueueResponse {
                 .name(q.getName())
                 .description(q.getDescription())
                 .department(q.getDepartment())
+                .subDepartment(q.getSubDepartment())
                 .location(q.getLocation())
                 .isActive(q.getIsActive())
                 .opensAt(q.getOpensAt())
