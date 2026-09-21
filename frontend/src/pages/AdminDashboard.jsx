@@ -8,7 +8,7 @@ import {
     Route as RouteIcon,
     Settings as SettingsIcon,
 } from 'lucide-react'
-import MobileTabSelect from '../components/layout/MobileTabSelect'
+import DashboardLayout from '../components/layout/DashboardLayout'
 import Overview from './admin/Overview'
 import Analytics from './admin/Analytics'
 import Feedback from './admin/Feedback'
@@ -29,9 +29,7 @@ const tabs = [
 
 export default function AdminDashboard() {
     return (
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-            <MobileTabSelect tabs={tabs} />
-
+        <DashboardLayout tabs={tabs}>
             <Routes>
                 <Route index element={<Overview />} />
                 <Route path="analytics" element={<Analytics />} />
@@ -42,6 +40,6 @@ export default function AdminDashboard() {
                 <Route path="settings" element={<Settings />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
             </Routes>
-        </div>
+        </DashboardLayout>
     )
 }

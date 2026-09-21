@@ -23,8 +23,7 @@ import Input from '../components/ui/Input'
 import Badge from '../components/ui/Badge'
 import StatCard from '../components/ui/StatCard'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
-import PageHeader from '../components/layout/PageHeader'
-import MobileTabSelect from '../components/layout/MobileTabSelect'
+import DashboardLayout from '../components/layout/DashboardLayout'
 import { SkeletonStats } from '../components/ui/Skeleton'
 import { useToastStore } from '../store/toastStore'
 import { useAuthStore } from '../store/authStore'
@@ -430,14 +429,11 @@ function UniversitiesTab() {
 
 export default function SuperAdminDashboard() {
     return (
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-            <PageHeader
-                title="Platform Console"
-                description="Manage universities, users, and monitor platform activity"
-            />
-
-            <MobileTabSelect tabs={tabs} />
-
+        <DashboardLayout
+            tabs={tabs}
+            title="Platform Console"
+            description="Manage universities, users, and monitor platform activity"
+        >
             <Routes>
                 <Route index element={<UniversitiesTab />} />
                 <Route path="plans" element={<Plans />} />
@@ -448,6 +444,6 @@ export default function SuperAdminDashboard() {
                 <Route path="audit-logs" element={<AuditLogs />} />
                 <Route path="*" element={<Navigate to="/super-admin" replace />} />
             </Routes>
-        </div>
+        </DashboardLayout>
     )
 }

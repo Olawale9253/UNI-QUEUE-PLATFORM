@@ -6,7 +6,7 @@ import {
     Route as RouteIcon,
     FileText,
 } from 'lucide-react'
-import MobileTabSelect from '../components/layout/MobileTabSelect'
+import DashboardLayout from '../components/layout/DashboardLayout'
 import QueuesTab from './student/QueuesTab'
 import HistoryTab from './student/HistoryTab'
 import AppointmentsTab from './student/AppointmentsTab'
@@ -33,9 +33,7 @@ export default function StudentDashboard() {
     }
 
     return (
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-            <MobileTabSelect tabs={tabs} />
-
+        <DashboardLayout tabs={tabs}>
             <Routes>
                 <Route index element={<QueuesTab />} />
                 <Route path="history" element={<HistoryTab />} />
@@ -44,6 +42,6 @@ export default function StudentDashboard() {
                 <Route path="documents" element={<DocumentsTab />} />
                 <Route path="*" element={<Navigate to="/student" replace />} />
             </Routes>
-        </div>
+        </DashboardLayout>
     )
 }

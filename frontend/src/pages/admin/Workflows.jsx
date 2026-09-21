@@ -190,6 +190,17 @@ export default function Workflows() {
                                     />
                                 </div>
 
+                                <div className="mb-4 flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
+                                    <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
+                                    <div>
+                                        <p className="font-medium">What is this?</p>
+                                        <p className="mt-1 text-xs text-sky-800">
+                                            This is a required multi-step process. Complete each queue in order —
+                                            locked steps unlock as you finish the previous one.
+                                        </p>
+                                    </div>
+                                </div>
+
                                 <div>
                                     <label className="mb-1.5 block text-sm font-medium text-slate-700">
                                         Description
@@ -299,8 +310,8 @@ export default function Workflows() {
             {workflows.length === 0 ? (
                 <EmptyState
                     icon={RouteIcon}
-                    title="No workflows yet"
-                    description="Create a workflow to enforce ordered processing across multiple queues."
+                    title="No active workflows"
+                    description="Workflows are multi-step processes assigned by your university — like clearance or registration — where you must visit several offices in order. When you're assigned one, it will appear here."
                     action={
                         <Button icon={Plus} onClick={() => setShowCreate(true)}>
                             Create workflow
