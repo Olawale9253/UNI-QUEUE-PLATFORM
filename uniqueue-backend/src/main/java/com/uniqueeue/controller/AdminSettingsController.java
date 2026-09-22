@@ -50,8 +50,13 @@ public class AdminSettingsController {
         if (request.getMatricPattern() != null) u.setMatricPattern(request.getMatricPattern());
         if (request.getMatricExample() != null) u.setMatricExample(request.getMatricExample());
         if (request.getMatricDescription() != null) u.setMatricDescription(request.getMatricDescription());
+
+        // ─── Branding ───
         if (request.getLogoUrl() != null) u.setLogoUrl(request.getLogoUrl().trim());
+        if (request.getCampusImageUrl() != null) u.setCampusImageUrl(request.getCampusImageUrl().trim());
+        if (request.getTagline() != null) u.setTagline(request.getTagline().trim());
         if (request.getPrimaryColor() != null) u.setPrimaryColor(request.getPrimaryColor().trim());
+
         if (request.getMaxStaff() != null) u.setMaxStaff(request.getMaxStaff());
         if (request.getMaxQueues() != null) u.setMaxQueues(request.getMaxQueues());
 

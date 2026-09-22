@@ -31,8 +31,20 @@ public class CreateUniversityRequest {
     private String matricPattern;
     private String matricExample;
     private String matricDescription;
+
+    // ─── Branding ───
+    @Size(max = 500)
     private String logoUrl;
+
+    @Size(max = 500)
+    private String campusImageUrl;
+
+    @Size(max = 255)
+    private String tagline;
+
+    @Size(max = 20)
     private String primaryColor;
+
     private String plan;
     private Integer maxStaff;
     private Integer maxQueues;

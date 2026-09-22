@@ -11,6 +11,8 @@ import com.uniqueeue.enums.Role;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
 import com.uniqueeue.model.PlanConfig;
+import com.uniqueeue.model.Queue;
+import com.uniqueeue.model.Ticket;
 import com.uniqueeue.model.University;
 import com.uniqueeue.model.User;
 import com.uniqueeue.repository.*;
@@ -31,13 +33,12 @@ public class UniversityService {
     private final UserRepository userRepository;
     private final QueueRepository queueRepository;
     private final TicketRepository ticketRepository;
+    private final QueueStaffRepository queueStaffRepository;
+    private final FeedbackRepository feedbackRepository;
+    private final NotificationRepository notificationRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
     private final PlanConfigRepository planConfigRepository;
-
-    // ============================================================
-    //  READ
-    // ============================================================
 
     @Transactional(readOnly = true)
     public List<UniversityResponse> listAll() {
@@ -73,6 +74,8 @@ public class UniversityService {
                 .matricExample(request.getMatricExample())
                 .matricDescription(request.getMatricDescription())
                 .logoUrl(request.getLogoUrl())
+                .campusImageUrl(request.getCampusImageUrl())
+                .tagline(request.getTagline())
                 .primaryColor(request.getPrimaryColor() != null ? request.getPrimaryColor() : "#3B82F6")
                 .plan(request.getPlan() != null ? request.getPlan() : "FREE")
                 .maxStaff(request.getMaxStaff() != null ? request.getMaxStaff() : 10)
@@ -115,6 +118,8 @@ public class UniversityService {
         if (request.getMatricExample() != null) u.setMatricExample(request.getMatricExample());
         if (request.getMatricDescription() != null) u.setMatricDescription(request.getMatricDescription());
         if (request.getLogoUrl() != null) u.setLogoUrl(request.getLogoUrl());
+        if (request.getCampusImageUrl() != null) u.setCampusImageUrl(request.getCampusImageUrl());
+        if (request.getTagline() != null) u.setTagline(request.getTagline());
         if (request.getPrimaryColor() != null) u.setPrimaryColor(request.getPrimaryColor());
         if (request.getPlan() != null) u.setPlan(request.getPlan());
         if (request.getMaxStaff() != null) u.setMaxStaff(request.getMaxStaff());
@@ -126,6 +131,10 @@ public class UniversityService {
         auditService.record(null, id, AuditAction.UNIVERSITY_UPDATED, "University", id, null);
         return enrich(saved);
     }
+
+    // ============================================================
+    //  DEACTIVATE / REACTIVATE
+    // ============================================================
 
     @Transactional
     public UniversityResponse deactivate(Long id) {
@@ -149,6 +158,50 @@ public class UniversityService {
 
         auditService.record(null, id, AuditAction.UNIVERSITY_REACTIVATED, "University", id, null);
         return enrich(saved);
+    }
+
+    // ============================================================
+    //  DELETE — destructive, cascades all data
+    // ============================================================
+
+    @Transactional
+    public void delete(Long id) {
+        University u = universityRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("University not found"));
+
+        String code = u.getCode();
+        String name = u.getName();
+
+        // 1. Delete all queues' tickets + feedback + queue staff
+        List<Queue> queues = queueRepository.findByUniversityId(id);
+        for (Queue q : queues) {
+            List<Ticket> tickets = ticketRepository.findByQueueId(q.getId());
+            for (Ticket t : tickets) {
+                feedbackRepository.deleteAll(feedbackRepository.findByTicketId(t.getId()));
+            }
+            ticketRepository.deleteAll(tickets);
+            queueStaffRepository.deleteAll(queueStaffRepository.findByQueueId(q.getId()));
+        }
+
+        // 2. Delete queues
+        queueRepository.deleteAll(queues);
+
+        // 3. Delete users + their notifications
+        List<User> users = userRepository.findByUniversityId(id);
+        for (User user : users) {
+            notificationRepository.deleteAll(notificationRepository.findByUserId(user.getId()));
+        }
+        userRepository.deleteAll(users);
+
+        // 4. Delete university
+        universityRepository.delete(u);
+
+        // 5. Audit (university-scoped record will be orphaned but kept for history)
+        auditService.record(null, null, AuditAction.UNIVERSITY_DELETED,
+                "University", id,
+                "{\"code\":\"" + code + "\",\"name\":\"" + name + "\"}");
+
+        log.info("Deleted university {} ({}) and all associated data", code, id);
     }
 
     // ============================================================

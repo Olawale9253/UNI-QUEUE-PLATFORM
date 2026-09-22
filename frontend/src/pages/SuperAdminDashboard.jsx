@@ -15,6 +15,9 @@ import {
     Megaphone,
     Eye,
     DollarSign,
+    Pencil,
+    Trash2,
+    AlertTriangle,
 } from 'lucide-react'
 import api from '../api/axios'
 import Card from '../components/ui/Card'
@@ -23,6 +26,7 @@ import Input from '../components/ui/Input'
 import Badge from '../components/ui/Badge'
 import StatCard from '../components/ui/StatCard'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
+import ImageUrlInput from '../components/ui/ImageUrlInput'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import { SkeletonStats } from '../components/ui/Skeleton'
 import { useToastStore } from '../store/toastStore'
@@ -47,6 +51,9 @@ const emptyForm = {
     matricPattern: '',
     matricExample: '',
     matricDescription: '',
+    logoUrl: null,
+    campusImageUrl: null,
+    tagline: '',
 }
 
 const emptyAdminForm = {
@@ -76,11 +83,25 @@ function UniversitiesTab() {
     const [universities, setUniversities] = useState([])
     const [analytics, setAnalytics] = useState(null)
     const [loading, setLoading] = useState(true)
+
+    // Create
     const [showCreate, setShowCreate] = useState(false)
     const [creating, setCreating] = useState(false)
     const [form, setForm] = useState(emptyForm)
+
+    // Edit
+    const [editTarget, setEditTarget] = useState(null)
+    const [editing, setEditing] = useState(false)
+    const [editForm, setEditForm] = useState(emptyForm)
+
+    // Delete
+    const [deleteTarget, setDeleteTarget] = useState(null)
+    const [deleting, setDeleting] = useState(false)
+    const [deleteConfirmCode, setDeleteConfirmCode] = useState('')
+
+    // Other
     const [toggling, setToggling] = useState(null)
-    const [confirmTarget, setConfirmTarget] = useState(null)
+    const [confirmDeactivate, setConfirmDeactivate] = useState(null)
     const [addAdminTarget, setAddAdminTarget] = useState(null)
     const [adminForm, setAdminForm] = useState(emptyAdminForm)
     const [addingAdmin, setAddingAdmin] = useState(false)
@@ -105,6 +126,9 @@ function UniversitiesTab() {
         load()
     }, [load])
 
+    // ═══════════════════════════════════════════════════════════
+    //  CREATE
+    // ═══════════════════════════════════════════════════════════
     const createUniversity = async (e) => {
         e.preventDefault()
         setCreating(true)
@@ -121,8 +145,85 @@ function UniversitiesTab() {
         }
     }
 
+    // ═══════════════════════════════════════════════════════════
+    //  EDIT
+    // ═══════════════════════════════════════════════════════════
+    const openEdit = (u) => {
+        setEditTarget(u)
+        setEditForm({
+            name: u.name || '',
+            code: u.code || '',
+            emailDomain: u.emailDomain || '',
+            adminFullName: '',
+            adminEmail: '',
+            adminPassword: '',
+            matricPattern: u.matricPattern || '',
+            matricExample: u.matricExample || '',
+            matricDescription: u.matricDescription || '',
+            logoUrl: u.logoUrl || null,
+            campusImageUrl: u.campusImageUrl || null,
+            tagline: u.tagline || '',
+        })
+    }
+
+    const closeEdit = () => {
+        setEditTarget(null)
+        setEditForm(emptyForm)
+    }
+
+    const saveEdit = async (e) => {
+        e.preventDefault()
+        if (!editTarget) return
+        setEditing(true)
+        try {
+            await api.put(`/api/super-admin/universities/${editTarget.id}`, {
+                name: editForm.name,
+                emailDomain: editForm.emailDomain,
+                matricPattern: editForm.matricPattern,
+                matricExample: editForm.matricExample,
+                matricDescription: editForm.matricDescription,
+                logoUrl: editForm.logoUrl,
+                campusImageUrl: editForm.campusImageUrl,
+                tagline: editForm.tagline,
+            })
+            push({ type: 'success', message: 'University updated' })
+            closeEdit()
+            await load()
+        } catch (err) {
+            push({ type: 'error', message: err.response?.data?.message || 'Failed to update' })
+        } finally {
+            setEditing(false)
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  DELETE
+    // ═══════════════════════════════════════════════════════════
+    const performDelete = async () => {
+        if (!deleteTarget) return
+        if (deleteConfirmCode.trim().toUpperCase() !== deleteTarget.code.toUpperCase()) {
+            push({ type: 'error', message: 'Code does not match' })
+            return
+        }
+        setDeleting(true)
+        try {
+            await api.delete(`/api/super-admin/universities/${deleteTarget.id}`)
+            push({ type: 'success', message: `${deleteTarget.name} deleted` })
+            setDeleteTarget(null)
+            setDeleteConfirmCode('')
+            await load()
+        } catch (err) {
+            push({ type: 'error', message: err.response?.data?.message || 'Failed to delete' })
+        } finally {
+            setDeleting(false)
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  TOGGLE
+    // ═══════════════════════════════════════════════════════════
     const handleToggle = (u) => {
-        if (u.isActive) setConfirmTarget(u)
+        if (u.isActive) setConfirmDeactivate(u)
         else performToggle(u)
     }
 
@@ -136,7 +237,7 @@ function UniversitiesTab() {
                 await api.post(`/api/super-admin/universities/${u.id}/reactivate`)
                 push({ type: 'success', message: `${u.name} reactivated` })
             }
-            setConfirmTarget(null)
+            setConfirmDeactivate(null)
             await load()
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed' })
@@ -242,6 +343,7 @@ function UniversitiesTab() {
                 </div>
             )}
 
+            {/* ───── Register form ───── */}
             <AnimatePresence>
                 {showCreate && (
                     <motion.div
@@ -255,17 +357,58 @@ function UniversitiesTab() {
                             <h3 className="mb-4 text-base font-semibold text-slate-900">
                                 Register a new university
                             </h3>
-                            <form onSubmit={createUniversity} className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <Input label="University name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="University of Lagos" required />
-                                <Input label="Code" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="UNILAG" required />
-                                <Input label="Email domain" value={form.emailDomain} onChange={(e) => setForm({ ...form, emailDomain: e.target.value })} placeholder="@unilag.edu.ng" />
-                                <Input label="Matric pattern (regex)" value={form.matricPattern} onChange={(e) => setForm({ ...form, matricPattern: e.target.value })} placeholder="^\\d{2}/\\d{5}/\\d{3}$" />
-                                <Input label="Matric example" value={form.matricExample} onChange={(e) => setForm({ ...form, matricExample: e.target.value })} placeholder="21/12345/001" />
-                                <Input label="Matric description" value={form.matricDescription} onChange={(e) => setForm({ ...form, matricDescription: e.target.value })} placeholder="YY/XXXXX/XXX" />
-                                <Input label="First admin name" value={form.adminFullName} onChange={(e) => setForm({ ...form, adminFullName: e.target.value })} placeholder="Jane Doe" required />
-                                <Input label="First admin email" type="email" value={form.adminEmail} onChange={(e) => setForm({ ...form, adminEmail: e.target.value })} placeholder="admin@unilag.edu.ng" required />
-                                <Input label="First admin password" type="password" value={form.adminPassword} onChange={(e) => setForm({ ...form, adminPassword: e.target.value })} placeholder="At least 8 characters" required />
-                                <div className="md:col-span-2">
+                            <form onSubmit={createUniversity} className="space-y-6">
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <Input label="University name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="University of Lagos" required />
+                                    <Input label="Code" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="UNILAG" required />
+                                    <Input label="Email domain" value={form.emailDomain} onChange={(e) => setForm({ ...form, emailDomain: e.target.value })} placeholder="@unilag.edu.ng" />
+                                    <Input label="Tagline (optional)" value={form.tagline} onChange={(e) => setForm({ ...form, tagline: e.target.value })} placeholder="Skip the line. Not the service." />
+                                </div>
+
+                                <div>
+                                    <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Matric number format</h4>
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                        <Input label="Pattern (regex)" value={form.matricPattern} onChange={(e) => setForm({ ...form, matricPattern: e.target.value })} placeholder="^\\d{2}/\\d{5}/\\d{3}$" />
+                                        <Input label="Example" value={form.matricExample} onChange={(e) => setForm({ ...form, matricExample: e.target.value })} placeholder="21/12345/001" />
+                                        <Input label="Description" value={form.matricDescription} onChange={(e) => setForm({ ...form, matricDescription: e.target.value })} placeholder="YY/XXXXX/XXX" />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Branding</h4>
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <ImageUrlInput
+                                            label="University logo URL"
+                                            value={form.logoUrl}
+                                            onChange={(url) => setForm({ ...form, logoUrl: url })}
+                                            placeholder="https://unilag.edu.ng/logo.png"
+                                            hint="Right-click the school's logo on their website → Copy image address."
+                                            previewHeight="h-32"
+                                        />
+                                        <ImageUrlInput
+                                            label="Campus photo URL"
+                                            value={form.campusImageUrl}
+                                            onChange={(url) => setForm({ ...form, campusImageUrl: url })}
+                                            placeholder="https://unilag.edu.ng/campus.jpg"
+                                            hint="Paste any public image URL."
+                                            previewHeight="h-32"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">First administrator</h4>
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <Input label="Full name" value={form.adminFullName} onChange={(e) => setForm({ ...form, adminFullName: e.target.value })} placeholder="Jane Doe" required />
+                                        <Input label="Email" type="email" value={form.adminEmail} onChange={(e) => setForm({ ...form, adminEmail: e.target.value })} placeholder="admin@unilag.edu.ng" required />
+                                        <Input label="Password" type="password" value={form.adminPassword} onChange={(e) => setForm({ ...form, adminPassword: e.target.value })} placeholder="At least 8 characters" required />
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end gap-2 pt-2">
+                                    <Button type="button" variant="secondary" onClick={() => { setForm(emptyForm); setShowCreate(false) }} disabled={creating}>
+                                        Cancel
+                                    </Button>
                                     <Button type="submit" loading={creating} disabled={creating}>
                                         Register university
                                     </Button>
@@ -276,6 +419,7 @@ function UniversitiesTab() {
                 )}
             </AnimatePresence>
 
+            {/* ───── Table ───── */}
             <Card padded={false}>
                 <div className="border-b border-slate-100 px-6 py-4">
                     <h3 className="text-sm font-semibold text-slate-900">Registered universities</h3>
@@ -300,7 +444,23 @@ function UniversitiesTab() {
                             {universities.map((u) => (
                                 <motion.tr key={u.id} variants={staggerItem}>
                                     <td className="px-6 py-3 font-mono text-sm text-slate-700">{u.code}</td>
-                                    <td className="px-6 py-3 text-sm text-slate-900">{u.name}</td>
+                                    <td className="px-6 py-3 text-sm text-slate-900">
+                                        <div className="flex items-center gap-3">
+                                            {u.logoUrl ? (
+                                                <img
+                                                    src={u.logoUrl}
+                                                    alt={u.name}
+                                                    className="h-8 w-8 shrink-0 rounded-md object-contain ring-1 ring-slate-200"
+                                                    onError={(e) => { e.target.style.display = 'none' }}
+                                                />
+                                            ) : (
+                                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-semibold text-slate-500">
+                                                    {(u.code || '?').slice(0, 2)}
+                                                </div>
+                                            )}
+                                            <span>{u.name}</span>
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-3 text-sm text-slate-600">{u.plan}</td>
                                     <td className="px-6 py-3">
                                         <Badge variant={u.isActive ? 'success' : 'default'}>
@@ -309,6 +469,14 @@ function UniversitiesTab() {
                                     </td>
                                     <td className="px-6 py-3">
                                         <div className="flex items-center justify-end gap-3">
+                                            <button
+                                                onClick={() => openEdit(u)}
+                                                className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 transition-colors hover:text-slate-900"
+                                            >
+                                                <Pencil className="h-3.5 w-3.5" />
+                                                Edit
+                                            </button>
+
                                             <button
                                                 onClick={() => handleImpersonate(u)}
                                                 disabled={impersonating === u.id}
@@ -334,7 +502,7 @@ function UniversitiesTab() {
                                                 disabled={toggling === u.id}
                                                 className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
                                                     u.isActive
-                                                        ? 'text-rose-600 hover:text-rose-700'
+                                                        ? 'text-amber-600 hover:text-amber-700'
                                                         : 'text-emerald-600 hover:text-emerald-700'
                                                 }`}
                                             >
@@ -350,6 +518,17 @@ function UniversitiesTab() {
                                                     </>
                                                 )}
                                             </button>
+
+                                            <button
+                                                onClick={() => {
+                                                    setDeleteTarget(u)
+                                                    setDeleteConfirmCode('')
+                                                }}
+                                                className="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 transition-colors hover:text-rose-700"
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                                Delete
+                                            </button>
                                         </div>
                                     </td>
                                 </motion.tr>
@@ -359,17 +538,204 @@ function UniversitiesTab() {
                 </div>
             </Card>
 
+            {/* ───── Deactivate confirm ───── */}
             <ConfirmDialog
-                open={!!confirmTarget}
-                onClose={() => !toggling && setConfirmTarget(null)}
-                onConfirm={() => performToggle(confirmTarget)}
-                title={`Deactivate ${confirmTarget?.name}?`}
-                description="All users of this university will be blocked from logging in. Data is preserved and you can reactivate at any time."
+                open={!!confirmDeactivate}
+                onClose={() => !toggling && setConfirmDeactivate(null)}
+                onConfirm={() => performToggle(confirmDeactivate)}
+                title={`Deactivate ${confirmDeactivate?.name}?`}
+                description="All users will be blocked from logging in. Data is preserved and you can reactivate at any time."
                 confirmLabel="Deactivate"
                 variant="danger"
-                loading={toggling === confirmTarget?.id}
+                loading={toggling === confirmDeactivate?.id}
             />
 
+            {/* ═══════════════════════════════════════════════════════════
+                EDIT MODAL
+               ═══════════════════════════════════════════════════════════ */}
+            <AnimatePresence>
+                {editTarget && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => !editing && closeEdit()}
+                            className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm"
+                        />
+                        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.96, y: 12 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.96, y: 12 }}
+                                transition={{ duration: 0.2 }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="relative my-8 w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+                            >
+                                <button
+                                    onClick={() => !editing && closeEdit()}
+                                    className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    aria-label="Close"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                                    Edit {editTarget.name}
+                                </h3>
+                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                    Update the university's details and branding.
+                                </p>
+
+                                <form onSubmit={saveEdit} className="mt-6 space-y-6">
+                                    {/* Basic info */}
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <Input label="University name" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} required />
+                                        <div>
+                                            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Code</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.code}
+                                                readOnly
+                                                className="w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                                            />
+                                            <p className="mt-1 text-xs text-slate-500">Code is immutable — it's used in URLs and IDs.</p>
+                                        </div>
+                                        <Input label="Email domain" value={editForm.emailDomain} onChange={(e) => setEditForm({ ...editForm, emailDomain: e.target.value })} placeholder="@unilag.edu.ng" />
+                                        <Input label="Tagline" value={editForm.tagline} onChange={(e) => setEditForm({ ...editForm, tagline: e.target.value })} placeholder="Skip the line. Not the service." />
+                                    </div>
+
+                                    {/* Matric */}
+                                    <div>
+                                        <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Matric number format</h4>
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                            <Input label="Pattern (regex)" value={editForm.matricPattern} onChange={(e) => setEditForm({ ...editForm, matricPattern: e.target.value })} />
+                                            <Input label="Example" value={editForm.matricExample} onChange={(e) => setEditForm({ ...editForm, matricExample: e.target.value })} />
+                                            <Input label="Description" value={editForm.matricDescription} onChange={(e) => setEditForm({ ...editForm, matricDescription: e.target.value })} />
+                                        </div>
+                                    </div>
+
+                                    {/* Branding */}
+                                    <div>
+                                        <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Branding</h4>
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                            <ImageUrlInput
+                                                label="University logo URL"
+                                                value={editForm.logoUrl}
+                                                onChange={(url) => setEditForm({ ...editForm, logoUrl: url })}
+                                                placeholder="https://unilag.edu.ng/logo.png"
+                                                hint="Right-click the school's logo on their website → Copy image address."
+                                                previewHeight="h-32"
+                                            />
+                                            <ImageUrlInput
+                                                label="Campus photo URL"
+                                                value={editForm.campusImageUrl}
+                                                onChange={(url) => setEditForm({ ...editForm, campusImageUrl: url })}
+                                                placeholder="https://unilag.edu.ng/campus.jpg"
+                                                hint="Paste any public image URL."
+                                                previewHeight="h-32"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+                                        <Button type="button" variant="secondary" onClick={closeEdit} disabled={editing}>
+                                            Cancel
+                                        </Button>
+                                        <Button type="submit" loading={editing} disabled={editing}>
+                                            Save changes
+                                        </Button>
+                                    </div>
+                                </form>
+                            </motion.div>
+                        </div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* ═══════════════════════════════════════════════════════════
+                DELETE MODAL — type-to-confirm
+               ═══════════════════════════════════════════════════════════ */}
+            <AnimatePresence>
+                {deleteTarget && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => !deleting && setDeleteTarget(null)}
+                            className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm"
+                        />
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 8 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 8 }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="relative w-full max-w-md rounded-xl border border-rose-200 bg-white p-6 shadow-2xl dark:border-rose-900 dark:bg-slate-900"
+                            >
+                                <button
+                                    onClick={() => !deleting && setDeleteTarget(null)}
+                                    className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    aria-label="Close"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+
+                                <div className="mb-5 flex items-start gap-4">
+                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-950/40">
+                                        <AlertTriangle className="h-6 w-6 text-rose-600 dark:text-rose-400" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                                            Delete {deleteTarget.name}?
+                                        </h3>
+                                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                            This permanently removes the university and <strong>all</strong> its data — users, queues, tickets, feedback, and notifications. This cannot be undone.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+                                    <label className="mb-2 block text-xs font-medium text-slate-600 dark:text-slate-400">
+                                        Type <span className="rounded bg-slate-200 px-1.5 py-0.5 font-mono font-bold text-slate-900 dark:bg-slate-700 dark:text-slate-100">{deleteTarget.code}</span> to confirm
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={deleteConfirmCode}
+                                        onChange={(e) => setDeleteConfirmCode(e.target.value)}
+                                        placeholder={deleteTarget.code}
+                                        autoFocus
+                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-sm text-slate-900 placeholder-slate-400 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                    />
+                                </div>
+
+                                <div className="mt-5 flex justify-end gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        onClick={() => setDeleteTarget(null)}
+                                        disabled={deleting}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        onClick={performDelete}
+                                        loading={deleting}
+                                        disabled={deleting || deleteConfirmCode.trim().toUpperCase() !== deleteTarget.code.toUpperCase()}
+                                        className="bg-rose-600 hover:bg-rose-700 focus:ring-rose-500"
+                                    >
+                                        Delete permanently
+                                    </Button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* ───── Add admin modal ───── */}
             <AnimatePresence>
                 {addAdminTarget && (
                     <>
@@ -386,7 +752,7 @@ function UniversitiesTab() {
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: 8 }}
                                 onClick={(e) => e.stopPropagation()}
-                                className="relative w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl"
+                                className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 shadow-xl"
                             >
                                 <button
                                     onClick={() => !addingAdmin && setAddAdminTarget(null)}

@@ -88,6 +88,12 @@ public class SuperAdminController {
                 "University reactivated", universityService.reactivate(id)));
     }
 
+    @DeleteMapping("/universities/{id}")
+    public ResponseEntity<ApiResponse<Object>> deleteUniversity(@PathVariable Long id) {
+        universityService.delete(id);
+        return ResponseEntity.ok(ApiResponse.success("University deleted", null));
+    }
+
     @PutMapping("/universities/{id}/features")
     public ResponseEntity<ApiResponse<UniversityResponse>> updateFeatures(
             @PathVariable Long id,

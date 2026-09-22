@@ -33,6 +33,7 @@ public enum AuditAction {
     UNIVERSITY_UPDATED,
     UNIVERSITY_DEACTIVATED,
     UNIVERSITY_REACTIVATED,
+    UNIVERSITY_DELETED,        // ← NEW
     ADMIN_CREATED,
 
     // feedback

@@ -71,4 +71,22 @@ public class User {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    // ───────── Fresher identifiers (only set for FRESHER role) ─────────
+
+    @Column(name = "jamb_reg_number", length = 50, unique = true)
+    private String jambRegNumber;
+
+    @Column(name = "admission_ref", length = 100)
+    private String admissionRef;
+
+    @Column(name = "application_number", length = 100)
+    private String applicationNumber;
+
+    @Column(name = "admitted_student_id")
+    private Long admittedStudentId;
+
+    /** When the fresher provided their matric and upgraded to USER. */
+    @Column(name = "upgraded_to_user_at")
+    private LocalDateTime upgradedToUserAt;
 }

@@ -113,4 +113,50 @@ public class AuthController {
                 .toList();
         return ResponseEntity.ok(ApiResponse.success("Universities", list));
     }
+
+    /**
+     * Public, unauthenticated lookup used by the login page to brand itself
+     * from the visitor's email domain.
+     *
+     * Example: /api/auth/universities/lookup?domain=unilag.edu.ng
+     */
+    @GetMapping("/universities/lookup")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> lookupUniversity(
+            @RequestParam(value = "domain", required = false) String domain) {
+
+        if (domain == null || domain.isBlank()) {
+            return ResponseEntity.ok(ApiResponse.success("No domain provided", null));
+        }
+
+        String normalized = domain.trim().toLowerCase();
+        if (normalized.startsWith("@")) normalized = normalized.substring(1);
+        final String lookupDomain = normalized;
+
+        var uni = universityRepository.findAll().stream()
+                .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                .filter(u -> {
+                    String d = u.getEmailDomain();
+                    if (d == null) return false;
+                    d = d.toLowerCase();
+                    if (d.startsWith("@")) d = d.substring(1);
+                    return d.equals(lookupDomain);
+                })
+                .findFirst()
+                .orElse(null);
+
+        if (uni == null) {
+            return ResponseEntity.ok(ApiResponse.success("Not found", null));
+        }
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("id", uni.getId());
+        data.put("name", uni.getName());
+        data.put("code", uni.getCode());
+        data.put("logoUrl", uni.getLogoUrl());
+        data.put("campusImageUrl", uni.getCampusImageUrl());
+        data.put("tagline", uni.getTagline());
+        data.put("primaryColor", uni.getPrimaryColor());
+
+        return ResponseEntity.ok(ApiResponse.success("University", data));
+    }
 }

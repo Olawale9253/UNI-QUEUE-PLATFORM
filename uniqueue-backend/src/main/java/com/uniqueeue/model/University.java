@@ -39,6 +39,12 @@ public class University {
     @Column(name = "logo_url", length = 500)
     private String logoUrl;
 
+    @Column(name = "campus_image_url", length = 500)
+    private String campusImageUrl;
+
+    @Column(length = 255)
+    private String tagline;
+
     @Column(name = "primary_color", length = 20)
     @Builder.Default
     private String primaryColor = "#3B82F6";
@@ -79,6 +85,69 @@ public class University {
     @Column(name = "feature_documents")
     @Builder.Default
     private Boolean featureDocuments = true;
+
+    // ═══════════════════════════════════════════════════════════
+    //  FRESHER REGISTRATION
+    // ═══════════════════════════════════════════════════════════
+
+    /** Is fresher registration enabled at all? */
+    @Column(name = "fresher_registration_enabled")
+    @Builder.Default
+    private Boolean fresherRegistrationEnabled = true;
+
+    /**
+     * How to verify freshers:
+     * <ul>
+     *   <li>{@code PATTERN} — regex on their ID(s) only. Fast, weak.</li>
+     *   <li>{@code LIST}    — must match a pre-uploaded admission list entry. Strong.</li>
+     *   <li>{@code BOTH}    — pattern must pass AND list must match. Strongest.</li>
+     * </ul>
+     */
+    @Column(name = "fresher_verification_mode", length = 20)
+    @Builder.Default
+    private String fresherVerificationMode = "PATTERN";
+
+    // ─── JAMB Registration Number ───
+    @Column(name = "require_jamb_reg")
+    @Builder.Default
+    private Boolean requireJambReg = true;
+
+    @Column(name = "jamb_reg_pattern")
+    private String jambRegPattern;
+
+    @Column(name = "jamb_reg_example", length = 100)
+    private String jambRegExample;
+
+    @Column(name = "jamb_reg_description")
+    private String jambRegDescription;
+
+    // ─── Admission Reference Number ───
+    @Column(name = "require_admission_ref")
+    @Builder.Default
+    private Boolean requireAdmissionRef = false;
+
+    @Column(name = "admission_ref_pattern")
+    private String admissionRefPattern;
+
+    @Column(name = "admission_ref_example", length = 100)
+    private String admissionRefExample;
+
+    @Column(name = "admission_ref_description")
+    private String admissionRefDescription;
+
+    // ─── Application Number ───
+    @Column(name = "require_application_number")
+    @Builder.Default
+    private Boolean requireApplicationNumber = false;
+
+    @Column(name = "application_number_pattern")
+    private String applicationNumberPattern;
+
+    @Column(name = "application_number_example", length = 100)
+    private String applicationNumberExample;
+
+    @Column(name = "application_number_description")
+    private String applicationNumberDescription;
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)

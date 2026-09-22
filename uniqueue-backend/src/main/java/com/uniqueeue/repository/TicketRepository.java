@@ -26,6 +26,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     List<Ticket> findByUserIdOrderByJoinedAtDesc(Long userId);
 
+    List<Ticket> findByQueueId(Long queueId);
+
     List<Ticket> findByQueueIdOrderByJoinedAtAsc(Long queueId);
 
     @Query("SELECT t FROM Ticket t WHERE t.queue.id = :queueId " +

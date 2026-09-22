@@ -17,6 +17,8 @@ public class UniversityResponse {
     private String matricExample;
     private String matricDescription;
     private String logoUrl;
+    private String campusImageUrl;
+    private String tagline;
     private String primaryColor;
 
     @JsonProperty("isActive")
@@ -32,6 +34,22 @@ public class UniversityResponse {
     private Boolean featureAppointments;
     private Boolean featureWorkflows;
     private Boolean featureDocuments;
+
+    // Fresher registration config
+    private Boolean fresherRegistrationEnabled;
+    private String fresherVerificationMode;
+    private Boolean requireJambReg;
+    private String jambRegPattern;
+    private String jambRegExample;
+    private String jambRegDescription;
+    private Boolean requireAdmissionRef;
+    private String admissionRefPattern;
+    private String admissionRefExample;
+    private String admissionRefDescription;
+    private Boolean requireApplicationNumber;
+    private String applicationNumberPattern;
+    private String applicationNumberExample;
+    private String applicationNumberDescription;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -52,6 +70,8 @@ public class UniversityResponse {
                 .matricExample(u.getMatricExample())
                 .matricDescription(u.getMatricDescription())
                 .logoUrl(u.getLogoUrl())
+                .campusImageUrl(u.getCampusImageUrl())
+                .tagline(u.getTagline())
                 .primaryColor(u.getPrimaryColor())
                 .isActive(u.getIsActive())
                 .plan(u.getPlan())
@@ -62,6 +82,20 @@ public class UniversityResponse {
                 .featureAppointments(u.getFeatureAppointments())
                 .featureWorkflows(u.getFeatureWorkflows())
                 .featureDocuments(u.getFeatureDocuments())
+                .fresherRegistrationEnabled(u.getFresherRegistrationEnabled())
+                .fresherVerificationMode(u.getFresherVerificationMode())
+                .requireJambReg(u.getRequireJambReg())
+                .jambRegPattern(u.getJambRegPattern())
+                .jambRegExample(u.getJambRegExample())
+                .jambRegDescription(u.getJambRegDescription())
+                .requireAdmissionRef(u.getRequireAdmissionRef())
+                .admissionRefPattern(u.getAdmissionRefPattern())
+                .admissionRefExample(u.getAdmissionRefExample())
+                .admissionRefDescription(u.getAdmissionRefDescription())
+                .requireApplicationNumber(u.getRequireApplicationNumber())
+                .applicationNumberPattern(u.getApplicationNumberPattern())
+                .applicationNumberExample(u.getApplicationNumberExample())
+                .applicationNumberDescription(u.getApplicationNumberDescription())
                 .createdAt(u.getCreatedAt())
                 .updatedAt(u.getUpdatedAt())
                 .build();

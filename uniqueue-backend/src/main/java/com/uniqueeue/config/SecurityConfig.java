@@ -89,14 +89,18 @@ public class SecurityConfig {
                                 "/api/auth/register",
                                 "/api/auth/login",
                                 "/api/auth/universities",
+                                "/api/auth/universities/lookup",
                                 "/api/auth/validate-matric",
-                                "/api/auth/forgot-password",     // ← NEW
+                                "/api/auth/forgot-password",
                                 "/api/auth/reset-password",
                                 "/api/auth/verify-email",
-                                "/api/auth/resend-verification", // ← NEW
+                                "/api/auth/resend-verification",
                                 "/h2-console/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // ─── PUBLIC FILE SERVING (GET only) ───
+                        .requestMatchers(HttpMethod.GET, "/api/files/**").permitAll()
 
                         // ─── ROLE-SCOPED ───
                         .requestMatchers("/api/super-admin/**").hasRole("SUPER_ADMIN")
@@ -104,7 +108,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/staff/**").hasRole("STAFF")
                         .requestMatchers("/api/user/**").hasRole("USER")
 
-                        // ─── EVERYTHING ELSE ───
+                        // ─── EVERYTHING ELSE (including POST /api/files/upload) ───
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

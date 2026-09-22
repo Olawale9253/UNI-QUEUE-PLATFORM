@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback } from 'react'
 import {
     Building2,
     Palette,
-    Image as ImageIcon,
     Save,
     GraduationCap,
     Users,
@@ -12,6 +11,7 @@ import api from '../../api/axios'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
+import ImageUrlInput from '../../components/ui/ImageUrlInput'
 import PageHeader from '../../components/layout/PageHeader'
 import { useToastStore } from '../../store/toastStore'
 import { useUniversityStore } from '../../store/universityStore'
@@ -33,11 +33,12 @@ export default function Settings() {
     const { refresh: refreshUniversity } = useUniversityStore()
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [logoError, setLogoError] = useState(false)
 
     const [form, setForm] = useState({
         name: '',
-        logoUrl: '',
+        logoUrl: null,
+        campusImageUrl: null,
+        tagline: '',
         primaryColor: '#4f46e5',
         emailDomain: '',
         matricPattern: '',
@@ -53,7 +54,9 @@ export default function Settings() {
             const u = res.data.data
             setForm({
                 name: u.name || '',
-                logoUrl: u.logoUrl || '',
+                logoUrl: u.logoUrl || null,
+                campusImageUrl: u.campusImageUrl || null,
+                tagline: u.tagline || '',
                 primaryColor: u.primaryColor || '#4f46e5',
                 emailDomain: u.emailDomain || '',
                 matricPattern: u.matricPattern || '',
@@ -62,7 +65,6 @@ export default function Settings() {
                 maxStaff: u.maxStaff ?? 10,
                 maxQueues: u.maxQueues ?? 5,
             })
-            setLogoError(false)
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed to load settings' })
         } finally {
@@ -78,8 +80,6 @@ export default function Settings() {
     useEffect(() => {
         const root = document.documentElement
         const base = form.primaryColor || '#4f46e5'
-        // Lazy import the shade generator from the ThemeProvider
-        // (defined as inline function there; we duplicate the logic here to keep it simple)
         const hexToRgb = (hex) => {
             const h = hex.replace('#', '')
             const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h
@@ -115,7 +115,15 @@ export default function Settings() {
         setSaving(true)
         try {
             await api.put('/api/admin/settings', {
-                ...form,
+                name: form.name,
+                logoUrl: form.logoUrl,
+                campusImageUrl: form.campusImageUrl,
+                tagline: form.tagline,
+                primaryColor: form.primaryColor,
+                emailDomain: form.emailDomain,
+                matricPattern: form.matricPattern,
+                matricExample: form.matricExample,
+                matricDescription: form.matricDescription,
                 maxStaff: Number(form.maxStaff),
                 maxQueues: Number(form.maxQueues),
             })
@@ -160,39 +168,8 @@ export default function Settings() {
                         <div>
                             <h2 className="text-base font-semibold text-slate-900">Branding</h2>
                             <p className="text-xs text-slate-500">
-                                Logo and color shown across the app for your users.
+                                Logo, campus photo and colors shown across the app for your users.
                             </p>
-                        </div>
-                    </div>
-
-                    <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start">
-                        <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 ring-1 ring-slate-200">
-                            {form.logoUrl && !logoError ? (
-                                <img
-                                    src={form.logoUrl}
-                                    alt="Logo preview"
-                                    className="h-full w-full object-contain p-2"
-                                    onError={() => setLogoError(true)}
-                                />
-                            ) : (
-                                <div className="flex flex-col items-center text-slate-400">
-                                    <ImageIcon className="h-7 w-7" />
-                                    <span className="mt-1 text-[10px] uppercase tracking-wide">Preview</span>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex-1">
-                            <Input
-                                label="Logo URL"
-                                value={form.logoUrl}
-                                onChange={(e) => {
-                                    setLogoError(false)
-                                    setField('logoUrl')(e)
-                                }}
-                                placeholder="/logos/unilag.png"
-                                hint="Use /logos/your-file.png for a file in public/logos, or paste a public image URL."
-                            />
                         </div>
                     </div>
 
@@ -205,7 +182,35 @@ export default function Settings() {
                         icon={Building2}
                     />
 
-                    <div className="mb-4">
+                    <Input
+                        label="Tagline"
+                        value={form.tagline}
+                        onChange={setField('tagline')}
+                        placeholder="Skip the line. Not the service."
+                        hint="Short marketing line shown on the login page hero."
+                    />
+
+                    {/* Logo + Campus photo URL inputs */}
+                    <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <ImageUrlInput
+                            label="University logo URL"
+                            value={form.logoUrl}
+                            onChange={(url) => setForm({ ...form, logoUrl: url })}
+                            placeholder="https://unilag.edu.ng/logo.png"
+                            hint="Right-click the logo on your school's website → Copy image address."
+                            previewHeight="h-32"
+                        />
+                        <ImageUrlInput
+                            label="Campus photo URL"
+                            value={form.campusImageUrl}
+                            onChange={(url) => setForm({ ...form, campusImageUrl: url })}
+                            placeholder="https://unilag.edu.ng/campus.jpg"
+                            hint="Paste any public image URL of your campus."
+                            previewHeight="h-32"
+                        />
+                    </div>
+
+                    <div className="mt-4">
                         <label className="mb-1.5 block text-sm font-medium text-slate-700">
                             Primary color
                         </label>
@@ -234,8 +239,8 @@ export default function Settings() {
                                     className="h-5 w-5 cursor-pointer rounded border-0 bg-transparent p-0"
                                 />
                                 <span className="font-mono text-xs text-slate-600">
-                  {form.primaryColor}
-                </span>
+                                    {form.primaryColor}
+                                </span>
                             </label>
                         </div>
                         <p className="mt-1.5 text-xs text-slate-500">

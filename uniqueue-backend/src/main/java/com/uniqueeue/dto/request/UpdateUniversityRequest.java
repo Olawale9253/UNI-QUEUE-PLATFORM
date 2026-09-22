@@ -6,6 +6,13 @@ import lombok.*;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class UpdateUniversityRequest {
 
+
+    @Size(max = 500)
+    private String campusImageUrl;
+
+    @Size(max = 255)
+    private String tagline;
+
     @Size(max = 255)
     private String name;
 
@@ -15,6 +22,7 @@ public class UpdateUniversityRequest {
     private String matricPattern;
     private String matricExample;
     private String matricDescription;
+    @Size(max = 500)
     private String logoUrl;
     private String primaryColor;
     private String plan;

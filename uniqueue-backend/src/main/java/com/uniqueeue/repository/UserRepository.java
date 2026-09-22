@@ -21,13 +21,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByUniversityIdAndRole(Long universityId, Role role);
     List<User> findByUniversityId(Long universityId);
 
-    /**
-     * Global user search with optional filters.
-     * Uses JOIN FETCH to eagerly load university — prevents LazyInitializationException
-     * when GlobalUserResponse.from() accesses university data outside a session.
-     *
-     * Note: The count query is separate because JOIN FETCH is not allowed in count queries.
-     */
     @Query(
             value = """
                     SELECT u FROM User u

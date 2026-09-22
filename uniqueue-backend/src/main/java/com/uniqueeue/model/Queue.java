@@ -83,4 +83,9 @@ public class Queue {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+
+    @Column(name = "matric_required")
+    @Builder.Default
+    private Boolean matricRequired = false;
 }
