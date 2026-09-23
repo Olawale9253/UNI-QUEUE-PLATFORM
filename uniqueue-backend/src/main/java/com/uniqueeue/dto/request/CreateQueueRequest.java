@@ -37,4 +37,10 @@ public class CreateQueueRequest {
 
     @Min(value = 0, message = "Max waitlist size can't be negative")
     private Integer maxWaitlistSize;
+
+    /**
+     * If true, freshers can't join this queue until they've upgraded to a
+     * full USER by providing a matric number. Defaults to false server-side.
+     */
+    private Boolean matricRequired;
 }

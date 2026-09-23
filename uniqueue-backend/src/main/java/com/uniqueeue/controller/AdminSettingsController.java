@@ -43,9 +43,8 @@ public class AdminSettingsController {
         University u = universityRepository.findById(principal.getUniversityId())
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
 
-        if (request.getName() != null && !request.getName().isBlank()) {
-            u.setName(request.getName().trim());
-        }
+        // ─── Identity / basics ───
+        if (request.getName() != null && !request.getName().isBlank()) u.setName(request.getName().trim());
         if (request.getEmailDomain() != null) u.setEmailDomain(request.getEmailDomain().trim());
         if (request.getMatricPattern() != null) u.setMatricPattern(request.getMatricPattern());
         if (request.getMatricExample() != null) u.setMatricExample(request.getMatricExample());
@@ -57,8 +56,30 @@ public class AdminSettingsController {
         if (request.getTagline() != null) u.setTagline(request.getTagline().trim());
         if (request.getPrimaryColor() != null) u.setPrimaryColor(request.getPrimaryColor().trim());
 
+        // ─── Limits ───
         if (request.getMaxStaff() != null) u.setMaxStaff(request.getMaxStaff());
         if (request.getMaxQueues() != null) u.setMaxQueues(request.getMaxQueues());
+
+        // ─── Fresher registration config ───
+        if (request.getFresherRegistrationEnabled() != null)
+            u.setFresherRegistrationEnabled(request.getFresherRegistrationEnabled());
+        if (request.getFresherVerificationMode() != null)
+            u.setFresherVerificationMode(request.getFresherVerificationMode().toUpperCase());
+
+        if (request.getRequireJambReg() != null) u.setRequireJambReg(request.getRequireJambReg());
+        if (request.getJambRegPattern() != null) u.setJambRegPattern(request.getJambRegPattern());
+        if (request.getJambRegExample() != null) u.setJambRegExample(request.getJambRegExample());
+        if (request.getJambRegDescription() != null) u.setJambRegDescription(request.getJambRegDescription());
+
+        if (request.getRequireAdmissionRef() != null) u.setRequireAdmissionRef(request.getRequireAdmissionRef());
+        if (request.getAdmissionRefPattern() != null) u.setAdmissionRefPattern(request.getAdmissionRefPattern());
+        if (request.getAdmissionRefExample() != null) u.setAdmissionRefExample(request.getAdmissionRefExample());
+        if (request.getAdmissionRefDescription() != null) u.setAdmissionRefDescription(request.getAdmissionRefDescription());
+
+        if (request.getRequireApplicationNumber() != null) u.setRequireApplicationNumber(request.getRequireApplicationNumber());
+        if (request.getApplicationNumberPattern() != null) u.setApplicationNumberPattern(request.getApplicationNumberPattern());
+        if (request.getApplicationNumberExample() != null) u.setApplicationNumberExample(request.getApplicationNumberExample());
+        if (request.getApplicationNumberDescription() != null) u.setApplicationNumberDescription(request.getApplicationNumberDescription());
 
         University saved = universityRepository.save(u);
 

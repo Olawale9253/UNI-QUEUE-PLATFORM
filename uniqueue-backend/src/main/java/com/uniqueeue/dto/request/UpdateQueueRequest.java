@@ -38,4 +38,7 @@ public class UpdateQueueRequest {
 
     @Min(value = 0, message = "Max waitlist size can't be negative")
     private Integer maxWaitlistSize;
+
+    /** If true, freshers must upgrade to USER before joining. */
+    private Boolean matricRequired;
 }

@@ -19,7 +19,7 @@ public class ProfileResponse {
     private String universityLogoUrl;
     private String universityPrimaryColor;
 
-    // Feature flags (used by frontend to show/hide tabs)
+    // Feature flags
     private Boolean featureWaitlist;
     private Boolean featureAppointments;
     private Boolean featureWorkflows;
@@ -32,8 +32,25 @@ public class ProfileResponse {
     private Boolean isVerified;
     private LocalDateTime createdAt;
 
+    // ─── Fresher fields ───
+    private String jambRegNumber;
+    private String admissionRef;
+    private String applicationNumber;
+    private Boolean isFresher;
+    private Boolean canUpgrade;      // true if role=FRESHER and has a university
+    private String matricPatternHint;
+    private String matricExample;
+
     public static ProfileResponse from(User u) {
         var uni = u.getUniversity();
+        boolean isFresher = u.getRole() != null
+                && "FRESHER".equalsIgnoreCase(u.getRole().name());
+
+        // Any fresher attached to a university can attempt to upgrade.
+        // The matric format is only validated server-side if the university
+        // has configured a pattern.
+        boolean canUpgrade = isFresher && uni != null;
+
         return ProfileResponse.builder()
                 .id(u.getId())
                 .email(u.getEmail())
@@ -54,6 +71,13 @@ public class ProfileResponse {
                 .isActive(u.getIsActive())
                 .isVerified(u.getIsVerified())
                 .createdAt(u.getCreatedAt())
+                .jambRegNumber(u.getJambRegNumber())
+                .admissionRef(u.getAdmissionRef())
+                .applicationNumber(u.getApplicationNumber())
+                .isFresher(isFresher)
+                .canUpgrade(canUpgrade)
+                .matricPatternHint(uni != null ? uni.getMatricDescription() : null)
+                .matricExample(uni != null ? uni.getMatricExample() : null)
                 .build();
     }
 }

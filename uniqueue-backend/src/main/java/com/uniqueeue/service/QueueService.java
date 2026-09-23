@@ -80,6 +80,7 @@ public class QueueService {
                 .autoPromoteWaitlist(request.getAutoPromoteWaitlist() != null
                         ? request.getAutoPromoteWaitlist() : true)
                 .maxWaitlistSize(request.getMaxWaitlistSize() != null ? request.getMaxWaitlistSize() : 100)
+                .matricRequired(request.getMatricRequired() != null ? request.getMatricRequired() : false)
                 .isActive(true)
                 .createdBy(admin)
                 .build();
@@ -111,6 +112,7 @@ public class QueueService {
         if (request.getAllowWaitlist() != null) queue.setAllowWaitlist(request.getAllowWaitlist());
         if (request.getAutoPromoteWaitlist() != null) queue.setAutoPromoteWaitlist(request.getAutoPromoteWaitlist());
         if (request.getMaxWaitlistSize() != null) queue.setMaxWaitlistSize(request.getMaxWaitlistSize());
+        if (request.getMatricRequired() != null) queue.setMatricRequired(request.getMatricRequired());
 
         Queue saved = queueRepository.save(queue);
 

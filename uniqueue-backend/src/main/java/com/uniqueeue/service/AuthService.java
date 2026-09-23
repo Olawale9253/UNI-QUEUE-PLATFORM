@@ -8,6 +8,7 @@ import com.uniqueeue.enums.Role;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
 import com.uniqueeue.exception.UnauthorizedException;
+import com.uniqueeue.model.AdmittedStudent;
 import com.uniqueeue.model.PasswordResetToken;
 import com.uniqueeue.model.University;
 import com.uniqueeue.model.User;
@@ -48,6 +49,7 @@ public class AuthService {
     private final AuditService auditService;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final MatricValidationService matricValidationService;
+    private final AdmittedStudentService admittedStudentService;
 
     // ============================================================
     //  REGISTER
@@ -61,14 +63,48 @@ public class AuthService {
             throw new BadRequestException("Email is already registered");
         }
 
-        University university = universityRepository.findById(request.getUniversityId())
-                .orElseThrow(() -> new ResourceNotFoundException("University not found"));
-
+        University university = resolveUniversity(request);
         if (!Boolean.TRUE.equals(university.getIsActive())) {
             throw new BadRequestException("University is not active");
         }
 
-        // ── Email domain ──
+        boolean isFresher = "FRESHER".equalsIgnoreCase(
+                request.getAccountType() == null ? "STUDENT" : request.getAccountType().trim());
+
+        return isFresher
+                ? registerFresher(request, email, university)
+                : registerStudent(request, email, university);
+    }
+
+    private University resolveUniversity(RegisterRequest request) {
+        University university;
+
+        if (request.getUniversityId() != null) {
+            university = universityRepository.findById(request.getUniversityId())
+                    .orElseThrow(() -> new BadRequestException("University not found"));
+        } else if (request.getUniversityCode() != null && !request.getUniversityCode().isBlank()) {
+            university = universityRepository.findByCode(request.getUniversityCode().trim().toUpperCase())
+                    .orElseThrow(() -> new BadRequestException("University not found"));
+        } else {
+            throw new BadRequestException("Please select your university");
+        }
+
+        if (!Boolean.TRUE.equals(university.getIsActive())) {
+            throw new BadRequestException("This university is currently inactive");
+        }
+
+        return university;
+    }
+
+    // ─── Continuing student path ───
+
+    private AuthResponse registerStudent(RegisterRequest request, String email, University university) {
+        if (!Boolean.TRUE.equals(university.getFresherRegistrationEnabled())
+                && false /* legacy students still allowed */) {
+            // (no-op — placeholder for future "registration closed" rule)
+        }
+
+        // Email domain check
         if (university.getEmailDomain() != null && !university.getEmailDomain().isBlank()) {
             String domain = university.getEmailDomain().startsWith("@")
                     ? university.getEmailDomain()
@@ -78,16 +114,17 @@ public class AuthService {
             }
         }
 
-        // ── Matric format (strict, anchored) ──
-        matricValidationService.validate(request.getMatricNumber(), university);
+        if (request.getMatricNumber() == null || request.getMatricNumber().isBlank()) {
+            throw new BadRequestException("Matric number is required");
+        }
 
-        // ── Matric uniqueness (per university) ──
+        // Matric format + uniqueness
+        matricValidationService.validate(request.getMatricNumber(), university);
         String matric = request.getMatricNumber().trim();
         if (userRepository.existsByUniversityIdAndMatricNumber(university.getId(), matric)) {
             throw new BadRequestException("Matric number already registered at this university");
         }
 
-        // ── Generate 6-digit verification code ──
         String code = String.format("%06d", RANDOM.nextInt(1_000_000));
 
         User user = User.builder()
@@ -109,10 +146,114 @@ public class AuthService {
         auditService.record(saved.getId(), university.getId(),
                 AuditAction.USER_REGISTERED, "User", saved.getId(), null);
 
-        // Dev mode: log the code. In prod, send via email.
         log.info("🔐 Verification code for {}: {}", saved.getEmail(), code);
-
         return buildAuthResponse(saved, code);
+    }
+
+    // ─── Fresher path ───
+
+    private AuthResponse registerFresher(RegisterRequest request, String email, University university) {
+
+        if (Boolean.FALSE.equals(university.getFresherRegistrationEnabled())) {
+            throw new BadRequestException(
+                    "Fresher registration is currently disabled. Contact your university.");
+        }
+
+        // 1. Pattern validation for whatever identifiers are required
+        validateFresherPatterns(request, university);
+
+        // 2. List matching if required
+        String mode = university.getFresherVerificationMode() == null
+                ? "PATTERN"
+                : university.getFresherVerificationMode().toUpperCase();
+
+        AdmittedStudent matched = null;
+        if ("LIST".equals(mode) || "BOTH".equals(mode)) {
+            matched = admittedStudentService.matchFresher(university, request);
+            if (matched == null) {
+                throw new BadRequestException(
+                        "We couldn't find your details on the admission list. "
+                                + "Please check that your JAMB registration number / admission reference / "
+                                + "full name exactly matches what was submitted for admission.");
+            }
+        }
+
+        // 3. JAMB uniqueness (if provided) — it's declared unique at DB level
+        if (request.getJambRegNumber() != null && !request.getJambRegNumber().isBlank()) {
+            if (userRepository.existsByJambRegNumber(request.getJambRegNumber().trim())) {
+                throw new BadRequestException("This JAMB registration number is already registered");
+            }
+        }
+
+        String code = String.format("%06d", RANDOM.nextInt(1_000_000));
+
+        User user = User.builder()
+                .email(email)
+                .password(passwordEncoder.encode(request.getPassword()))
+                .fullName(request.getFullName().trim())
+                .role(Role.FRESHER)
+                .university(university)
+                .department(request.getDepartment())
+                .phone(request.getPhone())
+                .jambRegNumber(trimOrNull(request.getJambRegNumber()))
+                .admissionRef(trimOrNull(request.getAdmissionRef()))
+                .applicationNumber(trimOrNull(request.getApplicationNumber()))
+                .admittedStudentId(matched != null ? matched.getId() : null)
+                .isActive(true)
+                .isVerified(false)
+                .verificationToken(code)
+                .build();
+
+        User saved = userRepository.save(user);
+
+        // Link the admitted list row to this user
+        if (matched != null) {
+            admittedStudentService.markClaimed(matched.getId(), saved);
+        }
+
+        auditService.record(saved.getId(), university.getId(),
+                AuditAction.USER_REGISTERED, "User", saved.getId(),
+                "{\"role\":\"FRESHER\",\"matched\":" + (matched != null) + "}");
+
+        log.info("🔐 [FRESHER] Verification code for {}: {}", saved.getEmail(), code);
+        return buildAuthResponse(saved, code);
+    }
+
+    private void validateFresherPatterns(RegisterRequest req, University u) {
+        if (Boolean.TRUE.equals(u.getRequireJambReg())) {
+            requireNonBlank(req.getJambRegNumber(), "JAMB registration number is required");
+            validatePattern(req.getJambRegNumber(), u.getJambRegPattern(), "JAMB registration number", u);
+        }
+        if (Boolean.TRUE.equals(u.getRequireAdmissionRef())) {
+            requireNonBlank(req.getAdmissionRef(), "Admission reference is required");
+            validatePattern(req.getAdmissionRef(), u.getAdmissionRefPattern(), "Admission reference", u);
+        }
+        if (Boolean.TRUE.equals(u.getRequireApplicationNumber())) {
+            requireNonBlank(req.getApplicationNumber(), "Application number is required");
+            validatePattern(req.getApplicationNumber(), u.getApplicationNumberPattern(), "Application number", u);
+        }
+    }
+
+    private void requireNonBlank(String v, String message) {
+        if (v == null || v.isBlank()) throw new BadRequestException(message);
+    }
+
+    private void validatePattern(String value, String pattern, String label, University u) {
+        if (pattern == null || pattern.isBlank()) return;
+        try {
+            if (!Pattern.compile(pattern).matcher(value.trim()).matches()) {
+                String hint = u.getJambRegExample() != null ? " Expected format: " + u.getJambRegExample() : "";
+                throw new BadRequestException(label + " format is invalid." + hint);
+            }
+        } catch (BadRequestException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.warn("Bad regex pattern for {}: {}", label, pattern);
+        }
+    }
+
+    private String trimOrNull(String v) {
+        return v == null ? null : (v.isBlank() ? null : v.trim());
     }
 
     // ============================================================
@@ -147,7 +288,6 @@ public class AuthService {
             throw new UnauthorizedException("Your account has been disabled.");
         }
 
-        // ── Require email verification ──
         if (!Boolean.TRUE.equals(user.getIsVerified())) {
             throw new UnauthorizedException(
                     "Your email is not verified. Please enter the 6-digit code sent to your email, "
@@ -176,8 +316,7 @@ public class AuthService {
         }
 
         if (user.getVerificationToken() == null || user.getVerificationToken().isBlank()) {
-            throw new BadRequestException(
-                    "No verification code on file. Please request a new one.");
+            throw new BadRequestException("No verification code on file. Please request a new one.");
         }
 
         if (!user.getVerificationToken().equals(code.trim())) {
@@ -192,9 +331,6 @@ public class AuthService {
         return buildAuthResponse(user, null);
     }
 
-    /**
-     * Regenerates a verification code and returns it (dev mode).
-     */
     @Transactional
     public String resendVerification(String email) {
         String lowerEmail = email.toLowerCase().trim();
@@ -239,9 +375,7 @@ public class AuthService {
                 .build();
         passwordResetTokenRepository.save(prt);
 
-        log.info("🔐 Password reset link for {}: /reset-password?token={}",
-                user.getEmail(), token);
-
+        log.info("🔐 Password reset link for {}: /reset-password?token={}", user.getEmail(), token);
         return token;
     }
 
@@ -250,12 +384,8 @@ public class AuthService {
         PasswordResetToken prt = passwordResetTokenRepository.findByToken(token)
                 .orElseThrow(() -> new BadRequestException("Invalid or expired reset link"));
 
-        if (prt.isUsed()) {
-            throw new BadRequestException("This reset link has already been used");
-        }
-        if (prt.isExpired()) {
-            throw new BadRequestException("This reset link has expired. Please request a new one.");
-        }
+        if (prt.isUsed()) throw new BadRequestException("This reset link has already been used");
+        if (prt.isExpired()) throw new BadRequestException("This reset link has expired. Please request a new one.");
 
         User user = prt.getUser();
         user.setPassword(passwordEncoder.encode(newPassword));
@@ -290,7 +420,7 @@ public class AuthService {
                 .role(user.getRole())
                 .universityId(user.getUniversity() != null ? user.getUniversity().getId() : null)
                 .isVerified(user.getIsVerified())
-                .devVerificationCode(devVerificationCode) // only returned on register
+                .devVerificationCode(devVerificationCode)
                 .build();
     }
 }

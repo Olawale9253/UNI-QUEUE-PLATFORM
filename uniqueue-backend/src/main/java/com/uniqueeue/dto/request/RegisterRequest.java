@@ -19,8 +19,11 @@ public class RegisterRequest {
     @NotBlank(message = "Full name is required")
     private String fullName;
 
-    @NotBlank(message = "University code is required")
+    // ─── School identification ───
+    // Registration accepts EITHER universityCode OR universityId.
+    // AuthService.resolveUniversity() enforces that at least one is present.
     private String universityCode;
+    private Long universityId;
 
     // ─── Continuing student (USER) ───
     private String matricNumber;
@@ -28,7 +31,7 @@ public class RegisterRequest {
     private String phone;
 
     // ─── Fresher ───
-
+    @Builder.Default
     private String accountType = "STUDENT";
 
     private String jambRegNumber;

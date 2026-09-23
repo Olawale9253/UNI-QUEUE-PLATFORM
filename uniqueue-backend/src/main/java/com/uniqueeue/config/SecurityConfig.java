@@ -95,6 +95,7 @@ public class SecurityConfig {
                                 "/api/auth/reset-password",
                                 "/api/auth/verify-email",
                                 "/api/auth/resend-verification",
+                                "/api/auth/universities/lookup",
                                 "/h2-console/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -106,7 +107,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/super-admin/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/staff/**").hasRole("STAFF")
-                        .requestMatchers("/api/user/**").hasRole("USER")
+                        .requestMatchers("/api/user/**").hasAnyRole("USER", "FRESHER")
 
                         // ─── EVERYTHING ELSE (including POST /api/files/upload) ───
                         .anyRequest().authenticated()

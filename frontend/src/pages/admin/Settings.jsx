@@ -1,11 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
-    Building2,
-    Palette,
-    Save,
-    GraduationCap,
-    Users,
-    RefreshCw,
+    Building2, Palette, Save, GraduationCap, Users, RefreshCw,
+    Sparkles, FileText, Hash,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -28,6 +24,12 @@ const PRESET_COLORS = [
     { label: 'Teal', value: '#0d9488' },
 ]
 
+const VERIFICATION_MODES = [
+    { value: 'PATTERN', label: 'Pattern only',   hint: 'Fast — validates format only' },
+    { value: 'LIST',    label: 'Admission list', hint: 'Matches against uploaded list' },
+    { value: 'BOTH',    label: 'Both',           hint: 'Strongest — pattern + list match' },
+]
+
 export default function Settings() {
     const { push } = useToastStore()
     const { refresh: refreshUniversity } = useUniversityStore()
@@ -35,17 +37,18 @@ export default function Settings() {
     const [saving, setSaving] = useState(false)
 
     const [form, setForm] = useState({
-        name: '',
-        logoUrl: null,
-        campusImageUrl: null,
-        tagline: '',
-        primaryColor: '#4f46e5',
-        emailDomain: '',
-        matricPattern: '',
-        matricExample: '',
-        matricDescription: '',
-        maxStaff: 10,
-        maxQueues: 5,
+        name: '', logoUrl: null, campusImageUrl: null, tagline: '',
+        primaryColor: '#4f46e5', emailDomain: '',
+        matricPattern: '', matricExample: '', matricDescription: '',
+        maxStaff: 10, maxQueues: 5,
+        fresherRegistrationEnabled: true,
+        fresherVerificationMode: 'PATTERN',
+        requireJambReg: true,
+        jambRegPattern: '', jambRegExample: '', jambRegDescription: '',
+        requireAdmissionRef: false,
+        admissionRefPattern: '', admissionRefExample: '', admissionRefDescription: '',
+        requireApplicationNumber: false,
+        applicationNumberPattern: '', applicationNumberExample: '', applicationNumberDescription: '',
     })
 
     const load = useCallback(async () => {
@@ -64,6 +67,20 @@ export default function Settings() {
                 matricDescription: u.matricDescription || '',
                 maxStaff: u.maxStaff ?? 10,
                 maxQueues: u.maxQueues ?? 5,
+                fresherRegistrationEnabled: u.fresherRegistrationEnabled !== false,
+                fresherVerificationMode: u.fresherVerificationMode || 'PATTERN',
+                requireJambReg: u.requireJambReg !== false,
+                jambRegPattern: u.jambRegPattern || '',
+                jambRegExample: u.jambRegExample || '',
+                jambRegDescription: u.jambRegDescription || '',
+                requireAdmissionRef: !!u.requireAdmissionRef,
+                admissionRefPattern: u.admissionRefPattern || '',
+                admissionRefExample: u.admissionRefExample || '',
+                admissionRefDescription: u.admissionRefDescription || '',
+                requireApplicationNumber: !!u.requireApplicationNumber,
+                applicationNumberPattern: u.applicationNumberPattern || '',
+                applicationNumberExample: u.applicationNumberExample || '',
+                applicationNumberDescription: u.applicationNumberDescription || '',
             })
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed to load settings' })
@@ -72,11 +89,8 @@ export default function Settings() {
         }
     }, [push])
 
-    useEffect(() => {
-        load()
-    }, [load])
+    useEffect(() => { load() }, [load])
 
-    // Live color preview — updates CSS variables as user picks colors
     useEffect(() => {
         const root = document.documentElement
         const base = form.primaryColor || '#4f46e5'
@@ -95,17 +109,11 @@ export default function Settings() {
             return rgbToHex(c.r + (t.r - c.r) * a, c.g + (t.g - c.g) * a, c.b + (t.b - c.b) * a)
         }
         const shades = {
-            50:  mix(base, 'white', 0.95),
-            100: mix(base, 'white', 0.88),
-            200: mix(base, 'white', 0.72),
-            300: mix(base, 'white', 0.5),
-            400: mix(base, 'white', 0.24),
-            500: mix(base, 'white', 0.1),
-            600: base,
-            700: mix(base, 'black', 0.18),
-            800: mix(base, 'black', 0.32),
-            900: mix(base, 'black', 0.48),
-            950: mix(base, 'black', 0.65),
+            50: mix(base, 'white', 0.95), 100: mix(base, 'white', 0.88),
+            200: mix(base, 'white', 0.72), 300: mix(base, 'white', 0.5),
+            400: mix(base, 'white', 0.24), 500: mix(base, 'white', 0.1),
+            600: base, 700: mix(base, 'black', 0.18), 800: mix(base, 'black', 0.32),
+            900: mix(base, 'black', 0.48), 950: mix(base, 'black', 0.65),
         }
         Object.entries(shades).forEach(([k, v]) => root.style.setProperty(`--color-brand-${k}`, v))
     }, [form.primaryColor])
@@ -115,15 +123,7 @@ export default function Settings() {
         setSaving(true)
         try {
             await api.put('/api/admin/settings', {
-                name: form.name,
-                logoUrl: form.logoUrl,
-                campusImageUrl: form.campusImageUrl,
-                tagline: form.tagline,
-                primaryColor: form.primaryColor,
-                emailDomain: form.emailDomain,
-                matricPattern: form.matricPattern,
-                matricExample: form.matricExample,
-                matricDescription: form.matricDescription,
+                ...form,
                 maxStaff: Number(form.maxStaff),
                 maxQueues: Number(form.maxQueues),
             })
@@ -138,13 +138,14 @@ export default function Settings() {
     }
 
     const setField = (field) => (e) => setForm({ ...form, [field]: e.target.value })
+    const setCheck = (field) => (e) => setForm({ ...form, [field]: e.target.checked })
 
     if (loading) {
         return (
             <div className="mx-auto max-w-4xl">
                 <div className="mb-8 h-10 w-1/3 animate-pulse rounded-lg bg-slate-200" />
                 <div className="space-y-6">
-                    {[1, 2, 3].map((i) => (
+                    {[1, 2, 3, 4].map((i) => (
                         <div key={i} className="h-48 animate-pulse rounded-xl bg-slate-100" />
                     ))}
                 </div>
@@ -156,10 +157,11 @@ export default function Settings() {
         <div className="mx-auto max-w-4xl">
             <PageHeader
                 title="University Settings"
-                description="Manage your university's branding and registration rules."
+                description="Manage branding, registration rules, and fresher verification."
             />
 
             <form onSubmit={save} className="space-y-6">
+                {/* BRANDING */}
                 <Card>
                     <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
                         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50">
@@ -167,88 +169,36 @@ export default function Settings() {
                         </div>
                         <div>
                             <h2 className="text-base font-semibold text-slate-900">Branding</h2>
-                            <p className="text-xs text-slate-500">
-                                Logo, campus photo and colors shown across the app for your users.
-                            </p>
+                            <p className="text-xs text-slate-500">Logo, campus photo and colors.</p>
                         </div>
                     </div>
 
-                    <Input
-                        label="University name"
-                        value={form.name}
-                        onChange={setField('name')}
-                        placeholder="University of Lagos"
-                        required
-                        icon={Building2}
-                    />
+                    <Input label="University name" value={form.name} onChange={setField('name')} placeholder="University of Lagos" required icon={Building2} />
+                    <Input label="Tagline" value={form.tagline} onChange={setField('tagline')} placeholder="Skip the line. Not the service." hint="Shown on the login page hero." />
 
-                    <Input
-                        label="Tagline"
-                        value={form.tagline}
-                        onChange={setField('tagline')}
-                        placeholder="Skip the line. Not the service."
-                        hint="Short marketing line shown on the login page hero."
-                    />
-
-                    {/* Logo + Campus photo URL inputs */}
                     <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <ImageUrlInput
-                            label="University logo URL"
-                            value={form.logoUrl}
-                            onChange={(url) => setForm({ ...form, logoUrl: url })}
-                            placeholder="https://unilag.edu.ng/logo.png"
-                            hint="Right-click the logo on your school's website → Copy image address."
-                            previewHeight="h-32"
-                        />
-                        <ImageUrlInput
-                            label="Campus photo URL"
-                            value={form.campusImageUrl}
-                            onChange={(url) => setForm({ ...form, campusImageUrl: url })}
-                            placeholder="https://unilag.edu.ng/campus.jpg"
-                            hint="Paste any public image URL of your campus."
-                            previewHeight="h-32"
-                        />
+                        <ImageUrlInput label="University logo URL" value={form.logoUrl} onChange={(url) => setForm({ ...form, logoUrl: url })} placeholder="https://unilag.edu.ng/logo.png" hint="Right-click the logo on your school's site → Copy image address." previewHeight="h-32" />
+                        <ImageUrlInput label="Campus photo URL" value={form.campusImageUrl} onChange={(url) => setForm({ ...form, campusImageUrl: url })} placeholder="https://unilag.edu.ng/campus.jpg" hint="Paste any public image URL of your campus." previewHeight="h-32" />
                     </div>
 
                     <div className="mt-4">
-                        <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                            Primary color
-                        </label>
+                        <label className="mb-1.5 block text-sm font-medium text-slate-700">Primary color</label>
                         <div className="flex flex-wrap items-center gap-2">
                             {PRESET_COLORS.map((c) => (
-                                <button
-                                    key={c.value}
-                                    type="button"
-                                    onClick={() => setForm({ ...form, primaryColor: c.value })}
-                                    className={`h-9 w-9 rounded-lg border-2 transition-transform hover:scale-110 ${
-                                        form.primaryColor === c.value
-                                            ? 'border-slate-900 ring-2 ring-slate-900 ring-offset-1'
-                                            : 'border-white shadow-sm'
-                                    }`}
-                                    style={{ backgroundColor: c.value }}
-                                    title={c.label}
-                                    aria-label={c.label}
+                                <button key={c.value} type="button" onClick={() => setForm({ ...form, primaryColor: c.value })}
+                                        className={`h-9 w-9 rounded-lg border-2 transition-transform hover:scale-110 ${form.primaryColor === c.value ? 'border-slate-900 ring-2 ring-slate-900 ring-offset-1' : 'border-white shadow-sm'}`}
+                                        style={{ backgroundColor: c.value }} title={c.label} aria-label={c.label}
                                 />
                             ))}
-
                             <label className="ml-2 flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50">
-                                <input
-                                    type="color"
-                                    value={form.primaryColor}
-                                    onChange={(e) => setForm({ ...form, primaryColor: e.target.value })}
-                                    className="h-5 w-5 cursor-pointer rounded border-0 bg-transparent p-0"
-                                />
-                                <span className="font-mono text-xs text-slate-600">
-                                    {form.primaryColor}
-                                </span>
+                                <input type="color" value={form.primaryColor} onChange={(e) => setForm({ ...form, primaryColor: e.target.value })} className="h-5 w-5 cursor-pointer rounded border-0 bg-transparent p-0" />
+                                <span className="font-mono text-xs text-slate-600">{form.primaryColor}</span>
                             </label>
                         </div>
-                        <p className="mt-1.5 text-xs text-slate-500">
-                            Applied live — buttons, tabs, and accents update as you pick.
-                        </p>
                     </div>
                 </Card>
 
+                {/* REGISTRATION RULES */}
                 <Card>
                     <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
                         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50">
@@ -256,44 +206,142 @@ export default function Settings() {
                         </div>
                         <div>
                             <h2 className="text-base font-semibold text-slate-900">Registration rules</h2>
-                            <p className="text-xs text-slate-500">
-                                How students validate their identity when signing up.
-                            </p>
+                            <p className="text-xs text-slate-500">How continuing students validate their identity.</p>
                         </div>
                     </div>
 
-                    <Input
-                        label="Email domain"
-                        value={form.emailDomain}
-                        onChange={setField('emailDomain')}
-                        placeholder="@unilag.edu.ng"
-                        hint="Only emails ending with this will be accepted at registration."
-                    />
-
-                    <Input
-                        label="Matric number pattern (regex)"
-                        value={form.matricPattern}
-                        onChange={setField('matricPattern')}
-                        placeholder="^\d{2}/\d{5}/\d{3}$"
-                        hint="Regular expression the matric number must match."
-                    />
+                    <Input label="Email domain" value={form.emailDomain} onChange={setField('emailDomain')} placeholder="@unilag.edu.ng" hint="Only emails ending with this are accepted for continuing students." />
+                    <Input label="Matric number pattern (regex)" value={form.matricPattern} onChange={setField('matricPattern')} placeholder="^\d{2}/\d{5}/\d{3}$" hint="Format enforced when students submit a matric." />
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <Input
-                            label="Matric example"
-                            value={form.matricExample}
-                            onChange={setField('matricExample')}
-                            placeholder="21/12345/001"
-                        />
-                        <Input
-                            label="Matric format description"
-                            value={form.matricDescription}
-                            onChange={setField('matricDescription')}
-                            placeholder="YY/XXXXX/XXX"
-                        />
+                        <Input label="Matric example" value={form.matricExample} onChange={setField('matricExample')} placeholder="21/12345/001" />
+                        <Input label="Matric format description" value={form.matricDescription} onChange={setField('matricDescription')} placeholder="YY/XXXXX/XXX" />
                     </div>
                 </Card>
 
+                {/* FRESHER REGISTRATION */}
+                <Card>
+                    <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50">
+                            <Sparkles className="h-4 w-4 text-brand-600" />
+                        </div>
+                        <div>
+                            <h2 className="text-base font-semibold text-slate-900">Fresher registration</h2>
+                            <p className="text-xs text-slate-500">How new students register before they get a matric number.</p>
+                        </div>
+                    </div>
+
+                    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                        <input
+                            type="checkbox"
+                            checked={form.fresherRegistrationEnabled}
+                            onChange={setCheck('fresherRegistrationEnabled')}
+                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                        />
+                        <div>
+                            <div className="text-sm font-medium text-slate-900">Allow fresher registration</div>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                                Freshers register with their JAMB / admission info and can
+                                access fresher-friendly queues. They upgrade to full
+                                student access once they receive a matric.
+                            </p>
+                        </div>
+                    </label>
+
+                    {form.fresherRegistrationEnabled && (
+                        <>
+                            <div className="mt-5">
+                                <label className="mb-2 block text-sm font-medium text-slate-700">Verification mode</label>
+                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                                    {VERIFICATION_MODES.map((m) => (
+                                        <button
+                                            key={m.value}
+                                            type="button"
+                                            onClick={() => setForm({ ...form, fresherVerificationMode: m.value })}
+                                            className={`rounded-lg border p-3 text-left transition-colors ${
+                                                form.fresherVerificationMode === m.value
+                                                    ? 'border-brand-500 bg-brand-50'
+                                                    : 'border-slate-200 hover:border-slate-300'
+                                            }`}
+                                        >
+                                            <div className={`text-sm font-semibold ${form.fresherVerificationMode === m.value ? 'text-brand-700' : 'text-slate-900'}`}>
+                                                {m.label}
+                                            </div>
+                                            <div className="mt-0.5 text-xs text-slate-500">{m.hint}</div>
+                                        </button>
+                                    ))}
+                                </div>
+                                {(form.fresherVerificationMode === 'LIST' || form.fresherVerificationMode === 'BOTH') && (
+                                    <p className="mt-2 text-xs text-amber-700">
+                                        ⚠️ Requires an uploaded admission list. Upload it from the super admin panel.
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* JAMB */}
+                            <div className="mt-5 rounded-lg border border-slate-200 p-4">
+                                <label className="flex cursor-pointer items-start gap-3">
+                                    <input type="checkbox" checked={form.requireJambReg} onChange={setCheck('requireJambReg')} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
+                                            <FileText className="h-3.5 w-3.5 text-slate-400" />
+                                            Require JAMB registration number
+                                        </div>
+                                    </div>
+                                </label>
+                                {form.requireJambReg && (
+                                    <div className="mt-3 grid grid-cols-1 gap-3 pl-7 sm:grid-cols-3">
+                                        <Input label="Pattern (regex)" value={form.jambRegPattern} onChange={setField('jambRegPattern')} placeholder="^\d{10}$" />
+                                        <Input label="Example" value={form.jambRegExample} onChange={setField('jambRegExample')} placeholder="2025123456" />
+                                        <Input label="Description" value={form.jambRegDescription} onChange={setField('jambRegDescription')} placeholder="10-digit number" />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Admission ref */}
+                            <div className="mt-3 rounded-lg border border-slate-200 p-4">
+                                <label className="flex cursor-pointer items-start gap-3">
+                                    <input type="checkbox" checked={form.requireAdmissionRef} onChange={setCheck('requireAdmissionRef')} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
+                                            <FileText className="h-3.5 w-3.5 text-slate-400" />
+                                            Require admission reference number
+                                        </div>
+                                    </div>
+                                </label>
+                                {form.requireAdmissionRef && (
+                                    <div className="mt-3 grid grid-cols-1 gap-3 pl-7 sm:grid-cols-3">
+                                        <Input label="Pattern (regex)" value={form.admissionRefPattern} onChange={setField('admissionRefPattern')} placeholder="^ADM/\d{4}/\d{5}$" />
+                                        <Input label="Example" value={form.admissionRefExample} onChange={setField('admissionRefExample')} placeholder="ADM/2025/00123" />
+                                        <Input label="Description" value={form.admissionRefDescription} onChange={setField('admissionRefDescription')} placeholder="ADM/YYYY/NNNNN" />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Application number */}
+                            <div className="mt-3 rounded-lg border border-slate-200 p-4">
+                                <label className="flex cursor-pointer items-start gap-3">
+                                    <input type="checkbox" checked={form.requireApplicationNumber} onChange={setCheck('requireApplicationNumber')} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
+                                            <Hash className="h-3.5 w-3.5 text-slate-400" />
+                                            Require application number
+                                        </div>
+                                    </div>
+                                </label>
+                                {form.requireApplicationNumber && (
+                                    <div className="mt-3 grid grid-cols-1 gap-3 pl-7 sm:grid-cols-3">
+                                        <Input label="Pattern (regex)" value={form.applicationNumberPattern} onChange={setField('applicationNumberPattern')} placeholder="^APP-\d{4}-\d{5}$" />
+                                        <Input label="Example" value={form.applicationNumberExample} onChange={setField('applicationNumberExample')} placeholder="APP-2025-00123" />
+                                        <Input label="Description" value={form.applicationNumberDescription} onChange={setField('applicationNumberDescription')} placeholder="APP-YYYY-NNNNN" />
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
+                </Card>
+
+                {/* LIMITS */}
                 <Card>
                     <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
                         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50">
@@ -301,40 +349,17 @@ export default function Settings() {
                         </div>
                         <div>
                             <h2 className="text-base font-semibold text-slate-900">Account limits</h2>
-                            <p className="text-xs text-slate-500">
-                                Maximum staff members and queues your university can create.
-                            </p>
+                            <p className="text-xs text-slate-500">Maximum staff members and queues.</p>
                         </div>
                     </div>
-
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <Input
-                            label="Max staff members"
-                            type="number"
-                            min="1"
-                            value={form.maxStaff}
-                            onChange={setField('maxStaff')}
-                        />
-                        <Input
-                            label="Max active queues"
-                            type="number"
-                            min="1"
-                            value={form.maxQueues}
-                            onChange={setField('maxQueues')}
-                        />
+                        <Input label="Max staff members" type="number" min="1" value={form.maxStaff} onChange={setField('maxStaff')} />
+                        <Input label="Max active queues" type="number" min="1" value={form.maxQueues} onChange={setField('maxQueues')} />
                     </div>
                 </Card>
 
                 <div className="sticky bottom-0 -mx-4 flex items-center justify-end gap-3 border-t border-slate-200 bg-white/90 px-4 py-4 backdrop-blur sm:-mx-6 sm:px-6">
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        icon={RefreshCw}
-                        onClick={load}
-                        disabled={saving}
-                    >
-                        Reset
-                    </Button>
+                    <Button type="button" variant="secondary" icon={RefreshCw} onClick={load} disabled={saving}>Reset</Button>
                     <Button type="submit" icon={Save} loading={saving} disabled={saving}>
                         {saving ? 'Saving…' : 'Save changes'}
                     </Button>

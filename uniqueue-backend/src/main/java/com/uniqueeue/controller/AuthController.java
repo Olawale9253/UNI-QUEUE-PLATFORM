@@ -108,6 +108,23 @@ public class AuthController {
                     m.put("emailDomain", u.getEmailDomain());
                     m.put("matricExample", u.getMatricExample());
                     m.put("matricDescription", u.getMatricDescription());
+
+                    // ─── Fresher config ───
+                    m.put("fresherRegistrationEnabled", u.getFresherRegistrationEnabled());
+                    m.put("fresherVerificationMode", u.getFresherVerificationMode());
+
+                    m.put("requireJambReg", u.getRequireJambReg());
+                    m.put("jambRegExample", u.getJambRegExample());
+                    m.put("jambRegDescription", u.getJambRegDescription());
+
+                    m.put("requireAdmissionRef", u.getRequireAdmissionRef());
+                    m.put("admissionRefExample", u.getAdmissionRefExample());
+                    m.put("admissionRefDescription", u.getAdmissionRefDescription());
+
+                    m.put("requireApplicationNumber", u.getRequireApplicationNumber());
+                    m.put("applicationNumberExample", u.getApplicationNumberExample());
+                    m.put("applicationNumberDescription", u.getApplicationNumberDescription());
+
                     return m;
                 })
                 .toList();

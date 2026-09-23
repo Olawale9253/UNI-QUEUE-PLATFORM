@@ -26,6 +26,9 @@ public class QueueResponse {
     private Boolean autoPromoteWaitlist;
     private Integer maxWaitlistSize;
 
+    /** If true, only users with a matric (USER role) can join. */
+    private Boolean matricRequired;
+
     // Live counts
     private long waitingCount;
     private long waitlistCount;
@@ -67,6 +70,7 @@ public class QueueResponse {
                 .allowWaitlist(q.getAllowWaitlist())
                 .autoPromoteWaitlist(q.getAutoPromoteWaitlist())
                 .maxWaitlistSize(q.getMaxWaitlistSize())
+                .matricRequired(q.getMatricRequired() != null ? q.getMatricRequired() : false)
                 .universityId(q.getUniversity() != null ? q.getUniversity().getId() : null)
                 .universityName(q.getUniversity() != null ? q.getUniversity().getName() : null)
                 .createdById(q.getCreatedBy() != null ? q.getCreatedBy().getId() : null)
