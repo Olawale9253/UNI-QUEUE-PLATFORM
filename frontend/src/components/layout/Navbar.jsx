@@ -16,6 +16,7 @@ import { useUIStore } from '../../store/uiStore'
 import { getInitials } from '../../lib/format'
 import NotificationBell from './NotificationBell'
 import ThemeToggle from '../ui/ThemeToggle'
+import Logo from '../ui/Logo'
 
 const DASHBOARD_PREFIXES = ['/student', '/staff', '/admin', '/super-admin']
 
@@ -76,6 +77,7 @@ export default function Navbar() {
         ADMIN: '/admin',
         STAFF: '/staff',
         USER: '/student',
+        FRESHER: '/student',
     }
     const dashboardHref = user ? dashboards[user.role] || '/' : '/'
 
@@ -125,10 +127,12 @@ export default function Navbar() {
                                     className="h-full w-full object-contain p-1"
                                     onError={() => setLogoFailed(true)}
                                 />
-                            ) : (
+                            ) : hasUniversity ? (
                                 <div className="flex h-full w-full items-center justify-center bg-brand-600 text-sm font-bold text-white sm:text-base">
-                                    {hasUniversity ? initials : 'UQ'}
+                                    {initials}
                                 </div>
+                            ) : (
+                                <Logo size={40} variant="icon" />
                             )}
                         </div>
 

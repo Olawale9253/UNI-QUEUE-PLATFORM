@@ -17,7 +17,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/user/tickets")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('USER')")
+@PreAuthorize("hasAnyRole('USER', 'FRESHER')")
 public class UserTicketController {
 
     private final TicketService ticketService;

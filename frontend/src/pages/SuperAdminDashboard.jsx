@@ -40,6 +40,7 @@ import UsersPage from './super-admin/Users'
 import TiersAndFeatures from './super-admin/TiersAndFeatures'
 import Broadcast from './super-admin/Broadcast'
 import Plans from './super-admin/Plans'
+import AdmittedStudentsButton from './super-admin/AdmittedStudentsButton'
 
 const emptyForm = {
     name: '',
@@ -126,9 +127,7 @@ function UniversitiesTab() {
         load()
     }, [load])
 
-    // ═══════════════════════════════════════════════════════════
-    //  CREATE
-    // ═══════════════════════════════════════════════════════════
+    // ═══════ CREATE ═══════
     const createUniversity = async (e) => {
         e.preventDefault()
         setCreating(true)
@@ -145,9 +144,7 @@ function UniversitiesTab() {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════
-    //  EDIT
-    // ═══════════════════════════════════════════════════════════
+    // ═══════ EDIT ═══════
     const openEdit = (u) => {
         setEditTarget(u)
         setEditForm({
@@ -196,9 +193,7 @@ function UniversitiesTab() {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════
-    //  DELETE
-    // ═══════════════════════════════════════════════════════════
+    // ═══════ DELETE ═══════
     const performDelete = async () => {
         if (!deleteTarget) return
         if (deleteConfirmCode.trim().toUpperCase() !== deleteTarget.code.toUpperCase()) {
@@ -219,9 +214,7 @@ function UniversitiesTab() {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════
-    //  TOGGLE
-    // ═══════════════════════════════════════════════════════════
+    // ═══════ TOGGLE ═══════
     const handleToggle = (u) => {
         if (u.isActive) setConfirmDeactivate(u)
         else performToggle(u)
@@ -343,7 +336,7 @@ function UniversitiesTab() {
                 </div>
             )}
 
-            {/* ───── Register form ───── */}
+            {/* Register form */}
             <AnimatePresence>
                 {showCreate && (
                     <motion.div
@@ -419,7 +412,7 @@ function UniversitiesTab() {
                 )}
             </AnimatePresence>
 
-            {/* ───── Table ───── */}
+            {/* Table */}
             <Card padded={false}>
                 <div className="border-b border-slate-100 px-6 py-4">
                     <h3 className="text-sm font-semibold text-slate-900">Registered universities</h3>
@@ -476,6 +469,8 @@ function UniversitiesTab() {
                                                 <Pencil className="h-3.5 w-3.5" />
                                                 Edit
                                             </button>
+
+                                            <AdmittedStudentsButton university={u} />
 
                                             <button
                                                 onClick={() => handleImpersonate(u)}
@@ -538,7 +533,7 @@ function UniversitiesTab() {
                 </div>
             </Card>
 
-            {/* ───── Deactivate confirm ───── */}
+            {/* Deactivate confirm */}
             <ConfirmDialog
                 open={!!confirmDeactivate}
                 onClose={() => !toggling && setConfirmDeactivate(null)}
@@ -550,9 +545,7 @@ function UniversitiesTab() {
                 loading={toggling === confirmDeactivate?.id}
             />
 
-            {/* ═══════════════════════════════════════════════════════════
-                EDIT MODAL
-               ═══════════════════════════════════════════════════════════ */}
+            {/* EDIT MODAL */}
             <AnimatePresence>
                 {editTarget && (
                     <>
@@ -588,7 +581,6 @@ function UniversitiesTab() {
                                 </p>
 
                                 <form onSubmit={saveEdit} className="mt-6 space-y-6">
-                                    {/* Basic info */}
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                         <Input label="University name" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} required />
                                         <div>
@@ -599,13 +591,12 @@ function UniversitiesTab() {
                                                 readOnly
                                                 className="w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
                                             />
-                                            <p className="mt-1 text-xs text-slate-500">Code is immutable — it's used in URLs and IDs.</p>
+                                            <p className="mt-1 text-xs text-slate-500">Code is immutable.</p>
                                         </div>
                                         <Input label="Email domain" value={editForm.emailDomain} onChange={(e) => setEditForm({ ...editForm, emailDomain: e.target.value })} placeholder="@unilag.edu.ng" />
                                         <Input label="Tagline" value={editForm.tagline} onChange={(e) => setEditForm({ ...editForm, tagline: e.target.value })} placeholder="Skip the line. Not the service." />
                                     </div>
 
-                                    {/* Matric */}
                                     <div>
                                         <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Matric number format</h4>
                                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -615,7 +606,6 @@ function UniversitiesTab() {
                                         </div>
                                     </div>
 
-                                    {/* Branding */}
                                     <div>
                                         <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Branding</h4>
                                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -653,9 +643,7 @@ function UniversitiesTab() {
                 )}
             </AnimatePresence>
 
-            {/* ═══════════════════════════════════════════════════════════
-                DELETE MODAL — type-to-confirm
-               ═══════════════════════════════════════════════════════════ */}
+            {/* DELETE MODAL */}
             <AnimatePresence>
                 {deleteTarget && (
                     <>
@@ -735,7 +723,7 @@ function UniversitiesTab() {
                 )}
             </AnimatePresence>
 
-            {/* ───── Add admin modal ───── */}
+            {/* ADD ADMIN MODAL */}
             <AnimatePresence>
                 {addAdminTarget && (
                     <>

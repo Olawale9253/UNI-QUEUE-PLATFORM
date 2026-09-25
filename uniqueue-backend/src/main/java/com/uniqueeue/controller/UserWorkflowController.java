@@ -17,7 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/user/workflows")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('USER')")
+@PreAuthorize("hasAnyRole('USER', 'FRESHER')")
 public class UserWorkflowController {
 
     private final WorkflowService workflowService;

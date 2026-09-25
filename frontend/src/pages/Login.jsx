@@ -5,6 +5,7 @@ import { Mail, Lock, ArrowRight, LogOut, CheckCircle2, Loader2 } from 'lucide-re
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
 import api from '../api/axios'
+import Logo from '../components/ui/Logo'
 import { useAuthStore } from '../store/authStore'
 import { useToastStore } from '../store/toastStore'
 import { ease, fadeUp } from '../lib/motion'
@@ -14,6 +15,7 @@ const dashboards = {
     ADMIN: '/admin',
     STAFF: '/staff',
     USER: '/student',
+    FRESHER: '/student',
 }
 
 const DEFAULT_BRAND = {
@@ -149,9 +151,7 @@ export default function Login() {
                                     onError={(e) => { e.target.style.display = 'none' }}
                                 />
                             ) : (
-                                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 text-lg font-bold text-white">
-                                    UQ
-                                </div>
+                                <Logo size={72} variant="full" />
                             )}
                         </div>
 

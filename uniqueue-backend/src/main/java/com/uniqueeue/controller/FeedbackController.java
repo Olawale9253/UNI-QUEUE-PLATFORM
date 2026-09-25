@@ -24,7 +24,7 @@ public class FeedbackController {
 
     /** Student submits feedback for their own completed ticket. */
     @PostMapping("/user/feedback")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'FRESHER')")
     public ResponseEntity<ApiResponse<FeedbackResponse>> submit(
             @Valid @RequestBody CreateFeedbackRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {

@@ -29,7 +29,7 @@ public class DocumentController {
     // ---------- STUDENT ----------
 
     @PostMapping(value = "/user/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'FRESHER')")
     public ResponseEntity<ApiResponse<DocumentResponse>> upload(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "ticketId", required = false) Long ticketId,
@@ -40,7 +40,7 @@ public class DocumentController {
     }
 
     @GetMapping("/user/documents")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'FRESHER')")
     public ResponseEntity<ApiResponse<List<DocumentResponse>>> listMine(
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.success(
@@ -48,7 +48,7 @@ public class DocumentController {
     }
 
     @GetMapping("/user/documents/{id}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'FRESHER')")
     public ResponseEntity<ApiResponse<DocumentResponse>> getMine(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -57,7 +57,7 @@ public class DocumentController {
     }
 
     @DeleteMapping("/user/documents/{id}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'FRESHER')")
     public ResponseEntity<ApiResponse<Object>> deleteMine(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -66,7 +66,7 @@ public class DocumentController {
     }
 
     @GetMapping("/user/documents/{id}/download")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'FRESHER')")
     public ResponseEntity<Resource> downloadMine(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {

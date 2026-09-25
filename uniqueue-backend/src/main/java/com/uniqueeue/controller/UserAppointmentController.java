@@ -19,7 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/user/appointments")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('USER')")
+@PreAuthorize("hasAnyRole('USER', 'FRESHER')")
 public class UserAppointmentController {
 
     private final AppointmentService appointmentService;

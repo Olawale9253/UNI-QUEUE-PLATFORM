@@ -89,4 +89,26 @@ public class User {
     /** When the fresher provided their matric and upgraded to USER. */
     @Column(name = "upgraded_to_user_at")
     private LocalDateTime upgradedToUserAt;
+
+    // ───────── Email change flow ─────────
+
+    /**
+     * Optional fallback email. Set automatically to the previous primary
+     * email the first time a user changes their login email, so they never
+     * lose access if they later forget their school email.
+     */
+    @Column(name = "recovery_email", length = 255)
+    private String recoveryEmail;
+
+    /** Email the user has asked to switch to (before verification). */
+    @Column(name = "pending_email", length = 255)
+    private String pendingEmail;
+
+    /** 6-digit code sent to {@link #pendingEmail}. */
+    @Column(name = "pending_email_code", length = 10)
+    private String pendingEmailCode;
+
+    /** When the pending code expires. */
+    @Column(name = "pending_email_expires_at")
+    private LocalDateTime pendingEmailExpiresAt;
 }
