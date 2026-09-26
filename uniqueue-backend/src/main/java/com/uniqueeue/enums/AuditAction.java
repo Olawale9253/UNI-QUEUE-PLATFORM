@@ -5,6 +5,8 @@ public enum AuditAction {
     USER_REGISTERED,
     USER_LOGIN,
     USER_LOGIN_FAILED,
+    EMAIL_CHANGE_REQUESTED,
+    EMAIL_CHANGED,
 
     // ticket lifecycle
     TICKET_JOINED,

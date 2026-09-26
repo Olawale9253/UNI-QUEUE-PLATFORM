@@ -1,16 +1,27 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-    ArrowLeft, User as UserIcon, Mail, Building2, Shield, Lock,
-    Check, AlertCircle, Eye, EyeOff, Phone, Briefcase, Hash,
-    Sparkles, GraduationCap, ArrowRight,
+    ArrowLeft,
+    User as UserIcon,
+    Mail,
+    Building2,
+    Shield,
+    Lock,
+    Check,
+    AlertCircle,
+    Eye,
+    EyeOff,
+    GraduationCap,
+    ArrowRight,
+    ShieldCheck,
 } from 'lucide-react'
 import api from '../api/axios'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Badge from '../components/ui/Badge'
 import { SkeletonRow } from '../components/ui/Skeleton'
+import ChangeEmailModal from '../components/profile/ChangeEmailModal'
 import { useAuthStore } from '../store/authStore'
 import { useUniversityStore } from '../store/universityStore'
 import { useToastStore } from '../store/toastStore'
@@ -32,6 +43,7 @@ const ROLE_VARIANTS = {
     FRESHER: 'info',
 }
 
+// ── Reusable password input with show/hide toggle ──
 function PasswordField({ label, value, onChange, placeholder, autoComplete }) {
     const [show, setShow] = useState(false)
     return (
@@ -47,12 +59,13 @@ function PasswordField({ label, value, onChange, placeholder, autoComplete }) {
                     placeholder={placeholder}
                     autoComplete={autoComplete}
                     required
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pr-10 text-sm text-slate-900 placeholder-slate-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 pr-10 text-sm text-slate-900 placeholder-slate-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                 />
                 <button
                     type="button"
                     onClick={() => setShow((v) => !v)}
                     className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+                    aria-label={show ? 'Hide password' : 'Show password'}
                 >
                     {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -62,7 +75,7 @@ function PasswordField({ label, value, onChange, placeholder, autoComplete }) {
 }
 
 export default function Profile() {
-    const { user, refreshProfile } = useAuthStore()
+    const { user, refreshProfile, logout } = useAuthStore()
     const { refresh: refreshUniversity } = useUniversityStore()
     const { push } = useToastStore()
     const navigate = useNavigate()
@@ -77,8 +90,14 @@ export default function Profile() {
     const [matricInput, setMatricInput] = useState('')
     const [upgrading, setUpgrading] = useState(false)
 
-    const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    const [passwordForm, setPasswordForm] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+    })
     const [savingPassword, setSavingPassword] = useState(false)
+
+    const [showEmailModal, setShowEmailModal] = useState(false)
 
     const role = profile?.role || user?.role
     const isSuperAdmin = role === 'SUPER_ADMIN'
@@ -86,16 +105,16 @@ export default function Profile() {
     const isStudent = role === 'USER'
     const isFresher = role === 'FRESHER'
 
-    const departmentLabel = isAdmin ? 'Office / Unit' : 'Department'
-    const departmentPlaceholder = isAdmin ? "e.g. Registry, Bursar's Office" : 'e.g. Computer Science'
-
     const dashboards = {
-        SUPER_ADMIN: '/super-admin', ADMIN: '/admin', STAFF: '/staff',
-        USER: '/student', FRESHER: '/student',
+        SUPER_ADMIN: '/super-admin',
+        ADMIN: '/admin',
+        STAFF: '/staff',
+        USER: '/student',
+        FRESHER: '/student',
     }
     const backHref = dashboards[role] || '/'
 
-    // ── Load profile from server ──
+    // ── Load profile ──
     const load = async () => {
         try {
             const res = await api.get('/api/profile')
@@ -115,6 +134,7 @@ export default function Profile() {
 
     useEffect(() => {
         load()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const updateProfile = async (e) => {
@@ -132,12 +152,9 @@ export default function Profile() {
             if (!isSuperAdmin) payload.department = profileForm.department.trim() || null
 
             await api.put('/api/profile', payload)
-
-            // Refetch to get fresh server state (name, department, etc.)
             await load()
             await refreshProfile()
             if (refreshUniversity) refreshUniversity()
-
             push({ type: 'success', message: 'Profile updated' })
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed to update profile' })
@@ -155,13 +172,9 @@ export default function Profile() {
         }
         setUpgrading(true)
         try {
-            // Just fire the PUT — don't rely on its response body
             await api.put('/api/profile', { matricNumber: matricInput.trim() })
-
-            // Force fresh fetch from server so role + matric reflect the new state
             await load()
             await refreshProfile()
-
             push({ type: 'success', message: 'Upgraded to student! You now have full access.' })
             setMatricInput('')
         } catch (err) {
@@ -196,29 +209,60 @@ export default function Profile() {
         }
     }
 
+    const handleEmailChanged = async () => {
+        setShowEmailModal(false)
+        push({
+            type: 'info',
+            message: 'Email updated. Please sign in again with your new email.',
+            duration: 5000,
+        })
+        setTimeout(() => {
+            logout()
+            navigate('/login')
+        }, 1500)
+    }
+
     const display = profile || user
 
+    const inputClass =
+        'w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500'
+
+    const labelClass =
+        'mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300'
+
+    // ── Loading state ──
     if (loading) {
         return (
             <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
                 <div className="mb-6 h-8 w-32 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
-                <Card className="mb-6"><SkeletonRow /></Card>
-                <Card className="mb-6"><SkeletonRow /></Card>
+                <Card className="mb-6">
+                    <SkeletonRow />
+                </Card>
+                <Card className="mb-6">
+                    <SkeletonRow />
+                </Card>
             </div>
         )
     }
 
+    // ── Error state ──
     if (loadError) {
         return (
             <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-                <button onClick={() => navigate(backHref)} className="mb-6 -ml-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">
-                    <ArrowLeft className="h-4 w-4" /> Back to dashboard
+                <button
+                    onClick={() => navigate(backHref)}
+                    className="mb-6 -ml-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to dashboard
                 </button>
                 <Card>
                     <div className="flex flex-col items-center gap-3 py-8 text-center">
                         <AlertCircle className="h-6 w-6 text-rose-600" />
-                        <p className="text-sm text-slate-600">{loadError}</p>
-                        <Button variant="secondary" onClick={() => window.location.reload()}>Try again</Button>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">{loadError}</p>
+                        <Button variant="secondary" onClick={() => window.location.reload()}>
+                            Try again
+                        </Button>
                     </div>
                 </Card>
             </div>
@@ -227,23 +271,32 @@ export default function Profile() {
 
     return (
         <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+            {/* ───── Back button ───── */}
             <button
                 onClick={() => navigate(backHref)}
-                className="mb-6 -ml-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
+                className="mb-6 -ml-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
             >
                 <ArrowLeft className="h-4 w-4" />
                 Back to dashboard
             </button>
 
-            {/* ═══════════ HEADER ═══════════ */}
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+            {/* ───── HEADER ───── */}
+            <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35 }}
+            >
                 <Card className="mb-6 overflow-hidden">
                     <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
                         <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-50 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
                             {profile?.universityLogoUrl ? (
-                                <img src={profile.universityLogoUrl} alt={profile.universityName || 'University'} className="h-full w-full object-contain p-2" />
+                                <img
+                                    src={profile.universityLogoUrl}
+                                    alt={profile.universityName || 'University'}
+                                    className="h-full w-full object-contain p-2"
+                                />
                             ) : (
-                                <div className="flex h-full w-full items-center justify-center bg-slate-900 text-2xl font-semibold text-white">
+                                <div className="flex h-full w-full items-center justify-center bg-slate-900 text-2xl font-semibold text-white dark:bg-slate-700">
                                     {getInitials(display?.fullName)}
                                 </div>
                             )}
@@ -273,8 +326,7 @@ export default function Profile() {
 
                                 {isStudent && profile?.matricNumber && (
                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 font-mono text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                    <Hash className="h-3 w-3 text-slate-400" />
-                                        {profile.matricNumber}
+                    {profile.matricNumber}
                   </span>
                                 )}
                             </div>
@@ -283,7 +335,7 @@ export default function Profile() {
                 </Card>
             </motion.div>
 
-            {/* ═══════════ FRESHER UPGRADE CARD ═══════════ */}
+            {/* ───── FRESHER UPGRADE CARD ───── */}
             {isFresher && profile?.canUpgrade && (
                 <motion.div
                     initial={{ opacity: 0, y: 8 }}
@@ -305,20 +357,13 @@ export default function Profile() {
                                 </p>
 
                                 <form onSubmit={upgradeToStudent} className="mt-4 flex flex-col gap-2 sm:flex-row">
-                                    <div className="relative flex-1">
-                                        <Hash className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                                        <input
-                                            type="text"
-                                            value={matricInput}
-                                            onChange={(e) => setMatricInput(e.target.value)}
-                                            placeholder={
-                                                profile?.matricExample
-                                                    ? `e.g. ${profile.matricExample}`
-                                                    : 'Your matric number'
-                                            }
-                                            className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                                        />
-                                    </div>
+                                    <input
+                                        type="text"
+                                        value={matricInput}
+                                        onChange={(e) => setMatricInput(e.target.value)}
+                                        placeholder="Enter your matric number"
+                                        className="flex-1 rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                                    />
                                     <Button type="submit" loading={upgrading} disabled={upgrading}>
                                         {upgrading ? 'Upgrading…' : 'Upgrade account'}
                                         {!upgrading && <ArrowRight className="ml-1 h-4 w-4" />}
@@ -337,17 +382,21 @@ export default function Profile() {
             )}
 
             {isFresher && !profile?.canUpgrade && (
-                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}>
+                <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.04 }}
+                >
                     <Card className="mb-6 border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40">
                         <div className="flex items-start gap-3">
-                            <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
                             <div>
                                 <h2 className="text-sm font-semibold text-amber-900 dark:text-amber-100">
                                     You're registered as a fresher
                                 </h2>
                                 <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
-                                    Your university hasn't set up a matric number format yet. Contact your
-                                    admin once you receive your matric.
+                                    Your university hasn't set up a matric number format yet. Contact
+                                    your admin once you receive your matric.
                                 </p>
                             </div>
                         </div>
@@ -355,49 +404,97 @@ export default function Profile() {
                 </motion.div>
             )}
 
-            {/* ═══════════ PERSONAL INFO ═══════════ */}
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+            {/* ───── LOGIN & SECURITY ───── */}
+            <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+            >
+                <Card className="mb-6">
+                    <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40">
+                            <ShieldCheck className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+                        </div>
+                        <div>
+                            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                                Login credentials
+                            </h2>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Your email and how to access your account
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                Email address
+                            </div>
+                            <div className="mt-0.5 flex items-center gap-2 truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                                <Mail className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                                {display?.email}
+                            </div>
+                            {profile?.recoveryEmail && (
+                                <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                    <span className="font-semibold uppercase tracking-wide">Recovery:</span>{' '}
+                                    <span className="font-mono">{profile.recoveryEmail}</span>
+                                </div>
+                            )}
+                        </div>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => setShowEmailModal(true)}
+                            className="shrink-0"
+                        >
+                            Change email
+                        </Button>
+                    </div>
+                </Card>
+            </motion.div>
+
+            {/* ───── PERSONAL INFO ───── */}
+            <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.08 }}
+            >
                 <Card className="mb-6">
                     <div className="mb-5 flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40">
                             <UserIcon className="h-5 w-5 text-brand-600 dark:text-brand-400" />
                         </div>
                         <div>
-                            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Personal information</h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">Update your details. Email can't be changed here.</p>
+                            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                                Personal information
+                            </h2>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Update your details
+                            </p>
                         </div>
                     </div>
 
                     <form onSubmit={updateProfile} className="space-y-4">
                         <div>
-                            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Full name</label>
+                            <label className={labelClass}>Full name</label>
                             <input
                                 type="text"
                                 value={profileForm.fullName}
                                 onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
+                                placeholder="Enter your full name"
                                 required
-                                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Email address</label>
-                            <input
-                                type="email"
-                                value={display?.email || ''}
-                                readOnly
-                                className="w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-500"
+                                className={inputClass}
                             />
                         </div>
 
                         {isFresher && profile?.jambRegNumber && (
                             <div>
-                                <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">JAMB registration number</label>
+                                <label className={labelClass}>JAMB registration number</label>
                                 <input
                                     type="text"
                                     value={profile.jambRegNumber}
                                     readOnly
-                                    className="w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-500"
+                                    className="w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 font-mono text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-500"
                                 />
                             </div>
                         )}
@@ -405,32 +502,28 @@ export default function Profile() {
                         <div className={`grid grid-cols-1 gap-4 ${!isSuperAdmin ? 'sm:grid-cols-2' : ''}`}>
                             {!isSuperAdmin && (
                                 <div>
-                                    <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">{departmentLabel}</label>
-                                    <div className="relative">
-                                        <Briefcase className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                                        <input
-                                            type="text"
-                                            value={profileForm.department}
-                                            onChange={(e) => setProfileForm({ ...profileForm, department: e.target.value })}
-                                            placeholder={departmentPlaceholder}
-                                            className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                                        />
-                                    </div>
+                                    <label className={labelClass}>
+                                        {isAdmin ? 'Office / Unit' : 'Department'}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={profileForm.department}
+                                        onChange={(e) => setProfileForm({ ...profileForm, department: e.target.value })}
+                                        placeholder={isAdmin ? 'Enter your office or unit' : 'Enter your department'}
+                                        className={inputClass}
+                                    />
                                 </div>
                             )}
 
                             <div>
-                                <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Phone number</label>
-                                <div className="relative">
-                                    <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                                    <input
-                                        type="tel"
-                                        value={profileForm.phone}
-                                        onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                                        placeholder="+234 801 234 5678"
-                                        className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                                    />
-                                </div>
+                                <label className={labelClass}>Phone number</label>
+                                <input
+                                    type="tel"
+                                    value={profileForm.phone}
+                                    onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                                    placeholder="Enter your phone number"
+                                    className={inputClass}
+                                />
                             </div>
                         </div>
 
@@ -443,16 +536,24 @@ export default function Profile() {
                 </Card>
             </motion.div>
 
-            {/* ═══════════ PASSWORD ═══════════ */}
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            {/* ───── PASSWORD ───── */}
+            <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.12 }}
+            >
                 <Card>
                     <div className="mb-5 flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950/40">
                             <Lock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                         </div>
                         <div>
-                            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Change password</h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">At least 8 characters</p>
+                            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                                Change password
+                            </h2>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                At least 8 characters
+                            </p>
                         </div>
                     </div>
 
@@ -460,21 +561,27 @@ export default function Profile() {
                         <PasswordField
                             label="Current password"
                             value={passwordForm.currentPassword}
-                            onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                            placeholder="Enter current password"
+                            onChange={(e) =>
+                                setPasswordForm({ ...passwordForm, currentPassword: e.target.value })
+                            }
+                            placeholder="Enter your current password"
                             autoComplete="current-password"
                         />
                         <PasswordField
                             label="New password"
                             value={passwordForm.newPassword}
-                            onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                            onChange={(e) =>
+                                setPasswordForm({ ...passwordForm, newPassword: e.target.value })
+                            }
                             placeholder="At least 8 characters"
                             autoComplete="new-password"
                         />
                         <PasswordField
                             label="Confirm new password"
                             value={passwordForm.confirmPassword}
-                            onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                            onChange={(e) =>
+                                setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
+                            }
                             placeholder="Re-enter new password"
                             autoComplete="new-password"
                         />
@@ -501,6 +608,17 @@ export default function Profile() {
                     </form>
                 </Card>
             </motion.div>
+
+            {/* ───── EMAIL CHANGE MODAL ───── */}
+            <AnimatePresence>
+                {showEmailModal && (
+                    <ChangeEmailModal
+                        currentEmail={display?.email}
+                        onClose={() => setShowEmailModal(false)}
+                        onSuccess={handleEmailChanged}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     )
 }

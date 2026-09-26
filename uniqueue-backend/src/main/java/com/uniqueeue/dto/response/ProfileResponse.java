@@ -10,6 +10,7 @@ public class ProfileResponse {
 
     private Long id;
     private String email;
+    private String recoveryEmail;
     private String fullName;
     private String role;
 
@@ -19,7 +20,6 @@ public class ProfileResponse {
     private String universityLogoUrl;
     private String universityPrimaryColor;
 
-    // Feature flags
     private Boolean featureWaitlist;
     private Boolean featureAppointments;
     private Boolean featureWorkflows;
@@ -32,12 +32,12 @@ public class ProfileResponse {
     private Boolean isVerified;
     private LocalDateTime createdAt;
 
-    // ─── Fresher fields ───
+    // Fresher fields
     private String jambRegNumber;
     private String admissionRef;
     private String applicationNumber;
     private Boolean isFresher;
-    private Boolean canUpgrade;      // true if role=FRESHER and has a university
+    private Boolean canUpgrade;
     private String matricPatternHint;
     private String matricExample;
 
@@ -45,15 +45,12 @@ public class ProfileResponse {
         var uni = u.getUniversity();
         boolean isFresher = u.getRole() != null
                 && "FRESHER".equalsIgnoreCase(u.getRole().name());
-
-        // Any fresher attached to a university can attempt to upgrade.
-        // The matric format is only validated server-side if the university
-        // has configured a pattern.
         boolean canUpgrade = isFresher && uni != null;
 
         return ProfileResponse.builder()
                 .id(u.getId())
                 .email(u.getEmail())
+                .recoveryEmail(u.getRecoveryEmail())
                 .fullName(u.getFullName())
                 .role(u.getRole() != null ? u.getRole().name() : null)
                 .universityId(uni != null ? uni.getId() : null)
