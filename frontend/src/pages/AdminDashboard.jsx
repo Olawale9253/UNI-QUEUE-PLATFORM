@@ -7,21 +7,25 @@ import {
     Users,
     Route as RouteIcon,
     Settings as SettingsIcon,
+    Building2,
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
+import AdminHome from './admin/AdminHome'
 import Overview from './admin/Overview'
 import Analytics from './admin/Analytics'
 import Feedback from './admin/Feedback'
 import Queues from './admin/Queues'
+import Offices from './admin/Offices'
 import Staff from './admin/Staff'
 import Workflows from './admin/Workflows'
 import Settings from './admin/Settings'
 
 const tabs = [
-    { to: '/admin', label: 'Overview', icon: LayoutGrid, end: true },
+    { to: '/admin/overview', label: 'Overview', icon: LayoutGrid },
     { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     { to: '/admin/feedback', label: 'Feedback', icon: Star },
     { to: '/admin/queues', label: 'Queues', icon: ListOrdered },
+    { to: '/admin/offices', label: 'Offices', icon: Building2 },
     { to: '/admin/staff', label: 'Staff', icon: Users },
     { to: '/admin/workflows', label: 'Workflows', icon: RouteIcon },
     { to: '/admin/settings', label: 'Settings', icon: SettingsIcon },
@@ -31,10 +35,12 @@ export default function AdminDashboard() {
     return (
         <DashboardLayout tabs={tabs}>
             <Routes>
-                <Route index element={<Overview />} />
+                <Route index element={<AdminHome />} />
+                <Route path="overview" element={<Overview />} />
                 <Route path="analytics" element={<Analytics />} />
                 <Route path="feedback" element={<Feedback />} />
                 <Route path="queues" element={<Queues />} />
+                <Route path="offices" element={<Offices />} />
                 <Route path="staff" element={<Staff />} />
                 <Route path="workflows" element={<Workflows />} />
                 <Route path="settings" element={<Settings />} />

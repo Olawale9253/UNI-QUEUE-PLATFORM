@@ -15,6 +15,7 @@ import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import PageHeader from '../../components/layout/PageHeader'
+import StaffStatsCards from '../../components/staff/StaffStatsCards'
 import { SkeletonRow } from '../../components/ui/Skeleton'
 import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../store/toastStore'
@@ -142,6 +143,7 @@ export default function ServingQueue() {
         return (
             <>
                 <PageHeader title="Serving Queue" description={`Signed in as ${user?.fullName}`} />
+                <StaffStatsCards />
                 <EmptyState
                     icon={ListOrdered}
                     title="No queues assigned"
@@ -176,6 +178,9 @@ export default function ServingQueue() {
                     </Button>
                 }
             />
+
+            {/* Personal stats */}
+            <StaffStatsCards />
 
             <div className="mb-6 flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
                 <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />

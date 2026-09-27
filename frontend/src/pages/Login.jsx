@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Mail, Lock, ArrowRight, LogOut, CheckCircle2, Loader2, Eye, EyeOff } from 'lucide-react'
+import { ArrowRight, LogOut, CheckCircle2, Loader2, Eye, EyeOff } from 'lucide-react'
 import api from '../api/axios'
 import { useAuthStore } from '../store/authStore'
 import { useToastStore } from '../store/toastStore'
@@ -34,6 +34,7 @@ export default function Login() {
     const [redirecting, setRedirecting] = useState(false)
     const [brand, setBrand] = useState(DEFAULT_BRAND)
     const [imageError, setImageError] = useState(false)
+    const [unverified, setUnverified] = useState(false)
 
     // Detect university from email domain
     useEffect(() => {
@@ -68,14 +69,34 @@ export default function Login() {
     const handleSubmit = async (e) => {
         e.preventDefault()
         setRedirecting(true)
+        setUnverified(false)
+
         const res = await login(email, password)
+
         if (res.success) {
             push({ type: 'success', message: 'Signed in successfully' })
             navigate(dashboards[res.role] || '/')
-        } else {
-            setRedirecting(false)
-            push({ type: 'error', message: res.error })
+            return
         }
+
+        setRedirecting(false)
+
+        // Detect "not verified" error and offer to go verify
+        const msg = (res.error || '').toLowerCase()
+        if (msg.includes('not verified') || msg.includes('verification')) {
+            setUnverified(true)
+            push({
+                type: 'info',
+                message: 'Your email is not verified. Redirecting to verification…',
+            })
+            // Auto-redirect after a short beat so the toast is visible
+            setTimeout(() => {
+                navigate('/verify-email', { state: { email: email.trim() } })
+            }, 1200)
+            return
+        }
+
+        push({ type: 'error', message: res.error })
     }
 
     const handleSwitchAccount = () => {
@@ -181,6 +202,20 @@ export default function Login() {
                         </div>
                     )}
 
+                    {/* Unverified hint banner */}
+                    {unverified && (
+                        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                            <p className="font-medium">Your email isn't verified</p>
+                            <p className="mt-1 text-xs text-amber-800">
+                                We're redirecting you to verify it now. Or{' '}
+                                <Link to="/verify-email" state={{ email: email.trim() }} className="font-medium underline">
+                                    click here to verify
+                                </Link>
+                                .
+                            </p>
+                        </div>
+                    )}
+
                     <h2 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
                         Sign in
                     </h2>
@@ -259,12 +294,25 @@ export default function Login() {
                         </button>
                     </form>
 
-                    <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-                        Don't have an account?{' '}
-                        <Link to="/register" className="font-medium text-brand-600 hover:text-brand-700">
-                            Register as a student
-                        </Link>
-                    </p>
+                    {/* Footer links */}
+                    <div className="mt-6 space-y-2 text-center text-sm">
+                        <p className="text-slate-500 dark:text-slate-400">
+                            Don't have an account?{' '}
+                            <Link to="/register" className="font-medium text-brand-600 hover:text-brand-700">
+                                Register as a student
+                            </Link>
+                        </p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">
+                            Haven't verified your email yet?{' '}
+                            <Link
+                                to="/verify-email"
+                                state={{ email: email.trim() }}
+                                className="font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
+                            >
+                                Verify now
+                            </Link>
+                        </p>
+                    </div>
                 </motion.div>
             </div>
         </div>

@@ -5,9 +5,12 @@ import {
     Calendar,
     Route as RouteIcon,
     FileText,
+    Building2,
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
+import StudentHome from './student/StudentHome'
 import QueuesTab from './student/QueuesTab'
+import OfficesTab from './student/OfficesTab'
 import HistoryTab from './student/HistoryTab'
 import AppointmentsTab from './student/AppointmentsTab'
 import WorkflowsTab from './student/WorkflowsTab'
@@ -18,7 +21,8 @@ export default function StudentDashboard() {
     const { university } = useUniversityStore()
 
     const tabs = [
-        { to: '/student', label: 'Queues', icon: ListOrdered, end: true },
+        { to: '/student/queues', label: 'Queues', icon: ListOrdered },
+        { to: '/student/offices', label: 'Offices', icon: Building2 },
         { to: '/student/history', label: 'History', icon: History },
     ]
 
@@ -35,7 +39,9 @@ export default function StudentDashboard() {
     return (
         <DashboardLayout tabs={tabs}>
             <Routes>
-                <Route index element={<QueuesTab />} />
+                <Route index element={<StudentHome />} />
+                <Route path="queues" element={<QueuesTab />} />
+                <Route path="offices" element={<OfficesTab />} />
                 <Route path="history" element={<HistoryTab />} />
                 <Route path="appointments" element={<AppointmentsTab />} />
                 <Route path="workflows" element={<WorkflowsTab />} />

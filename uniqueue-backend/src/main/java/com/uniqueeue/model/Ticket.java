@@ -6,6 +6,7 @@ import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -60,4 +61,8 @@ public class Ticket {
 
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+    public LocalDate getTicketDate() {
+        return joinedAt != null ? joinedAt.toLocalDate() : null;
+    }
 }

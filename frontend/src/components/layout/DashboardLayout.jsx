@@ -1,9 +1,18 @@
 import { useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X } from 'lucide-react'
+import { X, Home as HomeIcon } from 'lucide-react'
 import PageHeader from './PageHeader'
 import { useUIStore } from '../../store/uiStore'
+import { useAuthStore } from '../../store/authStore'
+
+const ROLE_HOME = {
+    SUPER_ADMIN: '/super-admin',
+    ADMIN: '/admin',
+    STAFF: '/staff',
+    USER: '/student',
+    FRESHER: '/student',
+}
 
 function SidebarLink({ item, collapsed, onClick }) {
     const Icon = item.icon
@@ -45,14 +54,13 @@ export default function DashboardLayout({ tabs, title, description, action, chil
         mobileSidebarOpen,
         closeMobileSidebar,
     } = useUIStore()
+    const { user } = useAuthStore()
     const location = useLocation()
 
-    // Auto-close drawer on route change
     useEffect(() => {
         closeMobileSidebar()
     }, [location.pathname, closeMobileSidebar])
 
-    // Lock body scroll while drawer is open
     useEffect(() => {
         document.body.style.overflow = mobileSidebarOpen ? 'hidden' : ''
         return () => {
@@ -60,9 +68,17 @@ export default function DashboardLayout({ tabs, title, description, action, chil
         }
     }, [mobileSidebarOpen])
 
+    const homeHref = user ? ROLE_HOME[user.role] || '/' : '/'
+
+    const homeItem = {
+        to: homeHref,
+        label: 'Home',
+        icon: HomeIcon,
+        end: true,
+    }
+
     return (
         <div className="flex w-full">
-            {/* ───── Desktop sidebar (md+) ───── */}
             <aside
                 className={`sticky top-16 hidden h-[calc(100vh-4rem)] shrink-0 self-start border-r border-slate-200 bg-white transition-[width] duration-300 ease-out md:flex md:flex-col dark:border-slate-800 dark:bg-slate-900 ${
                     sidebarCollapsed ? 'w-16' : 'w-56'
@@ -74,6 +90,13 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                             Menu
                         </p>
                     )}
+
+                    <div className="space-y-0.5">
+                        <SidebarLink item={homeItem} collapsed={sidebarCollapsed} />
+                    </div>
+
+                    <div className="my-2 mx-2 border-t border-slate-100 dark:border-slate-800" />
+
                     <div className="space-y-0.5">
                         {tabs.map((item) => (
                             <SidebarLink
@@ -86,7 +109,6 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                 </nav>
             </aside>
 
-            {/* ───── Mobile drawer ───── */}
             <AnimatePresence>
                 {mobileSidebarOpen && (
                     <>
@@ -120,6 +142,16 @@ export default function DashboardLayout({ tabs, title, description, action, chil
 
                             <nav className="flex-1 overflow-y-auto px-2 py-3">
                                 <div className="space-y-0.5">
+                                    <SidebarLink
+                                        item={homeItem}
+                                        collapsed={false}
+                                        onClick={closeMobileSidebar}
+                                    />
+                                </div>
+
+                                <div className="my-2 mx-2 border-t border-slate-100 dark:border-slate-800" />
+
+                                <div className="space-y-0.5">
                                     {tabs.map((item) => (
                                         <SidebarLink
                                             key={item.to}
@@ -135,7 +167,6 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                 )}
             </AnimatePresence>
 
-            {/* ───── Main content ───── */}
             <main className="min-w-0 flex-1">
                 <div className="w-full px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
                     {title && (

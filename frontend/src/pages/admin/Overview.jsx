@@ -161,24 +161,6 @@ export default function Overview() {
                 }
             />
 
-            {analytics && (
-                <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <StatCard label="Total queues" value={analytics.totalQueues} icon={LayoutGrid} delay={0} />
-                    <StatCard label="Staff members" value={analytics.totalStaff} icon={Users} delay={0.05} />
-                    <StatCard label="Tickets today" value={analytics.ticketsToday} icon={Ticket} delay={0.1} />
-                    <StatCard
-                        label="Currently waiting"
-                        value={analytics.waitingNow}
-                        icon={Clock}
-                        delay={0.15}
-                        hint={
-                            analytics.avgWaitMinutes
-                                ? `Avg. wait ${analytics.avgWaitMinutes} min`
-                                : undefined
-                        }
-                    />
-                </div>
-            )}
 
             <AnimatePresence>
                 {showCreate && (

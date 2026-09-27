@@ -24,7 +24,13 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
             "                 com.uniqueeue.enums.TicketStatus.SERVING)")
     List<Ticket> findActiveByUserId(@Param("userId") Long userId);
 
-    List<Ticket> findByUserIdOrderByJoinedAtDesc(Long userId);
+    java.util.List<com.uniqueeue.model.Ticket> findByUserIdOrderByJoinedAtDesc(Long userId);
+
+    @org.springframework.data.jpa.repository.Query(
+            "SELECT t FROM Ticket t WHERE t.servedBy.id = :staffId"
+    )
+    java.util.List<com.uniqueeue.model.Ticket> findByServedById(
+            @org.springframework.data.repository.query.Param("staffId") Long staffId);
 
     List<Ticket> findByQueueId(Long queueId);
 
