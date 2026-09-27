@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import {
     LayoutGrid,
     BarChart3,
@@ -11,6 +11,7 @@ import {
     CalendarCheck,
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
+import AdminHeader from '../components/admin/AdminHeader'
 import AdminHome from './admin/AdminHome'
 import Overview from './admin/Overview'
 import Analytics from './admin/Analytics'
@@ -34,9 +35,26 @@ const tabs = [
     { to: '/admin/settings', label: 'Settings', icon: SettingsIcon },
 ]
 
+const ROUTE_SUBTITLES = {
+    '/admin': 'Everything you need to run your university today.',
+    '/admin/overview': "A snapshot of what's happening across your university.",
+    '/admin/analytics': 'Track wait times, service quality, and staff performance.',
+    '/admin/appointments': 'Review and manage every appointment across your university.',
+    '/admin/feedback': 'See what students are saying about your service.',
+    '/admin/queues': 'Create and manage the services students can join.',
+    '/admin/offices': 'Manage the offices that host your services.',
+    '/admin/staff': 'Add staff, assign them to services, and manage accounts.',
+    '/admin/workflows': 'Build multi-step clearance processes.',
+    '/admin/settings': 'Configure your university branding, features, and limits.',
+}
+
 export default function AdminDashboard() {
+    const location = useLocation()
+    const subtitle = ROUTE_SUBTITLES[location.pathname] || 'Manage your university.'
+
     return (
         <DashboardLayout tabs={tabs}>
+            <AdminHeader subtitle={subtitle} />
             <Routes>
                 <Route index element={<AdminHome />} />
                 <Route path="overview" element={<Overview />} />

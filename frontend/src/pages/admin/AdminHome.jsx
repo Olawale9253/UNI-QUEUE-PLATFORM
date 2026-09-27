@@ -1,48 +1,34 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-    LayoutGrid, ListOrdered, Users, Building2, BarChart3, ArrowRight, Sparkles,
-    CalendarCheck,
+    LayoutGrid, ListOrdered, Users, Building2, BarChart3,
+    ArrowRight, CalendarCheck,
 } from 'lucide-react'
 import Card from '../../components/ui/Card'
 import AdminStatsCards from '../../components/admin/AdminStatsCards'
-import { useAuthStore } from '../../store/authStore'
 
 const QUICK_ACTIONS = [
-    { to: '/admin/overview', label: 'Overview', description: 'See your queues and staff at a glance.', icon: LayoutGrid, accent: 'bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400' },
-    { to: '/admin/queues', label: 'Queues', description: 'Create, edit, and manage every queue.', icon: ListOrdered, accent: 'bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400' },
-    { to: '/admin/staff', label: 'Staff', description: 'Add staff, assign them to queues, and manage accounts.', icon: Users, accent: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' },
-    { to: '/admin/offices', label: 'Offices', description: 'See how queues roll up into offices across the university.', icon: Building2, accent: 'bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400' },
-    { to: '/admin/analytics', label: 'Analytics', description: 'Track wait times, service quality, and staff performance.', icon: BarChart3, accent: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400' },
-    { to: '/admin/appointments', label: 'Appointments', description: 'Review every booked appointment across your university.', icon: CalendarCheck, accent: 'bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400' },
+    { to: '/admin/overview', label: 'Overview', description: 'See your services and staff at a glance.', icon: LayoutGrid, accent: 'bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400' },
+    { to: '/admin/queues', label: 'Services', description: 'Create, edit, and manage every service.', icon: ListOrdered, accent: 'bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400' },
+    { to: '/admin/appointments', label: 'Appointments', description: 'Review every booked appointment.', icon: CalendarCheck, accent: 'bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400' },
+    { to: '/admin/staff', label: 'Staff', description: 'Add staff and assign them to services.', icon: Users, accent: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' },
+    { to: '/admin/offices', label: 'Offices', description: 'See how services roll up into offices.', icon: Building2, accent: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400' },
+    { to: '/admin/analytics', label: 'Analytics', description: 'Track wait times and staff performance.', icon: BarChart3, accent: 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400' },
 ]
 
 export default function AdminHome() {
-    const { user } = useAuthStore()
-    const firstName = user?.fullName?.split(' ')[0] || 'there'
-
     return (
         <>
-            {/* ─── Sticky greeting header ─── */}
-            <div className="sticky top-16 z-30 -mx-3 -mt-4 mb-6 border-b border-slate-200 bg-white/95 px-3 py-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/95 sm:-mx-5 sm:-mt-6 sm:px-5 sm:py-5 lg:-mx-8 lg:-mt-8 lg:px-8 lg:py-6">
-                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-400">
-                        <Sparkles className="h-3.5 w-3.5" />
-                        Admin Workspace
-                    </div>
-                    <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
-                        Welcome back, {firstName}
-                    </h1>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        Here's what's happening across your university today.
-                    </p>
-                </motion.div>
-            </div>
-
             <AdminStatsCards />
 
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mt-2">
-                <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">Quick actions</h2>
+            <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+            >
+                <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    Quick actions
+                </h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {QUICK_ACTIONS.map((a, i) => {
                         const Icon = a.icon
@@ -60,10 +46,14 @@ export default function AdminHome() {
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-1.5">
-                                                <h3 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{a.label}</h3>
+                                                <h3 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                    {a.label}
+                                                </h3>
                                                 <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-600" />
                                             </div>
-                                            <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{a.description}</p>
+                                            <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                                                {a.description}
+                                            </p>
                                         </div>
                                     </Card>
                                 </Link>

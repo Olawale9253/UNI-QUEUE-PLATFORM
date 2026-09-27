@@ -176,6 +176,54 @@ body {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
+/* ═══════════════════════════════════════════════════════════
+   CURSOR: POINTER for all clickable elements
+   Tailwind v3 removed the default `cursor: pointer` from
+   buttons — this restores it universally.
+   ═══════════════════════════════════════════════════════════ */
+
+button:not(:disabled),
+[role="button"]:not(:disabled),
+[role="tab"]:not(:disabled),
+[role="menuitem"]:not(:disabled),
+[role="option"]:not(:disabled),
+[role="link"]:not(:disabled),
+[role="checkbox"]:not(:disabled),
+[role="radio"]:not(:disabled),
+summary:not([disabled]),
+select:not(:disabled),
+label[for]:not([disabled]) {
+    cursor: pointer;
+}
+
+a[href] {
+    cursor: pointer;
+}
+
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled),
+input[type="submit"]:not(:disabled),
+input[type="button"]:not(:disabled),
+input[type="reset"]:not(:disabled),
+input[type="file"]:not(:disabled) {
+    cursor: pointer;
+}
+
+/* Any element with an inline click handler */
+[onclick]:not([disabled]) {
+    cursor: pointer;
+}
+
+/* Disabled state overrides */
+button:disabled,
+[role="button"][aria-disabled="true"],
+[aria-disabled="true"],
+select:disabled,
+input:disabled,
+[disabled] {
+    cursor: not-allowed;
+}
+
 /* ─── Navbar sticky scrolled state ─── */
 /* ─── Navbar sticky scrolled state ─── */
 .dark .bg-white\/80 {
