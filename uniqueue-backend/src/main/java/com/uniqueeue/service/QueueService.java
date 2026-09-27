@@ -9,10 +9,12 @@ import com.uniqueeue.enums.Role;
 import com.uniqueeue.enums.TicketStatus;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
+import com.uniqueeue.model.Office;
 import com.uniqueeue.model.Queue;
 import com.uniqueeue.model.QueueStaff;
 import com.uniqueeue.model.University;
 import com.uniqueeue.model.User;
+import com.uniqueeue.repository.OfficeRepository;
 import com.uniqueeue.repository.QueueRepository;
 import com.uniqueeue.repository.QueueStaffRepository;
 import com.uniqueeue.repository.TicketRepository;
@@ -35,12 +37,14 @@ public class QueueService {
     private final UniversityRepository universityRepository;
     private final UserRepository userRepository;
     private final TicketRepository ticketRepository;
+    private final OfficeRepository officeRepository;
+    private final OfficeService officeService;
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
 
-    // ============================================================
-    //  QUEUES
-    // ============================================================
+    // ────────────────────────────────────────────────────────────
+    //  QUEUES / SERVICES
+    // ────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public List<QueueResponse> listQueues(Long universityId, boolean onlyActive) {
@@ -64,11 +68,14 @@ public class QueueService {
         User admin = userRepository.findById(adminUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin user not found"));
 
+        Office office = resolveOffice(universityId, request);
+
         Queue queue = Queue.builder()
                 .university(university)
+                .office(office)
                 .name(request.getName())
                 .description(request.getDescription())
-                .department(request.getDepartment() != null ? request.getDepartment().trim() : null)
+                .department(office != null ? office.getName() : null) // keep in sync for legacy
                 .subDepartment(request.getSubDepartment() != null ? request.getSubDepartment().trim() : null)
                 .location(request.getLocation())
                 .opensAt(request.getOpensAt() != null ? request.getOpensAt() : LocalTime.of(8, 0))
@@ -114,6 +121,14 @@ public class QueueService {
         if (request.getMaxWaitlistSize() != null) queue.setMaxWaitlistSize(request.getMaxWaitlistSize());
         if (request.getMatricRequired() != null) queue.setMatricRequired(request.getMatricRequired());
 
+        // Office change
+        if (request.getOfficeId() != null) {
+            Office office = officeRepository.findByIdAndUniversityId(request.getOfficeId(), universityId)
+                    .orElseThrow(() -> new BadRequestException("Office not found"));
+            queue.setOffice(office);
+            queue.setDepartment(office.getName());
+        }
+
         Queue saved = queueRepository.save(queue);
 
         auditService.record(null, universityId,
@@ -134,9 +149,21 @@ public class QueueService {
                 "{\"name\":\"" + queue.getName() + "\"}");
     }
 
-    // ============================================================
+    /** Resolves the office FK from officeId, or falls back to the department string. */
+    private Office resolveOffice(Long universityId, CreateQueueRequest request) {
+        if (request.getOfficeId() != null) {
+            return officeRepository.findByIdAndUniversityId(request.getOfficeId(), universityId)
+                    .orElseThrow(() -> new BadRequestException("Office not found"));
+        }
+        if (request.getDepartment() != null && !request.getDepartment().isBlank()) {
+            return officeService.findOrCreateByName(universityId, request.getDepartment());
+        }
+        return null;
+    }
+
+    // ────────────────────────────────────────────────────────────
     //  STAFF
-    // ============================================================
+    // ────────────────────────────────────────────────────────────
 
     @Transactional
     public QueueResponse.StaffInfo createStaff(Long universityId, CreateStaffRequest request) {
@@ -227,9 +254,9 @@ public class QueueService {
                 .toList();
     }
 
-    // ============================================================
+    // ────────────────────────────────────────────────────────────
     //  HELPERS
-    // ============================================================
+    // ────────────────────────────────────────────────────────────
 
     private QueueResponse enrichWithStaff(Queue queue) {
         QueueResponse response = QueueResponse.from(queue);

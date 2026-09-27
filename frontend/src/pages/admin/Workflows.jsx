@@ -9,6 +9,7 @@ import {
     X,
     Users,
     CheckCircle2,
+    Info,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -179,14 +180,14 @@ export default function Workflows() {
                                         label="Workflow name"
                                         value={form.name}
                                         onChange={(e) => setForm({ ...form, name: e.target.value })}
-                                        placeholder="e.g. 2026 Graduation Clearance"
+                                        placeholder="Enter workflow name"
                                         required
                                     />
                                     <Input
                                         label="Session"
                                         value={form.session}
                                         onChange={(e) => setForm({ ...form, session: e.target.value })}
-                                        placeholder="e.g. 2026"
+                                        placeholder="Enter session"
                                     />
                                 </div>
 
@@ -195,7 +196,7 @@ export default function Workflows() {
                                     <div>
                                         <p className="font-medium">What is this?</p>
                                         <p className="mt-1 text-xs text-sky-800">
-                                            This is a required multi-step process. Complete each queue in order —
+                                            This is a required multi-step process. Complete each service in order —
                                             locked steps unlock as you finish the previous one.
                                         </p>
                                     </div>
@@ -232,12 +233,12 @@ export default function Workflows() {
                                             >
                                                 <div className="mb-3 flex items-center justify-between">
                                                     <div className="flex items-center gap-2">
-                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">
-                              {idx + 1}
-                            </span>
+                                                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">
+                                                            {idx + 1}
+                                                        </span>
                                                         <span className="text-sm font-medium text-slate-700">
-                              Step {idx + 1}
-                            </span>
+                                                            Step {idx + 1}
+                                                        </span>
                                                     </div>
                                                     <div className="flex items-center gap-1">
                                                         <button
@@ -269,18 +270,18 @@ export default function Workflows() {
 
                                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                                     <Select
-                                                        label="Queue"
+                                                        label="Service"
                                                         value={step.queueId}
                                                         onChange={(e) => updateStep(idx, 'queueId', e.target.value)}
                                                         options={queueOptions}
-                                                        placeholder="Select queue"
+                                                        placeholder="Select service"
                                                         required
                                                     />
                                                     <Input
                                                         label="Label (optional)"
                                                         value={step.label}
                                                         onChange={(e) => updateStep(idx, 'label', e.target.value)}
-                                                        placeholder="e.g. Pay outstanding fees"
+                                                        placeholder="Enter a short description"
                                                     />
                                                 </div>
                                             </div>
@@ -311,7 +312,7 @@ export default function Workflows() {
                 <EmptyState
                     icon={RouteIcon}
                     title="No active workflows"
-                    description="Workflows are multi-step processes assigned by your university — like clearance or registration — where you must visit several offices in order. When you're assigned one, it will appear here."
+                    description="Workflows are multi-step processes assigned by your university — like clearance or registration — where students visit several services in order. When you create one, it will appear here."
                     action={
                         <Button icon={Plus} onClick={() => setShowCreate(true)}>
                             Create workflow
@@ -359,28 +360,28 @@ export default function Workflows() {
                                 <ol className="mt-4 space-y-1.5 border-t border-slate-100 pt-4">
                                     {w.steps.map((s, idx) => (
                                         <li key={s.id} className="flex items-center gap-2 text-sm text-slate-700">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-600">
-                        {idx + 1}
-                      </span>
+                                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-600">
+                                                {idx + 1}
+                                            </span>
                                             <span className="flex-1 truncate">
-                        {s.queueName}
+                                                {s.queueName}
                                                 {s.label && (
                                                     <span className="ml-1.5 text-xs text-slate-500">· {s.label}</span>
                                                 )}
-                      </span>
+                                            </span>
                                         </li>
                                     ))}
                                 </ol>
 
                                 <div className="mt-auto flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4 text-xs text-slate-500">
-                  <span className="flex items-center gap-1.5">
-                    <Users className="h-3.5 w-3.5" />
-                      {w.inProgressCount ?? 0} in progress
-                  </span>
                                     <span className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                        <Users className="h-3.5 w-3.5" />
+                                        {w.inProgressCount ?? 0} in progress
+                                    </span>
+                                    <span className="flex items-center gap-1.5">
+                                        <CheckCircle2 className="h-3.5 w-3.5" />
                                         {w.completedCount ?? 0} completed
-                  </span>
+                                    </span>
                                 </div>
                             </Card>
                         </motion.div>

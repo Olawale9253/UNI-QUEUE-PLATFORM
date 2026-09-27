@@ -48,7 +48,7 @@ function LiveQueueCard({ queue }) {
                         <div className="flex items-center gap-1 text-[9px] font-medium uppercase tracking-wide text-slate-500">
                             <Users className="h-2.5 w-2.5" /> In queue
                         </div>
-                        <div className="mt-0.5 text-base font-semibold text-brand-600 dark:text-brand-400">
+                        <div className="mt-0.5 text-base font-bold text-brand-600 dark:text-brand-400">
                             {queue.waitingCount ?? 0}
                         </div>
                     </div>
@@ -56,7 +56,7 @@ function LiveQueueCard({ queue }) {
                         <div className="flex items-center gap-1 text-[9px] font-medium uppercase tracking-wide text-slate-500">
                             <Clock className="h-2.5 w-2.5" /> ~Wait
                         </div>
-                        <div className="mt-0.5 text-base font-semibold text-amber-600 dark:text-amber-400">
+                        <div className="mt-0.5 text-base font-bold text-amber-600 dark:text-amber-400">
                             {queue.estimatedMinutes ?? 0}<span className="ml-0.5 text-[10px] font-normal text-slate-500">m</span>
                         </div>
                     </div>
@@ -64,7 +64,7 @@ function LiveQueueCard({ queue }) {
                         <div className="flex items-center gap-1 text-[9px] font-medium uppercase tracking-wide text-slate-500">
                             <Activity className="h-2.5 w-2.5" /> Serving
                         </div>
-                        <div className="mt-0.5 truncate font-mono text-base font-semibold text-emerald-600 dark:text-emerald-400">
+                        <div className="mt-0.5 truncate font-mono text-base font-bold text-emerald-600 dark:text-emerald-400">
                             {queue.currentlyServing || '—'}
                         </div>
                     </div>
@@ -102,18 +102,21 @@ export default function StudentHome() {
 
     return (
         <>
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-400">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    Student Workspace
-                </div>
-                <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
-                    Hi, {firstName}
-                </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Skip the line — join a queue from anywhere and get notified when it's your turn.
-                </p>
-            </motion.div>
+            {/* ─── Sticky greeting header ─── */}
+            <div className="sticky top-16 z-30 -mx-3 -mt-4 mb-6 border-b border-slate-200 bg-white/95 px-3 py-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/95 sm:-mx-5 sm:-mt-6 sm:px-5 sm:py-5 lg:-mx-8 lg:-mt-8 lg:px-8 lg:py-6">
+                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-400">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Student Workspace
+                    </div>
+                    <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+                        Hi, {firstName}
+                    </h1>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        Skip the line — join a queue from anywhere and get notified when it's your turn.
+                    </p>
+                </motion.div>
+            </div>
 
             <UserStatsCards />
 

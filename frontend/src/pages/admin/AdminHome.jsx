@@ -21,18 +21,21 @@ export default function AdminHome() {
 
     return (
         <>
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-400">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    Admin Workspace
-                </div>
-                <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
-                    Welcome back, {firstName}
-                </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Here's what's happening across your university today.
-                </p>
-            </motion.div>
+            {/* ─── Sticky greeting header ─── */}
+            <div className="sticky top-16 z-30 -mx-3 -mt-4 mb-6 border-b border-slate-200 bg-white/95 px-3 py-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/95 sm:-mx-5 sm:-mt-6 sm:px-5 sm:py-5 lg:-mx-8 lg:-mt-8 lg:px-8 lg:py-6">
+                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-400">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Admin Workspace
+                    </div>
+                    <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+                        Welcome back, {firstName}
+                    </h1>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        Here's what's happening across your university today.
+                    </p>
+                </motion.div>
+            </div>
 
             <AdminStatsCards />
 

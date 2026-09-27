@@ -2,17 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-    Building2,
-    MapPin,
-    Clock,
-    Users,
-    ListOrdered,
-    Search,
-    X,
-    Ticket,
-    ArrowRight,
-    Pencil,
-    Mail,
+    Building2, MapPin, Users, ListOrdered, Search, X, Ticket, Pencil,
+    Plus, ArrowRight, Mail, FileText,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -21,74 +12,96 @@ import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import PageHeader from '../../components/layout/PageHeader'
 import { SkeletonQueueGrid } from '../../components/ui/Skeleton'
+import OfficeFormModal from '../../components/admin/OfficeFormModal'
 import { useToastStore } from '../../store/toastStore'
 import { stagger, staggerItem } from '../../lib/motion'
 
-function OfficeCard({ office, onClick }) {
+function OfficeCard({ office, onEdit, onOpen }) {
     return (
         <motion.div variants={staggerItem}>
-            <button
-                type="button"
-                onClick={onClick}
-                className="group block h-full w-full text-left transition-transform hover:-translate-y-0.5"
-            >
-                <Card className="flex h-full flex-col">
-                    <div className="mb-3 flex items-start justify-between gap-3">
-                        <div className="flex min-w-0 items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40">
-                                <Building2 className="h-5 w-5 text-brand-600 dark:text-brand-400" />
-                            </div>
-                            <div className="min-w-0">
-                                <h3 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
-                                    {office.department}
-                                </h3>
-                                {office.location && (
-                                    <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400">
-                                        <MapPin className="h-3 w-3 shrink-0" />
-                                        {office.location}
-                                    </p>
-                                )}
-                            </div>
+            <Card className="flex h-full flex-col">
+                <div className="mb-3 flex items-start justify-between gap-2">
+                    <button
+                        onClick={onOpen}
+                        className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                    >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40">
+                            <Building2 className="h-5 w-5 text-brand-600 dark:text-brand-400" />
                         </div>
-                        <ArrowRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-600" />
+                        <div className="min-w-0">
+                            <h3 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+                                {office.name}
+                            </h3>
+                            {office.location && (
+                                <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                                    <MapPin className="h-3 w-3 shrink-0" />
+                                    {office.location}
+                                </p>
+                            )}
+                        </div>
+                    </button>
+                    <div className="flex shrink-0 items-center gap-1">
+                        {!office.isActive && (
+                            <Badge variant="default">Inactive</Badge>
+                        )}
+                        <button
+                            onClick={onEdit}
+                            className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
+                            aria-label="Edit office"
+                        >
+                            <Pencil className="h-3.5 w-3.5" />
+                        </button>
                     </div>
+                </div>
 
-                    <div className="mt-2 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-                        <div>
-                            <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
-                                <ListOrdered className="h-3 w-3" />
-                                Queues
-                            </div>
-                            <div className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-100">
-                                {office.queueCount}
-                            </div>
+                {office.description && (
+                    <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                        {office.description}
+                    </p>
+                )}
+
+                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+                    <div>
+                        <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                            <ListOrdered className="h-3 w-3" /> Services
                         </div>
-                        <div>
-                            <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
-                                <Users className="h-3 w-3" />
-                                Staff
-                            </div>
-                            <div className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-100">
-                                {office.staffCount}
-                            </div>
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
-                                <Ticket className="h-3 w-3" />
-                                Waiting
-                            </div>
-                            <div className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-100">
-                                {office.waitingTotal}
-                            </div>
+                        <div className="mt-1 text-base font-bold text-brand-600 dark:text-brand-400">
+                            {office.serviceCount ?? 0}
                         </div>
                     </div>
-                </Card>
-            </button>
+                    <div>
+                        <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                            <Users className="h-3 w-3" /> Staff
+                        </div>
+                        <div className="mt-1 text-base font-bold text-sky-600 dark:text-sky-400">
+                            {office.staffCount ?? 0}
+                        </div>
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                            <Ticket className="h-3 w-3" /> Waiting
+                        </div>
+                        <div className="mt-1 text-base font-bold text-amber-600 dark:text-amber-400">
+                            {office.waitingCount ?? 0}
+                        </div>
+                    </div>
+                </div>
+
+                <button
+                    onClick={onOpen}
+                    className="mt-3 flex items-center gap-1 self-start text-xs font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400"
+                >
+                    View services
+                    <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+            </Card>
         </motion.div>
     )
 }
 
-function OfficeDetail({ office, onClose }) {
+function OfficeDetail({ office, queues, onClose }) {
+    const services = queues.filter((q) => q.officeId === office.id)
+
     return (
         <>
             <motion.div
@@ -121,7 +134,7 @@ function OfficeDetail({ office, onClose }) {
                         </div>
                         <div className="min-w-0 flex-1">
                             <h2 className="truncate text-lg font-semibold text-slate-900 dark:text-slate-100">
-                                {office.department}
+                                {office.name}
                             </h2>
                             {office.location && (
                                 <p className="mt-0.5 flex items-center gap-1 truncate text-sm text-slate-500 dark:text-slate-400">
@@ -129,99 +142,101 @@ function OfficeDetail({ office, onClose }) {
                                     {office.location}
                                 </p>
                             )}
+                            {office.description && (
+                                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                                    {office.description}
+                                </p>
+                            )}
                         </div>
                         <Link to="/admin/queues">
                             <Button variant="secondary" icon={Pencil} className="shrink-0">
-                                Manage queues
+                                Manage services
                             </Button>
                         </Link>
                     </div>
 
                     <div className="mt-6">
                         <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            Queues in this office
+                            Services in this office
                         </h3>
-                        <div className="space-y-3">
-                            {office.queues.map((q) => (
-                                <div
-                                    key={q.id}
-                                    className="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
+
+                        {services.length === 0 ? (
+                            <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-800">
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    No services yet.
+                                </p>
+                                <Link
+                                    to="/admin/queues"
+                                    className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline"
                                 >
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="min-w-0">
-                                            <h4 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                {q.name}
-                                            </h4>
-                                            {q.location && (
-                                                <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                                                    <MapPin className="h-3 w-3" />
-                                                    {q.location}
-                                                </p>
+                                    <Plus className="h-3 w-3" />
+                                    Create a service
+                                </Link>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {services.map((q) => (
+                                    <div
+                                        key={q.id}
+                                        className="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <h4 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                    {q.name}
+                                                </h4>
+                                                {q.description && (
+                                                    <p className="mt-0.5 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
+                                                        {q.description}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <Badge variant={q.isActive ? 'success' : 'default'}>
+                                                {q.isActive ? 'Active' : 'Inactive'}
+                                            </Badge>
+                                        </div>
+
+                                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                      <span className="flex items-center gap-1 font-bold text-brand-600 dark:text-brand-400">
+                        <Users className="h-3 w-3" />
+                          {q.waitingCount ?? 0} waiting
+                      </span>
+                                            <span className="flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400">
+                        <Ticket className="h-3 w-3" />
+                        ~{q.estimatedMinutes ?? 0} min
+                      </span>
+                                            {q.staffCount > 0 && (
+                                                <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                          <Users className="h-3 w-3" />
+                                                    {q.staffCount} staff
+                        </span>
                                             )}
                                         </div>
-                                        <Badge variant={q.isActive ? 'success' : 'default'}>
-                                            {q.isActive ? 'Active' : 'Inactive'}
-                                        </Badge>
-                                    </div>
 
-                                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                    <span className="flex items-center gap-1">
-                      <Users className="h-3 w-3" />
-                        {q.waitingCount ?? 0} waiting
-                    </span>
-                                        <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      ~{q.estimatedMinutes ?? 0} min
-                    </span>
-                                        {q.opensAt && q.closesAt && (
-                                            <span>
-                        {String(q.opensAt).slice(0, 5)} – {String(q.closesAt).slice(0, 5)}
-                      </span>
+                                        {q.staff && q.staff.length > 0 && (
+                                            <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-800">
+                                                <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                                                    Assigned staff
+                                                </div>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {q.staff.map((s) => (
+                                                        <span
+                                                            key={s.id}
+                                                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                                        >
+                              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-brand-600 text-[8px] font-bold text-white">
+                                {s.fullName?.slice(0, 1).toUpperCase()}
+                              </span>
+                                                            {s.fullName}
+                            </span>
+                                                    ))}
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
-
-                                    {/* Staff with emails for admin */}
-                                    {q.staff && q.staff.length > 0 ? (
-                                        <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-800">
-                                            <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                                                Assigned staff
-                                            </div>
-                                            <div className="space-y-1.5">
-                                                {q.staff.map((s) => (
-                                                    <div
-                                                        key={s.id}
-                                                        className="flex items-center gap-2 text-xs"
-                                                    >
-                                                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">
-                                                            {s.fullName?.slice(0, 1).toUpperCase()}
-                                                        </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <div className="truncate font-medium text-slate-900 dark:text-slate-100">
-                                                                {s.fullName}
-                                                            </div>
-                                                            <div className="flex items-center gap-1 truncate text-slate-500 dark:text-slate-400">
-                                                                <Mail className="h-3 w-3 shrink-0" />
-                                                                {s.email}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-400 dark:border-slate-800">
-                                            No staff assigned yet.{' '}
-                                            <Link
-                                                to="/admin/staff"
-                                                className="font-medium text-brand-600 hover:underline"
-                                            >
-                                                Assign staff
-                                            </Link>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     <div className="mt-6 flex justify-end">
@@ -237,83 +252,59 @@ function OfficeDetail({ office, onClose }) {
 
 export default function Offices() {
     const { push } = useToastStore()
+    const [offices, setOffices] = useState([])
     const [queues, setQueues] = useState([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
+    const [showModal, setShowModal] = useState(false)
+    const [editTarget, setEditTarget] = useState(null)
     const [openOffice, setOpenOffice] = useState(null)
 
-    useEffect(() => {
-        let cancelled = false
-        api
-            .get('/api/admin/queues')
-            .then((res) => {
-                if (!cancelled) setQueues(res.data?.data || [])
-            })
-            .catch((err) => {
-                if (!cancelled)
-                    push({
-                        type: 'error',
-                        message: err.response?.data?.message || 'Failed to load offices',
-                    })
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false)
-            })
-        return () => {
-            cancelled = true
+    const load = async () => {
+        try {
+            const [o, q] = await Promise.all([
+                api.get('/api/admin/offices'),
+                api.get('/api/admin/queues'),
+            ])
+            setOffices(o.data?.data || [])
+            setQueues(q.data?.data || [])
+        } catch (err) {
+            push({ type: 'error', message: err.response?.data?.message || 'Failed to load offices' })
+        } finally {
+            setLoading(false)
         }
-    }, [push])
+    }
 
-    const offices = useMemo(() => {
-        const map = new Map()
-        for (const q of queues) {
-            const dept = (q.department || '').trim()
-            const key = dept || '__other__'
-            if (!map.has(key)) {
-                map.set(key, {
-                    key,
-                    department: dept || 'Unassigned queues',
-                    location: q.location || '',
-                    queues: [],
-                    queueCount: 0,
-                    staffCount: 0,
-                    waitingTotal: 0,
-                    _staffIds: new Set(),
-                })
-            }
-            const o = map.get(key)
-            o.queues.push(q)
-            o.queueCount += 1
-            o.waitingTotal += q.waitingCount ?? 0
-            if (!o.location && q.location) o.location = q.location
-            ;(q.staff || []).forEach((s) => o._staffIds.add(s.id))
-        }
-        const arr = Array.from(map.values())
-        arr.forEach((o) => {
-            o.staffCount = o._staffIds.size
-            delete o._staffIds
-        })
-        return arr.sort((a, b) => a.department.localeCompare(b.department))
-    }, [queues])
+    useEffect(() => {
+        load()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     const filtered = useMemo(() => {
         if (!search.trim()) return offices
         const s = search.toLowerCase()
         return offices.filter(
             (o) =>
-                o.department.toLowerCase().includes(s) ||
+                o.name.toLowerCase().includes(s) ||
                 o.location?.toLowerCase().includes(s) ||
-                o.queues.some((q) => q.name.toLowerCase().includes(s))
+                o.description?.toLowerCase().includes(s)
         )
     }, [offices, search])
+
+    const openCreate = () => {
+        setEditTarget(null)
+        setShowModal(true)
+    }
+
+    const openEdit = (office) => {
+        setEditTarget(office)
+        setShowModal(true)
+    }
 
     if (loading) {
         return (
             <>
-                <PageHeader
-                    title="Offices"
-                    description="Browse every office and its assigned staff."
-                />
+                <PageHeader title="Offices" description="Manage your university's offices." />
                 <SkeletonQueueGrid count={6} />
             </>
         )
@@ -323,15 +314,15 @@ export default function Offices() {
         <>
             <PageHeader
                 title="Offices"
-                description="Browse every office, its queues, and its assigned staff."
+                description="Manage the offices that host your services."
                 action={
-                    <Link to="/admin/queues">
-                        <Button icon={Pencil}>Manage queues</Button>
-                    </Link>
+                    <Button icon={Plus} onClick={openCreate}>
+                        New office
+                    </Button>
                 }
             />
 
-            {queues.length > 0 && (
+            {offices.length > 0 && (
                 <div className="mb-5">
                     <div className="relative">
                         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -339,7 +330,7 @@ export default function Offices() {
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search offices or queues"
+                            placeholder="Search offices"
                             className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                         />
                     </div>
@@ -350,23 +341,15 @@ export default function Offices() {
                 <EmptyState
                     icon={Building2}
                     title="No offices yet"
-                    description="Create queues with departments to organise them into offices."
-                    action={
-                        <Link to="/admin/queues">
-                            <Button icon={Pencil}>Go to queues</Button>
-                        </Link>
-                    }
+                    description="Create your first office — Bursary, Registry, Library — then add services under it."
+                    action={<Button icon={Plus} onClick={openCreate}>Create office</Button>}
                 />
             ) : filtered.length === 0 ? (
                 <EmptyState
                     icon={Search}
                     title="No matches"
                     description="Try a different search term."
-                    action={
-                        <Button variant="secondary" onClick={() => setSearch('')}>
-                            Clear search
-                        </Button>
-                    }
+                    action={<Button variant="secondary" onClick={() => setSearch('')}>Clear search</Button>}
                 />
             ) : (
                 <motion.div
@@ -376,14 +359,34 @@ export default function Offices() {
                     className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
                 >
                     {filtered.map((o) => (
-                        <OfficeCard key={o.key} office={o} onClick={() => setOpenOffice(o)} />
+                        <OfficeCard
+                            key={o.id}
+                            office={o}
+                            onEdit={() => openEdit(o)}
+                            onOpen={() => setOpenOffice(o)}
+                        />
                     ))}
                 </motion.div>
             )}
 
             <AnimatePresence>
+                {showModal && (
+                    <OfficeFormModal
+                        office={editTarget}
+                        onClose={() => setShowModal(false)}
+                        onSaved={load}
+                        onDeleted={load}
+                    />
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
                 {openOffice && (
-                    <OfficeDetail office={openOffice} onClose={() => setOpenOffice(null)} />
+                    <OfficeDetail
+                        office={openOffice}
+                        queues={queues}
+                        onClose={() => setOpenOffice(null)}
+                    />
                 )}
             </AnimatePresence>
         </>

@@ -21,7 +21,7 @@ import PageHeader from '../../components/layout/PageHeader'
 import { SkeletonStats, SkeletonQueueGrid } from '../../components/ui/Skeleton'
 import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../store/toastStore'
-import { groupQueuesByDepartment } from '../../lib/groupQueues'
+import { groupQueuesByOffice } from '../../lib/groupQueues'
 import { stagger, staggerItem, expand } from '../../lib/motion'
 
 export default function Overview() {
@@ -104,7 +104,7 @@ export default function Overview() {
         )
     }
 
-    const groups = groupQueuesByDepartment(queues)
+    const groups = groupQueuesByOffice(queues)
 
     const QueueCard = ({ q }) => (
         <motion.div variants={staggerItem}>

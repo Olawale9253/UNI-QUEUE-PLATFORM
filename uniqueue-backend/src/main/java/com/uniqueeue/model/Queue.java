@@ -23,17 +23,26 @@ public class Queue {
     @JoinColumn(name = "university_id", nullable = false)
     private University university;
 
+    /** The office this service belongs to. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "office_id")
+    private Office office;
+
     @Column(nullable = false)
     private String name;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    /** Top-level grouping — e.g. "Bursary", "Library". */
+    /**
+     * Deprecated — use {@link #office} instead. Kept for backward compatibility
+     * with old data; will be removed once the office backfill has run
+     * everywhere.
+     */
+    @Deprecated
     @Column(length = 100)
     private String department;
 
-    /** Optional middle level — e.g. "Cashier Desk" inside Bursary. */
     @Column(name = "sub_department", length = 100)
     private String subDepartment;
 
@@ -72,6 +81,10 @@ public class Queue {
     @Builder.Default
     private Integer maxWaitlistSize = 100;
 
+    @Column(name = "matric_required")
+    @Builder.Default
+    private Boolean matricRequired = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
@@ -83,9 +96,4 @@ public class Queue {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-
-    @Column(name = "matric_required")
-    @Builder.Default
-    private Boolean matricRequired = false;
 }

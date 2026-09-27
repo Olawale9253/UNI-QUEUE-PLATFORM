@@ -24,7 +24,7 @@ const tabs = [
     { to: '/admin/overview', label: 'Overview', icon: LayoutGrid },
     { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     { to: '/admin/feedback', label: 'Feedback', icon: Star },
-    { to: '/admin/queues', label: 'Queues', icon: ListOrdered },
+    { to: '/admin/queues', label: 'Services', icon: ListOrdered },
     { to: '/admin/offices', label: 'Offices', icon: Building2 },
     { to: '/admin/staff', label: 'Staff', icon: Users },
     { to: '/admin/workflows', label: 'Workflows', icon: RouteIcon },

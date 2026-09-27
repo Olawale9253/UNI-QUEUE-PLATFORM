@@ -13,7 +13,17 @@ public class QueueResponse {
     private Long id;
     private String name;
     private String description;
+
+    /** Office this service belongs to. */
+    private Long officeId;
+    private String officeName;
+    private String officeLocation;
+    private String officeIcon;
+
+    /** Deprecated — mirrors officeName for backward compatibility. */
+    @Deprecated
     private String department;
+
     private String subDepartment;
     private String location;
     private Boolean isActive;
@@ -25,11 +35,8 @@ public class QueueResponse {
     private Boolean allowWaitlist;
     private Boolean autoPromoteWaitlist;
     private Integer maxWaitlistSize;
-
-    /** If true, only users with a matric (USER role) can join. */
     private Boolean matricRequired;
 
-    // Live counts
     private long waitingCount;
     private long waitlistCount;
     private String currentlyServing;
@@ -55,11 +62,19 @@ public class QueueResponse {
     }
 
     public static QueueResponse from(Queue q) {
+        String officeName = q.getOffice() != null ? q.getOffice().getName() : q.getDepartment();
+        String officeLocation = q.getOffice() != null ? q.getOffice().getLocation() : null;
+        String officeIcon = q.getOffice() != null ? q.getOffice().getIcon() : null;
+
         return QueueResponse.builder()
                 .id(q.getId())
                 .name(q.getName())
                 .description(q.getDescription())
-                .department(q.getDepartment())
+                .officeId(q.getOffice() != null ? q.getOffice().getId() : null)
+                .officeName(officeName)
+                .officeLocation(officeLocation)
+                .officeIcon(officeIcon)
+                .department(officeName)
                 .subDepartment(q.getSubDepartment())
                 .location(q.getLocation())
                 .isActive(q.getIsActive())
