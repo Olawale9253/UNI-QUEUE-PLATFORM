@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Ticket, CheckCircle2, TrendingUp, Clock } from 'lucide-react'
+import { Ticket, CheckCircle2, TrendingUp, Clock, CalendarCheck } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../ui/Card'
 import { SkeletonStats } from '../ui/Skeleton'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 
-const TILE_DELAYS = [0, 0.05, 0.1, 0.15]
+const TILE_DELAYS = [0, 0.04, 0.08, 0.12, 0.16]
 
 function StatTile({ label, value, hint, icon: Icon, accent, valueColor, delay }) {
     return (
@@ -31,12 +31,17 @@ function StatTile({ label, value, hint, icon: Icon, accent, valueColor, delay })
 
 export default function StaffStatsCards() {
     const [stats, setStats] = useState(null)
+    const [apptStats, setApptStats] = useState(null)
     const [loading, setLoading] = useState(true)
 
     const load = useCallback(async () => {
         try {
-            const res = await api.get('/api/staff/stats')
-            setStats(res.data?.data || null)
+            const [s, a] = await Promise.all([
+                api.get('/api/staff/stats'),
+                api.get('/api/staff/appointments/stats').catch(() => ({ data: { data: null } })),
+            ])
+            setStats(s.data?.data || null)
+            setApptStats(a.data?.data || null)
         } catch {
             // silent
         } finally {
@@ -45,16 +50,15 @@ export default function StaffStatsCards() {
     }, [])
 
     useEffect(() => { load() }, [load])
-
     useAdaptivePoll(load, { fastMs: 5000, slowMs: 15000 })
 
-    if (loading) return <SkeletonStats count={4} />
+    if (loading) return <SkeletonStats count={5} />
     if (!stats) return null
 
     const nowServingValue = stats.currentlyServing || '0'
 
     return (
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <StatTile
                 label="Now serving"
                 value={nowServingValue}
@@ -90,6 +94,21 @@ export default function StaffStatsCards() {
                 accent="bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
                 valueColor="text-amber-600 dark:text-amber-400"
                 delay={TILE_DELAYS[3]}
+            />
+            <StatTile
+                label="Appointments today"
+                value={apptStats?.today ?? 0}
+                hint={
+                    apptStats?.nextStartTime
+                        ? `Next: ${new Date(apptStats.nextStartTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                        : apptStats?.upcoming
+                            ? `${apptStats.upcoming} upcoming`
+                            : 'None booked'
+                }
+                icon={CalendarCheck}
+                accent="bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400"
+                valueColor="text-violet-600 dark:text-violet-400"
+                delay={TILE_DELAYS[4]}
             />
         </div>
     )

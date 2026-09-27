@@ -58,4 +58,30 @@ public class UserTicketController {
         ticketService.leaveQueue(principal.getId(), id);
         return ResponseEntity.ok(ApiResponse.success("Left queue", null));
     }
+
+    /**
+     * Student moves their own ticket to the end of the queue.
+     * Only allowed for WAITING or CALLED tickets.
+     */
+    @PostMapping("/{id}/reschedule")
+    public ResponseEntity<ApiResponse<TicketResponse>> reschedule(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Turn rescheduled",
+                ticketService.rescheduleMyTurn(principal.getId(), id)));
+    }
+
+    /**
+     * Student skips their own turn. Ticket is marked NO_SHOW
+     * and the next waiting student is promoted.
+     */
+    @PostMapping("/{id}/skip")
+    public ResponseEntity<ApiResponse<TicketResponse>> skip(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Turn skipped",
+                ticketService.skipMyTurn(principal.getId(), id)));
+    }
 }

@@ -19,6 +19,8 @@ public enum AuditAction {
     TICKET_TRANSFERRED,
     TICKET_CANCELLED,
     TICKET_PRIORITY_CHANGED,
+    TICKET_RESCHEDULED,          // ← NEW
+    TICKET_SKIPPED,
 
     // queue
     QUEUE_CREATED,

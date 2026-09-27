@@ -54,6 +54,9 @@ public class OfficeService {
                 .description(request.getDescription() != null ? request.getDescription().trim() : null)
                 .location(request.getLocation() != null ? request.getLocation().trim() : null)
                 .icon(request.getIcon())
+                .openingTime(request.getOpeningTime() != null ? request.getOpeningTime() : java.time.LocalTime.of(9, 0))
+                .closingTime(request.getClosingTime() != null ? request.getClosingTime() : java.time.LocalTime.of(17, 0))
+                .slotDurationMinutes(request.getSlotDurationMinutes() != null ? request.getSlotDurationMinutes() : 15)
                 .isActive(request.getIsActive() != null ? request.getIsActive() : true)
                 .build();
 
@@ -76,6 +79,9 @@ public class OfficeService {
         if (request.getDescription() != null) office.setDescription(request.getDescription().trim());
         if (request.getLocation() != null) office.setLocation(request.getLocation().trim());
         if (request.getIcon() != null) office.setIcon(request.getIcon());
+        if (request.getOpeningTime() != null) office.setOpeningTime(request.getOpeningTime());
+        if (request.getClosingTime() != null) office.setClosingTime(request.getClosingTime());
+        if (request.getSlotDurationMinutes() != null) office.setSlotDurationMinutes(request.getSlotDurationMinutes());
         if (request.getIsActive() != null) office.setIsActive(request.getIsActive());
 
         return enrich(officeRepository.save(office));

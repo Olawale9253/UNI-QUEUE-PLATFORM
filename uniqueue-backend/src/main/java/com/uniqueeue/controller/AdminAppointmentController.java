@@ -5,6 +5,9 @@ import com.uniqueeue.dto.response.AppointmentResponse;
 import com.uniqueeue.dto.response.AppointmentSlotResponse;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.AppointmentService;
+import com.uniqueeue.dto.response.AppointmentStatsResponse;
+import com.uniqueeue.service.AppointmentStatsService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,6 +23,7 @@ import java.util.List;
 public class AdminAppointmentController {
 
     private final AppointmentService appointmentService;
+    private final AppointmentStatsService appointmentStatsService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<AppointmentResponse>>> listAppointments(
@@ -27,6 +31,14 @@ public class AdminAppointmentController {
         return ResponseEntity.ok(ApiResponse.success(
                 "University appointments",
                 appointmentService.listAppointmentsForUniversity(principal.getUniversityId())));
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<ApiResponse<AppointmentStatsResponse>> stats(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Appointment stats",
+                appointmentStatsService.forUniversity(principal.getUniversityId())));
     }
 
     @GetMapping("/slots")

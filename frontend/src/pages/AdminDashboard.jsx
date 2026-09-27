@@ -8,6 +8,7 @@ import {
     Route as RouteIcon,
     Settings as SettingsIcon,
     Building2,
+    CalendarCheck,
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import AdminHome from './admin/AdminHome'
@@ -17,12 +18,14 @@ import Feedback from './admin/Feedback'
 import Queues from './admin/Queues'
 import Offices from './admin/Offices'
 import Staff from './admin/Staff'
+import Appointments from './admin/Appointments'
 import Workflows from './admin/Workflows'
 import Settings from './admin/Settings'
 
 const tabs = [
     { to: '/admin/overview', label: 'Overview', icon: LayoutGrid },
     { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+    { to: '/admin/appointments', label: 'Appointments', icon: CalendarCheck },
     { to: '/admin/feedback', label: 'Feedback', icon: Star },
     { to: '/admin/queues', label: 'Services', icon: ListOrdered },
     { to: '/admin/offices', label: 'Offices', icon: Building2 },
@@ -38,6 +41,7 @@ export default function AdminDashboard() {
                 <Route index element={<AdminHome />} />
                 <Route path="overview" element={<Overview />} />
                 <Route path="analytics" element={<Analytics />} />
+                <Route path="appointments" element={<Appointments />} />
                 <Route path="feedback" element={<Feedback />} />
                 <Route path="queues" element={<Queues />} />
                 <Route path="offices" element={<Offices />} />

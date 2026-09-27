@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
     Ticket, CheckCircle2, TrendingUp, Clock, Award, Activity,
@@ -8,27 +8,40 @@ import Card from '../../components/ui/Card'
 import PageHeader from '../../components/layout/PageHeader'
 import { SkeletonStats } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
+import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 
-function StatCard({ label, value, hint, icon: Icon, accent }) {
+const TILE_DELAYS = [0, 0.04, 0.08, 0.12]
+
+function StatCard({ label, value, hint, icon: Icon, accent, valueColor, delay }) {
     return (
-        <Card className="flex h-full flex-col">
-            <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                    <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        {label}
+        <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay }}
+        >
+            <Card className="flex h-full flex-col">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                        <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            {label}
+                        </div>
+                        <div className={`mt-2 truncate text-2xl font-bold tracking-tight ${valueColor}`}>
+                            {value}
+                        </div>
+                        {hint && (
+                            <div className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                                {hint}
+                            </div>
+                        )}
                     </div>
-                    <div className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-                        {value}
-                    </div>
-                    {hint && <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{hint}</div>}
+                    {Icon && (
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${accent}`}>
+                            <Icon className="h-5 w-5" />
+                        </div>
+                    )}
                 </div>
-                {Icon && (
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${accent}`}>
-                        <Icon className="h-5 w-5" />
-                    </div>
-                )}
-            </div>
-        </Card>
+            </Card>
+        </motion.div>
     )
 }
 
@@ -37,15 +50,19 @@ export default function ActivityPage() {
     const [stats, setStats] = useState(null)
     const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
-        let cancelled = false
-        api
-            .get('/api/staff/stats')
-            .then((res) => { if (!cancelled) setStats(res.data?.data || null) })
-            .catch((err) => { if (!cancelled) push({ type: 'error', message: err.response?.data?.message || 'Failed to load activity' }) })
-            .finally(() => { if (!cancelled) setLoading(false) })
-        return () => { cancelled = true }
+    const load = useCallback(async () => {
+        try {
+            const res = await api.get('/api/staff/stats')
+            setStats(res.data?.data || null)
+        } catch (err) {
+            push({ type: 'error', message: err.response?.data?.message || 'Failed to load activity' })
+        } finally {
+            setLoading(false)
+        }
     }, [push])
+
+    useEffect(() => { load() }, [load])
+    useAdaptivePoll(load, { fastMs: 5000, slowMs: 15000 })
 
     if (loading) {
         return (
@@ -69,10 +86,11 @@ export default function ActivityPage() {
         )
     }
 
-    // Compute a simple 7-day average
     const weekAvg = stats.servedThisWeek > 0
         ? Math.round((stats.servedThisWeek / 7) * 10) / 10
         : 0
+
+    const nowServingValue = stats.currentlyServing || '0'
 
     return (
         <>
@@ -88,10 +106,16 @@ export default function ActivityPage() {
             >
                 <StatCard
                     label="Now serving"
-                    value={stats.currentlyServing || '—'}
+                    value={nowServingValue}
                     hint={stats.currentlyServingQueue || 'No active ticket'}
                     icon={Ticket}
                     accent="bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400"
+                    valueColor={
+                        stats.currentlyServing
+                            ? 'text-brand-600 dark:text-brand-400'
+                            : 'text-slate-400 dark:text-slate-500'
+                    }
+                    delay={TILE_DELAYS[0]}
                 />
                 <StatCard
                     label="Served today"
@@ -99,6 +123,8 @@ export default function ActivityPage() {
                     hint={stats.servedToday === 1 ? 'ticket' : 'tickets'}
                     icon={CheckCircle2}
                     accent="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                    valueColor="text-emerald-600 dark:text-emerald-400"
+                    delay={TILE_DELAYS[1]}
                 />
                 <StatCard
                     label="This week"
@@ -106,6 +132,8 @@ export default function ActivityPage() {
                     hint={`${weekAvg}/day avg`}
                     icon={TrendingUp}
                     accent="bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400"
+                    valueColor="text-sky-600 dark:text-sky-400"
+                    delay={TILE_DELAYS[2]}
                 />
                 <StatCard
                     label="All time"
@@ -113,14 +141,16 @@ export default function ActivityPage() {
                     hint="Total completed"
                     icon={Award}
                     accent="bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400"
+                    valueColor="text-violet-600 dark:text-violet-400"
+                    delay={TILE_DELAYS[3]}
                 />
             </motion.div>
 
-            {/* Performance block */}
+            {/* Secondary metrics */}
             <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
+                transition={{ delay: 0.15 }}
                 className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2"
             >
                 <Card>
@@ -132,8 +162,9 @@ export default function ActivityPage() {
                             <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                 Avg service time
                             </div>
-                            <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
-                                {stats.avgServiceMinutes} <span className="text-sm font-normal text-slate-500">min per ticket</span>
+                            <div className="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">
+                                {stats.avgServiceMinutes}{' '}
+                                <span className="text-sm font-normal text-slate-500">min per ticket</span>
                             </div>
                         </div>
                     </div>
@@ -151,8 +182,9 @@ export default function ActivityPage() {
                             <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                 Weekly pace
                             </div>
-                            <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
-                                {weekAvg} <span className="text-sm font-normal text-slate-500">tickets/day</span>
+                            <div className="mt-1 text-2xl font-bold text-sky-600 dark:text-sky-400">
+                                {weekAvg}{' '}
+                                <span className="text-sm font-normal text-slate-500">tickets/day</span>
                             </div>
                         </div>
                     </div>

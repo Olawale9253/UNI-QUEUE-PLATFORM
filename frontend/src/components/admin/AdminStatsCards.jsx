@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { LayoutGrid, Ticket, Clock, Users } from 'lucide-react'
+import { LayoutGrid, Ticket, Clock, Users, CalendarCheck } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../ui/Card'
 import { SkeletonStats } from '../ui/Skeleton'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 
-const TILE_DELAYS = [0, 0.05, 0.1, 0.15]
+const TILE_DELAYS = [0, 0.04, 0.08, 0.12, 0.16]
 
 function StatTile({ label, value, hint, icon: Icon, accent, valueColor, delay }) {
     return (
@@ -31,30 +31,34 @@ function StatTile({ label, value, hint, icon: Icon, accent, valueColor, delay })
 
 export default function AdminStatsCards() {
     const [stats, setStats] = useState(null)
+    const [apptStats, setApptStats] = useState(null)
     const [loading, setLoading] = useState(true)
 
     const load = useCallback(async () => {
         try {
-            const res = await api.get('/api/admin/analytics')
-            setStats(res.data?.data || null)
+            const [s, a] = await Promise.all([
+                api.get('/api/admin/analytics'),
+                api.get('/api/admin/appointments/stats').catch(() => ({ data: { data: null } })),
+            ])
+            setStats(s.data?.data || null)
+            setApptStats(a.data?.data || null)
         } catch {
-            // silent on refresh
+            // silent
         } finally {
             setLoading(false)
         }
     }, [])
 
     useEffect(() => { load() }, [load])
-
     useAdaptivePoll(load, { fastMs: 5000, slowMs: 15000 })
 
-    if (loading) return <SkeletonStats count={4} />
+    if (loading) return <SkeletonStats count={5} />
     if (!stats) return null
 
     return (
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <StatTile
-                label="Total queues"
+                label="Total services"
                 value={stats.totalQueues ?? 0}
                 hint={`${stats.activeQueues ?? 0} active`}
                 icon={LayoutGrid}
@@ -83,11 +87,26 @@ export default function AdminStatsCards() {
             <StatTile
                 label="Currently waiting"
                 value={stats.waitingNow ?? 0}
-                hint={stats.avgWaitMinutes ? `Avg wait ${stats.avgWaitMinutes} min` : 'Across all queues'}
+                hint={stats.avgWaitMinutes ? `Avg wait ${stats.avgWaitMinutes} min` : 'Across all services'}
                 icon={Clock}
                 accent="bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
                 valueColor="text-amber-600 dark:text-amber-400"
                 delay={TILE_DELAYS[3]}
+            />
+            <StatTile
+                label="Appointments today"
+                value={apptStats?.today ?? 0}
+                hint={
+                    apptStats?.upcoming
+                        ? `${apptStats.upcoming} upcoming`
+                        : apptStats?.total
+                            ? `${apptStats.total} all time`
+                            : 'None booked'
+                }
+                icon={CalendarCheck}
+                accent="bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400"
+                valueColor="text-violet-600 dark:text-violet-400"
+                delay={TILE_DELAYS[4]}
             />
         </div>
     )

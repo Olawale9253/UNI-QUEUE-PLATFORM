@@ -349,6 +349,13 @@ public class AppointmentService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<AppointmentResponse> listAppointmentsForStaff(Long staffId) {
+        return appointmentRepository.findByStaff(staffId).stream()
+                .map(AppointmentResponse::from)
+                .toList();
+    }
+
     // ============================================================
     //  HELPERS
     // ============================================================

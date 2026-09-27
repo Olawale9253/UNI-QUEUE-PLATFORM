@@ -33,11 +33,15 @@ public class AppointmentResponse {
     private LocalDateTime cancelledAt;
     private LocalDateTime completedAt;
 
+    private String officeName;
+
+
     public static AppointmentResponse from(Appointment a) {
         return AppointmentResponse.builder()
                 .id(a.getId())
                 .status(a.getStatus())
                 .slotId(a.getSlot() != null ? a.getSlot().getId() : null)
+                .officeName(a.getSlot() != null ? a.getSlot().getDepartment() : null)
                 .slotTitle(a.getSlot() != null ? a.getSlot().getTitle() : null)
                 .slotLocation(a.getSlot() != null ? a.getSlot().getLocation() : null)
                 .startTime(a.getSlot() != null ? a.getSlot().getStartTime() : null)

@@ -1,270 +1,76 @@
-import { useEffect, useMemo, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import {
-    Building2, MapPin, Clock, Users, ListOrdered, Search, X, Ticket, ArrowRight,
+    Building2, MapPin, Clock, Users, ListOrdered, Search, Ticket,
+    ArrowRight, GraduationCap, Mail, UserCircle2,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
-import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
-import { SkeletonQueueGrid } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
-import { stagger, staggerItem } from '../../lib/motion'
+import { useAuthStore } from '../../store/authStore'
+import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 
-function OfficeCard({ office, queueCount, staffCount, waitingTotal, onClick }) {
-    return (
-        <motion.div variants={staggerItem}>
-            <button
-                type="button"
-                onClick={onClick}
-                className="group block h-full w-full text-left transition-transform hover:-translate-y-0.5"
-            >
-                <Card className="flex h-full flex-col">
-                    <div className="mb-3 flex items-start justify-between gap-3">
-                        <div className="flex min-w-0 items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40">
-                                <Building2 className="h-5 w-5 text-brand-600 dark:text-brand-400" />
-                            </div>
-                            <div className="min-w-0">
-                                <h3 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
-                                    {office.name}
-                                </h3>
-                                {office.location && (
-                                    <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400">
-                                        <MapPin className="h-3 w-3 shrink-0" />
-                                        {office.location}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                        <ArrowRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-600" />
-                    </div>
-
-                    {office.description && (
-                        <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
-                            {office.description}
-                        </p>
-                    )}
-
-                    <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-                        <div>
-                            <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
-                                <ListOrdered className="h-3 w-3" /> Services
-                            </div>
-                            <div className="mt-1 text-base font-bold text-brand-600 dark:text-brand-400">
-                                {queueCount}
-                            </div>
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
-                                <Users className="h-3 w-3" /> Staff
-                            </div>
-                            <div className="mt-1 text-base font-bold text-sky-600 dark:text-sky-400">
-                                {staffCount}
-                            </div>
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
-                                <Ticket className="h-3 w-3" /> Waiting
-                            </div>
-                            <div className="mt-1 text-base font-bold text-amber-600 dark:text-amber-400">
-                                {waitingTotal}
-                            </div>
-                        </div>
-                    </div>
-                </Card>
-            </button>
-        </motion.div>
-    )
-}
-
-function OfficeDetail({ office, queues, onClose }) {
-    const services = queues.filter((q) => q.officeId === office.id)
-
-    return (
-        <>
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={onClose}
-                className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm"
-            />
-            <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4">
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.96, y: 12 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.96, y: 12 }}
-                    transition={{ duration: 0.2 }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="relative my-8 w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
-                >
-                    <button
-                        onClick={onClose}
-                        className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
-                        aria-label="Close"
-                    >
-                        <X className="h-4 w-4" />
-                    </button>
-
-                    <div className="flex items-start gap-3 pr-8">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-950/40">
-                            <Building2 className="h-6 w-6 text-brand-600 dark:text-brand-400" />
-                        </div>
-                        <div className="min-w-0">
-                            <h2 className="truncate text-lg font-semibold text-slate-900 dark:text-slate-100">
-                                {office.name}
-                            </h2>
-                            {office.location && (
-                                <p className="mt-0.5 flex items-center gap-1 truncate text-sm text-slate-500 dark:text-slate-400">
-                                    <MapPin className="h-3.5 w-3.5 shrink-0" />
-                                    {office.location}
-                                </p>
-                            )}
-                            {office.description && (
-                                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                                    {office.description}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="mt-6">
-                        <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            Services
-                        </h3>
-
-                        {services.length === 0 ? (
-                            <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-800">
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    No services yet.
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {services.map((q) => (
-                                    <div
-                                        key={q.id}
-                                        className="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
-                                    >
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div className="min-w-0">
-                                                <h4 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                    {q.name}
-                                                </h4>
-                                                {q.description && (
-                                                    <p className="mt-0.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
-                                                        {q.description}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <Badge variant={q.isActive ? 'success' : 'default'}>
-                                                {q.isActive ? 'Open' : 'Closed'}
-                                            </Badge>
-                                        </div>
-
-                                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                      <span className="flex items-center gap-1 font-bold text-brand-600 dark:text-brand-400">
-                        <Users className="h-3 w-3" />
-                          {q.waitingCount ?? 0} waiting
-                      </span>
-                                            <span className="flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400">
-                        <Clock className="h-3 w-3" />
-                        ~{q.estimatedMinutes ?? 0} min
-                      </span>
-                                            {q.opensAt && q.closesAt && (
-                                                <span className="text-slate-500 dark:text-slate-400">
-                          {String(q.opensAt).slice(0, 5)} – {String(q.closesAt).slice(0, 5)}
-                        </span>
-                                            )}
-                                        </div>
-
-                                        {q.staff && q.staff.length > 0 && (
-                                            <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-800">
-                                                <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                                                    Staff
-                                                </div>
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {q.staff.map((s) => (
-                                                        <span
-                                                            key={s.id}
-                                                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                                                        >
-                              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-brand-600 text-[8px] font-bold text-white">
-                                {s.fullName?.slice(0, 1).toUpperCase()}
-                              </span>
-                                                            {s.fullName}
-                            </span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="mt-6 flex justify-end">
-                        <Button variant="secondary" onClick={onClose}>Close</Button>
-                    </div>
-                </motion.div>
-            </div>
-        </>
-    )
+function formatTime(t) {
+    if (!t) return null
+    return String(t).slice(0, 5)
 }
 
 export default function OfficesTab() {
     const { push } = useToastStore()
+    const { user } = useAuthStore()
+    const navigate = useNavigate()
+
     const [offices, setOffices] = useState([])
     const [queues, setQueues] = useState([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
-    const [openOffice, setOpenOffice] = useState(null)
+    const [selectedOfficeId, setSelectedOfficeId] = useState(null)
 
-    useEffect(() => {
-        let cancelled = false
-        Promise.all([
-            api.get('/api/queues'),
-            // Try the admin offices endpoint — if it fails (student), fall back to queue-derived list
-            api.get('/api/admin/offices').catch(() => ({ data: { data: [] } })),
-        ])
-            .then(([qRes, oRes]) => {
-                if (cancelled) return
-                const qs = qRes.data?.data || []
-                const os = oRes.data?.data || []
+    const isFresher = user?.role === 'FRESHER'
 
-                // If no offices loaded (student can't hit admin endpoint),
-                // derive a synthetic list from the queues themselves
-                if (os.length === 0) {
-                    const map = new Map()
-                    qs.forEach((q) => {
-                        const key = q.officeId ? String(q.officeId) : (q.officeName || '__other__')
-                        if (!map.has(key)) {
-                            map.set(key, {
-                                id: q.officeId || key,
-                                name: q.officeName || 'Other services',
-                                location: q.officeLocation || '',
-                                description: null,
-                                isActive: true,
-                            })
-                        }
-                    })
-                    setOffices(Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name)))
-                } else {
-                    setOffices(os)
-                }
-                setQueues(qs)
-            })
-            .catch((err) => {
-                if (!cancelled) push({ type: 'error', message: err.response?.data?.message || 'Failed to load' })
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false)
-            })
-        return () => { cancelled = true }
+    const load = useCallback(async () => {
+        try {
+            const [qRes, oRes] = await Promise.all([
+                api.get('/api/queues'),
+                api.get('/api/offices').catch(() => ({ data: { data: [] } })),
+            ])
+            const qs = qRes.data?.data || []
+            const os = oRes.data?.data || []
+
+            if (os.length === 0) {
+                const map = new Map()
+                qs.forEach((q) => {
+                    const key = q.officeId ? String(q.officeId) : (q.officeName || '__other__')
+                    if (!map.has(key)) {
+                        map.set(key, {
+                            id: q.officeId || key,
+                            name: q.officeName || 'Other services',
+                            location: q.officeLocation || '',
+                            description: null,
+                            isActive: true,
+                            openingTime: null,
+                            closingTime: null,
+                            slotDurationMinutes: null,
+                        })
+                    }
+                })
+                setOffices(Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name)))
+            } else {
+                setOffices(os)
+            }
+            setQueues(qs)
+        } catch (err) {
+            push({ type: 'error', message: err.response?.data?.message || 'Failed to load offices' })
+        } finally {
+            setLoading(false)
+        }
     }, [push])
+
+    useEffect(() => { load() }, [load])
+    useAdaptivePoll(load, { fastMs: 5000, slowMs: 15000 })
 
     const enriched = useMemo(() => {
         return offices.map((o) => {
@@ -272,18 +78,15 @@ export default function OfficesTab() {
                 if (q.officeId && o.id) return String(q.officeId) === String(o.id)
                 return q.officeName === o.name
             })
-            const staffIds = new Set()
+            const staffMap = new Map()
             let waitingTotal = 0
             services.forEach((q) => {
                 waitingTotal += q.waitingCount ?? 0
-                ;(q.staff || []).forEach((s) => staffIds.add(s.id))
+                ;(q.staff || []).forEach((s) => {
+                    if (!staffMap.has(s.id)) staffMap.set(s.id, s)
+                })
             })
-            return {
-                office: o,
-                queueCount: services.length,
-                staffCount: staffIds.size,
-                waitingTotal,
-            }
+            return { office: o, services, staff: Array.from(staffMap.values()), waitingTotal }
         })
     }, [offices, queues])
 
@@ -293,76 +96,328 @@ export default function OfficesTab() {
         return enriched.filter(
             (e) =>
                 e.office.name.toLowerCase().includes(s) ||
-                e.office.location?.toLowerCase().includes(s)
+                e.office.location?.toLowerCase().includes(s) ||
+                e.services.some((q) => q.name.toLowerCase().includes(s))
         )
     }, [enriched, search])
 
-    if (loading) return <SkeletonQueueGrid count={6} />
+    const selected = filtered.find(
+        (e) => String(e.office.id ?? e.office.name) === String(selectedOfficeId)
+    )
+
+    if (loading) {
+        return (
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr]">
+                <div className="h-96 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
+                <div className="h-96 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
+            </div>
+        )
+    }
 
     return (
         <div>
-            <div className="mb-6">
-                <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-                    Office directory
+            <div className="mb-5">
+                <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    Offices
                 </h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Browse every office at your university — see what they do and who's serving.
-                </p>
             </div>
 
-            {enriched.length > 0 && (
-                <div className="mb-5">
-                    <div className="relative">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search offices"
-                            className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
-                        />
-                    </div>
-                </div>
-            )}
-
-            {enriched.length === 0 ? (
-                <EmptyState
-                    icon={Building2}
-                    title="No offices available"
-                    description="Your university hasn't opened any offices or services yet."
-                />
-            ) : filtered.length === 0 ? (
-                <EmptyState
-                    icon={Search}
-                    title="No matches"
-                    description="Try a different search term."
-                    action={<Button variant="secondary" onClick={() => setSearch('')}>Clear search</Button>}
-                />
-            ) : (
+            {isFresher && (
                 <motion.div
-                    variants={stagger(0, 0.05)}
-                    initial="initial"
-                    animate="animate"
-                    className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/40"
                 >
-                    {filtered.map((e) => (
-                        <OfficeCard
-                            key={String(e.office.id)}
-                            office={e.office}
-                            queueCount={e.queueCount}
-                            staffCount={e.staffCount}
-                            waitingTotal={e.waitingTotal}
-                            onClick={() => setOpenOffice(e.office)}
-                        />
-                    ))}
+                    <GraduationCap className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-400" />
+                    <div className="flex-1 text-sm">
+                        <p className="font-medium text-amber-900 dark:text-amber-200">
+                            You're registered as a fresher
+                        </p>
+                        <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
+                            Some services require a matric number. Upgrade from your profile when you have one.
+                        </p>
+                        <button
+                            onClick={() => navigate('/profile')}
+                            className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-amber-700"
+                        >
+                            Go to profile
+                            <ArrowRight className="h-3 w-3" />
+                        </button>
+                    </div>
                 </motion.div>
             )}
 
-            <AnimatePresence>
-                {openOffice && (
-                    <OfficeDetail office={openOffice} queues={queues} onClose={() => setOpenOffice(null)} />
-                )}
-            </AnimatePresence>
+            {offices.length === 0 ? (
+                <EmptyState
+                    icon={Building2}
+                    title="No offices available"
+                    description="Your university hasn't opened any offices yet."
+                />
+            ) : (
+                <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[320px_1fr]">
+                    <div className="lg:sticky lg:top-[150px]">
+                        <Card className="h-fit">
+                            <h3 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">
+                                All Offices
+                            </h3>
+
+                            <div className="relative mb-4">
+                                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Search offices"
+                                    className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                                />
+                            </div>
+
+                            {filtered.length === 0 ? (
+                                <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">
+                                    No offices match your search.
+                                </div>
+                            ) : (
+                                <ul className="space-y-1">
+                                    {filtered.map((e) => {
+                                        const id = e.office.id ?? e.office.name
+                                        const isSelected = String(id) === String(selectedOfficeId)
+                                        return (
+                                            <li key={String(id)}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelectedOfficeId(id)}
+                                                    className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
+                                                        isSelected
+                                                            ? 'bg-brand-50 font-medium text-brand-700 dark:bg-brand-950/40 dark:text-brand-300'
+                                                            : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
+                                                    }`}
+                                                >
+                                                    <span className="truncate">{e.office.name}</span>
+                                                    <span
+                                                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                                            isSelected
+                                                                ? 'bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300'
+                                                                : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                                                        }`}
+                                                    >
+                            {e.services.length}
+                          </span>
+                                                </button>
+                                            </li>
+                                        )
+                                    })}
+                                </ul>
+                            )}
+                        </Card>
+                    </div>
+
+                    {selected ? (
+                        <Card>
+                            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                                <div className="flex min-w-0 items-start gap-3">
+                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-950/40">
+                                        <Building2 className="h-6 w-6 text-brand-600 dark:text-brand-400" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                                            {selected.office.name}
+                                        </h3>
+                                        {selected.office.location && (
+                                            <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+                                                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                                                {selected.office.location}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                                <Badge variant={selected.office.isActive === false ? 'default' : 'success'}>
+                                    {selected.office.isActive === false ? 'Inactive' : 'Active'}
+                                </Badge>
+                            </div>
+
+                            {selected.office.description && (
+                                <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
+                                    {selected.office.description}
+                                </p>
+                            )}
+
+                            <div className="mt-5 grid grid-cols-2 gap-4">
+                                <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                                    <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                        Working hours
+                                    </div>
+                                    <div className="mt-1 flex items-center gap-1.5 text-sm font-bold text-slate-900 dark:text-slate-100">
+                                        <Clock className="h-3.5 w-3.5 text-slate-400" />
+                                        {selected.office.openingTime && selected.office.closingTime ? (
+                                            <>
+                                                {formatTime(selected.office.openingTime)} –{' '}
+                                                {formatTime(selected.office.closingTime)}
+                                            </>
+                                        ) : (
+                                            <span className="font-normal italic text-slate-400 dark:text-slate-500">
+                        Not set
+                      </span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                                    <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                        Slot duration
+                                    </div>
+                                    <div className="mt-1 flex items-center gap-1.5 text-sm font-bold text-slate-900 dark:text-slate-100">
+                                        <Clock className="h-3.5 w-3.5 text-slate-400" />
+                                        {selected.office.slotDurationMinutes ? (
+                                            <>{selected.office.slotDurationMinutes} minutes</>
+                                        ) : (
+                                            <span className="font-normal italic text-slate-400 dark:text-slate-500">
+                        Not set
+                      </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-5 grid grid-cols-3 gap-4">
+                                <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                                    <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                        <ListOrdered className="h-3 w-3" />
+                                        Services
+                                    </div>
+                                    <div className="mt-1 text-xl font-bold text-brand-600 dark:text-brand-400">
+                                        {selected.services.length}
+                                    </div>
+                                </div>
+                                <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                                    <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                        <Users className="h-3 w-3" />
+                                        Staff
+                                    </div>
+                                    <div className="mt-1 text-xl font-bold text-sky-600 dark:text-sky-400">
+                                        {selected.staff.length}
+                                    </div>
+                                </div>
+                                <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                                    <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                        <Ticket className="h-3 w-3" />
+                                        Waiting
+                                    </div>
+                                    <div className="mt-1 text-xl font-bold text-amber-600 dark:text-amber-400">
+                                        {selected.waitingTotal}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-6">
+                                <h4 className="mb-3 text-base font-semibold text-slate-900 dark:text-slate-100">
+                                    Services
+                                </h4>
+
+                                {selected.services.length === 0 ? (
+                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                                        No services yet.
+                                    </div>
+                                ) : (
+                                    <div className="max-h-[420px] overflow-y-auto pr-1">
+                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                            {selected.services.map((q) => (
+                                                <div
+                                                    key={q.id}
+                                                    className="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
+                                                >
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <h5 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                            {q.name}
+                                                        </h5>
+                                                        {q.matricRequired && (
+                                                            <GraduationCap className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                                                        )}
+                                                    </div>
+
+                                                    {q.description ? (
+                                                        <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                                                            {q.description}
+                                                        </p>
+                                                    ) : (
+                                                        <p className="mt-1 text-xs italic text-slate-400 dark:text-slate-500">
+                                                            No description
+                                                        </p>
+                                                    )}
+
+                                                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                            <span className="flex items-center gap-1 font-bold text-brand-600 dark:text-brand-400">
+                              <Users className="h-3 w-3" />
+                                {q.waitingCount ?? 0} waiting
+                            </span>
+                                                        <span className="flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400">
+                              <Clock className="h-3 w-3" />
+                              ~{q.estimatedMinutes ?? 0} min
+                            </span>
+                                                    </div>
+
+                                                    <button
+                                                        onClick={() => navigate('/student/queues')}
+                                                        className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400"
+                                                    >
+                                                        Join this service
+                                                        <ArrowRight className="h-3 w-3" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {selected.staff.length > 0 && (
+                                <div className="mt-6">
+                                    <h4 className="mb-3 text-base font-semibold text-slate-900 dark:text-slate-100">
+                                        Assigned staff
+                                    </h4>
+                                    <div className="max-h-[280px] overflow-y-auto pr-1">
+                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                            {selected.staff.map((s) => (
+                                                <div
+                                                    key={s.id}
+                                                    className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700"
+                                                >
+                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
+                                                        {s.fullName?.slice(0, 1).toUpperCase() || <UserCircle2 className="h-5 w-5" />}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                            {s.fullName}
+                                                        </div>
+                                                        {s.email && (
+                                                            <div className="flex items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                                                                <Mail className="h-3 w-3 shrink-0" />
+                                                                {s.email}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </Card>
+                    ) : (
+                        <Card>
+                            <div className="py-20 text-center">
+                                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+                                    <Building2 className="h-8 w-8 text-slate-400" />
+                                </div>
+                                <p className="text-base font-medium text-slate-900 dark:text-slate-100">
+                                    Select an office to view details
+                                </p>
+                                <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+                                    Pick an office from the list on the left to see its services, staff, and working hours.
+                                </p>
+                            </div>
+                        </Card>
+                    )}
+                </div>
+            )}
         </div>
     )
 }

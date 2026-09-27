@@ -56,6 +56,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
             "ORDER BY t.calledAt DESC")
     List<Ticket> findCalledByQueueId(@Param("queueId") Long queueId);
 
+    boolean existsByTicketNumber(String ticketNumber);
+
     Optional<Ticket> findByIdAndQueueId(Long id, Long queueId);
 
     // ---------- analytics queries ----------

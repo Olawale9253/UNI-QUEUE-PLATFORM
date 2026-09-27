@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,6 +30,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class TicketService {
 
+    private static final SecureRandom RANDOM = new SecureRandom();
     private final TicketRepository ticketRepository;
     private final QueueRepository queueRepository;
     private final UserRepository userRepository;
@@ -87,10 +89,7 @@ public class TicketService {
             initialStatus = TicketStatus.WAITLISTED;
         }
 
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        long todayCount = ticketRepository.countTodayByQueueId(queueId, startOfDay);
-        String prefix = String.valueOf(queue.getName().charAt(0)).toUpperCase();
-        String ticketNumber = String.format("%s-%03d", prefix, todayCount + 1);
+        String ticketNumber = generateTicketNumber(queue);
 
         Ticket ticket = Ticket.builder()
                 .queue(queue)
@@ -164,6 +163,102 @@ public class TicketService {
 
         auditService.record(userId, ticket.getQueue().getUniversity().getId(),
                 AuditAction.TICKET_CANCELLED, "Ticket", ticketId, null);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  STUDENT: RESCHEDULE TURN
+    //  Moves the student's own ticket to the end of the current
+    //  queue. Keeps the same ticket number; just resets priority
+    //  and moves them to the back of the waiting list.
+    // ═══════════════════════════════════════════════════════════
+
+    @Transactional
+    public TicketResponse rescheduleMyTurn(Long userId, Long ticketId) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+
+        if (!ticket.getUser().getId().equals(userId)) {
+            throw new BadRequestException("Not your ticket");
+        }
+
+        // Only WAITING or CALLED tickets can be rescheduled
+        if (ticket.getStatus() != TicketStatus.WAITING
+                && ticket.getStatus() != TicketStatus.CALLED) {
+            throw new BadRequestException(
+                    "Only WAITING or CALLED tickets can be rescheduled. "
+                            + "Your ticket is " + ticket.getStatus() + ".");
+        }
+
+        Long queueId = ticket.getQueue().getId();
+
+        // Reset state
+        ticket.setStatus(TicketStatus.WAITING);
+        ticket.setCalledAt(null);
+        ticket.setServedBy(null);
+        ticket.setPriority(0);
+        // Update joinedAt so the ticket sorts to the end of the FIFO queue
+        ticket.setJoinedAt(LocalDateTime.now());
+        ticketRepository.save(ticket);
+
+        recalculatePositions(queueId);
+
+        notificationService.notify(ticket.getUser(), NotificationType.QUEUE_UPDATE,
+                "Turn rescheduled",
+                "You've been moved to the end of " + ticket.getQueue().getName()
+                        + ". New ticket: " + ticket.getTicketNumber() + ".");
+
+        auditService.record(userId, ticket.getQueue().getUniversity().getId(),
+                AuditAction.TICKET_RESCHEDULED, "Ticket", ticketId,
+                "{\"ticketNumber\":\"" + ticket.getTicketNumber() + "\"}");
+
+        Ticket fresh = ticketRepository.findById(ticketId).orElseThrow();
+        return enrichWithPosition(fresh);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  STUDENT: SKIP TURN
+    //  Marks the student's own ticket as NO_SHOW and promotes the
+    //  next ticket in the queue. Different from leave — recorded
+    //  as a skip for staff analytics.
+    // ═══════════════════════════════════════════════════════════
+
+    @Transactional
+    public TicketResponse skipMyTurn(Long userId, Long ticketId) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+
+        if (!ticket.getUser().getId().equals(userId)) {
+            throw new BadRequestException("Not your ticket");
+        }
+
+        if (ticket.getStatus() != TicketStatus.WAITING
+                && ticket.getStatus() != TicketStatus.CALLED) {
+            throw new BadRequestException(
+                    "Only WAITING or CALLED tickets can be skipped. "
+                            + "Your ticket is " + ticket.getStatus() + ".");
+        }
+
+        TicketStatus oldStatus = ticket.getStatus();
+        Long queueId = ticket.getQueue().getId();
+
+        ticket.setStatus(TicketStatus.NO_SHOW);
+        ticketRepository.save(ticket);
+        recalculatePositions(queueId);
+
+        if (oldStatus == TicketStatus.WAITING) {
+            promoteFromWaitlist(queueId);
+        }
+
+        notificationService.notify(ticket.getUser(), NotificationType.QUEUE_UPDATE,
+                "Turn skipped",
+                "Your ticket " + ticket.getTicketNumber() + " has been marked as skipped. "
+                        + "You can join the queue again anytime.");
+
+        auditService.record(userId, ticket.getQueue().getUniversity().getId(),
+                AuditAction.TICKET_SKIPPED, "Ticket", ticketId,
+                "{\"ticketNumber\":\"" + ticket.getTicketNumber() + "\"}");
+
+        return enrichWithPosition(ticket);
     }
 
     // ============================================================
@@ -435,6 +530,26 @@ public class TicketService {
     // ============================================================
     //  HELPERS
     // ============================================================
+
+    /**
+     * Generates a non-sequential, hard-to-guess ticket number.
+     * Format: queue-initial + 15 zero-padded random digits.
+     * Example: Q007271538400147
+     *
+     * Uses SecureRandom. Retries on the (astronomically unlikely) DB collision.
+     */
+    private String generateTicketNumber(Queue queue) {
+        String prefix = String.valueOf(queue.getName().charAt(0)).toUpperCase();
+        for (int attempt = 0; attempt < 5; attempt++) {
+            long value = RANDOM.nextLong(1_000_000_000_000_000L); // 15 digits
+            String candidate = prefix + String.format("%015d", value);
+            if (!ticketRepository.existsByTicketNumber(candidate)) {
+                return candidate;
+            }
+        }
+        throw new IllegalStateException(
+                "Could not generate a unique ticket number after 5 attempts");
+    }
 
     private void ensureStaffOwnsQueue(Long staffUserId, Long queueId) {
         if (!queueStaffRepository.existsByQueueIdAndUserId(queueId, staffUserId)) {

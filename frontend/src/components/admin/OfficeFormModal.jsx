@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-    X, Building2, MapPin, FileText, AlertCircle, Loader2, Trash2,
+    X, Building2, MapPin, AlertCircle, Trash2, Clock,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Button from '../ui/Button'
@@ -29,6 +29,9 @@ export default function OfficeFormModal({ office, onClose, onSaved, onDeleted })
         description: '',
         location: '',
         icon: '',
+        openingTime: '09:00',
+        closingTime: '17:00',
+        slotDurationMinutes: 15,
         isActive: true,
     })
     const [saving, setSaving] = useState(false)
@@ -43,6 +46,9 @@ export default function OfficeFormModal({ office, onClose, onSaved, onDeleted })
                 description: office.description || '',
                 location: office.location || '',
                 icon: office.icon || '',
+                openingTime: office.openingTime ? String(office.openingTime).slice(0, 5) : '09:00',
+                closingTime: office.closingTime ? String(office.closingTime).slice(0, 5) : '17:00',
+                slotDurationMinutes: office.slotDurationMinutes ?? 15,
                 isActive: office.isActive !== false,
             })
         }
@@ -64,6 +70,9 @@ export default function OfficeFormModal({ office, onClose, onSaved, onDeleted })
                 description: form.description.trim() || null,
                 location: form.location.trim() || null,
                 icon: form.icon || null,
+                openingTime: form.openingTime ? `${form.openingTime}:00` : null,
+                closingTime: form.closingTime ? `${form.closingTime}:00` : null,
+                slotDurationMinutes: Number(form.slotDurationMinutes) || 15,
                 isActive: form.isActive,
             }
             if (isEdit) {
@@ -139,9 +148,7 @@ export default function OfficeFormModal({ office, onClose, onSaved, onDeleted })
                                 {isEdit ? `Edit ${office.name}` : 'Create office'}
                             </h3>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {isEdit
-                                    ? 'Update the office details'
-                                    : 'An office groups the services students see'}
+                                {isEdit ? 'Update the office details' : 'An office groups the services students see'}
                             </p>
                         </div>
                     </div>
@@ -186,6 +193,53 @@ export default function OfficeFormModal({ office, onClose, onSaved, onDeleted })
                                 rows={3}
                                 className={`${inputClass} resize-none`}
                             />
+                        </div>
+
+                        {/* Working hours + slot duration */}
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                            <div className="mb-3 flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-slate-500" />
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Working hours & appointments
+                </span>
+                            </div>
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                <div>
+                                    <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
+                                        Opens at
+                                    </label>
+                                    <input
+                                        type="time"
+                                        value={form.openingTime}
+                                        onChange={setField('openingTime')}
+                                        className={inputClass}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
+                                        Closes at
+                                    </label>
+                                    <input
+                                        type="time"
+                                        value={form.closingTime}
+                                        onChange={setField('closingTime')}
+                                        className={inputClass}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
+                                        Slot duration (min)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="5"
+                                        max="240"
+                                        value={form.slotDurationMinutes}
+                                        onChange={setField('slotDurationMinutes')}
+                                        className={inputClass}
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         <div>

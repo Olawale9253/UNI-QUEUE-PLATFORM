@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     LayoutGrid, ListOrdered, Users, Building2, BarChart3, ArrowRight, Sparkles,
+    CalendarCheck,
 } from 'lucide-react'
 import Card from '../../components/ui/Card'
 import AdminStatsCards from '../../components/admin/AdminStatsCards'
@@ -13,6 +14,7 @@ const QUICK_ACTIONS = [
     { to: '/admin/staff', label: 'Staff', description: 'Add staff, assign them to queues, and manage accounts.', icon: Users, accent: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' },
     { to: '/admin/offices', label: 'Offices', description: 'See how queues roll up into offices across the university.', icon: Building2, accent: 'bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400' },
     { to: '/admin/analytics', label: 'Analytics', description: 'Track wait times, service quality, and staff performance.', icon: BarChart3, accent: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400' },
+    { to: '/admin/appointments', label: 'Appointments', description: 'Review every booked appointment across your university.', icon: CalendarCheck, accent: 'bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400' },
 ]
 
 export default function AdminHome() {

@@ -7,11 +7,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
-/**
- * A physical or logical unit in the university (Bursary, Registry, Library).
- * Services (queues) belong to an office.
- */
 @Entity
 @Table(
         name = "offices",
@@ -41,9 +38,23 @@ public class Office {
     @Column(length = 255)
     private String location;
 
-    /** Optional Lucide icon name shown on the student side. */
     @Column(length = 50)
     private String icon;
+
+    /** When the office opens (e.g. 08:00). */
+    @Column(name = "opening_time")
+    @Builder.Default
+    private LocalTime openingTime = LocalTime.of(9, 0);
+
+    /** When the office closes (e.g. 17:00). */
+    @Column(name = "closing_time")
+    @Builder.Default
+    private LocalTime closingTime = LocalTime.of(17, 0);
+
+    /** Typical appointment slot length, in minutes. */
+    @Column(name = "slot_duration_minutes")
+    @Builder.Default
+    private Integer slotDurationMinutes = 15;
 
     @Column(name = "is_active")
     @Builder.Default

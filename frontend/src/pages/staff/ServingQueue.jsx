@@ -16,6 +16,7 @@ import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import PageHeader from '../../components/layout/PageHeader'
 import StaffStatsCards from '../../components/staff/StaffStatsCards'
+import CopyButton from '../../components/ui/CopyButton'
 import { SkeletonRow } from '../../components/ui/Skeleton'
 import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../store/toastStore'
@@ -179,24 +180,25 @@ export default function ServingQueue() {
                 }
             />
 
-            {/* Personal stats */}
             <StaffStatsCards />
 
-            <div className="mb-6 flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
-                <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
+            <div className="mb-6 flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900 dark:border-sky-900 dark:bg-sky-950/40 dark:text-sky-200">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-600 dark:text-sky-400" />
                 <div>
                     <p className="font-medium">How this works</p>
-                    <p className="mt-1 text-xs text-sky-800">
+                    <p className="mt-1 text-xs text-sky-800 dark:text-sky-300">
                         Click{' '}
-                        <span className="rounded bg-white px-1.5 py-0.5 font-medium">
+                        <span className="rounded bg-white px-1.5 py-0.5 font-medium dark:bg-slate-800">
               Call next ticket
             </span>{' '}
                         to bring the next student up. Then{' '}
-                        <span className="rounded bg-white px-1.5 py-0.5 font-medium">
+                        <span className="rounded bg-white px-1.5 py-0.5 font-medium dark:bg-slate-800">
               Start service
             </span>{' '}
                         and{' '}
-                        <span className="rounded bg-white px-1.5 py-0.5 font-medium">Complete</span>{' '}
+                        <span className="rounded bg-white px-1.5 py-0.5 font-medium dark:bg-slate-800">
+              Complete
+            </span>{' '}
                         when done.
                     </p>
                 </div>
@@ -212,10 +214,9 @@ export default function ServingQueue() {
                     <div className="space-y-5">
                         {queueGroups.map((group) => (
                             <div key={group.key}>
-                                {/* Department label */}
                                 <div className="mb-1.5 flex items-center gap-1.5 px-1">
                                     <Building2 className="h-3 w-3 text-brand-600" />
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     {group.label}
                   </span>
                                     <span className="text-[10px] text-slate-400">
@@ -223,7 +224,6 @@ export default function ServingQueue() {
                   </span>
                                 </div>
 
-                                {/* Queues in this department */}
                                 <div className="space-y-2">
                                     {group.queues.map((q) => (
                                         <button
@@ -231,8 +231,8 @@ export default function ServingQueue() {
                                             onClick={() => setActiveQueue(q)}
                                             className={`w-full rounded-lg border px-4 py-3 text-left transition-colors ${
                                                 activeQueue?.id === q.id
-                                                    ? 'border-brand-300 bg-brand-50'
-                                                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                                                    ? 'border-brand-300 bg-brand-50 dark:border-brand-800 dark:bg-brand-950/40'
+                                                    : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800'
                                             }`}
                                         >
                                             <div className="flex items-center justify-between">
@@ -240,14 +240,14 @@ export default function ServingQueue() {
                                                     <div
                                                         className={`truncate text-sm font-medium ${
                                                             activeQueue?.id === q.id
-                                                                ? 'text-brand-900'
-                                                                : 'text-slate-900'
+                                                                ? 'text-brand-900 dark:text-brand-200'
+                                                                : 'text-slate-900 dark:text-slate-100'
                                                         }`}
                                                     >
                                                         {q.name}
                                                     </div>
                                                     {q.location && (
-                                                        <div className="mt-0.5 truncate text-xs text-slate-500">
+                                                        <div className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
                                                             {q.location}
                                                         </div>
                                                     )}
@@ -275,14 +275,14 @@ export default function ServingQueue() {
                                 exit={{ opacity: 0, y: -10, scale: 0.98 }}
                                 transition={{ duration: 0.35, ease }}
                             >
-                                <Card className="border-brand-200 bg-brand-50/50">
+                                <Card className="border-brand-200 bg-brand-50/50 dark:border-brand-800 dark:bg-brand-950/30">
                                     <div className="mb-3 flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                       <span className="relative flex h-2 w-2">
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-400 opacity-75" />
                         <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-500" />
                       </span>
-                                            <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-700">
+                                            <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-700 dark:text-brand-300">
                                                 Now serving
                                             </h3>
                                         </div>
@@ -290,11 +290,19 @@ export default function ServingQueue() {
                                     </div>
 
                                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                        <div className="min-w-0">
-                                            <div className="font-mono text-3xl font-semibold text-slate-900 sm:text-4xl">
-                                                {called.ticketNumber}
+                                        <div className="min-w-0 flex-1">
+                                            {/* Ticket number with copy button */}
+                                            <div className="flex items-center gap-2">
+                                                <div className="font-mono text-3xl font-semibold text-slate-900 dark:text-slate-100 sm:text-4xl">
+                                                    {called.ticketNumber}
+                                                </div>
+                                                <CopyButton
+                                                    text={called.ticketNumber}
+                                                    title="Copy ticket ID"
+                                                    className="shrink-0"
+                                                />
                                             </div>
-                                            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
+                                            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600 dark:text-slate-400">
                         <span className="flex items-center gap-1.5">
                           <User className="h-3.5 w-3.5" />
                             {called.userFullName}
@@ -305,7 +313,7 @@ export default function ServingQueue() {
                           </span>
                                                 )}
                                             </div>
-                                            <p className="mt-2 text-xs text-slate-500">
+                                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                                                 {statusDescription[called.status]}
                                             </p>
                                         </div>
@@ -325,7 +333,7 @@ export default function ServingQueue() {
                                                         onClick={() => noShow(called.id)}
                                                         disabled={acting === `noshow-${called.id}`}
                                                         loading={acting === `noshow-${called.id}`}
-                                                        className="text-rose-600 hover:bg-rose-50"
+                                                        className="text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                                                     >
                                                         No-show
                                                     </Button>
@@ -349,17 +357,18 @@ export default function ServingQueue() {
                         )}
                     </AnimatePresence>
 
+                    {/* Waiting list */}
                     <Card padded={false}>
-                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-6 py-4">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-6 py-4 dark:border-slate-800">
                             <div>
-                                <h3 className="text-sm font-semibold text-slate-900">
+                                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                                     Waiting in queue
                                 </h3>
-                                <p className="mt-0.5 text-xs text-slate-500">
+                                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                                     Sorted by priority, then by join time (FIFO).
                                 </p>
                             </div>
-                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                 {waiting.length} {waiting.length === 1 ? 'ticket' : 'tickets'}
               </span>
                         </div>
@@ -372,11 +381,13 @@ export default function ServingQueue() {
                             </div>
                         ) : waiting.length === 0 ? (
                             <div className="px-6 py-12 text-center">
-                                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+                                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
                                     <ListOrdered className="h-6 w-6 text-slate-400" />
                                 </div>
-                                <p className="text-sm font-medium text-slate-900">No one is waiting</p>
-                                <p className="mt-1 text-xs text-slate-500">
+                                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                    No one is waiting
+                                </p>
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                     New tickets will appear here automatically.
                                 </p>
                             </div>
@@ -385,7 +396,7 @@ export default function ServingQueue() {
                                 variants={stagger(0, 0.04)}
                                 initial="initial"
                                 animate="animate"
-                                className="divide-y divide-slate-100"
+                                className="divide-y divide-slate-100 dark:divide-slate-800"
                             >
                                 {waiting.map((t, i) => (
                                     <motion.li
@@ -394,20 +405,25 @@ export default function ServingQueue() {
                                         layout
                                         className="flex items-center justify-between gap-3 px-4 py-4 sm:px-6"
                                     >
-                                        <div className="flex min-w-0 items-center gap-4">
-                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-sm font-semibold text-slate-700">
+                                        <div className="flex min-w-0 flex-1 items-center gap-4">
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-sm font-bold text-brand-600 dark:bg-slate-800 dark:text-brand-400">
                                                 {t.position ?? i + 1}
                                             </div>
-                                            <div className="min-w-0">
-                                                <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm font-semibold text-slate-900">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono text-sm font-bold text-slate-900 dark:text-slate-100">
                             {t.ticketNumber}
                           </span>
+                                                    <CopyButton
+                                                        text={t.ticketNumber}
+                                                        title="Copy ticket ID"
+                                                        className="shrink-0"
+                                                    />
                                                     <Badge variant={statusVariant[t.status] || 'default'}>
                                                         {t.status}
                                                     </Badge>
                                                 </div>
-                                                <div className="mt-0.5 truncate text-xs text-slate-500">
+                                                <div className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
                                                     {t.userFullName}
                                                     {t.matricNumber ? ` · ${t.matricNumber}` : ''}
                                                 </div>
@@ -424,7 +440,7 @@ export default function ServingQueue() {
                                             <button
                                                 onClick={() => noShow(t.id)}
                                                 disabled={acting === `noshow-${t.id}`}
-                                                className="rounded-md px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                                                className="rounded-md px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50 dark:hover:bg-rose-950/40"
                                             >
                                                 No-show
                                             </button>
@@ -435,24 +451,30 @@ export default function ServingQueue() {
                         )}
                     </Card>
 
+                    {/* Recently resolved */}
                     {resolved.length > 0 && (
                         <Card padded={false}>
-                            <div className="border-b border-slate-100 px-6 py-4">
-                                <h3 className="text-sm font-semibold text-slate-900">
+                            <div className="border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+                                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                                     Recently resolved
                                 </h3>
                             </div>
-                            <ul className="divide-y divide-slate-100">
+                            <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {resolved.slice(0, 5).map((t) => (
                                     <li
                                         key={t.id}
                                         className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6"
                                     >
-                                        <div className="flex min-w-0 items-center gap-3">
-                      <span className="font-mono text-sm font-medium text-slate-700">
+                                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <span className="font-mono text-sm font-bold text-slate-700 dark:text-slate-300">
                         {t.ticketNumber}
                       </span>
-                                            <span className="truncate text-xs text-slate-500">
+                                            <CopyButton
+                                                text={t.ticketNumber}
+                                                title="Copy ticket ID"
+                                                className="shrink-0"
+                                            />
+                                            <span className="truncate text-xs text-slate-500 dark:text-slate-400">
                         {t.userFullName}
                       </span>
                                         </div>

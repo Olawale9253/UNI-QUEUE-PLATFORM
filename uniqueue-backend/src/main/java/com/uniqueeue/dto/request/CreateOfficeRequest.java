@@ -1,8 +1,11 @@
 package com.uniqueeue.dto.request;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+
+import java.time.LocalTime;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class CreateOfficeRequest {
@@ -19,6 +22,12 @@ public class CreateOfficeRequest {
 
     @Size(max = 50)
     private String icon;
+
+    private LocalTime openingTime;
+    private LocalTime closingTime;
+
+    @Min(value = 1, message = "Slot duration must be at least 1 minute")
+    private Integer slotDurationMinutes;
 
     private Boolean isActive;
 }

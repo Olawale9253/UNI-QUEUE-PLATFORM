@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     ListOrdered, Calendar, Building2, Activity, ArrowRight, Sparkles,
+    CalendarCheck,
 } from 'lucide-react'
 import Card from '../../components/ui/Card'
 import StaffStatsCards from '../../components/staff/StaffStatsCards'
@@ -12,6 +13,7 @@ const QUICK_ACTIONS = [
     { to: '/staff/queues', label: 'All Queues', description: 'Browse every queue and its staff.', icon: Building2, accent: 'bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400' },
     { to: '/staff/slots', label: 'Appointment Slots', description: 'Set your bookable time slots.', icon: Calendar, accent: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' },
     { to: '/staff/activity', label: 'Your Activity', description: 'See your service history and stats.', icon: Activity, accent: 'bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400' },
+    { to: '/staff/appointments', label: 'Appointments', description: 'Appointments students booked with you.', icon: CalendarCheck, accent: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400' },
 ]
 
 export default function StaffHome() {

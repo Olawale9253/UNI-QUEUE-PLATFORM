@@ -4,6 +4,7 @@ import com.uniqueeue.model.Office;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class OfficeResponse {
@@ -13,15 +14,15 @@ public class OfficeResponse {
     private String description;
     private String location;
     private String icon;
+
+    private LocalTime openingTime;
+    private LocalTime closingTime;
+    private Integer slotDurationMinutes;
+
     private Boolean isActive;
 
-    /** How many services (queues) belong to this office. */
     private Long serviceCount;
-
-    /** How many staff are assigned across all its services. */
     private Long staffCount;
-
-    /** Total tickets currently waiting across all its services. */
     private Long waitingCount;
 
     private LocalDateTime createdAt;
@@ -34,6 +35,9 @@ public class OfficeResponse {
                 .description(o.getDescription())
                 .location(o.getLocation())
                 .icon(o.getIcon())
+                .openingTime(o.getOpeningTime())
+                .closingTime(o.getClosingTime())
+                .slotDurationMinutes(o.getSlotDurationMinutes())
                 .isActive(o.getIsActive())
                 .createdAt(o.getCreatedAt())
                 .updatedAt(o.getUpdatedAt())
