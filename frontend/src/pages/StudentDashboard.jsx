@@ -33,7 +33,7 @@ export default function StudentDashboard() {
     const location = useLocation()
 
     const tabs = [
-        { to: '/student/queues', label: 'Queues', icon: ListOrdered },
+        { to: '/student/queues', label: 'Browse Queues', icon: ListOrdered },
         { to: '/student/offices', label: 'Offices', icon: Building2 },
         { to: '/student/history', label: 'History', icon: History },
     ]

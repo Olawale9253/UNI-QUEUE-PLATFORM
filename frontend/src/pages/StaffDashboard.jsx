@@ -22,20 +22,20 @@ import StaffProfile from './staff/StaffProfile'
 import SettingsPage from './staff/SettingsPage'
 
 const tabs = [
-    { to: '/staff/serving', label: 'Queue Management', icon: ListOrdered },
-    { to: '/staff/queues', label: 'All Queues', icon: Building2 },
-    { to: '/staff/slots', label: 'Appointment Slots', icon: Calendar },
+    { to: '/staff/serving', label: 'Serving Queue', icon: ListOrdered },
+    { to: '/staff/queues', label: 'Services', icon: Building2 },
+    { to: '/staff/slots', label: 'Manage Slots', icon: Calendar },
     { to: '/staff/appointments', label: 'Appointments', icon: CalendarCheck },
     { to: '/staff/documents', label: 'Documents', icon: FileText },
-    { to: '/staff/activity', label: 'My Activity', icon: Activity },
-    { to: '/staff/profile', label: 'My Profile', icon: UserIcon },
+    { to: '/staff/activity', label: 'Activity', icon: Activity },
+    { to: '/staff/profile', label: 'Profile', icon: UserIcon },
     { to: '/staff/settings', label: 'Settings', icon: SettingsIcon },
 ]
 
 const ROUTE_SUBTITLES = {
     '/staff': "A live view of today's office operations.",
     '/staff/serving': 'Call the next ticket and serve students.',
-    '/staff/queues': 'Browse every service across your university.',
+    '/staff/queues': 'Browse every service assigned to you, grouped by office.',
     '/staff/slots': 'Set your bookable time slots.',
     '/staff/appointments': 'Appointments students booked with you.',
     '/staff/documents': 'Review and process document requests.',

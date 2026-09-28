@@ -15,6 +15,9 @@ public class AppointmentSlotResponse {
     private String description;
     private AppointmentCategory category;
 
+    /** Computed office label — department → faculty → "General Office". */
+    private String officeName;
+
     private String faculty;
     private String department;
     private String location;
@@ -61,6 +64,7 @@ public class AppointmentSlotResponse {
                 .title(s.getTitle())
                 .description(s.getDescription())
                 .category(s.getCategory())
+                .officeName(computeOfficeName(s))
                 .faculty(s.getFaculty())
                 .department(s.getDepartment())
                 .location(s.getLocation())
@@ -81,5 +85,16 @@ public class AppointmentSlotResponse {
                 .createdAt(s.getCreatedAt())
                 .updatedAt(s.getUpdatedAt())
                 .build();
+    }
+
+    /** Picks the first non-blank of department / faculty, else a default. */
+    private static String computeOfficeName(AppointmentSlot s) {
+        if (s.getDepartment() != null && !s.getDepartment().isBlank()) {
+            return s.getDepartment().trim();
+        }
+        if (s.getFaculty() != null && !s.getFaculty().isBlank()) {
+            return s.getFaculty().trim();
+        }
+        return "General Office";
     }
 }

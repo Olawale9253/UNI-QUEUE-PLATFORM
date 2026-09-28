@@ -24,11 +24,11 @@ const STATUS_VARIANTS = {
 }
 
 const STATUS_LABELS = {
-    BOOKED: 'Booked',
+    BOOKED: 'Awaiting meeting',
     CONFIRMED: 'Confirmed',
     COMPLETED: 'Completed',
     CANCELLED: 'Cancelled',
-    NO_SHOW: 'No-show',
+    NO_SHOW: 'Missed',
 }
 
 const SORT_OPTIONS = [
