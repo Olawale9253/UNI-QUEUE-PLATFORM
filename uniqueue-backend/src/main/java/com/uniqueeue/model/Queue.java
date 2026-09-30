@@ -19,6 +19,10 @@ public class Queue {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "operating_days", nullable = false, length = 20)
+    @Builder.Default
+    private String operatingDays = "1,2,3,4,5";   // Mon–Fri
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "university_id", nullable = false)
     private University university;
@@ -96,4 +100,5 @@ public class Queue {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
 }

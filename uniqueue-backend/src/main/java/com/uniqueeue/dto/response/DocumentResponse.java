@@ -1,5 +1,6 @@
 package com.uniqueeue.dto.response;
 
+import com.uniqueeue.enums.DocumentStatus;
 import com.uniqueeue.enums.DocumentType;
 import com.uniqueeue.model.Document;
 import lombok.*;
@@ -21,10 +22,21 @@ public class DocumentResponse {
     private Long sizeBytes;
     private LocalDateTime createdAt;
 
+    // ─── Review state ───
+    private DocumentStatus status;
+    private Long reviewedBy;
+    private String reviewedByName;
+    private LocalDateTime reviewedAt;
+    private String reviewNotes;
+
     /** Relative URL the client can GET to download the file. */
     private String downloadUrl;
 
-    public static DocumentResponse from(Document d, String uploadedByName, String ticketNumber) {
+    public static DocumentResponse from(
+            Document d,
+            String uploadedByName,
+            String ticketNumber,
+            String reviewedByName) {
         return DocumentResponse.builder()
                 .id(d.getId())
                 .universityId(d.getUniversityId())
@@ -37,6 +49,11 @@ public class DocumentResponse {
                 .contentType(d.getContentType())
                 .sizeBytes(d.getSizeBytes())
                 .createdAt(d.getCreatedAt())
+                .status(d.getStatus())
+                .reviewedBy(d.getReviewedBy())
+                .reviewedByName(reviewedByName)
+                .reviewedAt(d.getReviewedAt())
+                .reviewNotes(d.getReviewNotes())
                 .downloadUrl("/api/documents/" + d.getId() + "/download")
                 .build();
     }

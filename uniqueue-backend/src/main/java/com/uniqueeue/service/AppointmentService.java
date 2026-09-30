@@ -168,6 +168,7 @@ public class AppointmentService {
                 .toList();
     }
 
+
     // ============================================================
     //  BOOKINGS — student
     // ============================================================
@@ -178,6 +179,15 @@ public class AppointmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         AppointmentSlot slot = slotRepository.findById(request.getSlotId())
                 .orElseThrow(() -> new ResourceNotFoundException("Slot not found"));
+
+        // ─── Block double-booking: student can only have ONE upcoming appointment ───
+        java.util.List<Appointment> upcoming = appointmentRepository.findUpcomingByStudent(
+                studentId, java.time.LocalDateTime.now());
+        if (!upcoming.isEmpty()) {
+            throw new BadRequestException(
+                    "You already have an upcoming appointment. "
+                            + "Please complete or cancel it before booking another.");
+        }
 
         if (student.getUniversity() == null
                 || !student.getUniversity().getId().equals(slot.getUniversity().getId())) {

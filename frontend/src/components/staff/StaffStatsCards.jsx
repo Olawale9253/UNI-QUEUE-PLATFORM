@@ -40,21 +40,23 @@ export default function StaffStatsCards() {
     const [loading, setLoading] = useState(true)
     const [stats, setStats] = useState(null)
     const [apptStats, setApptStats] = useState(null)
+    const [docStats, setDocStats] = useState(null)
     const [pendingQueues, setPendingQueues] = useState(0)
 
     const load = useCallback(async () => {
         try {
-            const [s, a, q] = await Promise.all([
+            const [s, a, d, q] = await Promise.all([
                 api.get('/api/staff/stats').catch(() => ({ data: { data: null } })),
                 api.get('/api/staff/appointments/stats').catch(() => ({ data: { data: null } })),
+                api.get('/api/staff/documents/stats').catch(() => ({ data: { data: null } })),
                 api.get('/api/staff/queues').catch(() => ({ data: { data: [] } })),
             ])
             setStats(s.data?.data || null)
             setApptStats(a.data?.data || null)
+            setDocStats(d.data?.data || null)
 
             const queues = q.data?.data || []
-            const total = queues.reduce((sum, qu) => sum + (qu.waitingCount ?? 0), 0)
-            setPendingQueues(total)
+            setPendingQueues(queues.reduce((sum, qu) => sum + (qu.waitingCount ?? 0), 0))
         } catch {
             // silent
         } finally {
@@ -87,7 +89,7 @@ export default function StaffStatsCards() {
             />
             <StatTile
                 label="Pending Documents"
-                value={0}
+                value={docStats?.pending ?? 0}
                 icon={FileText}
                 accent="bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400"
                 valueColor="text-purple-600 dark:text-purple-400"

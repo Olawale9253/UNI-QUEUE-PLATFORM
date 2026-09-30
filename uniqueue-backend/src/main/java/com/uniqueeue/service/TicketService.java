@@ -22,7 +22,6 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,6 +30,7 @@ import java.util.Optional;
 public class TicketService {
 
     private static final SecureRandom RANDOM = new SecureRandom();
+
     private final TicketRepository ticketRepository;
     private final QueueRepository queueRepository;
     private final UserRepository userRepository;
@@ -38,6 +38,7 @@ public class TicketService {
     private final NotificationService notificationService;
     private final AuditService auditService;
     private final WorkflowService workflowService;
+    private final QueueScheduleService scheduleService;   // ⬅ NEW
 
     // ============================================================
     //  STUDENT
@@ -57,13 +58,14 @@ public class TicketService {
         if (!Boolean.TRUE.equals(queue.getIsActive())) {
             throw new BadRequestException("Queue is not active");
         }
-        if (!isWithinOperatingHours(queue)) {
+
+        // ⬇ delegated to QueueScheduleService
+        if (!scheduleService.isWithinOperatingHours(queue)) {
             throw new BadRequestException(
-                    "Queue is closed. Opens at " + queue.getOpensAt() + ", closes at " + queue.getClosesAt() + ".");
+                    "Queue is closed. Opens at " + queue.getOpensAt()
+                            + ", closes at " + queue.getClosesAt() + ".");
         }
 
-        // Workflow gate: if the queue is part of an in-progress workflow,
-        // only the current step can be joined.
         workflowService.assertCanJoinQueue(userId, queueId);
 
         List<Ticket> active = ticketRepository.findActiveByUserId(userId);
@@ -165,13 +167,6 @@ public class TicketService {
                 AuditAction.TICKET_CANCELLED, "Ticket", ticketId, null);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    //  STUDENT: RESCHEDULE TURN
-    //  Moves the student's own ticket to the end of the current
-    //  queue. Keeps the same ticket number; just resets priority
-    //  and moves them to the back of the waiting list.
-    // ═══════════════════════════════════════════════════════════
-
     @Transactional
     public TicketResponse rescheduleMyTurn(Long userId, Long ticketId) {
         Ticket ticket = ticketRepository.findById(ticketId)
@@ -180,8 +175,6 @@ public class TicketService {
         if (!ticket.getUser().getId().equals(userId)) {
             throw new BadRequestException("Not your ticket");
         }
-
-        // Only WAITING or CALLED tickets can be rescheduled
         if (ticket.getStatus() != TicketStatus.WAITING
                 && ticket.getStatus() != TicketStatus.CALLED) {
             throw new BadRequestException(
@@ -191,12 +184,10 @@ public class TicketService {
 
         Long queueId = ticket.getQueue().getId();
 
-        // Reset state
         ticket.setStatus(TicketStatus.WAITING);
         ticket.setCalledAt(null);
         ticket.setServedBy(null);
         ticket.setPriority(0);
-        // Update joinedAt so the ticket sorts to the end of the FIFO queue
         ticket.setJoinedAt(LocalDateTime.now());
         ticketRepository.save(ticket);
 
@@ -215,13 +206,6 @@ public class TicketService {
         return enrichWithPosition(fresh);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    //  STUDENT: SKIP TURN
-    //  Marks the student's own ticket as NO_SHOW and promotes the
-    //  next ticket in the queue. Different from leave — recorded
-    //  as a skip for staff analytics.
-    // ═══════════════════════════════════════════════════════════
-
     @Transactional
     public TicketResponse skipMyTurn(Long userId, Long ticketId) {
         Ticket ticket = ticketRepository.findById(ticketId)
@@ -230,7 +214,6 @@ public class TicketService {
         if (!ticket.getUser().getId().equals(userId)) {
             throw new BadRequestException("Not your ticket");
         }
-
         if (ticket.getStatus() != TicketStatus.WAITING
                 && ticket.getStatus() != TicketStatus.CALLED) {
             throw new BadRequestException(
@@ -381,8 +364,6 @@ public class TicketService {
         ticketRepository.save(ticket);
         recalculatePositions(ticket.getQueue().getId());
 
-        // Workflow advance: if this queue is the current step of a workflow,
-        // advance the student's progress.
         workflowService.onTicketCompleted(ticket.getUser().getId(), ticket.getQueue().getId());
 
         notificationService.notify(ticket.getUser(), NotificationType.TICKET_SERVED,
@@ -511,7 +492,8 @@ public class TicketService {
         return QueueEstimateResponse.builder()
                 .queueId(queue.getId())
                 .queueName(queue.getName())
-                .isOpen(isWithinOperatingHours(queue))
+                // ⬇ delegated to QueueScheduleService
+                .isOpen(scheduleService.isWithinOperatingHours(queue))
                 .opensAt(queue.getOpensAt() != null ? queue.getOpensAt().toString() : null)
                 .closesAt(queue.getClosesAt() != null ? queue.getClosesAt().toString() : null)
                 .waitingCount(waiting.size())
@@ -531,17 +513,10 @@ public class TicketService {
     //  HELPERS
     // ============================================================
 
-    /**
-     * Generates a non-sequential, hard-to-guess ticket number.
-     * Format: queue-initial + 15 zero-padded random digits.
-     * Example: Q007271538400147
-     *
-     * Uses SecureRandom. Retries on the (astronomically unlikely) DB collision.
-     */
     private String generateTicketNumber(Queue queue) {
         String prefix = String.valueOf(queue.getName().charAt(0)).toUpperCase();
         for (int attempt = 0; attempt < 5; attempt++) {
-            long value = RANDOM.nextLong(1_000_000_000_000_000L); // 15 digits
+            long value = RANDOM.nextLong(1_000_000_000_000_000L);
             String candidate = prefix + String.format("%015d", value);
             if (!ticketRepository.existsByTicketNumber(candidate)) {
                 return candidate;
@@ -628,18 +603,4 @@ public class TicketService {
         return TicketResponse.from(ticket, position, estimated);
     }
 
-    private boolean isWithinOperatingHours(Queue queue) {
-        if (queue.getOpensAt() == null || queue.getClosesAt() == null) return true;
-
-        LocalTime now = LocalTime.now();
-        LocalTime open = queue.getOpensAt();
-        LocalTime close = queue.getClosesAt();
-
-        if (open.equals(close)) return true;
-        if (open.isBefore(close)) {
-            return !now.isBefore(open) && !now.isAfter(close);
-        } else {
-            return !now.isBefore(open) || !now.isAfter(close);
-        }
-    }
 }

@@ -23,48 +23,20 @@ public class AppointmentStatsService {
     public AppointmentStatsResponse forStaff(Long staffId) {
         List<Appointment> all = appointmentRepository.findByStaff(staffId);
         LocalDate today = LocalDate.now();
-        LocalDateTime dayStart = today.atStartOfDay();
-        LocalDateTime dayEnd = dayStart.plusDays(1);
         LocalDateTime now = LocalDateTime.now();
 
-        long todayCount = appointmentRepository.countTodayByStaff(staffId, dayStart, dayEnd);
-        long upcoming = appointmentRepository.countUpcomingByStaff(staffId, now);
-
-        return build(all, todayCount, upcoming, now);
-    }
-
-    @Transactional(readOnly = true)
-    public java.util.List<com.uniqueeue.dto.response.AppointmentResponse> listAppointmentsForStaff(Long staffId) {
-        return appointmentRepository.findByStaff(staffId).stream()
-                .map(com.uniqueeue.dto.response.AppointmentResponse::from)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public AppointmentStatsResponse forUniversity(Long universityId) {
-        List<Appointment> all = appointmentRepository.findByUniversity(universityId);
-        LocalDate today = LocalDate.now();
-        LocalDateTime dayStart = today.atStartOfDay();
-        LocalDateTime dayEnd = dayStart.plusDays(1);
-        LocalDateTime now = LocalDateTime.now();
-
-        long todayCount = appointmentRepository.countTodayByUniversity(universityId, dayStart, dayEnd);
-        long upcoming = appointmentRepository.countUpcomingByUniversity(universityId, now);
-
-        return build(all, todayCount, upcoming, now);
-    }
-
-    private AppointmentStatsResponse build(
-            List<Appointment> all, long todayCount, long upcoming, LocalDateTime now) {
-
-        long completed = all.stream()
-                .filter(a -> a.getStatus() == AppointmentStatus.COMPLETED)
-                .count();
-        long cancelled = all.stream()
-                .filter(a -> a.getStatus() == AppointmentStatus.CANCELLED)
+        long todayCount = all.stream()
+                .filter(a -> a.getStatus() == AppointmentStatus.BOOKED)
+                .filter(a -> a.getSlot() != null && a.getSlot().getStartTime() != null)
+                .filter(a -> a.getSlot().getStartTime().toLocalDate().equals(today))
                 .count();
 
-        // Find next upcoming
+        long upcoming = all.stream()
+                .filter(a -> a.getStatus() == AppointmentStatus.BOOKED)
+                .filter(a -> a.getSlot() != null && a.getSlot().getStartTime() != null)
+                .filter(a -> a.getSlot().getStartTime().isAfter(now))
+                .count();
+
         Appointment next = all.stream()
                 .filter(a -> a.getStatus() == AppointmentStatus.BOOKED)
                 .filter(a -> a.getSlot() != null && a.getSlot().getStartTime() != null)
@@ -76,11 +48,45 @@ public class AppointmentStatsService {
                 .total(all.size())
                 .today(todayCount)
                 .upcoming(upcoming)
-                .completed(completed)
-                .cancelled(cancelled)
+                .completed(all.stream()
+                        .filter(a -> a.getStatus() == AppointmentStatus.COMPLETED)
+                        .count())
+                .cancelled(all.stream()
+                        .filter(a -> a.getStatus() == AppointmentStatus.CANCELLED)
+                        .count())
                 .nextStartTime(next != null ? next.getSlot().getStartTime().toString() : null)
                 .nextStudentName(next != null && next.getStudent() != null
                         ? next.getStudent().getFullName() : null)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public AppointmentStatsResponse forUniversity(Long universityId) {
+        List<Appointment> all = appointmentRepository.findByUniversity(universityId);
+        LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
+
+        long todayCount = all.stream()
+                .filter(a -> a.getSlot() != null && a.getSlot().getStartTime() != null)
+                .filter(a -> a.getSlot().getStartTime().toLocalDate().equals(today))
+                .count();
+
+        long upcoming = all.stream()
+                .filter(a -> a.getStatus() == AppointmentStatus.BOOKED)
+                .filter(a -> a.getSlot() != null && a.getSlot().getStartTime() != null)
+                .filter(a -> a.getSlot().getStartTime().isAfter(now))
+                .count();
+
+        return AppointmentStatsResponse.builder()
+                .total(all.size())
+                .today(todayCount)
+                .upcoming(upcoming)
+                .completed(all.stream()
+                        .filter(a -> a.getStatus() == AppointmentStatus.COMPLETED)
+                        .count())
+                .cancelled(all.stream()
+                        .filter(a -> a.getStatus() == AppointmentStatus.CANCELLED)
+                        .count())
                 .build();
     }
 }

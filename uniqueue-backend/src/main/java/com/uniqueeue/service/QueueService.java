@@ -41,6 +41,7 @@ public class QueueService {
     private final OfficeService officeService;
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
+    private final QueueScheduleService scheduleService;   // ⬅ NEW
 
     // ────────────────────────────────────────────────────────────
     //  QUEUES / SERVICES
@@ -88,6 +89,9 @@ public class QueueService {
                         ? request.getAutoPromoteWaitlist() : true)
                 .maxWaitlistSize(request.getMaxWaitlistSize() != null ? request.getMaxWaitlistSize() : 100)
                 .matricRequired(request.getMatricRequired() != null ? request.getMatricRequired() : false)
+                .operatingDays(request.getOperatingDays() != null && !request.getOperatingDays().isBlank()
+                        ? request.getOperatingDays().trim()
+                        : "1,2,3,4,5")
                 .isActive(true)
                 .createdBy(admin)
                 .build();
@@ -120,6 +124,7 @@ public class QueueService {
         if (request.getAutoPromoteWaitlist() != null) queue.setAutoPromoteWaitlist(request.getAutoPromoteWaitlist());
         if (request.getMaxWaitlistSize() != null) queue.setMaxWaitlistSize(request.getMaxWaitlistSize());
         if (request.getMatricRequired() != null) queue.setMatricRequired(request.getMatricRequired());
+        if (request.getOperatingDays() != null) queue.setOperatingDays(request.getOperatingDays().trim());
 
         // Office change
         if (request.getOfficeId() != null) {
@@ -257,9 +262,11 @@ public class QueueService {
     // ────────────────────────────────────────────────────────────
     //  HELPERS
     // ────────────────────────────────────────────────────────────
-
     private QueueResponse enrichWithStaff(Queue queue) {
-        QueueResponse response = QueueResponse.from(queue);
+        // Attach live schedule state — this is the ONLY thing QueueService adds
+        // beyond what QueueResponse.from() already does.
+        QueueResponse response = QueueResponse.from(queue)
+                .withIsOpen(scheduleService.isWithinOperatingHours(queue));
 
         List<QueueStaff> assignments = queueStaffRepository.findByQueueId(queue.getId());
         List<QueueResponse.StaffInfo> staffList = assignments.stream()

@@ -339,13 +339,13 @@ export default function QueuesTab() {
                                         )}
                                     </div>
                                     <span className="flex-1">
-                    <span className="font-medium">{step.queueName}</span>
+                                        <span className="font-medium">{step.queueName}</span>
                                         {step.label && ` · ${step.label}`}
-                  </span>
+                                    </span>
                                     {step.state === 'CURRENT' && (
                                         <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold uppercase text-white">
-                      Current
-                    </span>
+                                            Current
+                                        </span>
                                     )}
                                 </li>
                             ))}
@@ -399,7 +399,14 @@ export default function QueuesTab() {
                                         {servicesInOffice.map((q) => {
                                             const isLocked = lockedQueueIds.has(q.id)
                                             const matricLocked = isFresher && q.matricRequired
-                                            const suffix = isLocked ? ' (locked)' : matricLocked ? ' (matric required)' : ''
+                                            const closed = q.isOpen === false
+                                            const suffix = isLocked
+                                                ? ' (locked)'
+                                                : matricLocked
+                                                    ? ' (matric required)'
+                                                    : closed
+                                                        ? ' (closed)'
+                                                        : ''
                                             return (
                                                 <option key={q.id} value={q.id} disabled={isLocked || matricLocked}>
                                                     {q.name}{suffix}
@@ -418,38 +425,62 @@ export default function QueuesTab() {
                                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                                             {selectedService.location && (
                                                 <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
-                          <MapPin className="h-3 w-3" />
+                                                    <MapPin className="h-3 w-3" />
                                                     {selectedService.location}
-                        </span>
+                                                </span>
                                             )}
                                             <span className="flex items-center gap-1 font-bold text-brand-600 dark:text-brand-400">
-                        <Users className="h-3 w-3" />
+                                                <Users className="h-3 w-3" />
                                                 {selectedService.waitingCount ?? 0} waiting
-                      </span>
+                                            </span>
                                             <span className="flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400">
-                        <Clock className="h-3 w-3" />
-                        ~{selectedService.estimatedMinutes ?? 0} min
-                      </span>
+                                                <Clock className="h-3 w-3" />
+                                                ~{selectedService.estimatedMinutes ?? 0} min
+                                            </span>
                                         </div>
                                         {selectedService.currentlyServing && (
                                             <div className="mt-2 text-slate-600 dark:text-slate-400">
                                                 Now serving:{' '}
                                                 <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                          {selectedService.currentlyServing}
-                        </span>
+                                                    {selectedService.currentlyServing}
+                                                </span>
                                             </div>
                                         )}
                                     </motion.div>
                                 )}
 
+                                {selectedService && selectedService.isOpen === false && (
+                                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
+                                        This service is closed.
+                                        {selectedService.opensAt && (
+                                            <>
+                                                {' '}It reopens at{' '}
+                                                <strong>{String(selectedService.opensAt).slice(0, 5)}</strong>
+                                            </>
+                                        )}
+                                        .
+                                    </div>
+                                )}
+
                                 <Button
                                     onClick={joinQueue}
-                                    disabled={!selectedService || !!activeTicket || joining}
+                                    disabled={
+                                        !selectedService ||
+                                        !!activeTicket ||
+                                        joining ||
+                                        selectedService?.isOpen === false
+                                    }
                                     loading={joining}
                                     fullWidth
                                     className="!mt-4"
                                 >
-                                    {activeTicket ? 'Queue turn is near' : joining ? 'Joining…' : 'Join Queue'}
+                                    {activeTicket
+                                        ? 'Queue turn is near'
+                                        : selectedService?.isOpen === false
+                                            ? 'Closed'
+                                            : joining
+                                                ? 'Joining…'
+                                                : 'Join Queue'}
                                 </Button>
 
                                 {activeTicket && (
@@ -543,8 +574,8 @@ export default function QueuesTab() {
                                             <div className="mt-2 flex items-center gap-1.5 text-sm">
                                                 <span className="text-slate-500 dark:text-slate-400">Ticket:</span>
                                                 <span className="font-mono font-semibold text-slate-900 dark:text-slate-100">
-                          {t.ticketNumber}
-                        </span>
+                                                    {t.ticketNumber}
+                                                </span>
                                                 <CopyButton text={t.ticketNumber} />
                                             </div>
 
@@ -552,8 +583,8 @@ export default function QueuesTab() {
                                                 <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                                                     <span className="text-slate-500">Position:</span>{' '}
                                                     <span className="font-medium text-slate-900 dark:text-slate-100">
-                            {t.position}
-                          </span>
+                                                        {t.position}
+                                                    </span>
                                                 </div>
                                             )}
 
@@ -561,8 +592,8 @@ export default function QueuesTab() {
                                                 <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                                                     <span className="text-slate-500">Est. Wait:</span>{' '}
                                                     <span className="font-medium text-slate-900 dark:text-slate-100">
-                            {t.estimatedMinutesRemaining} min
-                          </span>
+                                                        {t.estimatedMinutesRemaining} min
+                                                    </span>
                                                 </div>
                                             )}
 

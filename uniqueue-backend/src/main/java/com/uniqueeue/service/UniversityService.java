@@ -121,6 +121,9 @@ public class UniversityService {
         if (request.getCampusImageUrl() != null) u.setCampusImageUrl(request.getCampusImageUrl());
         if (request.getTagline() != null) u.setTagline(request.getTagline());
         if (request.getPrimaryColor() != null) u.setPrimaryColor(request.getPrimaryColor());
+        if (request.getTimezone() != null) {
+            u.setTimezone(request.getTimezone().trim());
+        }
         if (request.getPlan() != null) u.setPlan(request.getPlan());
         if (request.getMaxStaff() != null) u.setMaxStaff(request.getMaxStaff());
         if (request.getMaxQueues() != null) u.setMaxQueues(request.getMaxQueues());

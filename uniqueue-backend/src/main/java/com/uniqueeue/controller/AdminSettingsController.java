@@ -56,6 +56,11 @@ public class AdminSettingsController {
         if (request.getTagline() != null) u.setTagline(request.getTagline().trim());
         if (request.getPrimaryColor() != null) u.setPrimaryColor(request.getPrimaryColor().trim());
 
+        // ─── Schedule ───
+        if (request.getTimezone() != null && !request.getTimezone().isBlank()) {
+            u.setTimezone(request.getTimezone().trim());
+        }
+
         // ─── Limits ───
         if (request.getMaxStaff() != null) u.setMaxStaff(request.getMaxStaff());
         if (request.getMaxQueues() != null) u.setMaxQueues(request.getMaxQueues());

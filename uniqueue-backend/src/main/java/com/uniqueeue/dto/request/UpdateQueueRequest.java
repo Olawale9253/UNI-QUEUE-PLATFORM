@@ -17,6 +17,8 @@ public class UpdateQueueRequest {
     /** Move this service to a different office. */
     private Long officeId;
 
+    private String operatingDays;
+
     @Deprecated
     @Size(max = 100)
     private String department;

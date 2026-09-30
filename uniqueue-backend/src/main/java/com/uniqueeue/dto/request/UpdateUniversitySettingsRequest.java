@@ -33,6 +33,10 @@ public class UpdateUniversitySettingsRequest {
     @Size(max = 20)
     private String primaryColor;
 
+    // ─── Schedule ───
+    @Size(max = 64)
+    private String timezone;
+
     // ─── Limits ───
     @Min(value = 1, message = "Max staff must be at least 1")
     private Integer maxStaff;

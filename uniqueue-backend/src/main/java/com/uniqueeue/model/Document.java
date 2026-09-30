@@ -1,5 +1,6 @@
 package com.uniqueeue.model;
 
+import com.uniqueeue.enums.DocumentStatus;
 import com.uniqueeue.enums.DocumentType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,7 +13,8 @@ import java.time.LocalDateTime;
 @Table(name = "documents", indexes = {
         @Index(name = "idx_doc_university", columnList = "university_id"),
         @Index(name = "idx_doc_uploader", columnList = "uploaded_by"),
-        @Index(name = "idx_doc_ticket", columnList = "ticket_id")
+        @Index(name = "idx_doc_ticket", columnList = "ticket_id"),
+        @Index(name = "idx_doc_status", columnList = "status")
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
@@ -22,15 +24,12 @@ public class Document {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Tenant scope — always set from the uploader's university. */
     @Column(name = "university_id", nullable = false)
     private Long universityId;
 
-    /** User who uploaded it. */
     @Column(name = "uploaded_by", nullable = false)
     private Long uploadedBy;
 
-    /** Optional: which ticket this document supports. */
     @Column(name = "ticket_id")
     private Long ticketId;
 
@@ -39,11 +38,9 @@ public class Document {
     @Builder.Default
     private DocumentType type = DocumentType.OTHER;
 
-    /** The original filename the user uploaded. */
     @Column(name = "original_filename", nullable = false)
     private String originalFilename;
 
-    /** Relative path inside the storage root: "{universityId}/{yyyy}/{MM}/{uuid}.{ext}". */
     @Column(name = "storage_key", nullable = false, unique = true, length = 500)
     private String storageKey;
 
@@ -52,6 +49,22 @@ public class Document {
 
     @Column(name = "size_bytes", nullable = false)
     private Long sizeBytes;
+
+    // ───────── Review state ─────────
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private DocumentStatus status = DocumentStatus.PENDING;
+
+    @Column(name = "reviewed_by")
+    private Long reviewedBy;
+
+    @Column(name = "reviewed_at")
+    private LocalDateTime reviewedAt;
+
+    @Column(name = "review_notes", columnDefinition = "TEXT")
+    private String reviewNotes;
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)

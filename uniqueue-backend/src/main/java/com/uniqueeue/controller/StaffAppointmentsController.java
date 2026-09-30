@@ -23,7 +23,6 @@ public class StaffAppointmentsController {
     private final AppointmentService appointmentService;
     private final AppointmentStatsService appointmentStatsService;
 
-    /** All appointments assigned to the calling staff member. */
     @GetMapping
     public ResponseEntity<ApiResponse<List<AppointmentResponse>>> list(
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -32,7 +31,6 @@ public class StaffAppointmentsController {
                 appointmentService.listAppointmentsForStaff(principal.getId())));
     }
 
-    /** Stats for the calling staff member's appointments. */
     @GetMapping("/stats")
     public ResponseEntity<ApiResponse<AppointmentStatsResponse>> stats(
             @AuthenticationPrincipal UserPrincipal principal) {

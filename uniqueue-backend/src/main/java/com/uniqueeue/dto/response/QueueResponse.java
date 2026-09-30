@@ -54,12 +54,36 @@ public class QueueResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    // ─────────────────────────────────────────────────────────────
+    //  Schedule (set by QueueService via QueueScheduleService)
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * True if the queue is currently accepting joins.
+     * Null until the caller enriches the response — see QueueService.enrichWithStaff().
+     */
+    private Boolean isOpen;
+
+    /**
+     * CSV of ISO day numbers when this queue operates.
+     * 1=Mon .. 7=Sun. Empty = every day. Default = "1,2,3,4,5".
+     */
+    private String operatingDays;
+
+    // ─────────────────────────────────────────────────────────────
+    //  Nested DTO
+    // ─────────────────────────────────────────────────────────────
+
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
     public static class StaffInfo {
         private Long id;
         private String fullName;
         private String email;
     }
+
+    // ─────────────────────────────────────────────────────────────
+    //  Factory
+    // ─────────────────────────────────────────────────────────────
 
     public static QueueResponse from(Queue q) {
         String officeName = q.getOffice() != null ? q.getOffice().getName() : q.getDepartment();
@@ -92,6 +116,17 @@ public class QueueResponse {
                 .createdByName(q.getCreatedBy() != null ? q.getCreatedBy().getFullName() : null)
                 .createdAt(q.getCreatedAt())
                 .updatedAt(q.getUpdatedAt())
+                .operatingDays(q.getOperatingDays())          // ⬅ NEW
+                // isOpen intentionally left null — set by QueueService
                 .build();
+    }
+
+    /**
+     * Fluent setter so QueueService can chain:
+     *   QueueResponse.from(queue).withIsOpen(scheduleService.isWithinOperatingHours(queue))
+     */
+    public QueueResponse withIsOpen(boolean open) {
+        this.isOpen = open;
+        return this;
     }
 }

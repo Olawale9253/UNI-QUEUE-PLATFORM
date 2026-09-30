@@ -2,12 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
     Ticket, CheckCircle2, TrendingUp, Award, Clock, Activity as ActivityIcon,
-    CalendarCheck, XCircle, Users, Building2, AlertCircle, Zap,
+    CalendarCheck, XCircle, Building2, AlertCircle, Zap,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
-import EmptyState from '../../components/ui/EmptyState'
 import { SkeletonStats, SkeletonRow } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
@@ -69,20 +68,6 @@ function KpiTile({ label, value, hint, icon: Icon, accent, valueColor, delay }) 
     )
 }
 
-function formatDateTime(dt) {
-    if (!dt) return null
-    try {
-        return new Date(dt).toLocaleString([], {
-            day: 'numeric',
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit',
-        })
-    } catch {
-        return null
-    }
-}
-
 function relativeTime(dt) {
     if (!dt) return ''
     const diff = Date.now() - new Date(dt).getTime()
@@ -113,10 +98,10 @@ export default function ActivityPage() {
             ])
             setStats(s.data?.data || null)
             setApptStats(a.data?.data || null)
+
             const staffQueues = q.data?.data || []
             setQueues(staffQueues)
 
-            // Fetch tickets from all queues in parallel
             if (staffQueues.length > 0) {
                 const ticketsByQueue = await Promise.all(
                     staffQueues.map((qu) =>
@@ -130,20 +115,16 @@ export default function ActivityPage() {
                 )
                 const all = ticketsByQueue.flat()
 
-                // Sort by most recent activity (completed > called > joined)
+                // Sort by most recent activity
                 const sorted = all.sort((a, b) => {
-                    const at =
-                        a.completedAt || a.calledAt || a.joinedAt
-                            ? new Date(a.completedAt || a.calledAt || a.joinedAt).getTime()
-                            : 0
-                    const bt =
-                        b.completedAt || b.calledAt || b.joinedAt
-                            ? new Date(b.completedAt || b.calledAt || b.joinedAt).getTime()
-                            : 0
+                    const at = a.completedAt || a.calledAt || a.joinedAt
+                        ? new Date(a.completedAt || a.calledAt || a.joinedAt).getTime() : 0
+                    const bt = b.completedAt || b.calledAt || b.joinedAt
+                        ? new Date(b.completedAt || b.calledAt || b.joinedAt).getTime() : 0
                     return bt - at
                 })
 
-                setRecentTickets(sorted.slice(0, 15))
+                setRecentTickets(sorted.slice(0, 20))
             }
         } catch (err) {
             push({
@@ -159,7 +140,6 @@ export default function ActivityPage() {
     useEffect(() => { load() }, [load])
     useAdaptivePoll(load, { fastMs: 10000, slowMs: 30000 })
 
-    // Compute derived metrics
     const derived = useMemo(() => {
         const servedToday = stats?.servedToday ?? 0
         const servedThisWeek = stats?.servedThisWeek ?? 0
@@ -170,27 +150,18 @@ export default function ActivityPage() {
         const weeklyPace =
             servedThisWeek > 0 ? Math.round((servedThisWeek / 7) * 10) / 10 : 0
 
-        // Completion rate: of tickets shown in the recent list, how many completed
         const completed = recentTickets.filter((t) => t.status === 'COMPLETED').length
         const noShows = recentTickets.filter((t) => t.status === 'NO_SHOW').length
         const total = recentTickets.length
-        const completionRate =
-            total > 0 ? Math.round((completed / total) * 100) : 0
+        const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
         const noShowRate = total > 0 ? Math.round((noShows / total) * 100) : 0
 
         return {
-            servedToday,
-            servedThisWeek,
-            servedAllTime,
-            avgService,
-            apptToday,
-            weeklyPace,
-            completionRate,
-            noShowRate,
+            servedToday, servedThisWeek, servedAllTime, avgService, apptToday,
+            weeklyPace, completionRate, noShowRate,
         }
     }, [stats, apptStats, recentTickets])
 
-    // Queue breakdown — derived from queues list
     const queueBreakdown = useMemo(() => {
         return queues
             .map((q) => ({
@@ -200,7 +171,6 @@ export default function ActivityPage() {
                 waiting: q.waitingCount ?? 0,
                 currentlyServing: q.currentlyServing,
                 estimatedMinutes: q.estimatedMinutes ?? 0,
-                staffCount: q.staffCount ?? 0,
             }))
             .sort((a, b) => b.waiting - a.waiting)
     }, [queues])
@@ -220,7 +190,6 @@ export default function ActivityPage() {
 
     return (
         <div>
-            {/* ═══ Page title ═══ */}
             <div className="mb-5">
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                     Activity
@@ -230,7 +199,7 @@ export default function ActivityPage() {
                 </p>
             </div>
 
-            {/* ═══ KPI Tiles ═══ */}
+            {/* KPI Tiles */}
             <div className="mb-7 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
                 <KpiTile
                     label="Served Today"
@@ -279,7 +248,7 @@ export default function ActivityPage() {
                 />
             </div>
 
-            {/* ═══ Performance cards ═══ */}
+            {/* Performance cards */}
             <div className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <Card>
                     <div className="flex items-center gap-3">
@@ -292,9 +261,7 @@ export default function ActivityPage() {
                             </div>
                             <div className="mt-1 text-2xl font-bold text-sky-600 dark:text-sky-400">
                                 {derived.weeklyPace}
-                                <span className="ml-1 text-sm font-normal text-slate-500">
-                  tickets/day
-                </span>
+                                <span className="ml-1 text-sm font-normal text-slate-500">tickets/day</span>
                             </div>
                         </div>
                     </div>
@@ -342,9 +309,8 @@ export default function ActivityPage() {
                 </Card>
             </div>
 
-            {/* ═══ Two-column: Recent Activity + Queue Breakdown ═══ */}
+            {/* Two-column: Recent Activity + Queue Breakdown */}
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_400px]">
-                {/* ─── Recent Activity ─── */}
                 <Card padded={false}>
                     <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
                         <div className="flex items-center gap-2">
@@ -387,7 +353,6 @@ export default function ActivityPage() {
                                         className="flex items-center justify-between gap-3 px-6 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40"
                                     >
                                         <div className="flex min-w-0 flex-1 items-start gap-3">
-                                            {/* Status icon */}
                                             <div
                                                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
                                                     isCompleted
@@ -408,7 +373,6 @@ export default function ActivityPage() {
                                                 )}
                                             </div>
 
-                                            {/* Details */}
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex flex-wrap items-center gap-2">
                           <span className="font-mono text-xs font-bold text-slate-900 dark:text-slate-100">
@@ -425,7 +389,6 @@ export default function ActivityPage() {
                                             </div>
                                         </div>
 
-                                        {/* Relative time */}
                                         {ts && (
                                             <div className="shrink-0 text-right text-[10px] text-slate-400 dark:text-slate-500">
                                                 {relativeTime(ts)}
@@ -438,7 +401,6 @@ export default function ActivityPage() {
                     )}
                 </Card>
 
-                {/* ─── Queue Breakdown ─── */}
                 <Card padded={false}>
                     <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
                         <div className="flex items-center gap-2">

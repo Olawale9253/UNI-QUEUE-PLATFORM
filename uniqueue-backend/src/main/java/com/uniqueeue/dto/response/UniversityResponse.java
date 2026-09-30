@@ -21,6 +21,9 @@ public class UniversityResponse {
     private String tagline;
     private String primaryColor;
 
+    // ⬇ NEW
+    private String timezone;
+
     @JsonProperty("isActive")
     private Boolean isActive;
 
@@ -73,6 +76,8 @@ public class UniversityResponse {
                 .campusImageUrl(u.getCampusImageUrl())
                 .tagline(u.getTagline())
                 .primaryColor(u.getPrimaryColor())
+                // ⬇ NEW — fallback so old rows never serialize null
+                .timezone(u.getTimezone() != null ? u.getTimezone() : "Africa/Lagos")
                 .isActive(u.getIsActive())
                 .plan(u.getPlan())
                 .maxStaff(u.getMaxStaff())

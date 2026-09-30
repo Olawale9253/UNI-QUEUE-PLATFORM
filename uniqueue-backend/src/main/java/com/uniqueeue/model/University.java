@@ -18,6 +18,10 @@ public class University {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, length = 64)
+    @Builder.Default
+    private String timezone = "Africa/Lagos";
+
     @Column(nullable = false)
     private String name;
 

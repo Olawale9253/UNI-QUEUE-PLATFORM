@@ -17,10 +17,8 @@ public class CreateQueueRequest {
     /** Which office this service belongs to. */
     private Long officeId;
 
-    /**
-     * Deprecated fallback — if provided and officeId is null, the service is
-     * linked to (or creates) an office with this name.
-     */
+    private String operatingDays;
+
     @Deprecated
     @Size(max = 100)
     private String department;

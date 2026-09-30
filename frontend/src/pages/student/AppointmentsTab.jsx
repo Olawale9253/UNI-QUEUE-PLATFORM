@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-    Calendar, Clock, Building2, MapPin, User, X, CheckCircle2,
-    AlertCircle, Copy, Check, Filter, FileText, Search,
+    Calendar, Clock, Building2, MapPin, User, Copy, Check,
+    CalendarCheck, AlertCircle, Info,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -10,13 +10,11 @@ import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
-import { SkeletonRow } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 
-// ─── Status configuration ───
 const STATUS_VARIANTS = {
-    BOOKED: 'indigo',
+    BOOKED: 'info',
     CONFIRMED: 'success',
     COMPLETED: 'success',
     CANCELLED: 'default',
@@ -31,17 +29,24 @@ const STATUS_LABELS = {
     NO_SHOW: 'Missed',
 }
 
-const SORT_OPTIONS = [
-    { value: 'soonest', label: 'Soonest' },
-    { value: 'latest', label: 'Latest' },
-    { value: 'status', label: 'By status' },
-]
-
-// ─── Helpers ───
-function formatDateTime(dt) {
-    if (!dt) return '—'
+function formatDate(iso) {
+    if (!iso) return '—'
     try {
-        return new Date(dt).toLocaleString('en-GB', {
+        return new Date(iso).toLocaleDateString('en-GB', {
+            weekday: 'short',
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+        })
+    } catch {
+        return '—'
+    }
+}
+
+function formatDateTime(iso) {
+    if (!iso) return '—'
+    try {
+        return new Date(iso).toLocaleString('en-GB', {
             weekday: 'short',
             day: '2-digit',
             month: 'short',
@@ -55,38 +60,24 @@ function formatDateTime(dt) {
     }
 }
 
-function formatDateLabel(isoDate) {
-    if (!isoDate) return ''
+function formatTimeOnly(iso) {
+    if (!iso) return '—'
     try {
-        return new Date(isoDate).toLocaleDateString('en-GB', {
-            weekday: 'short',
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-        })
-    } catch {
-        return isoDate
-    }
-}
-
-function formatTimeLabel(dt) {
-    if (!dt) return ''
-    try {
-        return new Date(dt).toLocaleTimeString('en-GB', {
+        return new Date(iso).toLocaleTimeString('en-GB', {
             hour: '2-digit',
             minute: '2-digit',
             hour12: true,
         })
     } catch {
-        return ''
+        return '—'
     }
 }
 
-/**
- * Client-side generated reference.
- * Format: APP{YYYY}{MM}{DD}{id padded to 4}
- * Example: APP202609110042
- */
+function dateKey(iso) {
+    if (!iso) return ''
+    return String(iso).slice(0, 10)
+}
+
 function generateReference(appt) {
     if (!appt) return '—'
     const d = appt.bookedAt ? new Date(appt.bookedAt) : new Date()
@@ -125,31 +116,34 @@ function CopyButton({ text }) {
 
 export default function AppointmentsTab() {
     const { push } = useToastStore()
-    const [available, setAvailable] = useState([])
+    const [slots, setSlots] = useState([])
     const [mine, setMine] = useState([])
+    const [offices, setOffices] = useState([])
+    const [services, setServices] = useState([])
     const [loading, setLoading] = useState(true)
     const [booking, setBooking] = useState(false)
     const [cancelTarget, setCancelTarget] = useState(null)
     const [cancelling, setCancelling] = useState(false)
 
-    // Form state
-    const [selectedOffice, setSelectedOffice] = useState('')
-    const [selectedService, setSelectedService] = useState('')
+    // Form
+    const [selectedOfficeId, setSelectedOfficeId] = useState('')
+    const [selectedServiceId, setSelectedServiceId] = useState('')
     const [selectedDate, setSelectedDate] = useState('')
     const [selectedSlotId, setSelectedSlotId] = useState('')
     const [notes, setNotes] = useState('')
 
-    // List state
-    const [sortBy, setSortBy] = useState('soonest')
-
     const load = useCallback(async () => {
         try {
-            const [a, m] = await Promise.all([
+            const [s, m, o, q] = await Promise.all([
                 api.get('/api/user/appointments/available').catch(() => ({ data: { data: [] } })),
                 api.get('/api/user/appointments').catch(() => ({ data: { data: [] } })),
+                api.get('/api/offices').catch(() => ({ data: { data: [] } })),
+                api.get('/api/queues').catch(() => ({ data: { data: [] } })),
             ])
-            setAvailable(a.data?.data || [])
+            setSlots(s.data?.data || [])
             setMine(m.data?.data || [])
+            setOffices(o.data?.data || [])
+            setServices(q.data?.data || [])
         } catch {
             // silent
         } finally {
@@ -160,41 +154,54 @@ export default function AppointmentsTab() {
     useEffect(() => { load() }, [load])
     useAdaptivePoll(load, { fastMs: 10000, slowMs: 30000 })
 
-    // ─── Derive dropdown options from available slots ───
+    // ─── Office options: real offices + any queue-derived fallback ───
     const officeOptions = useMemo(() => {
-        const set = new Set()
-        available.forEach((s) => {
-            const o = (s.department || s.faculty || '').trim()
-            if (o) set.add(o)
+        const map = new Map()
+        offices.forEach((o) => {
+            if (o.isActive === false) return
+            map.set(String(o.id), { id: String(o.id), name: o.name })
         })
-        return Array.from(set).sort()
-    }, [available])
+        services.forEach((q) => {
+            if (!q.officeId) return
+            const key = String(q.officeId)
+            if (!map.has(key)) {
+                map.set(key, { id: key, name: q.officeName || 'General' })
+            }
+        })
+        return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name))
+    }, [offices, services])
 
+    // ─── Services in selected office ───
     const serviceOptions = useMemo(() => {
-        if (!selectedOffice) return []
-        const set = new Set()
-        available.forEach((s) => {
-            const o = (s.department || s.faculty || '').trim()
-            if (o === selectedOffice) set.add(s.title)
-        })
-        return Array.from(set).sort()
-    }, [available, selectedOffice])
+        if (!selectedOfficeId) return []
+        return services
+            .filter((q) => String(q.officeId) === String(selectedOfficeId) && q.isActive !== false)
+            .map((q) => ({ id: String(q.id), name: q.name }))
+            .sort((a, b) => a.name.localeCompare(b.name))
+    }, [services, selectedOfficeId])
 
+    const selectedService = useMemo(
+        () => services.find((s) => String(s.id) === String(selectedServiceId)) || null,
+        [services, selectedServiceId]
+    )
+
+    // ─── Slots matching the current selection ───
     const matchingSlots = useMemo(() => {
-        return available.filter((s) => {
-            const o = (s.department || s.faculty || '').trim()
-            return (
-                o === selectedOffice &&
-                s.title === selectedService &&
-                (s.remaining ?? 0) > 0
-            )
+        if (!selectedService) return []
+        const svcName = (selectedService.name || '').toLowerCase()
+        const officeName = (selectedService.officeName || '').toLowerCase()
+        return slots.filter((sl) => {
+            const t = (sl.title || '').toLowerCase()
+            const o = (sl.officeName || sl.department || sl.faculty || '').toLowerCase()
+            return t === svcName && (!officeName || o === officeName || !o)
         })
-    }, [available, selectedOffice, selectedService])
+    }, [slots, selectedService])
 
     const dateOptions = useMemo(() => {
         const set = new Set()
         matchingSlots.forEach((s) => {
-            if (s.startTime) set.add(s.startTime.slice(0, 10))
+            const k = dateKey(s.startTime)
+            if (k) set.add(k)
         })
         return Array.from(set).sort()
     }, [matchingSlots])
@@ -202,33 +209,50 @@ export default function AppointmentsTab() {
     const timeSlots = useMemo(() => {
         if (!selectedDate) return []
         return matchingSlots
-            .filter((s) => s.startTime?.startsWith(selectedDate))
+            .filter((s) => dateKey(s.startTime) === selectedDate)
             .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
     }, [matchingSlots, selectedDate])
 
-    // Reset downstream fields when upstream changes
+    const selectedSlot = useMemo(
+        () => timeSlots.find((s) => String(s.id) === String(selectedSlotId)) || null,
+        [timeSlots, selectedSlotId]
+    )
+
+    // Reset downstream on upstream changes
     useEffect(() => {
-        setSelectedService('')
+        setSelectedServiceId('')
         setSelectedDate('')
         setSelectedSlotId('')
-    }, [selectedOffice])
+    }, [selectedOfficeId])
 
     useEffect(() => {
         setSelectedDate('')
         setSelectedSlotId('')
-    }, [selectedService])
+    }, [selectedServiceId])
 
     useEffect(() => {
         setSelectedSlotId('')
     }, [selectedDate])
 
-    const selectedSlot = useMemo(
-        () => available.find((s) => String(s.id) === String(selectedSlotId)) || null,
-        [available, selectedSlotId]
+    // ─── Upcoming appointment guard ───
+    const upcomingAppointments = useMemo(
+        () =>
+            mine.filter(
+                (a) =>
+                    (a.status === 'BOOKED' || a.status === 'CONFIRMED') &&
+                    a.startTime &&
+                    new Date(a.startTime).getTime() > Date.now()
+            ),
+        [mine]
     )
+    const hasUpcoming = upcomingAppointments.length > 0
 
     // ─── Actions ───
     const book = async () => {
+        if (hasUpcoming) {
+            push({ type: 'error', message: 'You already have an upcoming appointment' })
+            return
+        }
         if (!selectedSlot) {
             push({ type: 'error', message: 'Pick a time slot first' })
             return
@@ -240,17 +264,17 @@ export default function AppointmentsTab() {
                 notes: notes.trim() || null,
             })
             push({ type: 'success', message: `Booked: ${selectedSlot.title}` })
-
-            // Reset form
-            setSelectedOffice('')
-            setSelectedService('')
+            setSelectedOfficeId('')
+            setSelectedServiceId('')
             setSelectedDate('')
             setSelectedSlotId('')
             setNotes('')
-
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to book' })
+            push({
+                type: 'error',
+                message: err.response?.data?.message || 'Failed to book',
+            })
         } finally {
             setBooking(false)
         }
@@ -265,35 +289,27 @@ export default function AppointmentsTab() {
             setCancelTarget(null)
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to cancel' })
+            push({
+                type: 'error',
+                message: err.response?.data?.message || 'Failed to cancel',
+            })
         } finally {
             setCancelling(false)
         }
     }
 
-    // ─── Sorted list ───
-    const sortedAppointments = useMemo(() => {
-        const list = [...mine]
-        if (sortBy === 'soonest') {
-            return list.sort((a, b) => {
-                const at = a.startTime ? new Date(a.startTime).getTime() : 0
-                const bt = b.startTime ? new Date(b.startTime).getTime() : 0
-                return at - bt
-            })
-        }
-        if (sortBy === 'latest') {
-            return list.sort((a, b) => {
-                const at = a.startTime ? new Date(a.startTime).getTime() : 0
-                const bt = b.startTime ? new Date(b.startTime).getTime() : 0
-                return bt - at
-            })
-        }
-        if (sortBy === 'status') {
-            const order = { BOOKED: 0, CONFIRMED: 1, COMPLETED: 2, NO_SHOW: 3, CANCELLED: 4 }
-            return list.sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9))
-        }
-        return list
-    }, [mine, sortBy])
+    const sortedMine = useMemo(() => {
+        const now = Date.now()
+        return [...mine].sort((a, b) => {
+            const at = a.startTime ? new Date(a.startTime).getTime() : 0
+            const bt = b.startTime ? new Date(b.startTime).getTime() : 0
+            const aFuture = at > now
+            const bFuture = bt > now
+            if (aFuture && !bFuture) return -1
+            if (!aFuture && bFuture) return 1
+            return aFuture ? at - bt : bt - at
+        })
+    }, [mine])
 
     if (loading) {
         return (
@@ -323,28 +339,39 @@ export default function AppointmentsTab() {
                             Book Appointment
                         </h3>
 
-                        {available.length === 0 ? (
+                        {officeOptions.length === 0 ? (
                             <EmptyState
-                                icon={Calendar}
-                                title="No slots available"
-                                description="Check back later — staff publish new slots regularly."
+                                icon={Building2}
+                                title="No offices available"
+                                description="Your university hasn't set up any offices yet."
                             />
                         ) : (
                             <div className="space-y-3">
+                                {hasUpcoming && (
+                                    <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
+                                        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                        <span>
+                      You have an upcoming appointment. Complete or cancel it
+                      before booking another.
+                    </span>
+                                    </div>
+                                )}
+
                                 {/* Office */}
                                 <div>
                                     <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
                                         Office
                                     </label>
                                     <select
-                                        value={selectedOffice}
-                                        onChange={(e) => setSelectedOffice(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                                        value={selectedOfficeId}
+                                        onChange={(e) => setSelectedOfficeId(e.target.value)}
+                                        disabled={hasUpcoming}
+                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                     >
                                         <option value="">Select Office</option>
                                         {officeOptions.map((o) => (
-                                            <option key={o} value={o}>
-                                                {o}
+                                            <option key={o.id} value={o.id}>
+                                                {o.name}
                                             </option>
                                         ))}
                                     </select>
@@ -356,96 +383,113 @@ export default function AppointmentsTab() {
                                         Service
                                     </label>
                                     <select
-                                        value={selectedService}
-                                        onChange={(e) => setSelectedService(e.target.value)}
-                                        disabled={!selectedOffice}
-                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                                    >
-                                        <option value="">Select Service</option>
-                                        {serviceOptions.map((s) => (
-                                            <option key={s} value={s}>
-                                                {s}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Date */}
-                                <div>
-                                    <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                                        Date
-                                    </label>
-                                    <input
-                                        type="date"
-                                        value={selectedDate}
-                                        min={dateOptions[0] || undefined}
-                                        max={dateOptions[dateOptions.length - 1] || undefined}
-                                        onChange={(e) => setSelectedDate(e.target.value)}
-                                        disabled={!selectedService}
-                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                                    />
-                                    {selectedService && dateOptions.length > 0 && (
-                                        <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">
-                                            Available dates: {dateOptions.length}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Time */}
-                                <div>
-                                    <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                                        Time
-                                    </label>
-                                    <select
-                                        value={selectedSlotId}
-                                        onChange={(e) => setSelectedSlotId(e.target.value)}
-                                        disabled={!selectedDate || timeSlots.length === 0}
+                                        value={selectedServiceId}
+                                        onChange={(e) => setSelectedServiceId(e.target.value)}
+                                        disabled={!selectedOfficeId || hasUpcoming}
                                         className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                     >
                                         <option value="">
-                                            {!selectedDate
-                                                ? 'Pick a date first'
-                                                : timeSlots.length === 0
-                                                    ? 'No slots on this date'
-                                                    : 'Select Time'}
+                                            {!selectedOfficeId
+                                                ? 'Pick an office first'
+                                                : serviceOptions.length === 0
+                                                    ? 'No services in this office'
+                                                    : 'Select Service'}
                                         </option>
-                                        {timeSlots.map((s) => (
+                                        {serviceOptions.map((s) => (
                                             <option key={s.id} value={s.id}>
-                                                {formatTimeLabel(s.startTime)} — {s.remaining} left
+                                                {s.name}
                                             </option>
                                         ))}
                                     </select>
                                 </div>
 
-                                {/* Selected slot preview */}
+                                {/* No slots message */}
+                                {selectedService && matchingSlots.length === 0 && (
+                                    <div className="flex items-start gap-2 rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs text-sky-800 dark:border-sky-900 dark:bg-sky-950/40 dark:text-sky-300">
+                                        <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                        <span>
+                      No slots published yet for <strong>{selectedService.name}</strong>.
+                      Check back soon — staff publish new slots regularly.
+                    </span>
+                                    </div>
+                                )}
+
+                                {/* Date */}
+                                {selectedService && matchingSlots.length > 0 && (
+                                    <div>
+                                        <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                                            Date
+                                        </label>
+                                        <select
+                                            value={selectedDate}
+                                            onChange={(e) => setSelectedDate(e.target.value)}
+                                            disabled={hasUpcoming}
+                                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                                        >
+                                            <option value="">Select Date</option>
+                                            {dateOptions.map((d) => (
+                                                <option key={d} value={d}>
+                                                    {formatDate(d)}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
+                                {/* Time */}
+                                {selectedDate && (
+                                    <div>
+                                        <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                                            Time
+                                        </label>
+                                        <select
+                                            value={selectedSlotId}
+                                            onChange={(e) => setSelectedSlotId(e.target.value)}
+                                            disabled={hasUpcoming}
+                                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                                        >
+                                            <option value="">Select Time</option>
+                                            {timeSlots.map((s) => (
+                                                <option key={s.id} value={s.id}>
+                                                    {formatTimeOnly(s.startTime)} — {s.remaining} left
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
+                                {/* Preview */}
                                 {selectedSlot && (
                                     <motion.div
                                         initial={{ opacity: 0, y: 4 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs dark:border-slate-700 dark:bg-slate-800/50"
                                     >
-                                        <div className="text-slate-700 dark:text-slate-300">
-                                            <span className="font-semibold">{selectedSlot.title}</span>
+                                        <div className="font-semibold text-slate-700 dark:text-slate-300">
+                                            {selectedSlot.title}
                                         </div>
-                                        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-slate-500 dark:text-slate-400">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                          {formatTimeLabel(selectedSlot.startTime)} –{' '}
-                          {formatTimeLabel(selectedSlot.endTime)}
-                      </span>
+                                        <div className="mt-1.5 space-y-1 text-slate-500 dark:text-slate-400">
+                                            <div className="flex items-center gap-1.5">
+                                                <Clock className="h-3 w-3" />
+                                                {formatTimeOnly(selectedSlot.startTime)} –{' '}
+                                                {formatTimeOnly(selectedSlot.endTime)}
+                                            </div>
+                                            {selectedSlot.staffName && (
+                                                <div className="flex items-center gap-1.5">
+                                                    <User className="h-3 w-3" />
+                                                    {selectedSlot.staffName}
+                                                    {selectedSlot.staffRole && ` · ${selectedSlot.staffRole}`}
+                                                </div>
+                                            )}
                                             {selectedSlot.location && (
-                                                <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                                                    {selectedSlot.location}
-                        </span>
+                                                <div className="flex items-center gap-1.5">
+                                                    <MapPin className="h-3 w-3" />
+                                                    {selectedSlot.roomDetail
+                                                        ? `${selectedSlot.location} · ${selectedSlot.roomDetail}`
+                                                        : selectedSlot.location}
+                                                </div>
                                             )}
                                         </div>
-                                        {selectedSlot.staffName && (
-                                            <div className="mt-1 flex items-center gap-1 text-slate-500 dark:text-slate-400">
-                                                <User className="h-3 w-3" />
-                                                {selectedSlot.staffName}
-                                            </div>
-                                        )}
                                     </motion.div>
                                 )}
 
@@ -466,15 +510,18 @@ export default function AppointmentsTab() {
                                     </div>
                                 )}
 
-                                {/* Book button */}
                                 <Button
                                     onClick={book}
                                     loading={booking}
-                                    disabled={booking || !selectedSlot}
+                                    disabled={booking || hasUpcoming || !selectedSlot}
                                     fullWidth
                                     className="!mt-4"
                                 >
-                                    {booking ? 'Booking…' : 'Book Appointment'}
+                                    {hasUpcoming
+                                        ? 'You have an appointment already'
+                                        : booking
+                                            ? 'Booking…'
+                                            : 'Book Appointment'}
                                 </Button>
                             </div>
                         )}
@@ -484,28 +531,18 @@ export default function AppointmentsTab() {
                 {/* ═══ RIGHT: My Appointments ═══ */}
                 <Card>
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                            My Appointments
-                        </h3>
                         <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                Sort by
-              </span>
-                            <select
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value)}
-                                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                            >
-                                {SORT_OPTIONS.map((s) => (
-                                    <option key={s.value} value={s.value}>
-                                        {s.label}
-                                    </option>
-                                ))}
-                            </select>
+                            <CalendarCheck className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+                            <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                                My Appointments
+                            </h3>
                         </div>
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+              {sortedMine.length}
+            </span>
                     </div>
 
-                    {sortedAppointments.length === 0 ? (
+                    {sortedMine.length === 0 ? (
                         <div className="py-12 text-center">
                             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
                                 <Calendar className="h-6 w-6 text-slate-400" />
@@ -519,11 +556,11 @@ export default function AppointmentsTab() {
                         </div>
                     ) : (
                         <ul className="max-h-[600px] space-y-3 overflow-y-auto pr-1">
-                            {sortedAppointments.map((a) => {
-                                const officeName = a.officeName || a.slotTitle || 'Appointment'
-                                const serviceName = a.slotTitle || a.slotLocation || '—'
+                            {sortedMine.map((a) => {
                                 const reference = generateReference(a)
-                                const isBooked = a.status === 'BOOKED' || a.status === 'CONFIRMED'
+                                const isUpcoming =
+                                    a.status === 'BOOKED' || a.status === 'CONFIRMED'
+                                const officeName = a.officeName || a.slotTitle || 'Appointment'
 
                                 return (
                                     <motion.li
@@ -531,32 +568,35 @@ export default function AppointmentsTab() {
                                         initial={{ opacity: 0, y: 4 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         className={`rounded-lg border p-4 transition-colors ${
-                                            isBooked
+                                            isUpcoming
                                                 ? 'border-brand-200 bg-gradient-to-br from-brand-50/40 to-white dark:border-brand-900 dark:from-brand-950/20 dark:to-slate-900'
                                                 : 'border-slate-200 dark:border-slate-800'
                                         }`}
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0 flex-1">
-                                                {/* Office name (bold) */}
                                                 <h4 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
                                                     {officeName}
                                                 </h4>
 
-                                                {/* Service name */}
-                                                {serviceName && serviceName !== officeName && (
+                                                {a.slotTitle && a.slotTitle !== officeName && (
                                                     <p className="mt-0.5 truncate text-sm text-slate-500 dark:text-slate-400">
-                                                        {serviceName}
+                                                        {a.slotTitle}
                                                     </p>
                                                 )}
 
-                                                {/* Date/time */}
                                                 <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                                                     <Calendar className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                                                     <span>{formatDateTime(a.startTime)}</span>
                                                 </div>
 
-                                                {/* Reference */}
+                                                {a.staffName && (
+                                                    <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                                                        <User className="h-3 w-3 shrink-0" />
+                                                        {a.staffName}
+                                                    </div>
+                                                )}
+
                                                 <div className="mt-1.5 flex items-center gap-1.5 text-xs">
                           <span className="text-slate-500 dark:text-slate-400">
                             Reference:
@@ -566,13 +606,6 @@ export default function AppointmentsTab() {
                           </span>
                                                     <CopyButton text={reference} />
                                                 </div>
-
-                                                {/* Cancelled info */}
-                                                {a.status === 'CANCELLED' && a.cancelledAt && (
-                                                    <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                                                        Cancelled {formatDateTime(a.cancelledAt)}
-                                                    </div>
-                                                )}
                                             </div>
 
                                             <div className="flex shrink-0 flex-col items-end gap-2">
@@ -580,7 +613,7 @@ export default function AppointmentsTab() {
                                                     {STATUS_LABELS[a.status] || a.status}
                                                 </Badge>
 
-                                                {isBooked && (
+                                                {isUpcoming && (
                                                     <button
                                                         onClick={() => setCancelTarget(a)}
                                                         className="rounded-md px-2 py-1 text-xs text-rose-600 transition-colors hover:bg-rose-50 dark:hover:bg-rose-950/40"
@@ -602,7 +635,7 @@ export default function AppointmentsTab() {
                 open={!!cancelTarget}
                 onClose={() => !cancelling && setCancelTarget(null)}
                 onConfirm={cancel}
-                title={`Cancel this appointment?`}
+                title="Cancel this appointment?"
                 description={`${cancelTarget?.officeName || cancelTarget?.slotTitle || 'This appointment'} · ${formatDateTime(
                     cancelTarget?.startTime
                 )}. The slot will be freed for other students.`}

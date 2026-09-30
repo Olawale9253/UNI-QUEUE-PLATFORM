@@ -6,7 +6,6 @@ import lombok.*;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class UpdateUniversityRequest {
 
-
     @Size(max = 500)
     private String campusImageUrl;
 
@@ -25,6 +24,11 @@ public class UpdateUniversityRequest {
     @Size(max = 500)
     private String logoUrl;
     private String primaryColor;
+
+    // ─── Schedule ───  ⬅ NEW
+    @Size(max = 64)
+    private String timezone;
+
     private String plan;
     private Integer maxStaff;
     private Integer maxQueues;

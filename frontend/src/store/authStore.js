@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import api from '../api/axios'
+import { useUniversityStore } from './universityStore'
 
 const savedUser = (() => {
     try {
@@ -32,7 +33,19 @@ export const useAuthStore = create((set, get) => ({
             }
             localStorage.setItem('uniqueue_token', d.accessToken)
             localStorage.setItem('uniqueue_user', JSON.stringify(user))
+
+            // ⬇️ KEY FIX: wipe the previous user's university BEFORE
+            // updating auth state, so the Navbar effect sees loaded=false
+            // and reloads the new user's university.
+            useUniversityStore.getState().reset()
+
             set({ token: d.accessToken, user, loading: false })
+
+            // Kick off the reload immediately (don't wait for Navbar effect)
+            if (d.role !== 'SUPER_ADMIN') {
+                useUniversityStore.getState().load()
+            }
+
             return { success: true, role: d.role }
         } catch (err) {
             const message = err.response?.data?.message || 'Login failed'
@@ -55,7 +68,14 @@ export const useAuthStore = create((set, get) => ({
             }
             localStorage.setItem('uniqueue_token', d.accessToken)
             localStorage.setItem('uniqueue_user', JSON.stringify(user))
+
+            useUniversityStore.getState().reset()
             set({ token: d.accessToken, user, loading: false })
+
+            if (d.role !== 'SUPER_ADMIN') {
+                useUniversityStore.getState().load()
+            }
+
             return {
                 success: true,
                 role: d.role,
@@ -72,13 +92,17 @@ export const useAuthStore = create((set, get) => ({
     setAuth: (token, user) => {
         localStorage.setItem('uniqueue_token', token)
         localStorage.setItem('uniqueue_user', JSON.stringify(user))
+
+        // ⬇️ Also reset university when impersonating (or switching accounts)
+        useUniversityStore.getState().reset()
+
         set({ token, user })
+
+        if (user?.role && user.role !== 'SUPER_ADMIN') {
+            useUniversityStore.getState().load()
+        }
     },
 
-    /**
-     * Update the current user object (partial merge) without touching the token.
-     * Writes through to localStorage so the change survives reload.
-     */
     setUser: (patch) => {
         const current = get().user || {}
         const next = { ...current, ...(patch || {}) }
@@ -86,10 +110,6 @@ export const useAuthStore = create((set, get) => ({
         set({ user: next })
     },
 
-    /**
-     * Refetch the user's profile from the backend and sync the store.
-     * Use after profile updates so the Navbar / other pages reflect changes.
-     */
     refreshProfile: async () => {
         try {
             const res = await api.get('/api/profile')
@@ -121,6 +141,10 @@ export const useAuthStore = create((set, get) => ({
         localStorage.removeItem('uniqueue_token')
         localStorage.removeItem('uniqueue_user')
         localStorage.removeItem('uniqueue_impersonation')
+
+
+        useUniversityStore.getState().reset()
+
         set({ user: null, token: null })
     },
 
