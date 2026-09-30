@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
     Building2, Palette, Save, GraduationCap, Users, RefreshCw,
-    Sparkles, FileText, Hash,
+    Sparkles, FileText, Hash, CalendarX,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -11,6 +11,7 @@ import ImageUrlInput from '../../components/ui/ImageUrlInput'
 import PageHeader from '../../components/layout/PageHeader'
 import { useToastStore } from '../../store/toastStore'
 import { useUniversityStore } from '../../store/universityStore'
+import ClosedDatesPanel from '../../components/admin/ClosedDatesPanel'
 
 const PRESET_COLORS = [
     { label: 'Indigo', value: '#4f46e5' },
@@ -39,6 +40,7 @@ export default function Settings() {
     const [form, setForm] = useState({
         name: '', logoUrl: null, campusImageUrl: null, tagline: '',
         primaryColor: '#4f46e5', emailDomain: '',
+        timezone: 'Africa/Lagos',
         matricPattern: '', matricExample: '', matricDescription: '',
         maxStaff: 10, maxQueues: 5,
         fresherRegistrationEnabled: true,
@@ -56,6 +58,7 @@ export default function Settings() {
             const res = await api.get('/api/admin/settings')
             const u = res.data.data
             setForm({
+                timezone: u.timezone || 'Africa/Lagos',
                 name: u.name || '',
                 logoUrl: u.logoUrl || null,
                 campusImageUrl: u.campusImageUrl || null,
@@ -195,6 +198,54 @@ export default function Settings() {
                                 <span className="font-mono text-xs text-slate-600">{form.primaryColor}</span>
                             </label>
                         </div>
+                    </div>
+                </Card>
+                {/* SCHEDULE & CLOSED DATES */}
+                <Card>
+                    <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50">
+                            <CalendarX className="h-4 w-4 text-brand-600" />
+                        </div>
+                        <div>
+                            <h2 className="text-base font-semibold text-slate-900">Schedule</h2>
+                            <p className="text-xs text-slate-500">
+                                Time zone and days when your university is closed.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                            University time zone
+                        </label>
+                        <select
+                            value={form.timezone}
+                            onChange={setField('timezone')}
+                            className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                        >
+                            <option value="Africa/Lagos">Africa/Lagos (WAT — Nigeria)</option>
+                            <option value="Africa/Accra">Africa/Accra (GMT — Ghana)</option>
+                            <option value="Africa/Nairobi">Africa/Nairobi (EAT — Kenya)</option>
+                            <option value="Africa/Johannesburg">Africa/Johannesburg (SAST — South Africa)</option>
+                            <option value="Africa/Cairo">Africa/Cairo (EET — Egypt)</option>
+                            <option value="Africa/Casablanca">Africa/Casablanca (WEST — Morocco)</option>
+                            <option value="Europe/London">Europe/London (GMT/BST — UK)</option>
+                            <option value="UTC">UTC</option>
+                        </select>
+                        <p className="mt-1 text-xs text-slate-500">
+                            All queue opening hours, holidays, and analytics are computed in this time zone.
+                        </p>
+                    </div>
+
+                    <div className="mt-6 border-t border-slate-100 pt-6">
+                        <div className="mb-4">
+                            <div className="text-sm font-medium text-slate-900">Closed dates</div>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                                Public holidays and other days when the university is closed. All queues
+                                are automatically blocked on these dates.
+                            </p>
+                        </div>
+                        <ClosedDatesPanel />
                     </div>
                 </Card>
 

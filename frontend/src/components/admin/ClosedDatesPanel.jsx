@@ -39,8 +39,7 @@ export default function ClosedDatesPanel() {
 
     useEffect(() => { load() }, [load])
 
-    const add = async (e) => {
-        e.preventDefault()
+    const add = async () => {
         if (!date) {
             push({ type: 'error', message: 'Pick a date first' })
             return
@@ -81,8 +80,8 @@ export default function ClosedDatesPanel() {
 
     return (
         <div>
-            {/* Add form */}
-            <form onSubmit={add} className="grid grid-cols-1 gap-3 sm:grid-cols-[180px_1fr_auto]">
+            {/* Add row — NOT a form, to avoid nested <form> HTML error */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[180px_1fr_auto]">
                 <div>
                     <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
                         Date
@@ -109,11 +108,17 @@ export default function ClosedDatesPanel() {
                     />
                 </div>
                 <div className="flex items-end">
-                    <Button type="submit" icon={Plus} loading={saving} disabled={saving || !date}>
+                    <Button
+                        type="button"
+                        icon={Plus}
+                        loading={saving}
+                        disabled={saving || !date}
+                        onClick={add}
+                    >
                         Add
                     </Button>
                 </div>
-            </form>
+            </div>
 
             {/* List */}
             <div className="mt-5">
