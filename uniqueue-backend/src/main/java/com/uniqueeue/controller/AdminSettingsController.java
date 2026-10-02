@@ -61,6 +61,10 @@ public class AdminSettingsController {
             u.setTimezone(request.getTimezone().trim());
         }
 
+        if (request.getCountryCode() != null && !request.getCountryCode().isBlank()) {
+            u.setCountryCode(request.getCountryCode().trim().toUpperCase());
+        }
+
         // ─── Limits ───
         if (request.getMaxStaff() != null) u.setMaxStaff(request.getMaxStaff());
         if (request.getMaxQueues() != null) u.setMaxQueues(request.getMaxQueues());

@@ -7,6 +7,9 @@ import lombok.*;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class UpdateUniversitySettingsRequest {
 
+    @Size(max = 2)
+    private String countryCode;
+
     @Size(max = 255)
     private String name;
 

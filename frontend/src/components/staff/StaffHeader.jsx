@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Sparkles } from 'lucide-react'
+import api from '../../api/axios'
 import { useAuthStore } from '../../store/authStore'
+import HolidayStrip from '../student/HolidayStrip'
 
 function getGreeting() {
     const h = new Date().getHours()
@@ -12,17 +14,45 @@ function getGreeting() {
 }
 
 /**
- * Compact sticky header shown on every staff page.
- * Greeting is live — updates every minute.
+ * Sticky header shown on every staff page.
+ *
+ * Renders the shared HolidayStrip so staff always see today's holiday
+ * status and upcoming closures, no matter which tab they're on.
  */
 export default function StaffHeader({ subtitle }) {
     const { user } = useAuthStore()
     const firstName = user?.fullName?.split(' ')[0] || 'there'
 
     const [greeting, setGreeting] = useState(getGreeting())
+    const [closedDates, setClosedDates] = useState(null)
+
     useEffect(() => {
         const t = setInterval(() => setGreeting(getGreeting()), 60_000)
         return () => clearInterval(t)
+    }, [])
+
+    useEffect(() => {
+        let cancelled = false
+        api.get('/api/closed-dates')
+            .then((res) => {
+                if (!cancelled) {
+                    setClosedDates(res.data?.data || {
+                        todayClosed: false,
+                        todayReason: null,
+                        upcoming: [],
+                    })
+                }
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setClosedDates({
+                        todayClosed: false,
+                        todayReason: null,
+                        upcoming: [],
+                    })
+                }
+            })
+        return () => { cancelled = true }
     }, [])
 
     return (
@@ -41,6 +71,10 @@ export default function StaffHeader({ subtitle }) {
                     </p>
                 )}
             </motion.div>
+
+            {closedDates && (
+                <HolidayStrip closedDates={closedDates} className="mt-3" />
+            )}
         </div>
     )
 }

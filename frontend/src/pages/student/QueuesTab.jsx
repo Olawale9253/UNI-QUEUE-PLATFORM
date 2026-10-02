@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import {
     Ticket, MapPin, Clock, ListOrdered, X, Users,
     CheckCircle2, Lock, ArrowRight, Route as RouteIcon, Building2,
-    GraduationCap, Search, Copy, Check, CalendarX,
+    GraduationCap, Search, Copy, Check,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -269,55 +269,6 @@ export default function QueuesTab() {
                     Queue Management
                 </h2>
             </div>
-
-            {closedDates.todayClosed && (
-                <div className="mb-6 flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 dark:border-rose-900 dark:bg-rose-950/40">
-                    <CalendarX className="mt-0.5 h-5 w-5 shrink-0 text-rose-700 dark:text-rose-400" />
-                    <div className="flex-1 text-sm">
-                        <p className="font-medium text-rose-900 dark:text-rose-200">
-                            Today is a public holiday
-                        </p>
-                        <p className="mt-1 text-xs text-rose-800 dark:text-rose-300">
-                            {closedDates.todayReason
-                                ? `Your university is closed today for ${closedDates.todayReason}. All queues will resume the next working day.`
-                                : 'Your university is closed today. All queues will resume the next working day.'}
-                        </p>
-                    </div>
-                </div>
-            )}
-
-            {!closedDates.todayClosed && closedDates.upcoming?.length > 0 && (
-                <div className="mb-6 flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
-                    <CalendarX className="mt-0.5 h-5 w-5 shrink-0 text-slate-500 dark:text-slate-400" />
-                    <div className="flex-1 text-sm">
-                        <p className="font-medium text-slate-800 dark:text-slate-200">
-                            Upcoming closures
-                        </p>
-                        <ul className="mt-1.5 space-y-0.5 text-xs text-slate-600 dark:text-slate-400">
-                            {closedDates.upcoming.slice(0, 3).map((d) => (
-                                <li key={d.id} className="flex items-center gap-2">
-                                    <span className="font-mono">
-                                        {new Date(d.closedDate + 'T00:00:00').toLocaleDateString('en-GB', {
-                                            weekday: 'short', day: '2-digit', month: 'short',
-                                        })}
-                                    </span>
-                                    {d.reason && (
-                                        <>
-                                            <span className="text-slate-400">·</span>
-                                            <span>{d.reason}</span>
-                                        </>
-                                    )}
-                                </li>
-                            ))}
-                            {closedDates.upcoming.length > 3 && (
-                                <li className="text-slate-400">
-                                    +{closedDates.upcoming.length - 3} more
-                                </li>
-                            )}
-                        </ul>
-                    </div>
-                </div>
-            )}
 
             {isFresher && (
                 <motion.div

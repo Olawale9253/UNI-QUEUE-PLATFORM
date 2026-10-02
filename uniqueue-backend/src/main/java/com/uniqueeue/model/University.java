@@ -22,6 +22,10 @@ public class University {
     @Builder.Default
     private String timezone = "Africa/Lagos";
 
+    @Column(name = "country_code", nullable = false, length = 2)
+    @Builder.Default
+    private String countryCode = "NG";
+
     @Column(nullable = false)
     private String name;
 

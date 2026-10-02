@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import {
     Building2, Palette, Save, GraduationCap, Users, RefreshCw,
-    Sparkles, FileText, Hash, CalendarX,
+    Sparkles, FileText, Hash, CalendarX, Globe,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -9,9 +9,9 @@ import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import ImageUrlInput from '../../components/ui/ImageUrlInput'
 import PageHeader from '../../components/layout/PageHeader'
+import ClosedDatesPanel from '../../components/admin/ClosedDatesPanel'
 import { useToastStore } from '../../store/toastStore'
 import { useUniversityStore } from '../../store/universityStore'
-import ClosedDatesPanel from '../../components/admin/ClosedDatesPanel'
 
 const PRESET_COLORS = [
     { label: 'Indigo', value: '#4f46e5' },
@@ -31,6 +31,28 @@ const VERIFICATION_MODES = [
     { value: 'BOTH',    label: 'Both',           hint: 'Strongest — pattern + list match' },
 ]
 
+const TIMEZONES = [
+    { value: 'Africa/Lagos', label: 'Africa/Lagos (WAT — Nigeria)' },
+    { value: 'Africa/Accra', label: 'Africa/Accra (GMT — Ghana)' },
+    { value: 'Africa/Nairobi', label: 'Africa/Nairobi (EAT — Kenya)' },
+    { value: 'Africa/Johannesburg', label: 'Africa/Johannesburg (SAST — South Africa)' },
+    { value: 'Africa/Cairo', label: 'Africa/Cairo (EET — Egypt)' },
+    { value: 'Africa/Casablanca', label: 'Africa/Casablanca (WEST — Morocco)' },
+    { value: 'Europe/London', label: 'Europe/London (GMT/BST — UK)' },
+    { value: 'UTC', label: 'UTC' },
+]
+
+const COUNTRIES = [
+    { value: 'NG', label: 'Nigeria' },
+    { value: 'GH', label: 'Ghana' },
+    { value: 'KE', label: 'Kenya' },
+    { value: 'ZA', label: 'South Africa' },
+    { value: 'EG', label: 'Egypt' },
+    { value: 'MA', label: 'Morocco' },
+    { value: 'GB', label: 'United Kingdom' },
+    { value: 'US', label: 'United States' },
+]
+
 export default function Settings() {
     const { push } = useToastStore()
     const { refresh: refreshUniversity } = useUniversityStore()
@@ -41,6 +63,7 @@ export default function Settings() {
         name: '', logoUrl: null, campusImageUrl: null, tagline: '',
         primaryColor: '#4f46e5', emailDomain: '',
         timezone: 'Africa/Lagos',
+        countryCode: 'NG',
         matricPattern: '', matricExample: '', matricDescription: '',
         maxStaff: 10, maxQueues: 5,
         fresherRegistrationEnabled: true,
@@ -53,18 +76,19 @@ export default function Settings() {
         applicationNumberPattern: '', applicationNumberExample: '', applicationNumberDescription: '',
     })
 
-    const load = useCallback(async () => {
+    const load = async () => {
         try {
             const res = await api.get('/api/admin/settings')
             const u = res.data.data
             setForm({
-                timezone: u.timezone || 'Africa/Lagos',
                 name: u.name || '',
                 logoUrl: u.logoUrl || null,
                 campusImageUrl: u.campusImageUrl || null,
                 tagline: u.tagline || '',
                 primaryColor: u.primaryColor || '#4f46e5',
                 emailDomain: u.emailDomain || '',
+                timezone: u.timezone || 'Africa/Lagos',
+                countryCode: u.countryCode || 'NG',
                 matricPattern: u.matricPattern || '',
                 matricExample: u.matricExample || '',
                 matricDescription: u.matricDescription || '',
@@ -90,9 +114,9 @@ export default function Settings() {
         } finally {
             setLoading(false)
         }
-    }, [push])
+    }
 
-    useEffect(() => { load() }, [load])
+    useEffect(() => { load() }, [])
 
     useEffect(() => {
         const root = document.documentElement
@@ -148,7 +172,7 @@ export default function Settings() {
             <div className="mx-auto max-w-4xl">
                 <div className="mb-8 h-10 w-1/3 animate-pulse rounded-lg bg-slate-200" />
                 <div className="space-y-6">
-                    {[1, 2, 3, 4].map((i) => (
+                    {[1, 2, 3, 4, 5].map((i) => (
                         <div key={i} className="h-48 animate-pulse rounded-xl bg-slate-100" />
                     ))}
                 </div>
@@ -200,6 +224,7 @@ export default function Settings() {
                         </div>
                     </div>
                 </Card>
+
                 {/* SCHEDULE & CLOSED DATES */}
                 <Card>
                     <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
@@ -209,40 +234,57 @@ export default function Settings() {
                         <div>
                             <h2 className="text-base font-semibold text-slate-900">Schedule</h2>
                             <p className="text-xs text-slate-500">
-                                Time zone and days when your university is closed.
+                                Time zone, country, and days when your university is closed.
                             </p>
                         </div>
                     </div>
 
-                    <div>
-                        <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                            University time zone
-                        </label>
-                        <select
-                            value={form.timezone}
-                            onChange={setField('timezone')}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-                        >
-                            <option value="Africa/Lagos">Africa/Lagos (WAT — Nigeria)</option>
-                            <option value="Africa/Accra">Africa/Accra (GMT — Ghana)</option>
-                            <option value="Africa/Nairobi">Africa/Nairobi (EAT — Kenya)</option>
-                            <option value="Africa/Johannesburg">Africa/Johannesburg (SAST — South Africa)</option>
-                            <option value="Africa/Cairo">Africa/Cairo (EET — Egypt)</option>
-                            <option value="Africa/Casablanca">Africa/Casablanca (WEST — Morocco)</option>
-                            <option value="Europe/London">Europe/London (GMT/BST — UK)</option>
-                            <option value="UTC">UTC</option>
-                        </select>
-                        <p className="mt-1 text-xs text-slate-500">
-                            All queue opening hours, holidays, and analytics are computed in this time zone.
-                        </p>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div>
+                            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                                University time zone
+                            </label>
+                            <select
+                                value={form.timezone}
+                                onChange={setField('timezone')}
+                                className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                            >
+                                {TIMEZONES.map((tz) => (
+                                    <option key={tz.value} value={tz.value}>{tz.label}</option>
+                                ))}
+                            </select>
+                            <p className="mt-1 text-xs text-slate-500">
+                                Queue opening hours, holidays, and analytics use this time zone.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                                <Globe className="h-3.5 w-3.5 text-slate-400" />
+                                Country (public holidays)
+                            </label>
+                            <select
+                                value={form.countryCode || 'NG'}
+                                onChange={setField('countryCode')}
+                                className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                            >
+                                {COUNTRIES.map((c) => (
+                                    <option key={c.value} value={c.value}>{c.label}</option>
+                                ))}
+                            </select>
+                            <p className="mt-1 text-xs text-slate-500">
+                                Holidays auto-sync from this country's calendar. Supports 200+ countries.
+                            </p>
+                        </div>
                     </div>
 
                     <div className="mt-6 border-t border-slate-100 pt-6">
                         <div className="mb-4">
                             <div className="text-sm font-medium text-slate-900">Closed dates</div>
                             <p className="mt-0.5 text-xs text-slate-500">
-                                Public holidays and other days when the university is closed. All queues
-                                are automatically blocked on these dates.
+                                Public holidays and other days when the university is closed.
+                                Click <strong>Sync</strong> to pull them automatically from the
+                                national calendar, or add specific dates manually.
                             </p>
                         </div>
                         <ClosedDatesPanel />
@@ -329,7 +371,6 @@ export default function Settings() {
                                 )}
                             </div>
 
-                            {/* JAMB */}
                             <div className="mt-5 rounded-lg border border-slate-200 p-4">
                                 <label className="flex cursor-pointer items-start gap-3">
                                     <input type="checkbox" checked={form.requireJambReg} onChange={setCheck('requireJambReg')} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
@@ -349,7 +390,6 @@ export default function Settings() {
                                 )}
                             </div>
 
-                            {/* Admission ref */}
                             <div className="mt-3 rounded-lg border border-slate-200 p-4">
                                 <label className="flex cursor-pointer items-start gap-3">
                                     <input type="checkbox" checked={form.requireAdmissionRef} onChange={setCheck('requireAdmissionRef')} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
@@ -369,7 +409,6 @@ export default function Settings() {
                                 )}
                             </div>
 
-                            {/* Application number */}
                             <div className="mt-3 rounded-lg border border-slate-200 p-4">
                                 <label className="flex cursor-pointer items-start gap-3">
                                     <input type="checkbox" checked={form.requireApplicationNumber} onChange={setCheck('requireApplicationNumber')} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />

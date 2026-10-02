@@ -12,6 +12,8 @@ public class ClosedDateResponse {
     private Long id;
     private LocalDate closedDate;
     private String reason;
+    private String source;       // MANUAL | AUTO
+    private String externalId;
     private LocalDateTime createdAt;
 
     public static ClosedDateResponse from(UniversityClosedDate d) {
@@ -19,6 +21,8 @@ public class ClosedDateResponse {
                 .id(d.getId())
                 .closedDate(d.getClosedDate())
                 .reason(d.getReason())
+                .source(d.getSource())
+                .externalId(d.getExternalId())
                 .createdAt(d.getCreatedAt())
                 .build();
     }

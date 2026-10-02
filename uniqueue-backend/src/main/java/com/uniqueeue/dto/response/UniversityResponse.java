@@ -23,6 +23,7 @@ public class UniversityResponse {
 
     // ⬇ NEW
     private String timezone;
+    private String countryCode;
 
     @JsonProperty("isActive")
     private Boolean isActive;

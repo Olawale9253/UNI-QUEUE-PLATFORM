@@ -14,6 +14,14 @@ import java.time.LocalDateTime;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class UniversityClosedDate {
 
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private String source = "MANUAL";   // MANUAL | AUTO
+
+    @Column(name = "external_id", length = 100)
+    private String externalId;
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

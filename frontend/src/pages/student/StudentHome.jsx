@@ -59,20 +59,20 @@ function LiveQueueCard({ office }) {
                 </h3>
                 {hasQueue && (
                     <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            </span>
-            Live
-          </span>
+                        <span className="relative flex h-1.5 w-1.5">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        </span>
+                        Live
+                    </span>
                 )}
             </div>
 
             <div className="text-sm text-slate-600 dark:text-slate-400">
                 Waiting:{' '}
                 <span className="font-bold text-brand-600 dark:text-brand-400">
-          {waitingCount}
-        </span>
+                    {waitingCount}
+                </span>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
@@ -119,28 +119,25 @@ export default function StudentHome() {
     const [documents, setDocuments] = useState([])
     const [loading, setLoading] = useState(true)
 
-    const [closedDates, setClosedDates] = useState({ todayClosed: false, todayReason: null, upcoming: [] })
-
     const load = useCallback(async () => {
         try {
-            const [q, s, a, d, cd] = await Promise.all([
+            const [q, s, a, d] = await Promise.all([
                 api.get('/api/queues').catch(() => ({ data: { data: [] } })),
                 api.get('/api/user/stats').catch(() => ({ data: { data: null } })),
                 api.get('/api/user/appointments').catch(() => ({ data: { data: [] } })),
                 api.get('/api/user/documents').catch(() => ({ data: { data: [] } })),
-                api.get('/api/closed-dates').catch(() => ({ data: { data: null } })),
             ])
             setQueues(q.data?.data || [])
             setStats(s.data?.data || null)
             setAppointments(a.data?.data || [])
             setDocuments(d.data?.data || [])
-            setClosedDates(cd.data?.data || { todayClosed: false, todayReason: null, upcoming: [] })
         } catch {
             // silent
         } finally {
             setLoading(false)
         }
     }, [])
+
     useEffect(() => { load() }, [load])
     useAdaptivePoll(load, { fastMs: 5000, slowMs: 15000 })
 
