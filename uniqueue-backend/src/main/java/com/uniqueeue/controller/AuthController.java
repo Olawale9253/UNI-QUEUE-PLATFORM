@@ -11,6 +11,10 @@ import com.uniqueeue.dto.response.AuthResponse;
 import com.uniqueeue.repository.UniversityRepository;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.AuthService;
+import com.uniqueeue.ratelimit.RateLimited;
+import com.uniqueeue.ratelimit.RateKeyType;
+
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -176,4 +180,6 @@ public class AuthController {
 
         return ResponseEntity.ok(ApiResponse.success("University", data));
     }
+
+
 }

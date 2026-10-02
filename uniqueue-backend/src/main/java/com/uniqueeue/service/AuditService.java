@@ -4,7 +4,7 @@ import com.uniqueeue.dto.response.AuditLogResponse;
 import com.uniqueeue.enums.AuditAction;
 import com.uniqueeue.model.AuditLog;
 import com.uniqueeue.repository.AuditLogRepository;
-import com.uniqueeue.utils.RequestUtils;
+import com.uniqueeue.util.RequestUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

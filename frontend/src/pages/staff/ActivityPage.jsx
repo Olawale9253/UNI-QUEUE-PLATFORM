@@ -2,11 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
     Ticket, CheckCircle2, TrendingUp, Award, Clock, Activity as ActivityIcon,
-    CalendarCheck, XCircle, Building2, AlertCircle, Zap,
+    CalendarCheck, XCircle, Building2, AlertCircle, Zap, ChevronDown,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
+import Button from '../../components/ui/Button'
 import { SkeletonStats, SkeletonRow } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
@@ -34,6 +35,7 @@ const STATUS_LABELS = {
 }
 
 const TILE_DELAYS = [0, 0.05, 0.1, 0.15, 0.2]
+const PAGE_SIZE = 5
 
 function KpiTile({ label, value, hint, icon: Icon, accent, valueColor, delay }) {
     return (
@@ -86,6 +88,7 @@ export default function ActivityPage() {
     const [apptStats, setApptStats] = useState(null)
     const [queues, setQueues] = useState([])
     const [recentTickets, setRecentTickets] = useState([])
+    const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
     const [loading, setLoading] = useState(true)
     const [activityLoading, setActivityLoading] = useState(true)
 
@@ -115,7 +118,7 @@ export default function ActivityPage() {
                 )
                 const all = ticketsByQueue.flat()
 
-                // Sort by most recent activity
+                // Sort by most recent activity — no slice, we page in the UI
                 const sorted = all.sort((a, b) => {
                     const at = a.completedAt || a.calledAt || a.joinedAt
                         ? new Date(a.completedAt || a.calledAt || a.joinedAt).getTime() : 0
@@ -124,7 +127,9 @@ export default function ActivityPage() {
                     return bt - at
                 })
 
-                setRecentTickets(sorted.slice(0, 20))
+                setRecentTickets(sorted)
+            } else {
+                setRecentTickets([])
             }
         } catch (err) {
             push({
@@ -174,6 +179,10 @@ export default function ActivityPage() {
             }))
             .sort((a, b) => b.waiting - a.waiting)
     }, [queues])
+
+    const visibleTickets = recentTickets.slice(0, visibleCount)
+    const remainingCount = recentTickets.length - visibleCount
+    const hasMore = remainingCount > 0
 
     if (loading) {
         return (
@@ -309,19 +318,19 @@ export default function ActivityPage() {
                 </Card>
             </div>
 
-            {/* Two-column: Recent Activity + Queue Breakdown */}
+            {/* Two-column: Ticket History + Queue Breakdown */}
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_400px]">
                 <Card padded={false}>
                     <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
                         <div className="flex items-center gap-2">
                             <ActivityIcon className="h-4 w-4 text-brand-600 dark:text-brand-400" />
                             <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                                Recent Activity
+                                Ticket History
                             </h3>
                         </div>
                         <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-              {recentTickets.length} {recentTickets.length === 1 ? 'entry' : 'entries'}
-            </span>
+                            {recentTickets.length} {recentTickets.length === 1 ? 'entry' : 'entries'}
+                        </span>
                     </div>
 
                     {activityLoading ? (
@@ -341,63 +350,88 @@ export default function ActivityPage() {
                             </p>
                         </div>
                     ) : (
-                        <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                            {recentTickets.map((t) => {
-                                const ts = t.completedAt || t.calledAt || t.joinedAt
-                                const isCompleted = t.status === 'COMPLETED'
-                                const isNoShow = t.status === 'NO_SHOW'
-                                const isCancelled = t.status === 'CANCELLED'
-                                return (
-                                    <li
-                                        key={t.id}
-                                        className="flex items-center justify-between gap-3 px-6 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                        <>
+                            <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+                                {visibleTickets.map((t) => {
+                                    const ts = t.completedAt || t.calledAt || t.joinedAt
+                                    const isCompleted = t.status === 'COMPLETED'
+                                    const isNoShow = t.status === 'NO_SHOW'
+                                    const isCancelled = t.status === 'CANCELLED'
+                                    return (
+                                        <li
+                                            key={t.id}
+                                            className="flex items-center justify-between gap-3 px-6 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                                        >
+                                            <div className="flex min-w-0 flex-1 items-start gap-3">
+                                                <div
+                                                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                                                        isCompleted
+                                                            ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
+                                                            : isNoShow
+                                                                ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
+                                                                : isCancelled
+                                                                    ? 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                                                                    : 'bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400'
+                                                    }`}
+                                                >
+                                                    {isCompleted ? (
+                                                        <CheckCircle2 className="h-4 w-4" />
+                                                    ) : isNoShow ? (
+                                                        <XCircle className="h-4 w-4" />
+                                                    ) : (
+                                                        <Ticket className="h-4 w-4" />
+                                                    )}
+                                                </div>
+
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <span className="font-mono text-xs font-bold text-slate-900 dark:text-slate-100">
+                                                            {t.ticketNumber}
+                                                        </span>
+                                                        <Badge variant={STATUS_VARIANTS[t.status] || 'default'}>
+                                                            {STATUS_LABELS[t.status] || t.status}
+                                                        </Badge>
+                                                    </div>
+                                                    <div className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+                                                        {t.queueName}
+                                                        {t.userFullName ? ` · ${t.userFullName}` : ''}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {ts && (
+                                                <div className="shrink-0 text-right text-[10px] text-slate-400 dark:text-slate-500">
+                                                    {relativeTime(ts)}
+                                                </div>
+                                            )}
+                                        </li>
+                                    )
+                                })}
+                            </ul>
+
+                            {/* Load more */}
+                            {hasMore && (
+                                <div className="border-t border-slate-100 px-6 py-4 dark:border-slate-800">
+                                    <Button
+                                        variant="secondary"
+                                        fullWidth
+                                        onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
                                     >
-                                        <div className="flex min-w-0 flex-1 items-start gap-3">
-                                            <div
-                                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-                                                    isCompleted
-                                                        ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
-                                                        : isNoShow
-                                                            ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
-                                                            : isCancelled
-                                                                ? 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                                                                : 'bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400'
-                                                }`}
-                                            >
-                                                {isCompleted ? (
-                                                    <CheckCircle2 className="h-4 w-4" />
-                                                ) : isNoShow ? (
-                                                    <XCircle className="h-4 w-4" />
-                                                ) : (
-                                                    <Ticket className="h-4 w-4" />
-                                                )}
-                                            </div>
+                                        <ChevronDown className="mr-1.5 h-4 w-4" />
+                                        Load {Math.min(PAGE_SIZE, remainingCount)} more
+                                        <span className="ml-2 text-xs font-normal text-slate-400">
+                                            ({remainingCount} remaining)
+                                        </span>
+                                    </Button>
+                                </div>
+                            )}
 
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-mono text-xs font-bold text-slate-900 dark:text-slate-100">
-                            {t.ticketNumber}
-                          </span>
-                                                    <Badge variant={STATUS_VARIANTS[t.status] || 'default'}>
-                                                        {STATUS_LABELS[t.status] || t.status}
-                                                    </Badge>
-                                                </div>
-                                                <div className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
-                                                    {t.queueName}
-                                                    {t.userFullName ? ` · ${t.userFullName}` : ''}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {ts && (
-                                            <div className="shrink-0 text-right text-[10px] text-slate-400 dark:text-slate-500">
-                                                {relativeTime(ts)}
-                                            </div>
-                                        )}
-                                    </li>
-                                )
-                            })}
-                        </ul>
+                            {!hasMore && recentTickets.length > PAGE_SIZE && (
+                                <div className="border-t border-slate-100 px-6 py-3 text-center text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
+                                    That's all your ticket history.
+                                </div>
+                            )}
+                        </>
                     )}
                 </Card>
 
@@ -410,8 +444,8 @@ export default function ActivityPage() {
                             </h3>
                         </div>
                         <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-              {queueBreakdown.length}
-            </span>
+                            {queueBreakdown.length}
+                        </span>
                     </div>
 
                     {queueBreakdown.length === 0 ? (
@@ -437,12 +471,12 @@ export default function ActivityPage() {
                                             </div>
                                             {q.currentlyServing && (
                                                 <div className="mt-1.5 text-xs">
-                          <span className="text-slate-500 dark:text-slate-400">
-                            Now serving:{' '}
-                          </span>
+                                                    <span className="text-slate-500 dark:text-slate-400">
+                                                        Now serving:{' '}
+                                                    </span>
                                                     <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                            {q.currentlyServing}
-                          </span>
+                                                        {q.currentlyServing}
+                                                    </span>
                                                 </div>
                                             )}
                                         </div>

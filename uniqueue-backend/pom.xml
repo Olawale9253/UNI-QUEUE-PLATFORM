@@ -62,7 +62,13 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Flyway (DB migrations — will enable later) -->
+        <!-- Rate limiting -->
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j_jdk17-core</artifactId>
+            <version>8.14.0</version>
+        </dependency>
+
         <!-- Flyway (DB migrations — will enable later) -->
         <dependency>
             <groupId>org.flywaydb</groupId>

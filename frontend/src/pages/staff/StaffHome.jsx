@@ -91,7 +91,6 @@ export default function StaffHome() {
                 return
             }
 
-            // Fetch tickets from every queue in parallel
             const ticketsByQueue = await Promise.all(
                 staffQueues.map((q) =>
                     api
@@ -102,7 +101,6 @@ export default function StaffHome() {
             )
             const all = ticketsByQueue.flat()
 
-            // Sort by joinedAt desc, take the 5 most recent
             const sorted = all
                 .sort((a, b) => {
                     const at = a.joinedAt ? new Date(a.joinedAt).getTime() : 0
@@ -180,7 +178,7 @@ export default function StaffHome() {
                             Recent Queue Tickets
                         </h2>
                         <button
-                            onClick={() => navigate('/staff/serving')}
+                            onClick={() => navigate('/staff/activity')}
                             className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400"
                         >
                             View all
@@ -221,17 +219,17 @@ export default function StaffHome() {
                                             {t.queueName || t.officeName || 'Service'}
                                         </div>
                                         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                      <span className="font-mono">
-                        Ticket: {t.ticketNumber}
-                      </span>
+                                            <span className="font-mono">
+                                                Ticket: {t.ticketNumber}
+                                            </span>
                                             {t.userFullName && (
                                                 <span>· {t.userFullName}</span>
                                             )}
                                             {t.joinedAt && (
                                                 <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
+                                                    <Clock className="h-3 w-3" />
                                                     {formatTime(t.joinedAt)}
-                        </span>
+                                                </span>
                                             )}
                                         </div>
                                     </div>

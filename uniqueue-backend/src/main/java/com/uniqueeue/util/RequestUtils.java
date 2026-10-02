@@ -1,4 +1,4 @@
-package com.uniqueeue.utils;
+package com.uniqueeue.util;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
