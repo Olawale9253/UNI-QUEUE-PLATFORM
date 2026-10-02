@@ -41,7 +41,7 @@ public class QueueService {
     private final OfficeService officeService;
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
-    private final QueueScheduleService scheduleService;   // ⬅ NEW
+    private final QueueScheduleService scheduleService;
 
     // ────────────────────────────────────────────────────────────
     //  QUEUES / SERVICES
@@ -262,9 +262,12 @@ public class QueueService {
     // ────────────────────────────────────────────────────────────
     //  HELPERS
     // ────────────────────────────────────────────────────────────
-    private QueueResponse enrichWithStaff(Queue queue) {
-        // Attach live schedule state — this is the ONLY thing QueueService adds
-        // beyond what QueueResponse.from() already does.
+
+    /**
+     * Enriches a queue with live schedule state, staff, and counters.
+     * Public so TicketService can reuse it for the staff queue list.
+     */
+    public QueueResponse enrichWithStaff(Queue queue) {
         QueueResponse response = QueueResponse.from(queue)
                 .withIsOpen(scheduleService.isWithinOperatingHours(queue));
 

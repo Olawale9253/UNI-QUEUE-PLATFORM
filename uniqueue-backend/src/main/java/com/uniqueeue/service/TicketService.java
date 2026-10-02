@@ -38,7 +38,8 @@ public class TicketService {
     private final NotificationService notificationService;
     private final AuditService auditService;
     private final WorkflowService workflowService;
-    private final QueueScheduleService scheduleService;   // ⬅ NEW
+    private final QueueScheduleService scheduleService;
+    private final QueueService queueService;
 
     // ============================================================
     //  STUDENT
@@ -58,8 +59,6 @@ public class TicketService {
         if (!Boolean.TRUE.equals(queue.getIsActive())) {
             throw new BadRequestException("Queue is not active");
         }
-
-        // ⬇ delegated to QueueScheduleService
         if (!scheduleService.isWithinOperatingHours(queue)) {
             throw new BadRequestException(
                     "Queue is closed. Opens at " + queue.getOpensAt()
@@ -252,7 +251,7 @@ public class TicketService {
     public List<com.uniqueeue.dto.response.QueueResponse> listMyQueues(Long staffUserId) {
         List<com.uniqueeue.model.QueueStaff> assignments = queueStaffRepository.findByUserId(staffUserId);
         return assignments.stream()
-                .map(a -> com.uniqueeue.dto.response.QueueResponse.from(a.getQueue()))
+                .map(a -> queueService.enrichWithStaff(a.getQueue()))
                 .toList();
     }
 
@@ -270,7 +269,15 @@ public class TicketService {
         User staff = userRepository.findById(staffUserId).orElseThrow();
 
         List<Ticket> called = ticketRepository.findCalledByQueueId(queueId);
-        if (!called.isEmpty()) {
+
+        // Only block if a ticket was called TODAY. Yesterday's stale CALLED tickets
+        // (left over because the sweeper no longer cancels them) must not block
+        // the next operating session.
+        boolean hasActiveCalled = called.stream()
+                .anyMatch(t -> t.getCalledAt() != null
+                        && t.getCalledAt().toLocalDate().equals(LocalDate.now()));
+
+        if (hasActiveCalled) {
             throw new BadRequestException("A ticket is already being called. Serve or no-show it first.");
         }
 
@@ -492,7 +499,6 @@ public class TicketService {
         return QueueEstimateResponse.builder()
                 .queueId(queue.getId())
                 .queueName(queue.getName())
-                // ⬇ delegated to QueueScheduleService
                 .isOpen(scheduleService.isWithinOperatingHours(queue))
                 .opensAt(queue.getOpensAt() != null ? queue.getOpensAt().toString() : null)
                 .closesAt(queue.getClosesAt() != null ? queue.getClosesAt().toString() : null)
@@ -602,5 +608,4 @@ public class TicketService {
 
         return TicketResponse.from(ticket, position, estimated);
     }
-
 }

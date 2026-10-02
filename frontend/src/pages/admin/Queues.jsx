@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Plus, Pencil, Trash2, MapPin, Clock, LayoutGrid, Search,
-    Building2, GraduationCap,
+    Building2, GraduationCap, CalendarDays,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -16,12 +16,46 @@ import { SkeletonQueueGrid } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { stagger, staggerItem, expand } from '../../lib/motion'
 
+// ─── Weekday helpers ───
+const WEEKDAYS = [
+    { iso: 1, short: 'Mon', label: 'Monday' },
+    { iso: 2, short: 'Tue', label: 'Tuesday' },
+    { iso: 3, short: 'Wed', label: 'Wednesday' },
+    { iso: 4, short: 'Thu', label: 'Thursday' },
+    { iso: 5, short: 'Fri', label: 'Friday' },
+    { iso: 6, short: 'Sat', label: 'Saturday' },
+    { iso: 7, short: 'Sun', label: 'Sunday' },
+]
+
+const DEFAULT_DAYS = [1, 2, 3, 4, 5]
+
+const parseDays = (csv) => {
+    if (!csv) return [...DEFAULT_DAYS]
+    return String(csv)
+        .split(',')
+        .map((s) => parseInt(s.trim(), 10))
+        .filter((n) => n >= 1 && n <= 7)
+}
+
+const formatDays = (arr) => {
+    if (!arr || arr.length === 0) return '—'
+    if (arr.length === 7) return 'Every day'
+    if (arr.length === 5 && arr.every((d) => d <= 5)) return 'Mon–Fri'
+    if (arr.length === 2 && arr.includes(6) && arr.includes(7)) return 'Weekends'
+    return [...arr]
+        .sort((a, b) => a - b)
+        .map((iso) => WEEKDAYS.find((w) => w.iso === iso)?.short)
+        .filter(Boolean)
+        .join(', ')
+}
+
 const emptyForm = {
     name: '', description: '', officeId: '', location: '',
     opensAt: '08:00', closesAt: '17:00',
     maxCapacity: 50, averageServiceMinutes: 5,
     allowWaitlist: true, autoPromoteWaitlist: true, maxWaitlistSize: 20,
     matricRequired: false,
+    operatingDays: [...DEFAULT_DAYS],
 }
 
 export default function Queues() {
@@ -56,6 +90,20 @@ export default function Queues() {
 
     const setField = (f) => (e) => setForm({ ...form, [f]: e.target.value })
 
+    const toggleDay = (iso) => {
+        setForm((prev) => {
+            const current = prev.operatingDays || []
+            const next = current.includes(iso)
+                ? current.filter((d) => d !== iso)
+                : [...current, iso]
+            return { ...prev, operatingDays: next.sort((a, b) => a - b) }
+        })
+    }
+
+    const setDaysPreset = (arr) => {
+        setForm((prev) => ({ ...prev, operatingDays: [...arr] }))
+    }
+
     const openCreate = (prefillOfficeId = '') => {
         setForm({ ...emptyForm, officeId: prefillOfficeId })
         setEditingId(null)
@@ -77,6 +125,7 @@ export default function Queues() {
             autoPromoteWaitlist: queue.autoPromoteWaitlist ?? true,
             maxWaitlistSize: queue.maxWaitlistSize ?? 20,
             matricRequired: queue.matricRequired ?? false,
+            operatingDays: parseDays(queue.operatingDays),
         })
         setEditingId(queue.id)
         setShowForm(true)
@@ -95,6 +144,10 @@ export default function Queues() {
             push({ type: 'error', message: 'Please select an office' })
             return
         }
+        if (!form.operatingDays || form.operatingDays.length === 0) {
+            push({ type: 'error', message: 'Pick at least one operating day' })
+            return
+        }
         setSaving(true)
         try {
             const payload = {
@@ -110,6 +163,7 @@ export default function Queues() {
                 autoPromoteWaitlist: form.autoPromoteWaitlist,
                 maxWaitlistSize: Number(form.maxWaitlistSize),
                 matricRequired: !!form.matricRequired,
+                operatingDays: form.operatingDays.join(','),
             }
             if (editingId) {
                 await api.put(`/api/admin/queues/${editingId}`, payload)
@@ -186,9 +240,9 @@ export default function Queues() {
                         <h3 className="text-base font-semibold text-slate-900">{q.name}</h3>
                         {q.matricRequired && (
                             <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
-                <GraduationCap className="h-3 w-3" />
-                Matric required
-              </span>
+                                <GraduationCap className="h-3 w-3" />
+                                Matric required
+                            </span>
                         )}
                     </div>
                     <Badge variant={q.isActive ? 'success' : 'default'}>
@@ -232,6 +286,13 @@ export default function Queues() {
                     <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
                         <Clock className="h-3.5 w-3.5" />
                         Open {String(q.opensAt).slice(0, 5)} – {String(q.closesAt).slice(0, 5)}
+                    </div>
+                )}
+
+                {q.operatingDays && (
+                    <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500">
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        {formatDays(parseDays(q.operatingDays))}
                     </div>
                 )}
 
@@ -326,6 +387,73 @@ export default function Queues() {
                                     <Input label="Closes at" type="time" value={form.closesAt} onChange={setField('closesAt')} />
                                 </div>
 
+                                {/* ─── Operating days ─── */}
+                                <div className="rounded-lg border border-slate-200 p-4 dark:border-slate-700">
+                                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                                        <div>
+                                            <div className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-slate-100">
+                                                <CalendarDays className="h-4 w-4 text-slate-400" />
+                                                Operating days
+                                            </div>
+                                            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                                Students can only join on these days (respecting the university holiday calendar).
+                                            </p>
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-1.5">
+                                            <button
+                                                type="button"
+                                                onClick={() => setDaysPreset([1, 2, 3, 4, 5])}
+                                                className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                                            >
+                                                Mon–Fri
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setDaysPreset([1, 2, 3, 4, 5, 6, 7])}
+                                                className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                                            >
+                                                Every day
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setDaysPreset([6, 7])}
+                                                className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                                            >
+                                                Weekends
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-2">
+                                        {WEEKDAYS.map((day) => {
+                                            const checked = form.operatingDays?.includes(day.iso)
+                                            return (
+                                                <button
+                                                    key={day.iso}
+                                                    type="button"
+                                                    onClick={() => toggleDay(day.iso)}
+                                                    aria-pressed={checked}
+                                                    title={day.label}
+                                                    className={`h-10 w-12 rounded-lg border text-xs font-semibold transition-colors ${
+                                                        checked
+                                                            ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-300'
+                                                            : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-slate-600'
+                                                    }`}
+                                                >
+                                                    {day.short}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+
+                                    {(!form.operatingDays || form.operatingDays.length === 0) && (
+                                        <p className="mt-2 text-xs font-medium text-rose-600">
+                                            Pick at least one day — otherwise students can never join.
+                                        </p>
+                                    )}
+                                </div>
+
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <Input label="Max capacity" type="number" min="1" value={form.maxCapacity} onChange={setField('maxCapacity')} hint="Maximum waiting tickets" />
                                     <Input label="Avg. service minutes" type="number" min="1" value={form.averageServiceMinutes} onChange={setField('averageServiceMinutes')} hint="Used for wait estimates" />
@@ -402,8 +530,8 @@ export default function Queues() {
                                         {group.label}
                                     </h4>
                                     <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                    {group.queues.length} {group.queues.length === 1 ? 'service' : 'services'}
-                  </span>
+                                        {group.queues.length} {group.queues.length === 1 ? 'service' : 'services'}
+                                    </span>
                                 </div>
                                 <button
                                     onClick={() => openCreate(group.queues[0]?.officeId || '')}
@@ -412,7 +540,6 @@ export default function Queues() {
                                     <Plus className="h-3.5 w-3.5" />
                                     Add to {group.label}
                                 </button>
-
                             </div>
 
                             <motion.div

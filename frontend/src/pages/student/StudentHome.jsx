@@ -119,25 +119,28 @@ export default function StudentHome() {
     const [documents, setDocuments] = useState([])
     const [loading, setLoading] = useState(true)
 
+    const [closedDates, setClosedDates] = useState({ todayClosed: false, todayReason: null, upcoming: [] })
+
     const load = useCallback(async () => {
         try {
-            const [q, s, a, d] = await Promise.all([
+            const [q, s, a, d, cd] = await Promise.all([
                 api.get('/api/queues').catch(() => ({ data: { data: [] } })),
                 api.get('/api/user/stats').catch(() => ({ data: { data: null } })),
                 api.get('/api/user/appointments').catch(() => ({ data: { data: [] } })),
                 api.get('/api/user/documents').catch(() => ({ data: { data: [] } })),
+                api.get('/api/closed-dates').catch(() => ({ data: { data: null } })),
             ])
             setQueues(q.data?.data || [])
             setStats(s.data?.data || null)
             setAppointments(a.data?.data || [])
             setDocuments(d.data?.data || [])
+            setClosedDates(cd.data?.data || { todayClosed: false, todayReason: null, upcoming: [] })
         } catch {
             // silent
         } finally {
             setLoading(false)
         }
     }, [])
-
     useEffect(() => { load() }, [load])
     useAdaptivePoll(load, { fastMs: 5000, slowMs: 15000 })
 

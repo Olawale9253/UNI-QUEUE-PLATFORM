@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     User, CheckCircle2, ListOrdered, Clock, Info, Building2,
-    RefreshCw, XCircle, AlertCircle, Ticket,
+    RefreshCw, XCircle, AlertCircle, Ticket, Lock,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -62,8 +62,8 @@ export default function ServingQueue() {
     const [refreshing, setRefreshing] = useState(false)
 
     const activeQueue = queues.find((q) => q.id === activeQueueId) || null
+    const isClosed = activeQueue?.isOpen === false
 
-    // ─── Load staff's assigned queues ───
     const loadQueues = useCallback(async () => {
         try {
             const res = await api.get('/api/staff/queues')
@@ -80,7 +80,6 @@ export default function ServingQueue() {
         }
     }, [push])
 
-    // ─── Load tickets for the active queue ───
     const loadTickets = useCallback(
         async (queueId, showSkeleton = false) => {
             if (!queueId) return
@@ -111,13 +110,11 @@ export default function ServingQueue() {
         }
     }, [activeQueueId, loadTickets])
 
-    // Live refresh every 5s
     useAdaptivePoll(
         () => (activeQueueId ? loadTickets(activeQueueId, false) : Promise.resolve()),
         { fastMs: 5000, slowMs: 30000, enabled: !!activeQueueId }
     )
 
-    // ─── Actions ───
     const act = async (fn, successMessage, actionKey) => {
         setActing(actionKey)
         try {
@@ -165,6 +162,7 @@ export default function ServingQueue() {
     const refresh = async () => {
         setRefreshing(true)
         try {
+            await loadQueues()
             await loadTickets(activeQueueId, false)
             push({ type: 'success', message: 'Refreshed' })
         } finally {
@@ -172,7 +170,6 @@ export default function ServingQueue() {
         }
     }
 
-    // ─── Derived state ───
     const called = tickets.find(
         (t) => t.status === 'CALLED' || t.status === 'SERVING'
     )
@@ -212,7 +209,6 @@ export default function ServingQueue() {
 
     return (
         <div>
-            {/* ═══ Page title ═══ */}
             <div className="mb-5">
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                     Queue Management
@@ -222,26 +218,55 @@ export default function ServingQueue() {
                 </p>
             </div>
 
-            {/* ═══ Toolbar: Office + Call Next + Refresh ═══ */}
+            {isClosed && (
+                <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/40">
+                    <Lock className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-400" />
+                    <div className="flex-1 text-sm">
+                        <p className="font-medium text-amber-900 dark:text-amber-200">
+                            This service is currently closed
+                        </p>
+                        <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
+                            Students cannot join right now.
+                            {activeQueue?.opensAt && (
+                                <>
+                                    {' '}Reopens at{' '}
+                                    <strong>{String(activeQueue.opensAt).slice(0, 5)}</strong>
+                                    {activeQueue?.closesAt && (
+                                        <> – {String(activeQueue.closesAt).slice(0, 5)}</>
+                                    )}
+                                    .
+                                </>
+                            )}
+                            {' '}Waiting tickets are automatically cancelled at close.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             <Card className="mb-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-600 dark:text-slate-400">
-              Assigned office:
-            </span>
+                        <span className="text-sm text-slate-600 dark:text-slate-400">
+                            Assigned office:
+                        </span>
                         <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              {activeQueue?.name || '—'}
-            </span>
+                            {activeQueue?.name || '—'}
+                        </span>
+                        {isClosed && <Badge variant="default">Closed</Badge>}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
                         <Button
                             onClick={callNext}
-                            disabled={!!called || acting === 'next'}
+                            disabled={!!called || acting === 'next' || isClosed}
                             loading={acting === 'next'}
                             className="!bg-emerald-600 hover:!bg-emerald-700"
                         >
-                            {called ? 'Currently serving' : 'Call Next'}
+                            {isClosed
+                                ? 'Closed'
+                                : called
+                                    ? 'Currently serving'
+                                    : 'Call Next'}
                         </Button>
                         <button
                             onClick={refresh}
@@ -254,7 +279,6 @@ export default function ServingQueue() {
                     </div>
                 </div>
 
-                {/* Queue switcher (small pills) when staff serves multiple */}
                 {queues.length > 1 && (
                     <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
                         {queues.map((q) => (
@@ -269,14 +293,15 @@ export default function ServingQueue() {
                             >
                                 <Building2 className="h-3 w-3" />
                                 {q.name}
+                                {q.isOpen === false && <span className="opacity-60">· closed</span>}
                                 {q.waitingCount > 0 && (
                                     <span
                                         className={`text-[10px] font-bold ${
                                             activeQueueId === q.id ? 'opacity-80' : 'opacity-60'
                                         }`}
                                     >
-                    {q.waitingCount}
-                  </span>
+                                        {q.waitingCount}
+                                    </span>
                                 )}
                             </button>
                         ))}
@@ -284,7 +309,6 @@ export default function ServingQueue() {
                 )}
             </Card>
 
-            {/* ═══ Current Serving ═══ */}
             <Card className="mb-6">
                 <h3 className="mb-6 text-base font-semibold text-slate-900 dark:text-slate-100">
                     Current Serving
@@ -300,52 +324,44 @@ export default function ServingQueue() {
                             transition={{ duration: 0.25 }}
                             className="text-center"
                         >
-                            {/* Ticket number (big) */}
                             <div className="flex items-center justify-center gap-3">
                                 <div className="font-mono text-3xl font-bold tracking-tight text-brand-600 dark:text-brand-400 sm:text-4xl">
                                     {called.ticketNumber}
                                 </div>
-                                <CopyButton
-                                    text={called.ticketNumber}
-                                    title="Copy ticket ID"
-                                />
+                                <CopyButton text={called.ticketNumber} title="Copy ticket ID" />
                             </div>
 
-                            {/* Status pill */}
                             <div className="mt-3 flex justify-center">
                                 <Badge variant={STATUS_VARIANTS[called.status] || 'default'}>
                                     {STATUS_LABELS[called.status] || called.status}
                                 </Badge>
                             </div>
 
-                            {/* Student */}
                             <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-600 dark:text-slate-400">
-                <span className="flex items-center gap-1.5">
-                  <User className="h-3.5 w-3.5" />
-                    {called.userFullName}
-                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <User className="h-3.5 w-3.5" />
+                                    {called.userFullName}
+                                </span>
                                 {called.matricNumber && (
                                     <span className="font-mono text-xs">
-                    Matric: {called.matricNumber}
-                  </span>
+                                        Matric: {called.matricNumber}
+                                    </span>
                                 )}
                                 {called.calledAt && (
                                     <span className="flex items-center gap-1.5 text-xs">
-                    <Clock className="h-3 w-3" />
-                    Called {formatTime(called.calledAt)}
-                  </span>
+                                        <Clock className="h-3 w-3" />
+                                        Called {formatTime(called.calledAt)}
+                                    </span>
                                 )}
                             </div>
 
-                            {/* Waiting summary */}
                             <div className="mt-5 text-sm text-slate-500 dark:text-slate-400">
                                 Waiting:{' '}
                                 <span className="font-bold text-amber-600 dark:text-amber-400">
-                  {waiting.length}
-                </span>
+                                    {waiting.length}
+                                </span>
                             </div>
 
-                            {/* Actions */}
                             <div className="mt-6 flex flex-wrap justify-center gap-2">
                                 {called.status === 'CALLED' && (
                                     <Button
@@ -389,10 +405,10 @@ export default function ServingQueue() {
                             <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">
                                 Waiting:{' '}
                                 <span className="font-bold text-amber-600 dark:text-amber-400">
-                  {waiting.length}
-                </span>
+                                    {waiting.length}
+                                </span>
                             </div>
-                            {waiting.length > 0 && (
+                            {waiting.length > 0 && !isClosed && (
                                 <button
                                     onClick={callNext}
                                     disabled={acting === 'next'}
@@ -402,20 +418,24 @@ export default function ServingQueue() {
                                     {acting === 'next' ? 'Calling…' : 'Call Next Ticket'}
                                 </button>
                             )}
+                            {waiting.length > 0 && isClosed && (
+                                <p className="mt-5 text-xs text-amber-700 dark:text-amber-400">
+                                    Service is closed — Call Next is disabled.
+                                </p>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>
             </Card>
 
-            {/* ═══ Waiting Tickets ═══ */}
             <Card padded={false}>
                 <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
                     <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                         Waiting Tickets
                     </h3>
                     <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-            {waiting.length}
-          </span>
+                        {waiting.length}
+                    </span>
                 </div>
 
                 {ticketsLoading ? (
@@ -433,7 +453,9 @@ export default function ServingQueue() {
                             No waiting tickets
                         </p>
                         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            New tickets will appear here automatically.
+                            {isClosed
+                                ? 'This service is closed. New tickets will appear when it reopens.'
+                                : 'New tickets will appear here automatically.'}
                         </p>
                     </div>
                 ) : (
@@ -451,17 +473,15 @@ export default function ServingQueue() {
                                 className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40"
                             >
                                 <div className="flex min-w-0 flex-1 items-center gap-4">
-                                    {/* Position */}
                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-sm font-bold text-brand-600 dark:bg-slate-800 dark:text-brand-400">
                                         {t.position ?? i + 1}
                                     </div>
 
-                                    {/* Ticket info */}
                                     <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-sm font-bold text-slate-900 dark:text-slate-100">
-                        {t.ticketNumber}
-                      </span>
+                                            <span className="font-mono text-sm font-bold text-slate-900 dark:text-slate-100">
+                                                {t.ticketNumber}
+                                            </span>
                                             <CopyButton text={t.ticketNumber} title="Copy ticket ID" />
                                             <Badge variant={STATUS_VARIANTS[t.status] || 'default'}>
                                                 {STATUS_LABELS[t.status] || t.status}
@@ -480,7 +500,6 @@ export default function ServingQueue() {
                                     </div>
                                 </div>
 
-                                {/* No-show button */}
                                 <button
                                     onClick={() => noShow(t.id)}
                                     disabled={acting === `noshow-${t.id}`}

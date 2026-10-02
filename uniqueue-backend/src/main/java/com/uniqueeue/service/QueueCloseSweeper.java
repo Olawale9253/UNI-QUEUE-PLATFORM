@@ -13,10 +13,18 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Runs every 5 minutes. For every active queue that is currently CLOSED,
+ * cancels any tickets still in WAITING or WAITLISTED status.
+ *
+ * CALLED tickets are deliberately NOT swept — staff must be able to finish
+ * serving a student who was called just before close. Stale CALLED tickets
+ * no longer block the next day because TicketService.callNext() only blocks
+ * on tickets called today.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -28,14 +36,12 @@ public class QueueCloseSweeper {
     private final NotificationService notificationService;
     private final AuditService auditService;
 
-    @Scheduled(cron = "0 */5 * * * *")   // back to every 5 minutes
+    @Scheduled(cron = "0 */5 * * * *")   // every 5 minutes
     @Transactional
     public void sweepClosedQueues() {
-
         List<Queue> queues = queueRepository.findAll();
 
-
-        for (Queue queue : queues){
+        for (Queue queue : queues) {
             if (!Boolean.TRUE.equals(queue.getIsActive())) continue;
             if (queue.getOpensAt() == null || queue.getClosesAt() == null) continue;
             if (scheduleService.isWithinOperatingHours(queue)) continue;
@@ -43,7 +49,7 @@ public class QueueCloseSweeper {
             List<Ticket> stale = new ArrayList<>();
             stale.addAll(ticketRepository.findWaitingByQueueId(queue.getId()));
             stale.addAll(ticketRepository.findWaitlistedByQueueId(queue.getId()));
-            stale.addAll(ticketRepository.findCalledByQueueId(queue.getId()));
+            // NOTE: CALLED tickets are intentionally NOT swept.
 
             if (stale.isEmpty()) continue;
 
