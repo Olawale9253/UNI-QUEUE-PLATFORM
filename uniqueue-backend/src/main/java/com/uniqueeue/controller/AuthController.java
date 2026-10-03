@@ -14,7 +14,6 @@ import com.uniqueeue.service.AuthService;
 import com.uniqueeue.ratelimit.RateLimited;
 import com.uniqueeue.ratelimit.RateKeyType;
 
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -34,27 +33,50 @@ public class AuthController {
     private final AuthService authService;
     private final UniversityRepository universityRepository;
 
+    // ─────────────────────────────────────────────────────────────
+    //  REGISTER — 3 attempts per IP per hour
+    // ─────────────────────────────────────────────────────────────
     @PostMapping("/register")
+    @RateLimited(limit = 3, windowSeconds = 3600,
+            keyType = RateKeyType.IP, name = "register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Registration successful. Check your email for a verification code.", response));
     }
 
+    // ─────────────────────────────────────────────────────────────
+    //  LOGIN — 5 attempts per email per 15 minutes
+    //  (kills credential stuffing / brute force)
+    // ─────────────────────────────────────────────────────────────
     @PostMapping("/login")
+    @RateLimited(limit = 5, windowSeconds = 900,
+            keyType = RateKeyType.EMAIL, keyField = "email", name = "login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
     }
 
+    // ─────────────────────────────────────────────────────────────
+    //  VERIFY EMAIL — 5 attempts per email per 15 minutes
+    //  (kills 6-digit code brute-force)
+    // ─────────────────────────────────────────────────────────────
     @PostMapping("/verify-email")
+    @RateLimited(limit = 5, windowSeconds = 900,
+            keyType = RateKeyType.EMAIL, keyField = "email", name = "verify")
     public ResponseEntity<ApiResponse<AuthResponse>> verifyEmail(
             @Valid @RequestBody VerifyEmailRequest request) {
         AuthResponse response = authService.verifyEmail(request.getEmail(), request.getCode());
         return ResponseEntity.ok(ApiResponse.success("Email verified successfully", response));
     }
 
+    // ─────────────────────────────────────────────────────────────
+    //  RESEND VERIFICATION — 3 per email per hour
+    //  (protects your SMTP quota + the victim's inbox)
+    // ─────────────────────────────────────────────────────────────
     @PostMapping("/resend-verification")
+    @RateLimited(limit = 3, windowSeconds = 3600,
+            keyType = RateKeyType.EMAIL, keyField = "email", name = "resend")
     public ResponseEntity<ApiResponse<Map<String, Object>>> resendVerification(
             @Valid @RequestBody ResendVerificationRequest request) {
         String code = authService.resendVerification(request.getEmail());
@@ -66,7 +88,13 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Verification code resent", data));
     }
 
+    // ─────────────────────────────────────────────────────────────
+    //  FORGOT PASSWORD — 3 per email per hour
+    //  (also protects the victim's inbox and your SMTP quota)
+    // ─────────────────────────────────────────────────────────────
     @PostMapping("/forgot-password")
+    @RateLimited(limit = 3, windowSeconds = 3600,
+            keyType = RateKeyType.EMAIL, keyField = "email", name = "forgot")
     public ResponseEntity<ApiResponse<Map<String, Object>>> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request) {
         String token = authService.requestPasswordReset(request.getEmail());
@@ -81,6 +109,9 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Reset requested", data));
     }
 
+    // ─────────────────────────────────────────────────────────────
+    //  RESET PASSWORD — no rate limit (token itself is single-use)
+    // ─────────────────────────────────────────────────────────────
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<Object>> resetPassword(
             @Valid @RequestBody ResetPasswordRequest request) {
@@ -180,6 +211,4 @@ public class AuthController {
 
         return ResponseEntity.ok(ApiResponse.success("University", data));
     }
-
-
 }

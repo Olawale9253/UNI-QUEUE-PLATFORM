@@ -7,6 +7,7 @@ import com.uniqueeue.exception.ResourceNotFoundException;
 import com.uniqueeue.model.Notification;
 import com.uniqueeue.model.User;
 import com.uniqueeue.repository.NotificationRepository;
+import com.uniqueeue.security.TenantGuard;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -64,8 +65,9 @@ public class NotificationService {
     public NotificationResponse markAsRead(Long userId, Long notificationId) {
         Notification n = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
-        if (!n.getUser().getId().equals(userId)) {
-            throw new BadRequestException("Not your notification");
+
+        if (!n.getUser().getId().equals(TenantGuard.currentUserId())) {
+            throw new ResourceNotFoundException("Notification not found");
         }
         n.setIsRead(true);
         return NotificationResponse.from(notificationRepository.save(n));

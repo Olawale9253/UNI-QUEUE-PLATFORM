@@ -61,8 +61,23 @@ public class User {
     @Builder.Default
     private Boolean isVerified = false;
 
+    // ───────── Verification code state ─────────
+
     @Column(name = "verification_token")
     private String verificationToken;
+
+    /** Number of failed verification attempts against the current code. */
+    @Column(name = "verification_attempts")
+    @Builder.Default
+    private Integer verificationAttempts = 0;
+
+    /** When the current verification code expires. */
+    @Column(name = "verification_expires_at")
+    private LocalDateTime verificationExpiresAt;
+
+    /** When we last sent a verification code — for cooldown / dedupe. */
+    @Column(name = "last_verification_sent_at")
+    private LocalDateTime lastVerificationSentAt;
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)
@@ -92,23 +107,15 @@ public class User {
 
     // ───────── Email change flow ─────────
 
-    /**
-     * Optional fallback email. Set automatically to the previous primary
-     * email the first time a user changes their login email, so they never
-     * lose access if they later forget their school email.
-     */
     @Column(name = "recovery_email", length = 255)
     private String recoveryEmail;
 
-    /** Email the user has asked to switch to (before verification). */
     @Column(name = "pending_email", length = 255)
     private String pendingEmail;
 
-    /** 6-digit code sent to {@link #pendingEmail}. */
     @Column(name = "pending_email_code", length = 10)
     private String pendingEmailCode;
 
-    /** When the pending code expires. */
     @Column(name = "pending_email_expires_at")
     private LocalDateTime pendingEmailExpiresAt;
 }

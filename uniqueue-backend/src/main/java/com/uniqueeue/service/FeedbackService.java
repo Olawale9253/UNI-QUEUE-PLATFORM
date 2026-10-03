@@ -29,8 +29,9 @@ public class FeedbackService {
         Ticket ticket = ticketRepository.findById(request.getTicketId())
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
+        // Only the ticket's owner can rate it.
         if (!ticket.getUser().getId().equals(userId)) {
-            throw new BadRequestException("Not your ticket");
+            throw new ResourceNotFoundException("Ticket not found");
         }
         if (ticket.getStatus() != TicketStatus.COMPLETED) {
             throw new BadRequestException("You can only rate completed tickets");

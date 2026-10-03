@@ -14,6 +14,7 @@ import com.uniqueeue.repository.QueueRepository;
 import com.uniqueeue.repository.QueueStaffRepository;
 import com.uniqueeue.repository.TicketRepository;
 import com.uniqueeue.repository.UserRepository;
+import com.uniqueeue.security.TenantGuard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -146,7 +147,7 @@ public class TicketService {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
         if (!ticket.getUser().getId().equals(userId)) {
-            throw new BadRequestException("Not your ticket");
+            throw new ResourceNotFoundException("Ticket not found");
         }
         if (ticket.getStatus() != TicketStatus.WAITING
                 && ticket.getStatus() != TicketStatus.WAITLISTED
@@ -172,7 +173,7 @@ public class TicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
         if (!ticket.getUser().getId().equals(userId)) {
-            throw new BadRequestException("Not your ticket");
+            throw new ResourceNotFoundException("Ticket not found");
         }
         if (ticket.getStatus() != TicketStatus.WAITING
                 && ticket.getStatus() != TicketStatus.CALLED) {
@@ -211,7 +212,7 @@ public class TicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
         if (!ticket.getUser().getId().equals(userId)) {
-            throw new BadRequestException("Not your ticket");
+            throw new ResourceNotFoundException("Ticket not found");
         }
         if (ticket.getStatus() != TicketStatus.WAITING
                 && ticket.getStatus() != TicketStatus.CALLED) {
@@ -474,6 +475,9 @@ public class TicketService {
     public QueueEstimateResponse estimate(Long queueId) {
         Queue queue = queueRepository.findById(queueId)
                 .orElseThrow(() -> new ResourceNotFoundException("Queue not found"));
+
+        // Tenant isolation — student/staff from another university can't probe this queue
+        TenantGuard.requireSameUniversity(queue, TenantGuard.currentUniversityId());
 
         List<Ticket> waiting = ticketRepository.findWaitingByQueueId(queueId);
         List<Ticket> waitlisted = ticketRepository.findWaitlistedByQueueId(queueId);

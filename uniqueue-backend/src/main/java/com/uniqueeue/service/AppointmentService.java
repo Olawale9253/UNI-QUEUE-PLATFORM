@@ -102,6 +102,16 @@ public class AppointmentService {
     public AppointmentSlotResponse getSlot(Long slotId, Long requestingUserId) {
         AppointmentSlot slot = slotRepository.findById(slotId)
                 .orElseThrow(() -> new ResourceNotFoundException("Slot not found"));
+
+        // Tenant isolation — user must be in the same university as the slot.
+        User requester = userRepository.findById(requestingUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Slot not found"));
+
+        if (requester.getUniversity() == null
+                || slot.getUniversity() == null
+                || !slot.getUniversity().getId().equals(requester.getUniversity().getId())) {
+            throw new ResourceNotFoundException("Slot not found");
+        }
         return AppointmentSlotResponse.from(slot, bookedCount(slotId));
     }
 
@@ -110,7 +120,7 @@ public class AppointmentService {
         AppointmentSlot slot = slotRepository.findById(slotId)
                 .orElseThrow(() -> new ResourceNotFoundException("Slot not found"));
         if (!slot.getStaff().getId().equals(staffId)) {
-            throw new BadRequestException("Not your slot");
+            throw new ResourceNotFoundException("Slot not found");
         }
         if (request.getTitle() != null) slot.setTitle(request.getTitle());
         if (request.getDescription() != null) slot.setDescription(request.getDescription());
@@ -139,7 +149,7 @@ public class AppointmentService {
         AppointmentSlot slot = slotRepository.findById(slotId)
                 .orElseThrow(() -> new ResourceNotFoundException("Slot not found"));
         if (!slot.getStaff().getId().equals(staffId)) {
-            throw new BadRequestException("Not your slot");
+            throw new ResourceNotFoundException("Slot not found");
         }
         if (bookedCount(slotId) > 0) {
             throw new BadRequestException("Cannot delete a slot with active bookings. Cancel them first or deactivate the slot.");
@@ -260,8 +270,9 @@ public class AppointmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
 
         if (!appt.getStudent().getId().equals(studentId)) {
-            throw new BadRequestException("Not your appointment");
+            throw new ResourceNotFoundException("Appointment not found");
         }
+
         if (appt.getStatus() != AppointmentStatus.BOOKED) {
             throw new BadRequestException("Cannot cancel an appointment that is " + appt.getStatus());
         }
@@ -293,8 +304,7 @@ public class AppointmentService {
         AppointmentSlot slot = slotRepository.findById(slotId)
                 .orElseThrow(() -> new ResourceNotFoundException("Slot not found"));
         if (!slot.getStaff().getId().equals(staffId)) {
-            throw new BadRequestException("Not your slot");
-        }
+            throw new ResourceNotFoundException("Slot not found");        }
         return appointmentRepository.findBySlotIdOrderByBookedAtAsc(slotId).stream()
                 .map(AppointmentResponse::from)
                 .toList();
@@ -379,7 +389,7 @@ public class AppointmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
         if (appt.getSlot() == null || appt.getSlot().getStaff() == null
                 || !appt.getSlot().getStaff().getId().equals(staffId)) {
-            throw new BadRequestException("Not your appointment");
+            throw new ResourceNotFoundException("Appointment not found");
         }
         return appt;
     }

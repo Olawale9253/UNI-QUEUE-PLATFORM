@@ -36,7 +36,7 @@ public class DocumentController {
             @PathVariable Long id,
             @RequestParam(value = "inline", defaultValue = "false") boolean inline,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return buildDownload(documentService.getForAnyAuthorizedUser(principal, id), inline);
+        return buildDownload(documentService.getForAnyAuthorizedUser(principal, id), false);
     }
 
     // ---------- STUDENT ----------
@@ -169,8 +169,10 @@ public class DocumentController {
 
     @GetMapping("/super-admin/documents/{id}/download")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<Resource> downloadAsSuperAdmin(@PathVariable Long id) {
-        return buildDownload(documentService.getRaw(id), false);
+    public ResponseEntity<Resource> downloadAsSuperAdmin(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return buildDownload(documentService.getForAnyAuthorizedUser(principal, id), false);
     }
 
     // ---------- HELPER ----------

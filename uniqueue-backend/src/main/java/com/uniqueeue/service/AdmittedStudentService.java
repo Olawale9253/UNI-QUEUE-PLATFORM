@@ -230,6 +230,14 @@ public class AdmittedStudentService {
     public void markClaimed(Long admittedStudentId, User user) {
         AdmittedStudent a = admittedStudentRepository.findById(admittedStudentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Admitted student not found"));
+
+        // Defensive: the admitting row must belong to the same university as the user.
+        if (a.getUniversity() == null
+                || user.getUniversity() == null
+                || !a.getUniversity().getId().equals(user.getUniversity().getId())) {
+            throw new ResourceNotFoundException("Admitted student not found");
+        }
+
         a.setClaimedBy(user);
         a.setClaimedAt(LocalDateTime.now());
         admittedStudentRepository.save(a);

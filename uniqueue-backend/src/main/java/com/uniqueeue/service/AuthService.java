@@ -17,6 +17,7 @@ import com.uniqueeue.repository.UniversityRepository;
 import com.uniqueeue.repository.UserRepository;
 import com.uniqueeue.security.JwtTokenProvider;
 import com.uniqueeue.security.UserPrincipal;
+import com.uniqueeue.util.EmailNormalizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -39,6 +40,8 @@ public class AuthService {
 
     private static final long RESET_TOKEN_TTL_MINUTES = 30;
     private static final long VERIFICATION_TTL_HOURS = 24;
+    private static final int MAX_VERIFICATION_ATTEMPTS = 5;
+    private static final long RESEND_COOLDOWN_SECONDS = 30;
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final UserRepository userRepository;
@@ -57,10 +60,15 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        String email = request.getEmail().toLowerCase().trim();
+        // ⬅ CHANGED: use EmailNormalizer everywhere
+        String email = EmailNormalizer.normalize(request.getEmail());
+        if (email == null) {
+            throw new BadRequestException("Invalid email address");
+        }
 
+        // ⬅ CHANGED: silent success on existing email — prevents enumeration.
         if (userRepository.existsByEmail(email)) {
-            throw new BadRequestException("Email is already registered");
+            return handleExistingRegistration(email, request);
         }
 
         University university = resolveUniversity(request);
@@ -74,6 +82,38 @@ public class AuthService {
         return isFresher
                 ? registerFresher(request, email, university)
                 : registerStudent(request, email, university);
+    }
+
+    /**
+     * Email already exists. We respond with the same shape as a fresh
+     * registration so the caller can't tell whether the email is in use.
+     *
+     * Side effects:
+     *   - If the existing account is UNVERIFIED, resend a fresh code to the
+     *     real owner's inbox (they might have just forgotten to verify).
+     *   - If it's verified, do nothing — no email goes out.
+     *   - Either way, the response contains no tokens and no dev code.
+     */
+    private AuthResponse handleExistingRegistration(String email, RegisterRequest request) {
+        var existing = userRepository.findByEmail(email).orElse(null);
+
+        if (existing != null && Boolean.FALSE.equals(existing.getIsVerified())) {
+            String code = String.format("%06d", RANDOM.nextInt(1_000_000));
+            existing.setVerificationToken(code);
+            existing.setVerificationAttempts(0);
+            existing.setVerificationExpiresAt(
+                    LocalDateTime.now().plusHours(VERIFICATION_TTL_HOURS));
+            existing.setLastVerificationSentAt(LocalDateTime.now());
+            userRepository.save(existing);
+            // In production this would call emailService.sendVerificationCode().
+            log.info("🔐 [RESEND] Verification code for {}: {}", email, code);
+        }
+
+        log.info("Silent register: email already in use, response uniform");
+        return AuthResponse.builder()
+                .tokenType("Bearer")
+                .isVerified(false)
+                .build();
     }
 
     private University resolveUniversity(RegisterRequest request) {
@@ -99,12 +139,7 @@ public class AuthService {
     // ─── Continuing student path ───
 
     private AuthResponse registerStudent(RegisterRequest request, String email, University university) {
-        if (!Boolean.TRUE.equals(university.getFresherRegistrationEnabled())
-                && false /* legacy students still allowed */) {
-            // (no-op — placeholder for future "registration closed" rule)
-        }
-
-        // Email domain check
+        // Email domain check (email is already normalized to lowercase)
         if (university.getEmailDomain() != null && !university.getEmailDomain().isBlank()) {
             String domain = university.getEmailDomain().startsWith("@")
                     ? university.getEmailDomain()
@@ -118,7 +153,6 @@ public class AuthService {
             throw new BadRequestException("Matric number is required");
         }
 
-        // Matric format + uniqueness
         matricValidationService.validate(request.getMatricNumber(), university);
         String matric = request.getMatricNumber().trim();
         if (userRepository.existsByUniversityIdAndMatricNumber(university.getId(), matric)) {
@@ -139,6 +173,10 @@ public class AuthService {
                 .isActive(true)
                 .isVerified(false)
                 .verificationToken(code)
+                .verificationAttempts(0)                                        // ⬅ NEW
+                .verificationExpiresAt(LocalDateTime.now()
+                        .plusHours(VERIFICATION_TTL_HOURS))                    // ⬅ NEW
+                .lastVerificationSentAt(LocalDateTime.now())                   // ⬅ NEW
                 .build();
 
         User saved = userRepository.save(user);
@@ -159,10 +197,8 @@ public class AuthService {
                     "Fresher registration is currently disabled. Contact your university.");
         }
 
-        // 1. Pattern validation for whatever identifiers are required
         validateFresherPatterns(request, university);
 
-        // 2. List matching if required
         String mode = university.getFresherVerificationMode() == null
                 ? "PATTERN"
                 : university.getFresherVerificationMode().toUpperCase();
@@ -178,7 +214,6 @@ public class AuthService {
             }
         }
 
-        // 3. JAMB uniqueness (if provided) — it's declared unique at DB level
         if (request.getJambRegNumber() != null && !request.getJambRegNumber().isBlank()) {
             if (userRepository.existsByJambRegNumber(request.getJambRegNumber().trim())) {
                 throw new BadRequestException("This JAMB registration number is already registered");
@@ -202,11 +237,14 @@ public class AuthService {
                 .isActive(true)
                 .isVerified(false)
                 .verificationToken(code)
+                .verificationAttempts(0)                                        // ⬅ NEW
+                .verificationExpiresAt(LocalDateTime.now()
+                        .plusHours(VERIFICATION_TTL_HOURS))                    // ⬅ NEW
+                .lastVerificationSentAt(LocalDateTime.now())                   // ⬅ NEW
                 .build();
 
         User saved = userRepository.save(user);
 
-        // Link the admitted list row to this user
         if (matched != null) {
             admittedStudentService.markClaimed(matched.getId(), saved);
         }
@@ -262,7 +300,10 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        String email = request.getEmail().toLowerCase().trim();
+        String email = EmailNormalizer.normalize(request.getEmail());   // ⬅ CHANGED
+        if (email == null) {
+            throw new BadCredentialsException("Invalid email or password");
+        }
 
         Authentication authentication;
         try {
@@ -302,14 +343,23 @@ public class AuthService {
     }
 
     // ============================================================
-    //  EMAIL VERIFICATION
+    //  EMAIL VERIFICATION  — now with expiry + attempts + isActive
     // ============================================================
 
-    @Transactional
+    @Transactional(noRollbackFor = {BadRequestException.class, UnauthorizedException.class})
     public AuthResponse verifyEmail(String email, String code) {
-        String lowerEmail = email.toLowerCase().trim();
+        String lowerEmail = EmailNormalizer.normalize(email);
+        if (lowerEmail == null || code == null || code.isBlank()) {
+            throw new BadRequestException("Invalid verification code");
+        }
+
         User user = userRepository.findByEmail(lowerEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // ⬅ NEW: deactivated users can't verify
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
+            throw new UnauthorizedException("Your account has been disabled.");
+        }
 
         if (Boolean.TRUE.equals(user.getIsVerified())) {
             throw new BadRequestException("This email is already verified");
@@ -319,12 +369,37 @@ public class AuthService {
             throw new BadRequestException("No verification code on file. Please request a new one.");
         }
 
-        if (!user.getVerificationToken().equals(code.trim())) {
-            throw new BadRequestException("Invalid verification code");
+        // ⬅ NEW: expired code
+        if (user.getVerificationExpiresAt() != null
+                && user.getVerificationExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("Your verification code has expired. Please request a new one.");
         }
 
+        // ⬅ NEW: attempt limit
+        int attempts = user.getVerificationAttempts() != null ? user.getVerificationAttempts() : 0;
+        if (attempts >= MAX_VERIFICATION_ATTEMPTS) {
+            throw new BadRequestException(
+                    "Too many incorrect attempts. Please request a new verification code.");
+        }
+
+        // ⬅ NEW: failed attempt — increment and save
+        if (!user.getVerificationToken().equals(code.trim())) {
+            user.setVerificationAttempts(attempts + 1);
+            userRepository.save(user);
+            int remaining = MAX_VERIFICATION_ATTEMPTS - (attempts + 1);
+            if (remaining <= 0) {
+                throw new BadRequestException(
+                        "Too many incorrect attempts. Please request a new verification code.");
+            }
+            throw new BadRequestException(
+                    "Invalid verification code. " + remaining + " attempt" + (remaining == 1 ? "" : "s") + " remaining.");
+        }
+
+        // Success — clear everything
         user.setIsVerified(true);
         user.setVerificationToken(null);
+        user.setVerificationAttempts(0);                                    // ⬅ NEW
+        user.setVerificationExpiresAt(null);                                // ⬅ NEW
         userRepository.save(user);
 
         log.info("Email verified for {}", user.getEmail());
@@ -333,7 +408,11 @@ public class AuthService {
 
     @Transactional
     public String resendVerification(String email) {
-        String lowerEmail = email.toLowerCase().trim();
+        String lowerEmail = EmailNormalizer.normalize(email);
+        if (lowerEmail == null) {
+            throw new BadRequestException("Invalid email address");
+        }
+
         User user = userRepository.findByEmail(lowerEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -341,8 +420,24 @@ public class AuthService {
             throw new BadRequestException("This email is already verified");
         }
 
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
+            throw new UnauthorizedException("Your account has been disabled.");
+        }
+
+        // ⬅ NEW: cooldown between resends
+        if (user.getLastVerificationSentAt() != null
+                && user.getLastVerificationSentAt().plusSeconds(RESEND_COOLDOWN_SECONDS)
+                .isAfter(LocalDateTime.now())) {
+            throw new BadRequestException(
+                    "Please wait a moment before requesting another code.");
+        }
+
         String code = String.format("%06d", RANDOM.nextInt(1_000_000));
         user.setVerificationToken(code);
+        user.setVerificationAttempts(0);                                    // ⬅ NEW: reset on resend
+        user.setVerificationExpiresAt(LocalDateTime.now()
+                .plusHours(VERIFICATION_TTL_HOURS));                        // ⬅ NEW
+        user.setLastVerificationSentAt(LocalDateTime.now());                // ⬅ NEW
         userRepository.save(user);
 
         log.info("🔐 New verification code for {}: {}", user.getEmail(), code);
@@ -355,7 +450,9 @@ public class AuthService {
 
     @Transactional
     public String requestPasswordReset(String email) {
-        String lowerEmail = email.toLowerCase();
+        String lowerEmail = EmailNormalizer.normalize(email);
+        if (lowerEmail == null) return null;
+
         var userOpt = userRepository.findByEmail(lowerEmail);
         if (userOpt.isEmpty()) {
             log.info("Password reset requested for unknown email: {}", lowerEmail);
@@ -363,6 +460,7 @@ public class AuthService {
         }
 
         User user = userOpt.get();
+        // Invalidate any previous token — enforces single active reset per user.
         passwordResetTokenRepository.deleteByUserId(user.getId());
 
         String token = UUID.randomUUID().toString().replace("-", "")
@@ -381,6 +479,10 @@ public class AuthService {
 
     @Transactional
     public void resetPassword(String token, String newPassword) {
+        if (token == null || token.isBlank() || newPassword == null || newPassword.isBlank()) {
+            throw new BadRequestException("Invalid or expired reset link");
+        }
+
         PasswordResetToken prt = passwordResetTokenRepository.findByToken(token)
                 .orElseThrow(() -> new BadRequestException("Invalid or expired reset link"));
 
@@ -388,6 +490,11 @@ public class AuthService {
         if (prt.isExpired()) throw new BadRequestException("This reset link has expired. Please request a new one.");
 
         User user = prt.getUser();
+
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
+            throw new UnauthorizedException("Your account has been disabled.");
+        }
+
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 

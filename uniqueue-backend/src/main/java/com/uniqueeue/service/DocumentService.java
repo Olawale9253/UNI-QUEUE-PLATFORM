@@ -78,7 +78,7 @@ public class DocumentService {
             Ticket ticket = ticketRepository.findById(ticketId)
                     .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
             if (!ticket.getUser().getId().equals(userId)) {
-                throw new BadRequestException("Not your ticket");
+                throw new ResourceNotFoundException("Ticket not found");   // ← 404 (was 400)
             }
         }
 
@@ -126,7 +126,9 @@ public class DocumentService {
     public DocumentResponse getMine(Long userId, Long docId) {
         Document doc = documentRepository.findById(docId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
-        if (!doc.getUploadedBy().equals(userId)) throw new BadRequestException("Not your document");
+        if (!doc.getUploadedBy().equals(userId)) {
+            throw new ResourceNotFoundException("Document not found");     // ← 404
+        }
         return enrich(doc);
     }
 
@@ -134,7 +136,9 @@ public class DocumentService {
     public Document getOwnedRaw(Long userId, Long docId) {
         Document doc = documentRepository.findById(docId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
-        if (!doc.getUploadedBy().equals(userId)) throw new BadRequestException("Not your document");
+        if (!doc.getUploadedBy().equals(userId)) {
+            throw new ResourceNotFoundException("Document not found");     // ← 404
+        }
         return doc;
     }
 
@@ -174,7 +178,7 @@ public class DocumentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
         if (staff.getUniversity() == null
                 || !doc.getUniversityId().equals(staff.getUniversity().getId())) {
-            throw new BadRequestException("Not in your university");
+            throw new ResourceNotFoundException("Document not found");     // ← 404
         }
         return doc;
     }
@@ -199,7 +203,7 @@ public class DocumentService {
 
         if (staff.getUniversity() == null
                 || !doc.getUniversityId().equals(staff.getUniversity().getId())) {
-            throw new BadRequestException("Not in your university");
+            throw new ResourceNotFoundException("Document not found");     // ← 404
         }
         if (doc.getStatus() != DocumentStatus.PENDING) {
             throw new BadRequestException("This document has already been reviewed");
@@ -252,17 +256,18 @@ public class DocumentService {
         if (role == Role.ADMIN || role == Role.STAFF) {
             if (principal.getUniversityId() == null
                     || !doc.getUniversityId().equals(principal.getUniversityId())) {
-                throw new BadRequestException("Not in your university");
+                throw new ResourceNotFoundException("Document not found");  // ← 404
             }
             return doc;
         }
 
         // USER or FRESHER
         if (!doc.getUploadedBy().equals(principal.getId())) {
-            throw new BadRequestException("Not your document");
+            throw new ResourceNotFoundException("Document not found");      // ← 404
         }
         return doc;
     }
+
     // ---------- LEGACY ----------
 
     @Transactional(readOnly = true)
@@ -270,7 +275,7 @@ public class DocumentService {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
         if (!queueStaffRepository.existsByQueueIdAndUserId(ticket.getQueue().getId(), staffId)) {
-            throw new BadRequestException("You are not assigned to this ticket's queue");
+            throw new ResourceNotFoundException("Ticket not found");
         }
         return documentRepository.findByTicketIdOrderByCreatedAtDesc(ticketId)
                 .stream().map(this::enrich).toList();
@@ -287,16 +292,13 @@ public class DocumentService {
         Document doc = documentRepository.findById(docId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
         if (!doc.getUniversityId().equals(universityId)) {
-            throw new BadRequestException("Not in your university");
+            throw new ResourceNotFoundException("Document not found");      // ← 404
         }
         return doc;
     }
 
-    @Transactional(readOnly = true)
-    public Document getRaw(Long docId) {
-        return documentRepository.findById(docId)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
-    }
+    // ⚠️ getRaw() DELETED — it had no tenant check and no legitimate callers
+    //    after DocumentController switched to getForAnyAuthorizedUser().
 
     // ---------- DELETE ----------
 
@@ -304,7 +306,9 @@ public class DocumentService {
     public void deleteOwned(Long userId, Long docId) {
         Document doc = documentRepository.findById(docId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
-        if (!doc.getUploadedBy().equals(userId)) throw new BadRequestException("Not your document");
+        if (!doc.getUploadedBy().equals(userId)) {
+            throw new ResourceNotFoundException("Document not found");      // ← 404
+        }
 
         if (doc.getStatus() == DocumentStatus.APPROVED) {
             throw new BadRequestException("Approved documents cannot be deleted");

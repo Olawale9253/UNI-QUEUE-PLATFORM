@@ -46,7 +46,6 @@ public class WorkflowService {
             throw new BadRequestException("Workflow must have at least one step");
         }
 
-        // Validate all queues belong to this university
         List<Queue> queues = new ArrayList<>();
         for (CreateWorkflowRequest.StepInput input : request.getSteps()) {
             Queue q = queueRepository.findByIdAndUniversityId(input.getQueueId(), universityId)
@@ -65,7 +64,6 @@ public class WorkflowService {
                 .build();
         workflow = workflowRepository.save(workflow);
 
-        // Create steps with sequential order 1..N
         List<WorkflowStep> steps = new ArrayList<>();
         for (int i = 0; i < request.getSteps().size(); i++) {
             CreateWorkflowRequest.StepInput input = request.getSteps().get(i);
@@ -114,7 +112,6 @@ public class WorkflowService {
         Workflow w = workflowRepository.findByIdAndUniversityId(workflowId, universityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Workflow not found"));
 
-        // Reject if any student is still in progress
         long active = studentWorkflowRepository.countByWorkflowIdAndStatus(workflowId, WorkflowStatus.IN_PROGRESS);
         if (active > 0) {
             throw new BadRequestException("Cannot delete — " + active + " student(s) still in progress");
@@ -133,7 +130,7 @@ public class WorkflowService {
         WorkflowStep step = stepRepository.findById(stepId)
                 .orElseThrow(() -> new ResourceNotFoundException("Step not found"));
         if (!step.getWorkflow().getUniversity().getId().equals(universityId)) {
-            throw new BadRequestException("Not in your university");
+            throw new ResourceNotFoundException("Step not found");
         }
         if (request.getLabel() != null) step.setLabel(request.getLabel());
         if (request.getInstructions() != null) step.setInstructions(request.getInstructions());
@@ -222,7 +219,7 @@ public class WorkflowService {
         StudentWorkflow sw = studentWorkflowRepository.findById(studentWorkflowId)
                 .orElseThrow(() -> new ResourceNotFoundException("Not found"));
         if (!sw.getStudent().getId().equals(studentId)) {
-            throw new BadRequestException("Not yours");
+            throw new ResourceNotFoundException("Not found");
         }
         List<WorkflowStep> steps = stepRepository
                 .findByWorkflowIdOrderByStepOrderAsc(sw.getWorkflow().getId());
@@ -234,7 +231,7 @@ public class WorkflowService {
         StudentWorkflow sw = studentWorkflowRepository.findById(studentWorkflowId)
                 .orElseThrow(() -> new ResourceNotFoundException("Not found"));
         if (!sw.getStudent().getId().equals(studentId)) {
-            throw new BadRequestException("Not yours");
+            throw new ResourceNotFoundException("Not found");
         }
         if (sw.getStatus() != WorkflowStatus.IN_PROGRESS) {
             throw new BadRequestException("Only IN_PROGRESS workflows can be abandoned");
@@ -250,17 +247,8 @@ public class WorkflowService {
     //  GATE CHECK — called by TicketService
     // ============================================================
 
-    /**
-     * Called before a student joins a queue. If the queue is part of a workflow
-     * and the student is currently in progress on that workflow, they can only
-     * join the queue at their current step.
-     *
-     * Returns null if there's no blocking constraint.
-     * Throws BadRequestException if joining would be out-of-order.
-     */
     @Transactional(readOnly = true)
     public void assertCanJoinQueue(Long studentId, Long queueId) {
-        // Find an active StudentWorkflow for this student where this queue is a step
         List<StudentWorkflow> active = studentWorkflowRepository
                 .findByStudentIdOrderByStartedAtDesc(studentId).stream()
                 .filter(sw -> sw.getStatus() == WorkflowStatus.IN_PROGRESS)
@@ -270,14 +258,12 @@ public class WorkflowService {
             List<WorkflowStep> steps = stepRepository
                     .findByWorkflowIdOrderByStepOrderAsc(sw.getWorkflow().getId());
 
-            // Is this queue part of this workflow?
             WorkflowStep thisQueueStep = steps.stream()
                     .filter(s -> s.getQueue().getId().equals(queueId))
                     .findFirst().orElse(null);
 
-            if (thisQueueStep == null) continue;   // different workflow, ignore
+            if (thisQueueStep == null) continue;
 
-            // Student is on this workflow. Only allow if it's their current step.
             if (!thisQueueStep.getStepOrder().equals(sw.getCurrentStepOrder())) {
                 WorkflowStep currentStep = steps.stream()
                         .filter(s -> s.getStepOrder().equals(sw.getCurrentStepOrder()))
@@ -290,10 +276,6 @@ public class WorkflowService {
         }
     }
 
-    /**
-     * Called when a ticket is COMPLETED. If the ticket's queue is the current step
-     * of any in-progress StudentWorkflow, advance that student's progress.
-     */
     @Transactional
     public void onTicketCompleted(Long studentId, Long queueId) {
         List<StudentWorkflow> active = studentWorkflowRepository
@@ -311,7 +293,6 @@ public class WorkflowService {
             if (step == null) continue;
             if (!step.getStepOrder().equals(sw.getCurrentStepOrder())) continue;
 
-            // Advance to next step
             int nextOrder = step.getStepOrder() + 1;
             WorkflowStep nextStep = steps.stream()
                     .filter(s -> s.getStepOrder().equals(nextOrder))
@@ -322,7 +303,6 @@ public class WorkflowService {
                     "{\"stepOrder\":" + step.getStepOrder() + ",\"queueId\":" + queueId + "}");
 
             if (nextStep == null) {
-                // Last step completed → workflow done
                 sw.setStatus(WorkflowStatus.COMPLETED);
                 sw.setCompletedAt(LocalDateTime.now());
                 studentWorkflowRepository.save(sw);
