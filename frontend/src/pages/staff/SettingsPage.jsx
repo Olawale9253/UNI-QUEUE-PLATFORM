@@ -10,7 +10,7 @@ import Button from '../../components/ui/Button'
 import PageHeader from '../../components/layout/PageHeader'
 import { useToastStore } from '../../store/toastStore'
 import { previewSound } from '../../lib/soundService'
-import { useBrowserNotifications } from '../../hooks/useBrowserNotifications'
+import { useWebPush } from '../../hooks/useWebPush'
 
 const STORAGE_KEY = 'uniqueue_staff_prefs'
 
@@ -18,7 +18,6 @@ const DEFAULTS = {
     notifyNewTicket: true,
     notifySound: false,
     soundVolume: 0.5,
-    browserNotifications: false,
     autoRefresh: true,
     compactMode: false,
 }
@@ -50,7 +49,7 @@ function Toggle({ label, description, checked, onChange, disabled }) {
 export default function SettingsPage() {
     const { push } = useToastStore()
     const [prefs, setPrefs] = useState(DEFAULTS)
-    const browserNotif = useBrowserNotifications()
+    const webPush = useWebPush()
 
     useEffect(() => {
         try {
@@ -61,19 +60,22 @@ export default function SettingsPage() {
 
     const set = (k, v) => setPrefs((p) => ({ ...p, [k]: v }))
 
-    const enableBrowserNotifs = async (e) => {
+    const togglePush = async (e) => {
         const wantsOn = e.target.checked
-        if (!wantsOn) {
-            set('browserNotifications', false)
-            return
-        }
-        const result = await browserNotif.request()
-        if (result === 'granted') {
-            set('browserNotifications', true)
-            push({ type: 'success', message: 'Browser notifications enabled' })
+        if (wantsOn) {
+            const result = await webPush.subscribe()
+            if (result === 'granted') {
+                push({ type: 'success', message: 'Push notifications enabled' })
+            } else if (result === 'denied') {
+                push({ type: 'error', message: 'Notification permission denied' })
+            } else if (result === 'unsupported') {
+                push({ type: 'error', message: 'Your browser does not support push notifications' })
+            } else {
+                push({ type: 'error', message: 'Failed to enable push notifications' })
+            }
         } else {
-            set('browserNotifications', false)
-            push({ type: 'error', message: 'Browser notification permission denied' })
+            await webPush.unsubscribe()
+            push({ type: 'info', message: 'Push notifications disabled' })
         }
     }
 
@@ -95,6 +97,13 @@ export default function SettingsPage() {
         try { localStorage.removeItem(STORAGE_KEY) } catch {}
         push({ type: 'info', message: 'Preferences reset' })
     }
+
+    const pushDescription = (() => {
+        if (!webPush.supported) return 'Your browser does not support push notifications.'
+        if (webPush.permission === 'denied') return 'Blocked. Enable notifications in your browser settings and reload.'
+        if (webPush.subscription) return 'Active — you\'ll get real OS popups even when this tab is closed.'
+        return 'Allow your phone or desktop to alert you when something happens.'
+    })()
 
     return (
         <>
@@ -129,9 +138,9 @@ export default function SettingsPage() {
                                 onChange={(e) => set('notifyNewTicket', e.target.checked)}
                             />
 
-                            {/* Sound with preview */}
-                            <div className="rounded-lg border border-slate-200 p-4 dark:border-slate-700">
-                                <div className="flex items-start justify-between gap-4">
+                            {/* Sound — wrapped in <label> so the whole row is clickable */}
+                            <div className="rounded-lg border border-slate-200 dark:border-slate-700">
+                                <label className="flex cursor-pointer items-start justify-between gap-4 p-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                     <div className="min-w-0 flex-1">
                                         <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
                                             Sound alerts
@@ -154,14 +163,13 @@ export default function SettingsPage() {
                                         <div className="h-6 w-11 rounded-full bg-slate-300 transition-colors peer-checked:bg-brand-600 dark:bg-slate-700" />
                                         <div className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5" />
                                     </div>
-                                </div>
+                                </label>
 
-                                {/* Volume + preview — only shown when sound is on */}
                                 {prefs.notifySound && (
                                     <motion.div
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}
-                                        className="mt-4 flex items-center gap-3 border-t border-slate-100 pt-4 dark:border-slate-800"
+                                        className="flex items-center gap-3 border-t border-slate-100 px-4 pb-4 pt-4 dark:border-slate-800"
                                     >
                                         <Volume2 className="h-4 w-4 shrink-0 text-slate-400" />
                                         <input
@@ -190,44 +198,61 @@ export default function SettingsPage() {
                                 )}
                             </div>
 
-                            {/* Native browser notifications */}
-                            <div className="rounded-lg border border-slate-200 p-4 dark:border-slate-700">
-                                <div className="flex items-start justify-between gap-4">
+                            {/* Push — wrapped in <label> so the whole row is clickable */}
+                            <div className="rounded-lg border border-slate-200 dark:border-slate-700">
+                                <label className={`flex items-start justify-between gap-4 p-4 transition-colors ${
+                                    !webPush.supported || webPush.permission === 'denied' || webPush.busy
+                                        ? 'opacity-60'
+                                        : 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                }`}>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2">
                                             <BellRing className="h-3.5 w-3.5 text-slate-400" />
                                             <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                                Desktop notifications
+                                                Push notifications
                                             </span>
                                         </div>
                                         <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                                            {browserNotif.permission === 'granted'
-                                                ? 'Active — you\'ll get OS-level popups when this tab is in the background.'
-                                                : browserNotif.permission === 'denied'
-                                                    ? 'Blocked in your browser settings. Unblock to enable.'
-                                                    : browserNotif.permission === 'unsupported'
-                                                        ? 'Your browser does not support this feature.'
-                                                        : 'Allow your browser to show native popups when a tab is backgrounded.'}
+                                            {pushDescription}
                                         </p>
-                                        {browserNotif.permission === 'granted' && prefs.browserNotifications && (
-                                            <div className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                                                <CheckCircle2 className="h-3 w-3" />
-                                                Permission granted
+                                        {webPush.subscription && (
+                                            <div className="mt-2 flex items-center gap-3">
+                                                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                                                    <CheckCircle2 className="h-3 w-3" />
+                                                    Subscribed
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.preventDefault()
+                                                        e.stopPropagation()
+                                                        webPush.sendTest()
+                                                            .then(() => push({ type: 'success', message: 'Test push sent — check your device' }))
+                                                            .catch(() => push({ type: 'error', message: 'Failed to send test push' }))
+                                                    }}
+                                                    className="text-[11px] font-medium text-brand-600 hover:underline dark:text-brand-400"
+                                                >
+                                                    Send test
+                                                </button>
                                             </div>
                                         )}
                                     </div>
                                     <div className="relative shrink-0">
                                         <input
                                             type="checkbox"
-                                            checked={prefs.browserNotifications}
-                                            onChange={enableBrowserNotifs}
-                                            disabled={browserNotif.permission === 'denied' || browserNotif.permission === 'unsupported'}
+                                            checked={!!webPush.subscription}
+                                            onChange={togglePush}
+                                            disabled={
+                                                !webPush.supported
+                                                || webPush.permission === 'denied'
+                                                || webPush.busy
+                                            }
                                             className="peer sr-only"
                                         />
                                         <div className="h-6 w-11 rounded-full bg-slate-300 transition-colors peer-checked:bg-brand-600 peer-disabled:opacity-40 dark:bg-slate-700" />
                                         <div className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5" />
                                     </div>
-                                </div>
+                                </label>
                             </div>
 
                             <Toggle

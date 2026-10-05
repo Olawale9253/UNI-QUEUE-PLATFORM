@@ -24,6 +24,34 @@ function resolveImageUrl(url) {
     return base ? `${base}${url}` : url
 }
 
+/**
+ * If this browser already has a push subscription from a previous session,
+ * tell the backend it now belongs to the just-logged-in user. Silently
+ * skips if push isn't supported, permission wasn't granted, or no
+ * subscription exists yet (the user has to enable it once in Settings).
+ */
+async function syncExistingPushSubscription() {
+    if (typeof window === 'undefined') return
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
+
+    try {
+        const reg = await navigator.serviceWorker.getRegistration('/sw.js')
+        if (!reg) return
+
+        const sub = await reg.pushManager.getSubscription()
+        if (!sub) return
+
+        const raw = sub.toJSON()
+        await api.post('/api/push/subscribe', {
+            endpoint: raw.endpoint,
+            keys: raw.keys,
+        })
+    } catch (err) {
+        // Push is best-effort — never let it block login
+        console.debug('[push] re-sync skipped:', err?.message)
+    }
+}
+
 export default function Login() {
     const navigate = useNavigate()
     const { login, loading, user, logout } = useAuthStore()
@@ -74,6 +102,11 @@ export default function Login() {
         const res = await login(email, password)
 
         if (res.success) {
+            // Re-register any existing push subscription with the backend so
+            // this device is now mapped to the current user. Runs in the
+            // background — login doesn't wait for it.
+            syncExistingPushSubscription()
+
             push({ type: 'success', message: 'Signed in successfully' })
             navigate(dashboards[res.role] || '/')
             return
@@ -89,7 +122,6 @@ export default function Login() {
                 type: 'info',
                 message: 'Your email is not verified. Redirecting to verification…',
             })
-            // Auto-redirect after a short beat so the toast is visible
             setTimeout(() => {
                 navigate('/verify-email', { state: { email: email.trim() } })
             }, 1200)

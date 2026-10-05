@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Map;
 
 import java.util.List;
 
@@ -21,6 +22,7 @@ import java.util.List;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final WebPushService webPushService;
 
     /**
      * Fire-and-forget notification. Failures are logged but never break the caller.
@@ -37,8 +39,10 @@ public class NotificationService {
                     .isRead(false)
                     .build();
             notificationRepository.save(n);
+            webPushService.sendToUser(user.getId(), title, message, Map.of("type", type.name()));
         } catch (Exception ex) {
             log.error("Failed to send notification to user {}: {}", user.getId(), ex.getMessage());
+
         }
     }
 

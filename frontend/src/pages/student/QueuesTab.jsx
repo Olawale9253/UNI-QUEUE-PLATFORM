@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -12,9 +12,11 @@ import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
+import EnablePushPrompt from '../../components/student/EnablePushPrompt'
 import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
+import { useStudentTicketAlerts } from '../../hooks/useNotificationSound'
 import { groupQueuesByOffice } from '../../lib/groupQueues'
 
 const STATUS_VARIANTS = {
@@ -77,6 +79,7 @@ export default function QueuesTab() {
     const { user } = useAuthStore()
     const { push } = useToastStore()
     const navigate = useNavigate()
+    const { checkTicket } = useStudentTicketAlerts()
 
     const [queues, setQueues] = useState([])
     const [activeTicket, setActiveTicket] = useState(null)
@@ -99,6 +102,7 @@ export default function QueuesTab() {
     const [ticketSearch, setTicketSearch] = useState('')
 
     const isFresher = user?.role === 'FRESHER'
+    const showPushPrompt = !!activeTicket
 
     const load = useCallback(async () => {
         try {
@@ -159,6 +163,36 @@ export default function QueuesTab() {
     )
 
     useEffect(() => { setSelectedServiceId('') }, [selectedOfficeId])
+
+    const lastActiveTicketRef = useRef(null)
+
+    useEffect(() => {
+        if (activeTicket) {
+            lastActiveTicketRef.current = {
+                id: activeTicket.id,
+                status: activeTicket.status,
+            }
+            const event = checkTicket(activeTicket)
+            if (event) {
+                push({ type: event.severity, message: event.message })
+            }
+            return
+        }
+
+        const prev = lastActiveTicketRef.current
+        if (!prev) return
+
+        const finished = (history || []).find((h) => h.id === prev.id)
+
+        if (finished && finished.status !== prev.status) {
+            const event = checkTicket(finished)
+            if (event) {
+                push({ type: event.severity, message: event.message })
+            }
+        }
+
+        lastActiveTicketRef.current = null
+    }, [activeTicket, history, checkTicket, push])
 
     const joinQueue = async () => {
         if (!selectedService) {
@@ -269,6 +303,8 @@ export default function QueuesTab() {
                     Queue Management
                 </h2>
             </div>
+
+            {showPushPrompt && <EnablePushPrompt className="mb-6" />}
 
             {isFresher && (
                 <motion.div

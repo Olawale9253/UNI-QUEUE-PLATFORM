@@ -15,6 +15,8 @@ import {
     GraduationCap,
     ArrowRight,
     ShieldCheck,
+    BellRing,
+    CheckCircle2,
 } from 'lucide-react'
 import api from '../api/axios'
 import Card from '../components/ui/Card'
@@ -25,6 +27,7 @@ import ChangeEmailModal from '../components/profile/ChangeEmailModal'
 import { useAuthStore } from '../store/authStore'
 import { useUniversityStore } from '../store/universityStore'
 import { useToastStore } from '../store/toastStore'
+import { useWebPush } from '../hooks/useWebPush'
 import { getInitials } from '../lib/format'
 
 const ROLE_LABELS = {
@@ -78,6 +81,7 @@ export default function Profile() {
     const { user, refreshProfile, logout } = useAuthStore()
     const { refresh: refreshUniversity } = useUniversityStore()
     const { push } = useToastStore()
+    const webPush = useWebPush()
     const navigate = useNavigate()
 
     const [profile, setProfile] = useState(null)
@@ -456,6 +460,78 @@ export default function Profile() {
                         >
                             Change email
                         </Button>
+                    </div>
+                </Card>
+            </motion.div>
+
+            {/* ───── NOTIFICATIONS ───── */}
+            <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.07 }}
+            >
+                <Card className="mb-6">
+                    <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40">
+                            <BellRing className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+                        </div>
+                        <div>
+                            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                                Notifications
+                            </h2>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Get alerted when it's your turn, even when the app is closed.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                            <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                Push notifications
+                            </div>
+                            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                {!webPush.supported
+                                    ? 'Your browser does not support push notifications.'
+                                    : webPush.permission === 'denied'
+                                        ? 'Blocked. Enable notifications in your browser settings and reload.'
+                                        : webPush.subscription
+                                            ? 'Active — you\'ll get a popup on this device when something happens to your queue.'
+                                            : 'Off — turn on to get notified when it\'s your turn.'}
+                            </p>
+                            {webPush.subscription && (
+                                <div className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                                    <CheckCircle2 className="h-3 w-3" />
+                                    Subscribed on this device
+                                </div>
+                            )}
+                        </div>
+                        <button
+                            type="button"
+                            disabled={!webPush.supported || webPush.permission === 'denied' || webPush.busy}
+                            onClick={async () => {
+                                if (webPush.subscription) {
+                                    await webPush.unsubscribe()
+                                    push({ type: 'info', message: 'Push notifications disabled' })
+                                } else {
+                                    const result = await webPush.subscribe()
+                                    if (result === 'granted') {
+                                        push({ type: 'success', message: 'Push notifications enabled' })
+                                    } else if (result === 'denied') {
+                                        push({ type: 'error', message: 'Permission denied' })
+                                    } else if (result !== 'unsupported') {
+                                        push({ type: 'error', message: 'Could not enable notifications' })
+                                    }
+                                }
+                            }}
+                            className={`shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${
+                                webPush.subscription
+                                    ? 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
+                                    : 'bg-brand-600 text-white hover:bg-brand-700'
+                            }`}
+                        >
+                            {webPush.subscription ? 'Turn off' : 'Enable'}
+                        </button>
                     </div>
                 </Card>
             </motion.div>

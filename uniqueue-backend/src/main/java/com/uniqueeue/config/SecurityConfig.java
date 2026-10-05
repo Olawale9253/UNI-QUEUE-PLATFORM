@@ -107,6 +107,7 @@ public class SecurityConfig {
                         // ─── ROLE-SCOPED ───
                         .requestMatchers("/api/super-admin/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
                         .requestMatchers("/api/staff/**").hasRole("STAFF")
                         .requestMatchers("/api/user/**").hasAnyRole("USER", "FRESHER")
                         .requestMatchers("/api/offices/**").hasAnyRole("USER", "FRESHER", "STAFF", "ADMIN")

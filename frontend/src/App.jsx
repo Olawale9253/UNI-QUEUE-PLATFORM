@@ -39,6 +39,16 @@ export default function App() {
         initSoundUnlock()
     }, [])
 
+    useEffect(() => {
+        initSoundUnlock()
+        // Register the push service worker so subscriptions can be created later
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch((err) => {
+                console.warn('SW registration failed:', err)
+            })
+        }
+    }, [])
+
     return (
         <ErrorBoundary>
             <ThemeProvider>
