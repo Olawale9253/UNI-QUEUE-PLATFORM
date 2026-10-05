@@ -20,6 +20,7 @@ public class UserPrincipal implements UserDetails {
     private final Role role;
     private final Long universityId;
     private final boolean active;
+    private final Integer tokenVersion;
 
     public UserPrincipal(User user) {
         this.id = user.getId();
@@ -29,6 +30,7 @@ public class UserPrincipal implements UserDetails {
         this.role = user.getRole();
         this.universityId = user.getUniversity() != null ? user.getUniversity().getId() : null;
         this.active = user.getIsActive() != null && user.getIsActive();
+        this.tokenVersion = user.getTokenVersion() != null ? user.getTokenVersion() : 0;
     }
 
     @Override
@@ -41,20 +43,9 @@ public class UserPrincipal implements UserDetails {
         return email;
     }
 
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
+    @Override public boolean isAccountNonExpired() { return true; }
+    @Override public boolean isAccountNonLocked() { return true; }
+    @Override public boolean isCredentialsNonExpired() { return true; }
 
     @Override
     public boolean isEnabled() {

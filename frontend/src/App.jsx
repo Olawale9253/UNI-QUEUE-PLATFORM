@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import Navbar from './components/layout/Navbar'
 import ToastContainer from './components/ui/Toast'
@@ -17,6 +18,7 @@ import StaffDashboard from './pages/StaffDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import SuperAdminDashboard from './pages/SuperAdminDashboard'
 import NotFound from './pages/NotFound'
+import { initSoundUnlock } from './lib/soundService'
 
 const AUTH_ROUTES = [
     '/login',
@@ -29,6 +31,13 @@ const AUTH_ROUTES = [
 export default function App() {
     const location = useLocation()
     const hideNavbar = AUTH_ROUTES.includes(location.pathname)
+
+    // Register click/keypress/touch listeners once at app boot.
+    // These unlock the AudioContext so notification chimes can play later.
+    // Browsers block audio until the user has interacted at least once.
+    useEffect(() => {
+        initSoundUnlock()
+    }, [])
 
     return (
         <ErrorBoundary>

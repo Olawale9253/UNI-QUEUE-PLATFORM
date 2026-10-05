@@ -18,6 +18,7 @@ import com.uniqueeue.repository.UserRepository;
 import com.uniqueeue.security.JwtTokenProvider;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.util.EmailNormalizer;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -342,6 +343,52 @@ public class AuthService {
         return buildAuthResponse(user, null);
     }
 
+    /**
+     * Exchange a valid, non-expired refresh token for a fresh access token.
+     * Rejects if:
+     *   - the refresh token is malformed or expired
+     *   - the user's tokenVersion has been bumped since the refresh was issued
+     *   - the user is deactivated
+     */
+    @Transactional(readOnly = true)
+    public AuthResponse refresh(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()
+                || !tokenProvider.validateToken(refreshToken)) {
+            throw new UnauthorizedException("Invalid or expired session. Please sign in again.");
+        }
+
+        // Must be a refresh token, not an access token.
+        if (!JwtTokenProvider.TYPE_REFRESH.equals(tokenProvider.getTokenType(refreshToken))) {
+            throw new UnauthorizedException("Invalid session token.");
+        }
+
+        String email = EmailNormalizer.normalize(tokenProvider.getEmailFromToken(refreshToken));
+        if (email == null) {
+            throw new UnauthorizedException("Invalid session token.");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UnauthorizedException("Invalid session token."));
+
+        Integer tvFromToken = tokenProvider.getTokenVersionFromToken(refreshToken);
+        Integer currentTv = user.getTokenVersion() != null ? user.getTokenVersion() : 0;
+
+        if (!currentTv.equals(tvFromToken)) {
+            throw new UnauthorizedException("Your session has been invalidated. Please sign in again.");
+        }
+
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
+            throw new UnauthorizedException("Your account has been disabled.");
+        }
+
+        if (user.getUniversity() != null
+                && !Boolean.TRUE.equals(user.getUniversity().getIsActive())) {
+            throw new UnauthorizedException("Your university's account is inactive.");
+        }
+
+        return buildAuthResponse(user, null);
+    }
+
     // ============================================================
     //  EMAIL VERIFICATION  — now with expiry + attempts + isActive
     // ============================================================
@@ -496,6 +543,7 @@ public class AuthService {
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
+        user.setTokenVersion((user.getTokenVersion() != null ? user.getTokenVersion() : 0) + 1);
         userRepository.save(user);
 
         prt.setUsedAt(LocalDateTime.now());

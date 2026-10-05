@@ -18,6 +18,9 @@ import java.util.Date;
 @Slf4j
 public class JwtTokenProvider {
 
+    public static final String TYPE_ACCESS = "access";
+    public static final String TYPE_REFRESH = "refresh";
+
     @Value("${app.jwt.secret}")
     private String jwtSecret;
 
@@ -36,24 +39,20 @@ public class JwtTokenProvider {
 
     public String generateToken(Authentication authentication) {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-        return generateTokenFromPrincipal(principal, jwtExpirationMs);
+        return generateTokenFromPrincipal(principal, jwtExpirationMs, TYPE_ACCESS);
     }
 
     public String generateRefreshToken(Authentication authentication) {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-        return generateTokenFromPrincipal(principal, refreshExpirationMs);
+        return generateTokenFromPrincipal(principal, refreshExpirationMs, TYPE_REFRESH);
     }
 
-    /**
-     * Generate an access token directly for any user entity.
-     * Used for impersonation — super admin can mint a token for any user.
-     */
     public String generateTokenForUser(User user) {
         UserPrincipal principal = new UserPrincipal(user);
-        return generateTokenFromPrincipal(principal, jwtExpirationMs);
+        return generateTokenFromPrincipal(principal, jwtExpirationMs, TYPE_ACCESS);
     }
 
-    private String generateTokenFromPrincipal(UserPrincipal principal, long expirationMs) {
+    private String generateTokenFromPrincipal(UserPrincipal principal, long expirationMs, String type) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
 
@@ -62,6 +61,8 @@ public class JwtTokenProvider {
                 .claim("userId", principal.getId())
                 .claim("role", principal.getRole().name())
                 .claim("universityId", principal.getUniversityId())
+                .claim("tv", principal.getTokenVersion())
+                .claim("type", type)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(key)
@@ -73,21 +74,34 @@ public class JwtTokenProvider {
     }
 
     public String getEmailFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-        return claims.getSubject();
+        return parseClaims(token).getSubject();
+    }
+
+    public Integer getTokenVersionFromToken(String token) {
+        Object tv = parseClaims(token).get("tv");
+        return tv instanceof Number ? ((Number) tv).intValue() : 0;
+    }
+
+    public String getTokenType(String token) {
+        Object t = parseClaims(token).get("type");
+        return t != null ? t.toString() : TYPE_ACCESS;
     }
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
+            parseClaims(token);
             return true;
         } catch (Exception ex) {
             log.error("Invalid JWT token: {}", ex.getMessage());
             return false;
         }
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }

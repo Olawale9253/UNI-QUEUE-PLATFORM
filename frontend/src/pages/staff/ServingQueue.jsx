@@ -1,4 +1,3 @@
-import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     User, CheckCircle2, ListOrdered, Clock, Info, Building2,
@@ -15,6 +14,9 @@ import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { stagger, staggerItem } from '../../lib/motion'
+import { useNotificationSound } from '../../hooks/useNotificationSound'
+import { useBrowserNotifications } from '../../hooks/useBrowserNotifications'
+import { useEffect, useState, useCallback, useRef } from 'react'
 
 const STATUS_VARIANTS = {
     WAITING: 'warning',
@@ -60,6 +62,9 @@ export default function ServingQueue() {
     const [ticketsLoading, setTicketsLoading] = useState(false)
     const [acting, setActing] = useState(null)
     const [refreshing, setRefreshing] = useState(false)
+    const { playNewTicket, playAttention } = useNotificationSound()
+    const browserNotif = useBrowserNotifications()
+    const prevTicketIdsRef = useRef(null)   // null = first load, skip sound
 
     const activeQueue = queues.find((q) => q.id === activeQueueId) || null
     const isClosed = activeQueue?.isOpen === false
@@ -114,6 +119,60 @@ export default function ServingQueue() {
         () => (activeQueueId ? loadTickets(activeQueueId, false) : Promise.resolve()),
         { fastMs: 5000, slowMs: 30000, enabled: !!activeQueueId }
     )
+
+    // ─── Detect new tickets and play sound + notify ───
+    useEffect(() => {
+        if (!tickets.length) return
+
+        const currentIds = new Set(tickets.map((t) => t.id))
+
+        // Skip the very first load — it would alert on every existing ticket
+        if (prevTicketIdsRef.current === null) {
+            prevTicketIdsRef.current = currentIds
+            return
+        }
+
+        const prev = prevTicketIdsRef.current
+
+        // New tickets = present now, weren't there before
+        const newTickets = tickets.filter((t) => !prev.has(t.id))
+
+        // Tickets newly in CALLED state for this staff member
+        const newlyCalled = newTickets.filter((t) => t.status === 'CALLED')
+
+        if (newTickets.length > 0) {
+            playNewTicket()
+
+            if (browserNotif.permission === 'granted' && localStorage.getItem('uniqueue_staff_prefs')) {
+                try {
+                    const prefs = JSON.parse(localStorage.getItem('uniqueue_staff_prefs'))
+                    if (prefs.browserNotifications) {
+                        const title = newTickets.length === 1
+                            ? 'New ticket in your queue'
+                            : `${newTickets.length} new tickets`
+                        const body = newTickets.length === 1
+                            ? `${newTickets[0].userFullName} · ${newTickets[0].ticketNumber}`
+                            : newTickets.slice(0, 3).map((t) => t.ticketNumber).join(', ')
+
+                        browserNotif.notify(title, body, {
+                            tag: 'uniqueue-tickets',
+                            onClick: () => {
+                                if (activeQueueId) {
+                                    window.location.href = `/staff/serving`
+                                }
+                            },
+                        })
+                    }
+                } catch {}
+            }
+        }
+
+        if (newlyCalled.length > 0) {
+            playAttention()
+        }
+
+        prevTicketIdsRef.current = currentIds
+    }, [tickets, playNewTicket, playAttention, browserNotif, activeQueueId])
 
     const act = async (fn, successMessage, actionKey) => {
         setActing(actionKey)

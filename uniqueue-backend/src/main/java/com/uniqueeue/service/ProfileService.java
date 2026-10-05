@@ -2,6 +2,7 @@ package com.uniqueeue.service;
 
 import com.uniqueeue.dto.request.ChangePasswordRequest;
 import com.uniqueeue.dto.request.UpdateProfileRequest;
+import com.uniqueeue.dto.response.AuthResponse;
 import com.uniqueeue.dto.response.ProfileResponse;
 import com.uniqueeue.enums.AuditAction;
 import com.uniqueeue.enums.Role;
@@ -10,8 +11,12 @@ import com.uniqueeue.exception.ResourceNotFoundException;
 import com.uniqueeue.model.University;
 import com.uniqueeue.model.User;
 import com.uniqueeue.repository.UserRepository;
+import com.uniqueeue.security.JwtTokenProvider;
+import com.uniqueeue.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +32,7 @@ public class ProfileService {
     private final PasswordEncoder passwordEncoder;
     private final MatricValidationService matricValidationService;
     private final AuditService auditService;
+    private final JwtTokenProvider tokenProvider;
 
     @Transactional(readOnly = true)
     public ProfileResponse getProfile(Long userId) {
@@ -50,7 +56,6 @@ public class ProfileService {
             user.setPhone(request.getPhone().trim());
         }
 
-        // ── Fresher → Student upgrade ──
         if (user.getRole() == Role.FRESHER
                 && request.getMatricNumber() != null
                 && !request.getMatricNumber().isBlank()) {
@@ -62,8 +67,6 @@ public class ProfileService {
                 throw new BadRequestException("You are not attached to a university");
             }
 
-            // Validate matric ONLY if the university has configured a pattern.
-            // If no pattern is set, accept any reasonable format.
             if (university.getMatricPattern() != null
                     && !university.getMatricPattern().isBlank()) {
                 matricValidationService.validate(matric, university);
@@ -71,7 +74,6 @@ public class ProfileService {
                 throw new BadRequestException("Matric number looks too short");
             }
 
-            // Matric uniqueness per university
             if (userRepository.existsByUniversityIdAndMatricNumber(university.getId(), matric)) {
                 throw new BadRequestException("This matric number is already registered at your university");
             }
@@ -90,8 +92,13 @@ public class ProfileService {
         return ProfileResponse.from(userRepository.save(user));
     }
 
+    /**
+     * Change password. Bumps tokenVersion to invalidate every existing JWT
+     * for this user (including the current one), then issues fresh tokens
+     * so the caller's session continues uninterrupted.
+     */
     @Transactional
-    public void changePassword(Long userId, ChangePasswordRequest request) {
+    public AuthResponse changePassword(Long userId, ChangePasswordRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -104,6 +111,28 @@ public class ProfileService {
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        userRepository.save(user);
+        user.setTokenVersion((user.getTokenVersion() != null ? user.getTokenVersion() : 0) + 1);
+        User saved = userRepository.save(user);
+
+        log.info("Password changed for user {} — tokenVersion bumped to {}",
+                saved.getEmail(), saved.getTokenVersion());
+
+        // Issue fresh tokens so the caller's current tab stays logged in.
+        UserPrincipal principal = new UserPrincipal(saved);
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                principal, null, principal.getAuthorities());
+
+        return AuthResponse.builder()
+                .accessToken(tokenProvider.generateToken(auth))
+                .refreshToken(tokenProvider.generateRefreshToken(auth))
+                .tokenType("Bearer")
+                .expiresIn(tokenProvider.getJwtExpirationMs() / 1000)
+                .userId(saved.getId())
+                .email(saved.getEmail())
+                .fullName(saved.getFullName())
+                .role(saved.getRole())
+                .universityId(saved.getUniversity() != null ? saved.getUniversity().getId() : null)
+                .isVerified(saved.getIsVerified())
+                .build();
     }
 }

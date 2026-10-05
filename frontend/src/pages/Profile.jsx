@@ -196,10 +196,17 @@ export default function Profile() {
         }
         setSavingPassword(true)
         try {
-            await api.put('/api/profile/password', {
+            const res = await api.put('/api/profile/password', {
                 currentPassword: passwordForm.currentPassword,
                 newPassword: passwordForm.newPassword,
             })
+
+            // Backend returns fresh tokens because it bumped tokenVersion.
+            const d = res.data?.data
+            if (d?.accessToken) {
+                useAuthStore.getState().updateTokens(d.accessToken, d.refreshToken)
+            }
+
             push({ type: 'success', message: 'Password changed successfully' })
             setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
         } catch (err) {

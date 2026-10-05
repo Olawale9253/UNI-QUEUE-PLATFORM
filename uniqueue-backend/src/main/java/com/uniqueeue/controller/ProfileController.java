@@ -5,6 +5,7 @@ import com.uniqueeue.dto.request.EmailChangeRequest;
 import com.uniqueeue.dto.request.EmailChangeVerifyRequest;
 import com.uniqueeue.dto.request.UpdateProfileRequest;
 import com.uniqueeue.dto.response.ApiResponse;
+import com.uniqueeue.dto.response.AuthResponse;
 import com.uniqueeue.dto.response.ProfileResponse;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.EmailChangeService;
@@ -42,12 +43,17 @@ public class ProfileController {
                 profileService.updateProfile(principal.getId(), request)));
     }
 
+    /**
+     * Change password. Backend bumps tokenVersion (invalidating every existing
+     * session) and returns a fresh access + refresh token so the caller's
+     * current tab stays logged in while all other sessions are killed.
+     */
     @PutMapping("/password")
-    public ResponseEntity<ApiResponse<Object>> changePassword(
+    public ResponseEntity<ApiResponse<AuthResponse>> changePassword(
             @Valid @RequestBody ChangePasswordRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
-        profileService.changePassword(principal.getId(), request);
-        return ResponseEntity.ok(ApiResponse.success("Password changed", null));
+        AuthResponse response = profileService.changePassword(principal.getId(), request);
+        return ResponseEntity.ok(ApiResponse.success("Password changed", response));
     }
 
     // ───────────────────────────────────────────────────────────

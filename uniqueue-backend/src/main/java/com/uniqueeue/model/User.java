@@ -66,18 +66,24 @@ public class User {
     @Column(name = "verification_token")
     private String verificationToken;
 
-    /** Number of failed verification attempts against the current code. */
     @Column(name = "verification_attempts")
     @Builder.Default
     private Integer verificationAttempts = 0;
 
-    /** When the current verification code expires. */
     @Column(name = "verification_expires_at")
     private LocalDateTime verificationExpiresAt;
 
-    /** When we last sent a verification code — for cooldown / dedupe. */
     @Column(name = "last_verification_sent_at")
     private LocalDateTime lastVerificationSentAt;
+
+    /**
+     * Incremented whenever we want to invalidate all existing JWTs for this
+     * user (password change, admin deactivation, role change, etc).
+     * Included in every JWT as the "tv" claim. Filter rejects on mismatch.
+     */
+    @Column(name = "token_version", nullable = false)
+    @Builder.Default
+    private Integer tokenVersion = 0;
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)
@@ -87,7 +93,7 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // ───────── Fresher identifiers (only set for FRESHER role) ─────────
+    // ───────── Fresher identifiers ─────────
 
     @Column(name = "jamb_reg_number", length = 50, unique = true)
     private String jambRegNumber;
@@ -101,7 +107,6 @@ public class User {
     @Column(name = "admitted_student_id")
     private Long admittedStudentId;
 
-    /** When the fresher provided their matric and upgraded to USER. */
     @Column(name = "upgraded_to_user_at")
     private LocalDateTime upgradedToUserAt;
 

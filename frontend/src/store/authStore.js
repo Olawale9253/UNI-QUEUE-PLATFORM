@@ -2,18 +2,49 @@ import { create } from 'zustand'
 import api from '../api/axios'
 import { useUniversityStore } from './universityStore'
 
+const TOKEN_KEY = 'uniqueue_token'
+const REFRESH_KEY = 'uniqueue_refresh_token'
+const USER_KEY = 'uniqueue_user'
+
 const savedUser = (() => {
     try {
-        const raw = localStorage.getItem('uniqueue_user')
+        const raw = localStorage.getItem(USER_KEY)
         return raw ? JSON.parse(raw) : null
     } catch {
         return null
     }
 })()
 
+function persistSession(accessToken, refreshToken, user) {
+    localStorage.setItem(TOKEN_KEY, accessToken)
+    if (refreshToken) localStorage.setItem(REFRESH_KEY, refreshToken)
+    localStorage.setItem(USER_KEY, JSON.stringify(user))
+}
+
+function clearSession() {
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(REFRESH_KEY)
+    localStorage.removeItem(USER_KEY)
+    localStorage.removeItem('uniqueue_impersonation')
+}
+
+// ─── Cross-tab logout sync ───
+// When another tab clears the session, this fires and logs us out too.
+if (typeof window !== 'undefined') {
+    window.addEventListener('storage', (e) => {
+        if (e.key === TOKEN_KEY && e.newValue === null) {
+            useUniversityStore.getState().reset()
+            useAuthStore.setState({ user: null, token: null })
+            if (!window.location.pathname.startsWith('/login')) {
+                window.location.href = '/login'
+            }
+        }
+    })
+}
+
 export const useAuthStore = create((set, get) => ({
     user: savedUser,
-    token: localStorage.getItem('uniqueue_token'),
+    token: localStorage.getItem(TOKEN_KEY),
     loading: false,
     error: null,
 
@@ -31,17 +62,11 @@ export const useAuthStore = create((set, get) => ({
                 role: d.role,
                 universityId: d.universityId,
             }
-            localStorage.setItem('uniqueue_token', d.accessToken)
-            localStorage.setItem('uniqueue_user', JSON.stringify(user))
+            persistSession(d.accessToken, d.refreshToken, user)
 
-            // ⬇️ KEY FIX: wipe the previous user's university BEFORE
-            // updating auth state, so the Navbar effect sees loaded=false
-            // and reloads the new user's university.
             useUniversityStore.getState().reset()
-
             set({ token: d.accessToken, user, loading: false })
 
-            // Kick off the reload immediately (don't wait for Navbar effect)
             if (d.role !== 'SUPER_ADMIN') {
                 useUniversityStore.getState().load()
             }
@@ -66,8 +91,7 @@ export const useAuthStore = create((set, get) => ({
                 role: d.role,
                 universityId: d.universityId,
             }
-            localStorage.setItem('uniqueue_token', d.accessToken)
-            localStorage.setItem('uniqueue_user', JSON.stringify(user))
+            persistSession(d.accessToken, d.refreshToken, user)
 
             useUniversityStore.getState().reset()
             set({ token: d.accessToken, user, loading: false })
@@ -89,13 +113,10 @@ export const useAuthStore = create((set, get) => ({
         }
     },
 
-    setAuth: (token, user) => {
-        localStorage.setItem('uniqueue_token', token)
-        localStorage.setItem('uniqueue_user', JSON.stringify(user))
+    setAuth: (token, user, refreshToken = null) => {
+        persistSession(token, refreshToken, user)
 
-        // ⬇️ Also reset university when impersonating (or switching accounts)
         useUniversityStore.getState().reset()
-
         set({ token, user })
 
         if (user?.role && user.role !== 'SUPER_ADMIN') {
@@ -103,10 +124,19 @@ export const useAuthStore = create((set, get) => ({
         }
     },
 
+    /**
+     * Update tokens after a password change (backend returns fresh ones).
+     */
+    updateTokens: (accessToken, refreshToken) => {
+        if (accessToken) localStorage.setItem(TOKEN_KEY, accessToken)
+        if (refreshToken) localStorage.setItem(REFRESH_KEY, refreshToken)
+        if (accessToken) set({ token: accessToken })
+    },
+
     setUser: (patch) => {
         const current = get().user || {}
         const next = { ...current, ...(patch || {}) }
-        localStorage.setItem('uniqueue_user', JSON.stringify(next))
+        localStorage.setItem(USER_KEY, JSON.stringify(next))
         set({ user: next })
     },
 
@@ -126,7 +156,7 @@ export const useAuthStore = create((set, get) => ({
                 universityId: p.universityId ?? current.universityId,
             }
 
-            localStorage.setItem('uniqueue_user', JSON.stringify(next))
+            localStorage.setItem(USER_KEY, JSON.stringify(next))
             set({ user: next })
             return { success: true, profile: p }
         } catch (err) {
@@ -138,14 +168,10 @@ export const useAuthStore = create((set, get) => ({
     },
 
     logout: () => {
-        localStorage.removeItem('uniqueue_token')
-        localStorage.removeItem('uniqueue_user')
-        localStorage.removeItem('uniqueue_impersonation')
-
-
+        clearSession()
         useUniversityStore.getState().reset()
-
         set({ user: null, token: null })
+        // The storage event will propagate the logout to other tabs automatically.
     },
 
     clearError: () => set({ error: null }),

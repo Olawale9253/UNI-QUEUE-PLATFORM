@@ -167,6 +167,22 @@ public class AuthController {
     }
 
     /**
+     * Exchange a refresh token for a new access token.
+     * Public — no Authorization header required. The refresh token IS the credential.
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<AuthResponse>> refresh(
+            @RequestBody Map<String, String> body) {
+        String refreshToken = body.get("refreshToken");
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Missing refresh token"));
+        }
+        AuthResponse response = authService.refresh(refreshToken);
+        return ResponseEntity.ok(ApiResponse.success("Session refreshed", response));
+    }
+
+    /**
      * Public, unauthenticated lookup used by the login page to brand itself
      * from the visitor's email domain.
      *

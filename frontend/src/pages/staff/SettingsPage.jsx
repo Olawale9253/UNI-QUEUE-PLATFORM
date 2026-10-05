@@ -3,24 +3,29 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     Bell, Moon, Sun, Volume2, Shield, ArrowRight, Save, RefreshCw,
+    Play, BellRing, CheckCircle2,
 } from 'lucide-react'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import PageHeader from '../../components/layout/PageHeader'
 import { useToastStore } from '../../store/toastStore'
+import { previewSound } from '../../lib/soundService'
+import { useBrowserNotifications } from '../../hooks/useBrowserNotifications'
 
 const STORAGE_KEY = 'uniqueue_staff_prefs'
 
 const DEFAULTS = {
     notifyNewTicket: true,
     notifySound: false,
+    soundVolume: 0.5,
+    browserNotifications: false,
     autoRefresh: true,
     compactMode: false,
 }
 
-function Toggle({ label, description, checked, onChange }) {
+function Toggle({ label, description, checked, onChange, disabled }) {
     return (
-        <label className="flex cursor-pointer items-start justify-between gap-4 rounded-lg border border-slate-200 p-4 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50">
+        <label className={`flex items-start justify-between gap-4 rounded-lg border border-slate-200 p-4 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50 ${disabled ? 'opacity-50' : 'cursor-pointer'}`}>
             <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{label}</div>
                 {description && (
@@ -32,6 +37,7 @@ function Toggle({ label, description, checked, onChange }) {
                     type="checkbox"
                     checked={checked}
                     onChange={onChange}
+                    disabled={disabled}
                     className="peer sr-only"
                 />
                 <div className="h-6 w-11 rounded-full bg-slate-300 transition-colors peer-checked:bg-brand-600 dark:bg-slate-700" />
@@ -44,8 +50,8 @@ function Toggle({ label, description, checked, onChange }) {
 export default function SettingsPage() {
     const { push } = useToastStore()
     const [prefs, setPrefs] = useState(DEFAULTS)
+    const browserNotif = useBrowserNotifications()
 
-    // Load from localStorage
     useEffect(() => {
         try {
             const raw = localStorage.getItem(STORAGE_KEY)
@@ -54,6 +60,26 @@ export default function SettingsPage() {
     }, [])
 
     const set = (k, v) => setPrefs((p) => ({ ...p, [k]: v }))
+
+    const enableBrowserNotifs = async (e) => {
+        const wantsOn = e.target.checked
+        if (!wantsOn) {
+            set('browserNotifications', false)
+            return
+        }
+        const result = await browserNotif.request()
+        if (result === 'granted') {
+            set('browserNotifications', true)
+            push({ type: 'success', message: 'Browser notifications enabled' })
+        } else {
+            set('browserNotifications', false)
+            push({ type: 'error', message: 'Browser notification permission denied' })
+        }
+    }
+
+    const testSound = () => {
+        previewSound(prefs.soundVolume)
+    }
 
     const save = () => {
         try {
@@ -90,24 +116,120 @@ export default function SettingsPage() {
                                     Notifications
                                 </h2>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                                    How you want to be alerted when new students join your queues.
+                                    How you want to be alerted when new students join.
                                 </p>
                             </div>
                         </div>
 
                         <div className="space-y-3">
                             <Toggle
-                                label="Notify me about new tickets"
-                                description="Get a toast + bell indicator when someone joins a queue you serve."
+                                label="In-app toasts"
+                                description="Show a message in the corner of the screen when something happens."
                                 checked={prefs.notifyNewTicket}
                                 onChange={(e) => set('notifyNewTicket', e.target.checked)}
                             />
-                            <Toggle
-                                label="Play sound on new ticket"
-                                description="Chime when a student joins. Useful if you're away from the screen."
-                                checked={prefs.notifySound}
-                                onChange={(e) => set('notifySound', e.target.checked)}
-                            />
+
+                            {/* Sound with preview */}
+                            <div className="rounded-lg border border-slate-200 p-4 dark:border-slate-700">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="min-w-0 flex-1">
+                                        <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                            Sound alerts
+                                        </div>
+                                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                            Play a chime when a new ticket arrives. Works even when you're on another tab.
+                                        </p>
+                                    </div>
+                                    <div className="relative shrink-0">
+                                        <input
+                                            type="checkbox"
+                                            checked={prefs.notifySound}
+                                            onChange={(e) => {
+                                                const on = e.target.checked
+                                                set('notifySound', on)
+                                                if (on) setTimeout(() => previewSound(prefs.soundVolume), 100)
+                                            }}
+                                            className="peer sr-only"
+                                        />
+                                        <div className="h-6 w-11 rounded-full bg-slate-300 transition-colors peer-checked:bg-brand-600 dark:bg-slate-700" />
+                                        <div className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5" />
+                                    </div>
+                                </div>
+
+                                {/* Volume + preview — only shown when sound is on */}
+                                {prefs.notifySound && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        className="mt-4 flex items-center gap-3 border-t border-slate-100 pt-4 dark:border-slate-800"
+                                    >
+                                        <Volume2 className="h-4 w-4 shrink-0 text-slate-400" />
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="1"
+                                            step="0.05"
+                                            value={prefs.soundVolume}
+                                            onChange={(e) => set('soundVolume', parseFloat(e.target.value))}
+                                            onMouseUp={testSound}
+                                            onTouchEnd={testSound}
+                                            className="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-slate-200 accent-brand-600 dark:bg-slate-700"
+                                        />
+                                        <span className="w-10 shrink-0 text-right text-xs font-mono text-slate-500 dark:text-slate-400">
+                                            {Math.round(prefs.soundVolume * 100)}%
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={testSound}
+                                            className="inline-flex shrink-0 items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                                        >
+                                            <Play className="h-3 w-3" />
+                                            Test
+                                        </button>
+                                    </motion.div>
+                                )}
+                            </div>
+
+                            {/* Native browser notifications */}
+                            <div className="rounded-lg border border-slate-200 p-4 dark:border-slate-700">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2">
+                                            <BellRing className="h-3.5 w-3.5 text-slate-400" />
+                                            <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                                Desktop notifications
+                                            </span>
+                                        </div>
+                                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                            {browserNotif.permission === 'granted'
+                                                ? 'Active — you\'ll get OS-level popups when this tab is in the background.'
+                                                : browserNotif.permission === 'denied'
+                                                    ? 'Blocked in your browser settings. Unblock to enable.'
+                                                    : browserNotif.permission === 'unsupported'
+                                                        ? 'Your browser does not support this feature.'
+                                                        : 'Allow your browser to show native popups when a tab is backgrounded.'}
+                                        </p>
+                                        {browserNotif.permission === 'granted' && prefs.browserNotifications && (
+                                            <div className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                                                <CheckCircle2 className="h-3 w-3" />
+                                                Permission granted
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="relative shrink-0">
+                                        <input
+                                            type="checkbox"
+                                            checked={prefs.browserNotifications}
+                                            onChange={enableBrowserNotifs}
+                                            disabled={browserNotif.permission === 'denied' || browserNotif.permission === 'unsupported'}
+                                            className="peer sr-only"
+                                        />
+                                        <div className="h-6 w-11 rounded-full bg-slate-300 transition-colors peer-checked:bg-brand-600 peer-disabled:opacity-40 dark:bg-slate-700" />
+                                        <div className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5" />
+                                    </div>
+                                </div>
+                            </div>
+
                             <Toggle
                                 label="Auto-refresh queue list"
                                 description="Keep the waiting list up to date without manual refresh."
@@ -190,7 +312,6 @@ export default function SettingsPage() {
                     </Card>
                 </motion.div>
 
-                {/* Actions */}
                 <div className="flex items-center justify-end gap-3">
                     <Button variant="secondary" icon={RefreshCw} onClick={reset}>
                         Reset
