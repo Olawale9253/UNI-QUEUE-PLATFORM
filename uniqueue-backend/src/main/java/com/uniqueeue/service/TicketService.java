@@ -41,6 +41,7 @@ public class TicketService {
     private final WorkflowService workflowService;
     private final QueueScheduleService scheduleService;
     private final QueueService queueService;
+    private final EmailService emailService;
 
     // ============================================================
     //  STUDENT
@@ -300,6 +301,9 @@ public class TicketService {
                 "It's your turn!",
                 "Ticket " + next.getTicketNumber() + " is now being called at " + next.getQueue().getName() + ".");
 
+        // Also email — user may have the app closed.
+        emailService.sendTicketCalled(next.getUser(), next, next.getQueue());
+
         auditService.record(staffUserId, next.getQueue().getUniversity().getId(),
                 AuditAction.TICKET_CALLED, "Ticket", next.getId(),
                 "{\"ticketNumber\":\"" + next.getTicketNumber() + "\"}");
@@ -328,6 +332,9 @@ public class TicketService {
         notificationService.notify(ticket.getUser(), NotificationType.TICKET_CALLED,
                 "It's your turn!",
                 "Ticket " + ticket.getTicketNumber() + " is now being called.");
+
+        // FIX: this is a CALLED event, not completed
+        emailService.sendTicketCalled(ticket.getUser(), ticket, ticket.getQueue());
 
         auditService.record(staffUserId, ticket.getQueue().getUniversity().getId(),
                 AuditAction.TICKET_CALLED, "Ticket", ticketId, null);
@@ -378,6 +385,9 @@ public class TicketService {
                 "Service complete",
                 "Thanks for using UniQueue. Please rate your experience.");
 
+        // NEW: also email the completion
+        emailService.sendTicketCompleted(ticket.getUser(), ticket, ticket.getQueue());
+
         auditService.record(staffUserId, ticket.getQueue().getUniversity().getId(),
                 AuditAction.TICKET_COMPLETED, "Ticket", ticketId, null);
 
@@ -406,6 +416,9 @@ public class TicketService {
         notificationService.notify(ticket.getUser(), NotificationType.SYSTEM,
                 "You missed your turn",
                 "Ticket " + ticket.getTicketNumber() + " was marked as a no-show.");
+
+        // NEW: also email the no-show
+        emailService.sendTicketNoShow(ticket.getUser(), ticket, ticket.getQueue());
 
         auditService.record(staffUserId, ticket.getQueue().getUniversity().getId(),
                 AuditAction.TICKET_NO_SHOW, "Ticket", ticketId, null);
@@ -476,7 +489,6 @@ public class TicketService {
         Queue queue = queueRepository.findById(queueId)
                 .orElseThrow(() -> new ResourceNotFoundException("Queue not found"));
 
-        // Tenant isolation — student/staff from another university can't probe this queue
         TenantGuard.requireSameUniversity(queue, TenantGuard.currentUniversityId());
 
         List<Ticket> waiting = ticketRepository.findWaitingByQueueId(queueId);

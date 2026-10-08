@@ -17,5 +17,7 @@ public interface StudentWorkflowRepository extends JpaRepository<StudentWorkflow
 
     Optional<StudentWorkflow> findByStudentIdAndStatus(Long studentId, WorkflowStatus status);
 
+    List<StudentWorkflow> findByWorkflowId(Long workflowId);
+
     long countByWorkflowIdAndStatus(Long workflowId, WorkflowStatus status);
 }

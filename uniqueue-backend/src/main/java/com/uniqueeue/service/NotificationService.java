@@ -2,7 +2,6 @@ package com.uniqueeue.service;
 
 import com.uniqueeue.dto.response.NotificationResponse;
 import com.uniqueeue.enums.NotificationType;
-import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
 import com.uniqueeue.model.Notification;
 import com.uniqueeue.model.User;
@@ -12,9 +11,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.Map;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +24,9 @@ public class NotificationService {
     private final WebPushService webPushService;
 
     /**
-     * Fire-and-forget notification. Failures are logged but never break the caller.
+     * Fire-and-forget notification.
+     * Persists an in-app notification and sends a Web Push to all of the
+     * user's subscribed devices. Failures are logged but never break the caller.
      */
     @Transactional
     public void notify(User user, NotificationType type, String title, String message) {
@@ -39,10 +40,11 @@ public class NotificationService {
                     .isRead(false)
                     .build();
             notificationRepository.save(n);
-            webPushService.sendToUser(user.getId(), title, message, Map.of("type", type.name()));
+
+            webPushService.sendToUser(user.getId(), title, message,
+                    Map.of("type", type.name()));
         } catch (Exception ex) {
             log.error("Failed to send notification to user {}: {}", user.getId(), ex.getMessage());
-
         }
     }
 

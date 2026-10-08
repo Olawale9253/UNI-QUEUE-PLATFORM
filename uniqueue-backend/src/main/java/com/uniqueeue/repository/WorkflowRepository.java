@@ -9,6 +9,8 @@ import java.util.Optional;
 
 @Repository
 public interface WorkflowRepository extends JpaRepository<Workflow, Long> {
+    boolean existsByUniversityIdAndNameIgnoreCaseAndSession(
+            Long universityId, String name, String session);
 
     List<Workflow> findByUniversityIdOrderByCreatedAtDesc(Long universityId);
 

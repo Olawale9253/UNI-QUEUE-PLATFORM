@@ -35,6 +35,7 @@ public class QueueCloseSweeper {
     private final QueueScheduleService scheduleService;
     private final NotificationService notificationService;
     private final AuditService auditService;
+    private final EmailService emailService;
 
     @Scheduled(cron = "0 */5 * * * *")   // every 5 minutes
     @Transactional
@@ -62,6 +63,8 @@ public class QueueCloseSweeper {
                         "Queue closed for the day",
                         "Ticket " + t.getTicketNumber() + " was cancelled because "
                                 + queue.getName() + " closed. You can rejoin when it reopens.");
+
+                emailService.sendQueueClosed(t.getUser(), t, queue);
             }
 
             log.info("Sweeper cancelled {} stale tickets for queue '{}' (id={})",

@@ -5,6 +5,7 @@ import com.uniqueeue.dto.response.StudentWorkflowResponse;
 import com.uniqueeue.dto.response.WorkflowResponse;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.WorkflowService;
+import com.uniqueeue.dto.response.WorkflowProgressResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,6 +55,15 @@ public class UserWorkflowController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Workflow started",
                         workflowService.start(principal.getId(), workflowId)));
+    }
+
+    @GetMapping("/{id}/progress")
+    public ResponseEntity<ApiResponse<WorkflowProgressResponse>> progress(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Workflow progress",
+                workflowService.getProgress(principal.getId(), id)));
     }
 
     @PostMapping("/{id}/abandon")

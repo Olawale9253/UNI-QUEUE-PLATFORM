@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
+import WorkflowProgressCard from '../../components/student/WorkflowProgressCard'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { groupQueuesByOffice } from '../../lib/groupQueues'
 
@@ -117,20 +118,23 @@ export default function StudentHome() {
     const [stats, setStats] = useState(null)
     const [appointments, setAppointments] = useState([])
     const [documents, setDocuments] = useState([])
+    const [workflows, setWorkflows] = useState([])
     const [loading, setLoading] = useState(true)
 
     const load = useCallback(async () => {
         try {
-            const [q, s, a, d] = await Promise.all([
+            const [q, s, a, d, wf] = await Promise.all([
                 api.get('/api/queues').catch(() => ({ data: { data: [] } })),
                 api.get('/api/user/stats').catch(() => ({ data: { data: null } })),
                 api.get('/api/user/appointments').catch(() => ({ data: { data: [] } })),
                 api.get('/api/user/documents').catch(() => ({ data: { data: [] } })),
+                api.get('/api/user/workflows').catch(() => ({ data: { data: [] } })),
             ])
             setQueues(q.data?.data || [])
             setStats(s.data?.data || null)
             setAppointments(a.data?.data || [])
             setDocuments(d.data?.data || [])
+            setWorkflows(wf.data?.data || [])
         } catch {
             // silent
         } finally {
@@ -156,6 +160,12 @@ export default function StudentHome() {
             })
             .sort((a, b) => a.name.localeCompare(b.name))
     }, [queues])
+
+    // Only show active clearances on the dashboard — completed ones live in the workflows tab
+    const inProgressWorkflows = useMemo(
+        () => workflows.filter((w) => w.status === 'IN_PROGRESS'),
+        [workflows]
+    )
 
     const myAppointments = appointments.filter(
         (a) => a.status === 'BOOKED' || a.status === 'CONFIRMED'
@@ -207,6 +217,33 @@ export default function StudentHome() {
                     delay={0.15}
                 />
             </div>
+
+            {/* Active clearances */}
+            {inProgressWorkflows.length > 0 && (
+                <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.18 }}
+                    className="mb-7"
+                >
+                    <div className="mb-4 flex items-center justify-between">
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                            Active Clearances
+                        </h2>
+                        <Link
+                            to="/student/workflows"
+                            className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
+                        >
+                            View all →
+                        </Link>
+                    </div>
+                    <div className="space-y-3">
+                        {inProgressWorkflows.slice(0, 2).map((w) => (
+                            <WorkflowProgressCard key={w.id} progress={w} />
+                        ))}
+                    </div>
+                </motion.div>
+            )}
 
             {/* Live Queues */}
             <motion.div

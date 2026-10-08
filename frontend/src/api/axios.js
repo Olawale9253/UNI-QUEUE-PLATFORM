@@ -35,7 +35,6 @@ function doRefresh() {
         .then((res) => {
             const d = res.data?.data
             if (!d?.accessToken) throw new Error('Refresh failed')
-
             localStorage.setItem('uniqueue_token', d.accessToken)
             if (d.refreshToken) {
                 localStorage.setItem('uniqueue_refresh_token', d.refreshToken)

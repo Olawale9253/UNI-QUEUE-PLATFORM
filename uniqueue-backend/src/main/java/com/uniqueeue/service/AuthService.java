@@ -18,7 +18,6 @@ import com.uniqueeue.repository.UserRepository;
 import com.uniqueeue.security.JwtTokenProvider;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.util.EmailNormalizer;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -54,6 +53,7 @@ public class AuthService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final MatricValidationService matricValidationService;
     private final AdmittedStudentService admittedStudentService;
+    private final EmailService emailService;   // ⬅ NEW
 
     // ============================================================
     //  REGISTER
@@ -61,13 +61,11 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        // ⬅ CHANGED: use EmailNormalizer everywhere
         String email = EmailNormalizer.normalize(request.getEmail());
         if (email == null) {
             throw new BadRequestException("Invalid email address");
         }
 
-        // ⬅ CHANGED: silent success on existing email — prevents enumeration.
         if (userRepository.existsByEmail(email)) {
             return handleExistingRegistration(email, request);
         }
@@ -85,16 +83,6 @@ public class AuthService {
                 : registerStudent(request, email, university);
     }
 
-    /**
-     * Email already exists. We respond with the same shape as a fresh
-     * registration so the caller can't tell whether the email is in use.
-     *
-     * Side effects:
-     *   - If the existing account is UNVERIFIED, resend a fresh code to the
-     *     real owner's inbox (they might have just forgotten to verify).
-     *   - If it's verified, do nothing — no email goes out.
-     *   - Either way, the response contains no tokens and no dev code.
-     */
     private AuthResponse handleExistingRegistration(String email, RegisterRequest request) {
         var existing = userRepository.findByEmail(email).orElse(null);
 
@@ -102,15 +90,14 @@ public class AuthService {
             String code = String.format("%06d", RANDOM.nextInt(1_000_000));
             existing.setVerificationToken(code);
             existing.setVerificationAttempts(0);
-            existing.setVerificationExpiresAt(
-                    LocalDateTime.now().plusHours(VERIFICATION_TTL_HOURS));
+            existing.setVerificationExpiresAt(LocalDateTime.now().plusHours(VERIFICATION_TTL_HOURS));
             existing.setLastVerificationSentAt(LocalDateTime.now());
             userRepository.save(existing);
-            // In production this would call emailService.sendVerificationCode().
+
+            emailService.sendVerificationCode(existing, code);   // ⬅ NEW
             log.info("🔐 [RESEND] Verification code for {}: {}", email, code);
         }
 
-        log.info("Silent register: email already in use, response uniform");
         return AuthResponse.builder()
                 .tokenType("Bearer")
                 .isVerified(false)
@@ -140,7 +127,6 @@ public class AuthService {
     // ─── Continuing student path ───
 
     private AuthResponse registerStudent(RegisterRequest request, String email, University university) {
-        // Email domain check (email is already normalized to lowercase)
         if (university.getEmailDomain() != null && !university.getEmailDomain().isBlank()) {
             String domain = university.getEmailDomain().startsWith("@")
                     ? university.getEmailDomain()
@@ -174,13 +160,15 @@ public class AuthService {
                 .isActive(true)
                 .isVerified(false)
                 .verificationToken(code)
-                .verificationAttempts(0)                                        // ⬅ NEW
-                .verificationExpiresAt(LocalDateTime.now()
-                        .plusHours(VERIFICATION_TTL_HOURS))                    // ⬅ NEW
-                .lastVerificationSentAt(LocalDateTime.now())                   // ⬅ NEW
+                .verificationAttempts(0)
+                .verificationExpiresAt(LocalDateTime.now().plusHours(VERIFICATION_TTL_HOURS))
+                .lastVerificationSentAt(LocalDateTime.now())
                 .build();
 
         User saved = userRepository.save(user);
+
+        // ⬅ NEW: send the verification email to the student
+        emailService.sendVerificationCode(saved, code);
 
         auditService.record(saved.getId(), university.getId(),
                 AuditAction.USER_REGISTERED, "User", saved.getId(), null);
@@ -192,7 +180,6 @@ public class AuthService {
     // ─── Fresher path ───
 
     private AuthResponse registerFresher(RegisterRequest request, String email, University university) {
-
         if (Boolean.FALSE.equals(university.getFresherRegistrationEnabled())) {
             throw new BadRequestException(
                     "Fresher registration is currently disabled. Contact your university.");
@@ -238,10 +225,9 @@ public class AuthService {
                 .isActive(true)
                 .isVerified(false)
                 .verificationToken(code)
-                .verificationAttempts(0)                                        // ⬅ NEW
-                .verificationExpiresAt(LocalDateTime.now()
-                        .plusHours(VERIFICATION_TTL_HOURS))                    // ⬅ NEW
-                .lastVerificationSentAt(LocalDateTime.now())                   // ⬅ NEW
+                .verificationAttempts(0)
+                .verificationExpiresAt(LocalDateTime.now().plusHours(VERIFICATION_TTL_HOURS))
+                .lastVerificationSentAt(LocalDateTime.now())
                 .build();
 
         User saved = userRepository.save(user);
@@ -249,6 +235,9 @@ public class AuthService {
         if (matched != null) {
             admittedStudentService.markClaimed(matched.getId(), saved);
         }
+
+        // ⬅ NEW: send the verification email to the fresher
+        emailService.sendVerificationCode(saved, code);
 
         auditService.record(saved.getId(), university.getId(),
                 AuditAction.USER_REGISTERED, "User", saved.getId(),
@@ -301,7 +290,7 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        String email = EmailNormalizer.normalize(request.getEmail());   // ⬅ CHANGED
+        String email = EmailNormalizer.normalize(request.getEmail());
         if (email == null) {
             throw new BadCredentialsException("Invalid email or password");
         }
@@ -343,54 +332,8 @@ public class AuthService {
         return buildAuthResponse(user, null);
     }
 
-    /**
-     * Exchange a valid, non-expired refresh token for a fresh access token.
-     * Rejects if:
-     *   - the refresh token is malformed or expired
-     *   - the user's tokenVersion has been bumped since the refresh was issued
-     *   - the user is deactivated
-     */
-    @Transactional(readOnly = true)
-    public AuthResponse refresh(String refreshToken) {
-        if (refreshToken == null || refreshToken.isBlank()
-                || !tokenProvider.validateToken(refreshToken)) {
-            throw new UnauthorizedException("Invalid or expired session. Please sign in again.");
-        }
-
-        // Must be a refresh token, not an access token.
-        if (!JwtTokenProvider.TYPE_REFRESH.equals(tokenProvider.getTokenType(refreshToken))) {
-            throw new UnauthorizedException("Invalid session token.");
-        }
-
-        String email = EmailNormalizer.normalize(tokenProvider.getEmailFromToken(refreshToken));
-        if (email == null) {
-            throw new UnauthorizedException("Invalid session token.");
-        }
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UnauthorizedException("Invalid session token."));
-
-        Integer tvFromToken = tokenProvider.getTokenVersionFromToken(refreshToken);
-        Integer currentTv = user.getTokenVersion() != null ? user.getTokenVersion() : 0;
-
-        if (!currentTv.equals(tvFromToken)) {
-            throw new UnauthorizedException("Your session has been invalidated. Please sign in again.");
-        }
-
-        if (!Boolean.TRUE.equals(user.getIsActive())) {
-            throw new UnauthorizedException("Your account has been disabled.");
-        }
-
-        if (user.getUniversity() != null
-                && !Boolean.TRUE.equals(user.getUniversity().getIsActive())) {
-            throw new UnauthorizedException("Your university's account is inactive.");
-        }
-
-        return buildAuthResponse(user, null);
-    }
-
     // ============================================================
-    //  EMAIL VERIFICATION  — now with expiry + attempts + isActive
+    //  EMAIL VERIFICATION
     // ============================================================
 
     @Transactional(noRollbackFor = {BadRequestException.class, UnauthorizedException.class})
@@ -403,7 +346,6 @@ public class AuthService {
         User user = userRepository.findByEmail(lowerEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // ⬅ NEW: deactivated users can't verify
         if (!Boolean.TRUE.equals(user.getIsActive())) {
             throw new UnauthorizedException("Your account has been disabled.");
         }
@@ -416,20 +358,17 @@ public class AuthService {
             throw new BadRequestException("No verification code on file. Please request a new one.");
         }
 
-        // ⬅ NEW: expired code
         if (user.getVerificationExpiresAt() != null
                 && user.getVerificationExpiresAt().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("Your verification code has expired. Please request a new one.");
         }
 
-        // ⬅ NEW: attempt limit
         int attempts = user.getVerificationAttempts() != null ? user.getVerificationAttempts() : 0;
         if (attempts >= MAX_VERIFICATION_ATTEMPTS) {
             throw new BadRequestException(
                     "Too many incorrect attempts. Please request a new verification code.");
         }
 
-        // ⬅ NEW: failed attempt — increment and save
         if (!user.getVerificationToken().equals(code.trim())) {
             user.setVerificationAttempts(attempts + 1);
             userRepository.save(user);
@@ -442,11 +381,10 @@ public class AuthService {
                     "Invalid verification code. " + remaining + " attempt" + (remaining == 1 ? "" : "s") + " remaining.");
         }
 
-        // Success — clear everything
         user.setIsVerified(true);
         user.setVerificationToken(null);
-        user.setVerificationAttempts(0);                                    // ⬅ NEW
-        user.setVerificationExpiresAt(null);                                // ⬅ NEW
+        user.setVerificationAttempts(0);
+        user.setVerificationExpiresAt(null);
         userRepository.save(user);
 
         log.info("Email verified for {}", user.getEmail());
@@ -471,7 +409,6 @@ public class AuthService {
             throw new UnauthorizedException("Your account has been disabled.");
         }
 
-        // ⬅ NEW: cooldown between resends
         if (user.getLastVerificationSentAt() != null
                 && user.getLastVerificationSentAt().plusSeconds(RESEND_COOLDOWN_SECONDS)
                 .isAfter(LocalDateTime.now())) {
@@ -481,11 +418,13 @@ public class AuthService {
 
         String code = String.format("%06d", RANDOM.nextInt(1_000_000));
         user.setVerificationToken(code);
-        user.setVerificationAttempts(0);                                    // ⬅ NEW: reset on resend
-        user.setVerificationExpiresAt(LocalDateTime.now()
-                .plusHours(VERIFICATION_TTL_HOURS));                        // ⬅ NEW
-        user.setLastVerificationSentAt(LocalDateTime.now());                // ⬅ NEW
+        user.setVerificationAttempts(0);
+        user.setVerificationExpiresAt(LocalDateTime.now().plusHours(VERIFICATION_TTL_HOURS));
+        user.setLastVerificationSentAt(LocalDateTime.now());
         userRepository.save(user);
+
+        // ⬅ NEW: send the new code via email
+        emailService.sendVerificationCode(user, code);
 
         log.info("🔐 New verification code for {}: {}", user.getEmail(), code);
         return code;
@@ -507,7 +446,6 @@ public class AuthService {
         }
 
         User user = userOpt.get();
-        // Invalidate any previous token — enforces single active reset per user.
         passwordResetTokenRepository.deleteByUserId(user.getId());
 
         String token = UUID.randomUUID().toString().replace("-", "")
@@ -519,6 +457,9 @@ public class AuthService {
                 .expiresAt(LocalDateTime.now().plusMinutes(RESET_TOKEN_TTL_MINUTES))
                 .build();
         passwordResetTokenRepository.save(prt);
+
+        // ⬅ NEW: send the reset link via email
+        emailService.sendPasswordReset(user, token);
 
         log.info("🔐 Password reset link for {}: /reset-password?token={}", user.getEmail(), token);
         return token;
@@ -550,6 +491,48 @@ public class AuthService {
         passwordResetTokenRepository.save(prt);
 
         log.info("Password reset successfully for {}", user.getEmail());
+    }
+
+    // ============================================================
+    //  REFRESH
+    // ============================================================
+
+    @Transactional(readOnly = true)
+    public AuthResponse refresh(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()
+                || !tokenProvider.validateToken(refreshToken)) {
+            throw new UnauthorizedException("Invalid or expired session. Please sign in again.");
+        }
+
+        if (!JwtTokenProvider.TYPE_REFRESH.equals(tokenProvider.getTokenType(refreshToken))) {
+            throw new UnauthorizedException("Invalid session token.");
+        }
+
+        String email = EmailNormalizer.normalize(tokenProvider.getEmailFromToken(refreshToken));
+        if (email == null) {
+            throw new UnauthorizedException("Invalid session token.");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UnauthorizedException("Invalid session token."));
+
+        Integer tvFromToken = tokenProvider.getTokenVersionFromToken(refreshToken);
+        Integer currentTv = user.getTokenVersion() != null ? user.getTokenVersion() : 0;
+
+        if (!currentTv.equals(tvFromToken)) {
+            throw new UnauthorizedException("Your session has been invalidated. Please sign in again.");
+        }
+
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
+            throw new UnauthorizedException("Your account has been disabled.");
+        }
+
+        if (user.getUniversity() != null
+                && !Boolean.TRUE.equals(user.getUniversity().getIsActive())) {
+            throw new UnauthorizedException("Your university's account is inactive.");
+        }
+
+        return buildAuthResponse(user, null);
     }
 
     // ============================================================

@@ -15,6 +15,7 @@ import OfficesTab from './student/OfficesTab'
 import HistoryTab from './student/HistoryTab'
 import AppointmentsTab from './student/AppointmentsTab'
 import WorkflowsTab from './student/WorkflowsTab'
+import MyClearancePage from './student/MyClearancePage'
 import DocumentsTab from './student/DocumentsTab'
 import { useUniversityStore } from '../store/universityStore'
 
@@ -48,8 +49,14 @@ export default function StudentDashboard() {
         tabs.push({ to: '/student/documents', label: 'Documents', icon: FileText })
     }
 
-    const subtitle =
-        ROUTE_SUBTITLES[location.pathname] || 'Everything you need for today.'
+    // Subtitle picks the most specific match first so /student/workflows/123
+    // gets the clearance page subtitle rather than the workflows tab subtitle.
+    const subtitle = (() => {
+        if (location.pathname.startsWith('/student/workflows/')) {
+            return 'Track your progress through this clearance step by step.'
+        }
+        return ROUTE_SUBTITLES[location.pathname] || 'Everything you need for today.'
+    })()
 
     return (
         <DashboardLayout tabs={tabs}>
@@ -61,6 +68,7 @@ export default function StudentDashboard() {
                 <Route path="history" element={<HistoryTab />} />
                 <Route path="appointments" element={<AppointmentsTab />} />
                 <Route path="workflows" element={<WorkflowsTab />} />
+                <Route path="workflows/:id" element={<MyClearancePage />} />
                 <Route path="documents" element={<DocumentsTab />} />
                 <Route path="*" element={<Navigate to="/student" replace />} />
             </Routes>

@@ -17,10 +17,8 @@ import com.uniqueeue.model.User;
 import com.uniqueeue.repository.UserRepository;
 import com.uniqueeue.security.JwtTokenProvider;
 import com.uniqueeue.security.UserPrincipal;
-import com.uniqueeue.service.BroadcastService;
-import com.uniqueeue.service.PlanConfigService;
-import com.uniqueeue.service.SystemAnalyticsService;
-import com.uniqueeue.service.UniversityService;
+import com.uniqueeue.service.*;
+import com.uniqueeue.service.UniversityStarterPackService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -45,6 +43,7 @@ public class SuperAdminController {
     private final PlanConfigService planConfigService;
     private final UserRepository userRepository;
     private final JwtTokenProvider tokenProvider;
+    private final UniversityStarterPackService starterPackService;
 
     // ============================================================
     //  UNIVERSITIES
@@ -74,6 +73,27 @@ public class SuperAdminController {
             @Valid @RequestBody UpdateUniversityRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
                 "University updated", universityService.update(id, request)));
+    }
+
+    @PostMapping("/universities/{id}/seed-starter-pack")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> seedStarterPack(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Boolean> body,
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        boolean includeOffices = body == null || !Boolean.FALSE.equals(body.get("includeOffices"));
+        boolean includeServices = body == null || !Boolean.FALSE.equals(body.get("includeServices"));
+        boolean includeWorkflows = body == null || !Boolean.FALSE.equals(body.get("includeWorkflows"));
+
+        var result = starterPackService.seed(
+                id, principal.getId(), includeOffices, includeServices, includeWorkflows);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("officesCreated", result.officesCreated());
+        data.put("servicesCreated", result.servicesCreated());
+        data.put("workflowsCreated", result.workflowsCreated());
+
+        return ResponseEntity.ok(ApiResponse.success("Starter pack seeded", data));
     }
 
     @PostMapping("/universities/{id}/deactivate")

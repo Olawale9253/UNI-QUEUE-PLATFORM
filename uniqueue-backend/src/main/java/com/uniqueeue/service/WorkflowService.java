@@ -3,30 +3,37 @@ package com.uniqueeue.service;
 import com.uniqueeue.dto.request.CreateWorkflowRequest;
 import com.uniqueeue.dto.request.UpdateWorkflowStepRequest;
 import com.uniqueeue.dto.response.StudentWorkflowResponse;
+import com.uniqueeue.dto.response.WorkflowProgressResponse;
 import com.uniqueeue.dto.response.WorkflowResponse;
 import com.uniqueeue.enums.AuditAction;
 import com.uniqueeue.enums.NotificationType;
-import com.uniqueeue.enums.TicketStatus;
+import com.uniqueeue.enums.StepStatus;
 import com.uniqueeue.enums.WorkflowStatus;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
 import com.uniqueeue.model.*;
 import com.uniqueeue.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class WorkflowService {
 
     private final WorkflowRepository workflowRepository;
     private final WorkflowStepRepository stepRepository;
     private final StudentWorkflowRepository studentWorkflowRepository;
+    private final StudentWorkflowStepRepository studentWorkflowStepRepository;
     private final QueueRepository queueRepository;
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
@@ -46,6 +53,18 @@ public class WorkflowService {
             throw new BadRequestException("Workflow must have at least one step");
         }
 
+        // ⬇ NEW: reject duplicate (name + session) within the same university
+        String cleanName = request.getName() != null ? request.getName().trim() : "";
+        String cleanSession = request.getSession() != null ? request.getSession().trim() : null;
+
+        if (workflowRepository.existsByUniversityIdAndNameIgnoreCaseAndSession(
+                universityId, cleanName, cleanSession)) {
+            throw new BadRequestException(
+                    "A workflow named \"" + cleanName + "\" already exists"
+                            + (cleanSession != null ? " for session " + cleanSession : "")
+                            + ".");
+        }
+
         List<Queue> queues = new ArrayList<>();
         for (CreateWorkflowRequest.StepInput input : request.getSteps()) {
             Queue q = queueRepository.findByIdAndUniversityId(input.getQueueId(), universityId)
@@ -56,9 +75,9 @@ public class WorkflowService {
 
         Workflow workflow = Workflow.builder()
                 .university(admin.getUniversity())
-                .name(request.getName())
+                .name(cleanName)
                 .description(request.getDescription())
-                .session(request.getSession())
+                .session(cleanSession)
                 .isActive(true)
                 .createdBy(admin)
                 .build();
@@ -116,6 +135,13 @@ public class WorkflowService {
         if (active > 0) {
             throw new BadRequestException("Cannot delete — " + active + " student(s) still in progress");
         }
+
+        // Clean up related rows first (order matters for FK constraints)
+        List<StudentWorkflow> enrolled = studentWorkflowRepository.findByWorkflowId(workflowId);
+        for (StudentWorkflow sw : enrolled) {
+            studentWorkflowStepRepository.deleteByStudentWorkflowId(sw.getId());
+        }
+        studentWorkflowRepository.deleteAll(enrolled);
 
         stepRepository.deleteByWorkflowId(workflowId);
         workflowRepository.delete(w);
@@ -190,6 +216,8 @@ public class WorkflowService {
                 .build();
         sw = studentWorkflowRepository.save(sw);
 
+        createStepTracking(sw, steps);
+
         WorkflowStep firstStep = steps.get(0);
         notificationService.notify(student, NotificationType.SYSTEM,
                 "Workflow started: " + workflow.getName(),
@@ -209,6 +237,7 @@ public class WorkflowService {
                 .map(sw -> {
                     List<WorkflowStep> steps = stepRepository
                             .findByWorkflowIdOrderByStepOrderAsc(sw.getWorkflow().getId());
+                    ensureStepsExist(sw, steps);
                     return StudentWorkflowResponse.from(sw, steps);
                 })
                 .toList();
@@ -223,6 +252,7 @@ public class WorkflowService {
         }
         List<WorkflowStep> steps = stepRepository
                 .findByWorkflowIdOrderByStepOrderAsc(sw.getWorkflow().getId());
+        ensureStepsExist(sw, steps);
         return StudentWorkflowResponse.from(sw, steps);
     }
 
@@ -241,6 +271,98 @@ public class WorkflowService {
 
         auditService.record(studentId, sw.getWorkflow().getUniversity().getId(),
                 AuditAction.WORKFLOW_ABANDONED, "StudentWorkflow", sw.getId(), null);
+    }
+
+    // ============================================================
+    //  STUDENT — rich progress view
+    // ============================================================
+
+    @Transactional
+    public WorkflowProgressResponse getProgress(Long studentId, Long studentWorkflowId) {
+        StudentWorkflow sw = studentWorkflowRepository.findById(studentWorkflowId)
+                .orElseThrow(() -> new ResourceNotFoundException("Not found"));
+        if (!sw.getStudent().getId().equals(studentId)) {
+            throw new ResourceNotFoundException("Not found");
+        }
+
+        List<WorkflowStep> steps = stepRepository
+                .findByWorkflowIdOrderByStepOrderAsc(sw.getWorkflow().getId());
+
+        ensureStepsExist(sw, steps);
+
+        List<StudentWorkflowStep> tracking = studentWorkflowStepRepository
+                .findByStudentWorkflowIdOrderByWorkflowStepStepOrderAsc(sw.getId());
+
+        Map<Long, StudentWorkflowStep> trackingByStepId = new HashMap<>();
+        for (StudentWorkflowStep t : tracking) {
+            trackingByStepId.put(t.getWorkflowStep().getId(), t);
+        }
+
+        Map<Long, String> staffNames = new HashMap<>();
+        for (StudentWorkflowStep t : tracking) {
+            if (t.getCompletedByUserId() != null && !staffNames.containsKey(t.getCompletedByUserId())) {
+                userRepository.findById(t.getCompletedByUserId())
+                        .ifPresent(u -> staffNames.put(u.getId(), u.getFullName()));
+            }
+        }
+
+        List<WorkflowProgressResponse.ProgressStep> stepViews = new ArrayList<>();
+        int completedCount = 0;
+        WorkflowProgressResponse.ProgressStep current = null;
+
+        for (WorkflowStep step : steps) {
+            StudentWorkflowStep t = trackingByStepId.get(step.getId());
+            String state;
+            if (t != null && t.getStatus() == StepStatus.COMPLETED) {
+                state = "COMPLETED";
+                completedCount++;
+            } else if (step.getStepOrder().equals(sw.getCurrentStepOrder())
+                    && sw.getStatus() == WorkflowStatus.IN_PROGRESS) {
+                state = "CURRENT";
+            } else if (t != null && t.getStatus() == StepStatus.IN_PROGRESS) {
+                state = "CURRENT";
+            } else {
+                state = "LOCKED";
+            }
+
+            WorkflowProgressResponse.ProgressStep view = WorkflowProgressResponse.ProgressStep.builder()
+                    .order(step.getStepOrder())
+                    .queueId(step.getQueue().getId())
+                    .queueName(step.getQueue().getName())
+                    .label(step.getLabel())
+                    .instructions(step.getInstructions())
+                    .isRequired(step.getIsRequired())
+                    .state(state)
+                    .startedAt(t != null ? t.getStartedAt() : null)
+                    .completedAt(t != null ? t.getCompletedAt() : null)
+                    .completedByName(t != null && t.getCompletedByUserId() != null
+                            ? staffNames.get(t.getCompletedByUserId())
+                            : null)
+                    .ticketId(t != null ? t.getTicketId() : null)
+                    .notes(t != null ? t.getNotes() : null)
+                    .build();
+
+            stepViews.add(view);
+            if ("CURRENT".equals(state)) current = view;
+        }
+
+        return WorkflowProgressResponse.builder()
+                .id(sw.getId())
+                .workflowName(sw.getWorkflow().getName())
+                .description(sw.getWorkflow().getDescription())
+                .session(sw.getWorkflow().getSession())
+                .status(sw.getStatus().name())
+                .currentStepOrder(sw.getCurrentStepOrder())
+                .totalSteps(steps.size())
+                .completedSteps(completedCount)
+                .startedAt(sw.getStartedAt())
+                .completedAt(sw.getCompletedAt())
+                .currentQueueId(current != null ? current.getQueueId() : null)
+                .currentQueueName(current != null ? current.getQueueName() : null)
+                .currentStepLabel(current != null ? current.getLabel() : null)
+                .currentStepInstructions(current != null ? current.getInstructions() : null)
+                .steps(stepViews)
+                .build();
     }
 
     // ============================================================
@@ -293,6 +415,8 @@ public class WorkflowService {
             if (step == null) continue;
             if (!step.getStepOrder().equals(sw.getCurrentStepOrder())) continue;
 
+            markStepCompleted(sw, step);
+
             int nextOrder = step.getStepOrder() + 1;
             WorkflowStep nextStep = steps.stream()
                     .filter(s -> s.getStepOrder().equals(nextOrder))
@@ -317,11 +441,91 @@ public class WorkflowService {
                 sw.setCurrentStepOrder(nextOrder);
                 studentWorkflowRepository.save(sw);
 
+                unlockStep(sw, nextStep);
+
                 notificationService.notify(sw.getStudent(), NotificationType.SYSTEM,
                         "Step " + step.getStepOrder() + " completed",
                         "Next step: " + stepLabel(nextStep) + ". Join the \"" +
                                 nextStep.getQueue().getName() + "\" queue when ready.");
             }
+        }
+    }
+
+    // ============================================================
+    //  STEP TRACKING HELPERS
+    // ============================================================
+
+    private void createStepTracking(StudentWorkflow sw, List<WorkflowStep> steps) {
+        for (int i = 0; i < steps.size(); i++) {
+            WorkflowStep step = steps.get(i);
+            StudentWorkflowStep tracking = StudentWorkflowStep.builder()
+                    .studentWorkflow(sw)
+                    .workflowStep(step)
+                    .status(i == 0 ? StepStatus.IN_PROGRESS : StepStatus.PENDING)
+                    .startedAt(i == 0 ? LocalDateTime.now() : null)
+                    .build();
+            studentWorkflowStepRepository.save(tracking);
+        }
+    }
+
+    private void ensureStepsExist(StudentWorkflow sw, List<WorkflowStep> steps) {
+        long existing = studentWorkflowStepRepository
+                .countByStudentWorkflowIdAndStatus(sw.getId(), StepStatus.PENDING)
+                + studentWorkflowStepRepository
+                .countByStudentWorkflowIdAndStatus(sw.getId(), StepStatus.IN_PROGRESS)
+                + studentWorkflowStepRepository
+                .countByStudentWorkflowIdAndStatus(sw.getId(), StepStatus.COMPLETED);
+        if (existing > 0 || steps.isEmpty()) return;
+
+        log.info("Backfilling workflow steps for StudentWorkflow {}", sw.getId());
+        for (WorkflowStep step : steps) {
+            StepStatus status;
+            if (step.getStepOrder() < sw.getCurrentStepOrder()) {
+                status = StepStatus.COMPLETED;
+            } else if (step.getStepOrder().equals(sw.getCurrentStepOrder())) {
+                status = StepStatus.IN_PROGRESS;
+            } else {
+                status = StepStatus.PENDING;
+            }
+            StudentWorkflowStep tracking = StudentWorkflowStep.builder()
+                    .studentWorkflow(sw)
+                    .workflowStep(step)
+                    .status(status)
+                    .startedAt(status == StepStatus.IN_PROGRESS ? LocalDateTime.now() : null)
+                    .completedAt(status == StepStatus.COMPLETED ? LocalDateTime.now() : null)
+                    .build();
+            studentWorkflowStepRepository.save(tracking);
+        }
+    }
+
+    private void markStepCompleted(StudentWorkflow sw, WorkflowStep step) {
+        Optional<StudentWorkflowStep> opt = studentWorkflowStepRepository
+                .findByStudentWorkflowIdAndWorkflowStepId(sw.getId(), step.getId());
+        if (opt.isEmpty()) {
+            StudentWorkflowStep tracking = StudentWorkflowStep.builder()
+                    .studentWorkflow(sw)
+                    .workflowStep(step)
+                    .status(StepStatus.COMPLETED)
+                    .completedAt(LocalDateTime.now())
+                    .build();
+            studentWorkflowStepRepository.save(tracking);
+            return;
+        }
+        StudentWorkflowStep tracking = opt.get();
+        tracking.setStatus(StepStatus.COMPLETED);
+        tracking.setCompletedAt(LocalDateTime.now());
+        studentWorkflowStepRepository.save(tracking);
+    }
+
+    private void unlockStep(StudentWorkflow sw, WorkflowStep step) {
+        Optional<StudentWorkflowStep> opt = studentWorkflowStepRepository
+                .findByStudentWorkflowIdAndWorkflowStepId(sw.getId(), step.getId());
+        if (opt.isEmpty()) return;
+        StudentWorkflowStep tracking = opt.get();
+        if (tracking.getStatus() == StepStatus.PENDING) {
+            tracking.setStatus(StepStatus.IN_PROGRESS);
+            tracking.setStartedAt(LocalDateTime.now());
+            studentWorkflowStepRepository.save(tracking);
         }
     }
 
