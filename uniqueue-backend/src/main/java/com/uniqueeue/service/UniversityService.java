@@ -39,6 +39,7 @@ public class UniversityService {
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
     private final PlanConfigRepository planConfigRepository;
+    private final UniversityStarterPackService starterPackService;   // ⬅ NEW
 
     @Transactional(readOnly = true)
     public List<UniversityResponse> listAll() {
@@ -99,6 +100,25 @@ public class UniversityService {
         auditService.record(null, university.getId(),
                 AuditAction.UNIVERSITY_CREATED, "University", university.getId(),
                 "{\"code\":\"" + code + "\",\"adminEmail\":\"" + request.getAdminEmail() + "\"}");
+
+        // ─── Starter pack ───
+        // Auto-seed standard offices, services, and workflows so the admin
+        // has a working university from minute one.
+        // Failures here must NOT roll back the university creation.
+        try {
+            var result = starterPackService.seed(
+                    university.getId(),
+                    admin.getId(),
+                    true,   // includeOffices
+                    true,   // includeServices
+                    true    // includeWorkflows
+            );
+            log.info("Starter pack auto-seeded for university {} — offices={}, services={}, workflows={}",
+                    code, result.officesCreated(), result.servicesCreated(), result.workflowsCreated());
+        } catch (Exception e) {
+            // Non-fatal: the university is registered; the admin can seed manually later
+            log.warn("Starter pack seeding failed for new university {}: {}", code, e.getMessage());
+        }
 
         return enrich(university);
     }
@@ -199,7 +219,7 @@ public class UniversityService {
         // 4. Delete university
         universityRepository.delete(u);
 
-        // 5. Audit (university-scoped record will be orphaned but kept for history)
+        // 5. Audit
         auditService.record(null, null, AuditAction.UNIVERSITY_DELETED,
                 "University", id,
                 "{\"code\":\"" + code + "\",\"name\":\"" + name + "\"}");

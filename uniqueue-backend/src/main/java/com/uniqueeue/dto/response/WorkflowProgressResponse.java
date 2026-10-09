@@ -1,35 +1,70 @@
 package com.uniqueeue.dto.response;
 
+import com.uniqueeue.enums.StepStatus;
 import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Rich view of a student's progress through a workflow.
- * Drives the "My Clearance" page and the dashboard card.
- */
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class WorkflowProgressResponse {
 
-    private Long id;                       // StudentWorkflow id
+    /* ---------- shared ---------- */
+    private Long id;                 // getProgress
+    private Long enrollmentId;       // getMyProgress
+    private Long workflowId;         // getMyProgress
     private String workflowName;
     private String description;
     private String session;
-    private String status;                 // IN_PROGRESS | COMPLETED | ABANDONED
+    private String status;           // "IN_PROGRESS" / "COMPLETED" / "ABANDONED"
+    private LocalDateTime startedAt;
+    private LocalDateTime completedAt;
     private Integer currentStepOrder;
     private Integer totalSteps;
     private Integer completedSteps;
-    private LocalDateTime startedAt;
-    private LocalDateTime completedAt;
+    private Integer progressPercent; // getMyProgress
 
-    // Convenience for the current step — so the card can render a "Join Queue" button
+    /* ---------- getMyProgress convenience ---------- */
+    private NextAction nextAction;
+
+    /* ---------- getProgress convenience ---------- */
     private Long currentQueueId;
     private String currentQueueName;
     private String currentStepLabel;
     private String currentStepInstructions;
 
-    private List<ProgressStep> steps;
+    /* ---------- step lists (two shapes, two fields) ---------- */
+    private List<StepProgress> steps;          // Phase A
+    private List<ProgressStep> progressSteps;  // legacy
+
+    /* ============================================================
+       Phase A shape
+       ============================================================ */
+
+    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class StepProgress {
+        private Integer order;
+        private Long queueId;
+        private String queueName;
+        private String officeName;
+        private String label;
+        private StepStatus status;
+        private LocalDateTime startedAt;
+        private LocalDateTime completedAt;
+        private Boolean isCurrent;
+    }
+
+    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class NextAction {
+        private Long queueId;
+        private String queueName;
+        private String officeName;
+        private String label;
+    }
+
+    /* ============================================================
+       Legacy shape (used by getProgress)
+       ============================================================ */
 
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
     public static class ProgressStep {
@@ -39,10 +74,10 @@ public class WorkflowProgressResponse {
         private String label;
         private String instructions;
         private Boolean isRequired;
-        private String state;              // COMPLETED | CURRENT | LOCKED
+        private String state;   // COMPLETED | CURRENT | LOCKED
         private LocalDateTime startedAt;
         private LocalDateTime completedAt;
-        private String completedByName;    // Staff who served the ticket
+        private String completedByName;
         private Long ticketId;
         private String notes;
     }

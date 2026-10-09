@@ -1,24 +1,33 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Bell, Check, CheckCheck, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../../api/axios'
 import { useAuthStore } from '../../store/authStore'
 import { formatTimeAgo } from '../../lib/format'
+import { playAttentionSound } from '../../lib/soundService'
 
 export default function NotificationBell() {
     const { token } = useAuthStore()
+    const navigate = useNavigate()
     const [open, setOpen] = useState(false)
     const [unread, setUnread] = useState(0)
     const [notifications, setNotifications] = useState([])
     const [loading, setLoading] = useState(false)
-    const [processing, setProcessing] = useState(null) // id being processed
+    const [processing, setProcessing] = useState(null)
     const ref = useRef(null)
 
     const loadUnreadCount = useCallback(async () => {
         if (!token) return
         try {
             const res = await api.get('/api/notifications/unread/count')
-            setUnread(res.data.data?.count ?? 0)
+            const next = res.data.data?.count ?? 0
+            setUnread((prev) => {
+                if (next > prev) {
+                    try { playAttentionSound() } catch { /* audio locked */ }
+                }
+                return next
+            })
         } catch {
             // silent
         }
@@ -42,7 +51,6 @@ export default function NotificationBell() {
         return () => clearInterval(interval)
     }, [loadUnreadCount])
 
-    // Close on outside click
     useEffect(() => {
         const onClick = (e) => {
             if (ref.current && !ref.current.contains(e.target)) setOpen(false)
@@ -51,7 +59,6 @@ export default function NotificationBell() {
         return () => document.removeEventListener('mousedown', onClick)
     }, [])
 
-    // Close on Escape
     useEffect(() => {
         const onKey = (e) => {
             if (e.key === 'Escape') setOpen(false)
@@ -60,7 +67,6 @@ export default function NotificationBell() {
         return () => document.removeEventListener('keydown', onKey)
     }, [])
 
-    // Prevent body scroll on mobile when open
     useEffect(() => {
         if (open && window.innerWidth < 640) {
             document.body.style.overflow = 'hidden'
@@ -75,18 +81,26 @@ export default function NotificationBell() {
     }, [open, loadNotifications])
 
     const markOneRead = async (notification) => {
-        if (notification.isRead) return // already read
-        setProcessing(notification.id)
-        try {
-            await api.post(`/api/notifications/${notification.id}/read`)
+        // Optimistic read
+        if (!notification.isRead) {
             setNotifications((prev) =>
                 prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n))
             )
             setUnread((v) => Math.max(0, v - 1))
-        } catch {
-            // ignore — will retry on next poll
-        } finally {
-            setProcessing(null)
+            setProcessing(notification.id)
+            try {
+                await api.post(`/api/notifications/${notification.id}/read`)
+            } catch {
+                // next poll resyncs
+            } finally {
+                setProcessing(null)
+            }
+        }
+
+        // Deep-link if present
+        if (notification.link) {
+            setOpen(false)
+            navigate(notification.link)
         }
     }
 
@@ -127,7 +141,6 @@ export default function NotificationBell() {
             <AnimatePresence>
                 {open && (
                     <>
-                        {/* Mobile backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -143,11 +156,10 @@ export default function NotificationBell() {
                             exit={{ opacity: 0, y: -8, scale: 0.97 }}
                             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
                             className="
-                fixed inset-x-3 top-20 z-50 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl
-                sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[420px] sm:rounded-lg sm:shadow-lg
-              "
+                                fixed inset-x-3 top-20 z-50 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl
+                                sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[420px] sm:rounded-lg sm:shadow-lg
+                            "
                         >
-                            {/* Header */}
                             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                                 <div className="flex items-center gap-2">
                                     <h3 className="text-sm font-semibold text-slate-900">
@@ -155,8 +167,8 @@ export default function NotificationBell() {
                                     </h3>
                                     {unreadCount > 0 && (
                                         <span className="rounded-full bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700">
-                      {unreadCount} new
-                    </span>
+                                            {unreadCount} new
+                                        </span>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-1">
@@ -180,7 +192,6 @@ export default function NotificationBell() {
                                 </div>
                             </div>
 
-                            {/* Body */}
                             <div className="max-h-[calc(100vh-8rem)] overflow-y-auto sm:max-h-[500px]">
                                 {loading ? (
                                     <div className="space-y-3 p-4">
@@ -220,7 +231,6 @@ export default function NotificationBell() {
                                                             : 'bg-white hover:bg-slate-50'
                                                     }`}
                                                 >
-                                                    {/* Unread indicator bar */}
                                                     {isUnread && (
                                                         <motion.div
                                                             layoutId={`unread-bar-${n.id}`}
@@ -230,7 +240,6 @@ export default function NotificationBell() {
 
                                                     <div className="flex items-start gap-3">
                                                         <div className="min-w-0 flex-1">
-                                                            {/* Title row */}
                                                             <div className="flex items-start justify-between gap-2">
                                                                 <div className="flex min-w-0 items-center gap-2">
                                                                     {isUnread && (
@@ -258,7 +267,6 @@ export default function NotificationBell() {
                                                                 )}
                                                             </div>
 
-                                                            {/* Full message — no truncation */}
                                                             <p
                                                                 className={`mt-1 whitespace-pre-wrap text-xs leading-relaxed ${
                                                                     isUnread
@@ -269,15 +277,14 @@ export default function NotificationBell() {
                                                                 {n.message}
                                                             </p>
 
-                                                            {/* Footer */}
                                                             <div className="mt-2 flex items-center justify-between gap-2">
                                                                 <p className="text-[10px] uppercase tracking-wide text-slate-400">
                                                                     {formatTimeAgo(n.createdAt)}
                                                                 </p>
                                                                 {n.type && (
                                                                     <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                                    {String(n.type).replace(/_/g, ' ')}
-                                  </span>
+                                                                        {String(n.type).replace(/_/g, ' ')}
+                                                                    </span>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -289,12 +296,11 @@ export default function NotificationBell() {
                                 )}
                             </div>
 
-                            {/* Footer */}
                             {notifications.length > 0 && (
                                 <div className="border-t border-slate-100 px-4 py-2 text-center">
-                  <span className="text-xs text-slate-500">
-                    Click a notification to mark it as read
-                  </span>
+                                    <span className="text-xs text-slate-500">
+                                        Click a notification to mark it as read
+                                    </span>
                                 </div>
                             )}
                         </motion.div>

@@ -36,6 +36,10 @@ public class Notification {
     @Builder.Default
     private Boolean isRead = false;
 
+    /** Deep-link path the frontend navigates to when this notification is tapped. */
+    @Column(name = "link", length = 500)
+    private String link;
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

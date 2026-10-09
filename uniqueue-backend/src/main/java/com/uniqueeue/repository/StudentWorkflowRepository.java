@@ -13,11 +13,16 @@ public interface StudentWorkflowRepository extends JpaRepository<StudentWorkflow
 
     List<StudentWorkflow> findByStudentIdOrderByStartedAtDesc(Long studentId);
 
-    Optional<StudentWorkflow> findByStudentIdAndWorkflowId(Long studentId, Long workflowId);
-
-    Optional<StudentWorkflow> findByStudentIdAndStatus(Long studentId, WorkflowStatus status);
-
     List<StudentWorkflow> findByWorkflowId(Long workflowId);
 
+    Optional<StudentWorkflow> findByStudentIdAndWorkflowId(Long studentId, Long workflowId);
+
     long countByWorkflowIdAndStatus(Long workflowId, WorkflowStatus status);
+
+    // ---- Phase A additions ----
+
+    Optional<StudentWorkflow> findFirstByStudentIdAndStatusOrderByStartedAtDesc(
+            Long studentId, WorkflowStatus status);
+
+    Optional<StudentWorkflow> findFirstByStudentIdOrderByStartedAtDesc(Long studentId);
 }

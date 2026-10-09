@@ -3,9 +3,12 @@ package com.uniqueeue.controller;
 import com.uniqueeue.dto.request.CreateWorkflowRequest;
 import com.uniqueeue.dto.request.UpdateWorkflowStepRequest;
 import com.uniqueeue.dto.response.ApiResponse;
+import com.uniqueeue.dto.response.WorkflowAnalyticsResponse;
 import com.uniqueeue.dto.response.WorkflowResponse;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.WorkflowService;
+import com.uniqueeue.dto.response.WorkflowAnalyticsResponse;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -64,4 +67,14 @@ public class AdminWorkflowController {
         return ResponseEntity.ok(ApiResponse.success(
                 "Step updated", workflowService.updateStep(stepId, principal.getUniversityId(), request)));
     }
+
+    @GetMapping("/{id}/analytics")
+    public ResponseEntity<ApiResponse<WorkflowAnalyticsResponse>> analytics(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Workflow analytics",
+                workflowService.getAnalytics(id, principal.getUniversityId())));
+    }
+
 }

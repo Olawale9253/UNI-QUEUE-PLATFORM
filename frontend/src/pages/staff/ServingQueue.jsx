@@ -64,7 +64,12 @@ export default function ServingQueue() {
     const [refreshing, setRefreshing] = useState(false)
     const { playNewTicket, playAttention } = useNotificationSound()
     const browserNotif = useBrowserNotifications()
-    const prevTicketIdsRef = useRef(null)   // null = first load, skip sound
+    const prevTicketIdsRef = useRef(null)
+
+    // ── Race-protection refs ──
+    const actingRef = useRef(false)
+    const actionVersionRef = useRef(0)
+    const suppressPollUntilRef = useRef(0)
 
     const activeQueue = queues.find((q) => q.id === activeQueueId) || null
     const isClosed = activeQueue?.isOpen === false
@@ -88,9 +93,11 @@ export default function ServingQueue() {
     const loadTickets = useCallback(
         async (queueId, showSkeleton = false) => {
             if (!queueId) return
+            const startVersion = actionVersionRef.current
             if (showSkeleton) setTicketsLoading(true)
             try {
                 const res = await api.get(`/api/staff/queues/${queueId}/tickets`)
+                if (actionVersionRef.current !== startVersion) return
                 setTickets(res.data.data || [])
             } catch (err) {
                 push({
@@ -116,7 +123,11 @@ export default function ServingQueue() {
     }, [activeQueueId, loadTickets])
 
     useAdaptivePoll(
-        () => (activeQueueId ? loadTickets(activeQueueId, false) : Promise.resolve()),
+        () => {
+            if (actingRef.current) return Promise.resolve()
+            if (Date.now() < suppressPollUntilRef.current) return Promise.resolve()
+            return activeQueueId ? loadTickets(activeQueueId, false) : Promise.resolve()
+        },
         { fastMs: 5000, slowMs: 30000, enabled: !!activeQueueId }
     )
 
@@ -126,18 +137,13 @@ export default function ServingQueue() {
 
         const currentIds = new Set(tickets.map((t) => t.id))
 
-        // Skip the very first load — it would alert on every existing ticket
         if (prevTicketIdsRef.current === null) {
             prevTicketIdsRef.current = currentIds
             return
         }
 
         const prev = prevTicketIdsRef.current
-
-        // New tickets = present now, weren't there before
         const newTickets = tickets.filter((t) => !prev.has(t.id))
-
-        // Tickets newly in CALLED state for this staff member
         const newlyCalled = newTickets.filter((t) => t.status === 'CALLED')
 
         if (newTickets.length > 0) {
@@ -174,18 +180,39 @@ export default function ServingQueue() {
         prevTicketIdsRef.current = currentIds
     }, [tickets, playNewTicket, playAttention, browserNotif, activeQueueId])
 
-    const act = async (fn, successMessage, actionKey) => {
+    // ─── act(): optimistic UI + re-entry guard + race protection ───
+    const act = async (fn, successMsg, actionKey, optimistic) => {
+        // Ignore re-entry — second click while an action is in flight
+        if (actingRef.current) return
+
+        const snapshot = tickets
+        actionVersionRef.current += 1
+        actingRef.current = true
+
+        if (optimistic) setTickets((prev) => optimistic(prev))
+
         setActing(actionKey)
         try {
             await fn()
-            push({ type: 'success', message: successMessage })
-            await loadTickets(activeQueueId)
+            push({ type: 'success', message: successMsg })
+            // Give the server a moment to commit before the next poll fires.
+            suppressPollUntilRef.current = Date.now() + 2000
         } catch (err) {
+            // Log the real cause so we can see it in DevTools
+            // eslint-disable-next-line no-console
+            console.error('[ServingQueue] action failed', {
+                actionKey,
+                status: err.response?.status,
+                message: err.response?.data?.message,
+                data: err.response?.data,
+            })
+            setTickets(snapshot)
             push({
                 type: 'error',
                 message: err.response?.data?.message || 'Action failed',
             })
         } finally {
+            actingRef.current = false
             setActing(null)
         }
     }
@@ -194,28 +221,64 @@ export default function ServingQueue() {
         act(
             () => api.post(`/api/staff/queues/${activeQueueId}/next`),
             'Next ticket called',
-            'next'
+            'next',
+            (prev) => {
+                // Never call if someone is already being served locally
+                if (prev.some((t) => t.status === 'CALLED' || t.status === 'SERVING')) {
+                    return prev
+                }
+                const idx = prev.findIndex(
+                    (t) => t.status === 'WAITING' || t.status === 'WAITLISTED'
+                )
+                if (idx === -1) return prev
+                const next = [...prev]
+                next[idx] = {
+                    ...next[idx],
+                    status: 'CALLED',
+                    calledAt: new Date().toISOString(),
+                }
+                return next
+            }
         )
 
     const serve = (id) =>
         act(
             () => api.post(`/api/staff/tickets/${id}/serve`),
             'Service started',
-            `serve-${id}`
+            `serve-${id}`,
+            (prev) =>
+                prev.map((t) => {
+                    if (t.id !== id) return t
+                    if (t.status !== 'CALLED') return t
+                    return { ...t, status: 'SERVING' }
+                })
         )
 
     const complete = (id) =>
         act(
             () => api.post(`/api/staff/tickets/${id}/complete`),
             'Service completed',
-            `complete-${id}`
+            `complete-${id}`,
+            (prev) =>
+                prev.map((t) => {
+                    if (t.id !== id) return t
+                    if (t.status !== 'CALLED' && t.status !== 'SERVING') return t
+                    return { ...t, status: 'COMPLETED' }
+                })
         )
 
     const noShow = (id) =>
         act(
             () => api.post(`/api/staff/tickets/${id}/no-show`),
             'Marked as no-show',
-            `noshow-${id}`
+            `noshow-${id}`,
+            (prev) =>
+                prev.map((t) => {
+                    if (t.id !== id) return t
+                    const allowed = ['WAITING', 'WAITLISTED', 'CALLED', 'SERVING']
+                    if (!allowed.includes(t.status)) return t
+                    return { ...t, status: 'NO_SHOW' }
+                })
         )
 
     const refresh = async () => {
@@ -317,7 +380,7 @@ export default function ServingQueue() {
                     <div className="flex flex-wrap items-center gap-2">
                         <Button
                             onClick={callNext}
-                            disabled={!!called || acting === 'next' || isClosed}
+                            disabled={!!called || !!acting || isClosed}
                             loading={acting === 'next'}
                             className="!bg-emerald-600 hover:!bg-emerald-700"
                         >
@@ -329,7 +392,7 @@ export default function ServingQueue() {
                         </Button>
                         <button
                             onClick={refresh}
-                            disabled={refreshing}
+                            disabled={refreshing || !!acting}
                             className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-700 disabled:opacity-60"
                         >
                             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
@@ -344,7 +407,8 @@ export default function ServingQueue() {
                             <button
                                 key={q.id}
                                 onClick={() => setActiveQueueId(q.id)}
-                                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                                disabled={!!acting}
+                                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors disabled:opacity-60 ${
                                     activeQueueId === q.id
                                         ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
                                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
@@ -425,7 +489,7 @@ export default function ServingQueue() {
                                 {called.status === 'CALLED' && (
                                     <Button
                                         onClick={() => serve(called.id)}
-                                        disabled={acting === `serve-${called.id}`}
+                                        disabled={!!acting}
                                         loading={acting === `serve-${called.id}`}
                                     >
                                         Start Service
@@ -436,7 +500,7 @@ export default function ServingQueue() {
                                         variant="success"
                                         icon={CheckCircle2}
                                         onClick={() => complete(called.id)}
-                                        disabled={acting === `complete-${called.id}`}
+                                        disabled={!!acting}
                                         loading={acting === `complete-${called.id}`}
                                     >
                                         Complete
@@ -444,7 +508,7 @@ export default function ServingQueue() {
                                 )}
                                 <button
                                     onClick={() => noShow(called.id)}
-                                    disabled={acting === `noshow-${called.id}`}
+                                    disabled={!!acting}
                                     className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-100 disabled:opacity-60 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/60"
                                 >
                                     <XCircle className="h-4 w-4" />
@@ -470,7 +534,7 @@ export default function ServingQueue() {
                             {waiting.length > 0 && !isClosed && (
                                 <button
                                     onClick={callNext}
-                                    disabled={acting === 'next'}
+                                    disabled={!!acting}
                                     className="mt-5 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
                                 >
                                     <Ticket className="h-4 w-4" />
@@ -561,7 +625,7 @@ export default function ServingQueue() {
 
                                 <button
                                     onClick={() => noShow(t.id)}
-                                    disabled={acting === `noshow-${t.id}`}
+                                    disabled={!!acting}
                                     className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition-colors hover:bg-rose-100 disabled:opacity-60 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/60"
                                 >
                                     <XCircle className="h-3.5 w-3.5" />

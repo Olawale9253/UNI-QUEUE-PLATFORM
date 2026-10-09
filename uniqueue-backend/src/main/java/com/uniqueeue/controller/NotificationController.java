@@ -19,41 +19,44 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
+    /** List the current user's most recent notifications. */
     @GetMapping
     public ResponseEntity<ApiResponse<List<NotificationResponse>>> list(
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.success(
-                "Notifications", notificationService.listForUser(principal.getId())));
+                "Notifications",
+                notificationService.listForUser(principal.getId())));
     }
 
-    @GetMapping("/unread")
-    public ResponseEntity<ApiResponse<List<NotificationResponse>>> unread(
-            @AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.ok(ApiResponse.success(
-                "Unread", notificationService.listUnread(principal.getId())));
-    }
-
-    @GetMapping("/unread/count")
-    public ResponseEntity<ApiResponse<Map<String, Long>>> unreadCount(
+    /**
+     * Unread count.
+     * Serves both `/unread-count` (new) and `/unread/count` (what the existing
+     * NotificationBell.jsx calls) so either URL works.
+     */
+    @GetMapping({"/unread-count", "/unread/count"})
+    public ResponseEntity<ApiResponse<Map<String, Long>>> unread(
             @AuthenticationPrincipal UserPrincipal principal) {
         long count = notificationService.countUnread(principal.getId());
         return ResponseEntity.ok(ApiResponse.success(
-                "Unread count", Map.of("count", count)));
+                "Unread count",
+                Map.of("count", count)));
     }
 
+    /** Mark a single notification as read. */
     @PostMapping("/{id}/read")
     public ResponseEntity<ApiResponse<NotificationResponse>> markRead(
-            @PathVariable Long id,
-            @AuthenticationPrincipal UserPrincipal principal) {
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(
-                "Marked as read",
+                "Marked read",
                 notificationService.markAsRead(principal.getId(), id)));
     }
 
+    /** Mark every notification for the current user as read. */
     @PostMapping("/read-all")
-    public ResponseEntity<ApiResponse<Object>> markAllRead(
+    public ResponseEntity<ApiResponse<Void>> markAllRead(
             @AuthenticationPrincipal UserPrincipal principal) {
         notificationService.markAllAsRead(principal.getId());
-        return ResponseEntity.ok(ApiResponse.success("All marked as read", null));
+        return ResponseEntity.ok(ApiResponse.success("All marked read", null));
     }
 }

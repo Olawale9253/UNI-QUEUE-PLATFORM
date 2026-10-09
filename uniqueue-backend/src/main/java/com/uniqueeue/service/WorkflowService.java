@@ -3,6 +3,7 @@ package com.uniqueeue.service;
 import com.uniqueeue.dto.request.CreateWorkflowRequest;
 import com.uniqueeue.dto.request.UpdateWorkflowStepRequest;
 import com.uniqueeue.dto.response.StudentWorkflowResponse;
+import com.uniqueeue.dto.response.WorkflowAnalyticsResponse;
 import com.uniqueeue.dto.response.WorkflowProgressResponse;
 import com.uniqueeue.dto.response.WorkflowResponse;
 import com.uniqueeue.enums.AuditAction;
@@ -13,17 +14,20 @@ import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
 import com.uniqueeue.model.*;
 import com.uniqueeue.repository.*;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -53,7 +57,6 @@ public class WorkflowService {
             throw new BadRequestException("Workflow must have at least one step");
         }
 
-        // ⬇ NEW: reject duplicate (name + session) within the same university
         String cleanName = request.getName() != null ? request.getName().trim() : "";
         String cleanSession = request.getSession() != null ? request.getSession().trim() : null;
 
@@ -136,7 +139,6 @@ public class WorkflowService {
             throw new BadRequestException("Cannot delete — " + active + " student(s) still in progress");
         }
 
-        // Clean up related rows first (order matters for FK constraints)
         List<StudentWorkflow> enrolled = studentWorkflowRepository.findByWorkflowId(workflowId);
         for (StudentWorkflow sw : enrolled) {
             studentWorkflowStepRepository.deleteByStudentWorkflowId(sw.getId());
@@ -165,6 +167,102 @@ public class WorkflowService {
 
         List<WorkflowStep> steps = stepRepository.findByWorkflowIdOrderByStepOrderAsc(step.getWorkflow().getId());
         return WorkflowResponse.from(step.getWorkflow(), steps, 0, 0);
+    }
+
+    // ============================================================
+    //  ADMIN — analytics
+    // ============================================================
+
+    @Transactional(readOnly = true)
+    public WorkflowAnalyticsResponse getAnalytics(Long workflowId, Long universityId) {
+        Workflow w = workflowRepository.findByIdAndUniversityId(workflowId, universityId)
+                .orElseThrow(() -> new ResourceNotFoundException("Workflow not found"));
+
+        List<WorkflowStep> steps = stepRepository.findByWorkflowIdOrderByStepOrderAsc(workflowId);
+        List<StudentWorkflow> enrollments = studentWorkflowRepository.findByWorkflowId(workflowId);
+
+        long totalEnrolled = enrollments.size();
+        long totalCompleted = enrollments.stream()
+                .filter(sw -> sw.getStatus() == WorkflowStatus.COMPLETED)
+                .count();
+        long totalInProgress = enrollments.stream()
+                .filter(sw -> sw.getStatus() == WorkflowStatus.IN_PROGRESS)
+                .count();
+        long totalAbandoned = enrollments.stream()
+                .filter(sw -> sw.getStatus() == WorkflowStatus.ABANDONED)
+                .count();
+
+        double avgDays = enrollments.stream()
+                .filter(sw -> sw.getStatus() == WorkflowStatus.COMPLETED
+                        && sw.getStartedAt() != null
+                        && sw.getCompletedAt() != null)
+                .mapToLong(sw -> Duration.between(sw.getStartedAt(), sw.getCompletedAt()).toHours())
+                .average()
+                .orElse(0) / 24.0;
+
+        List<WorkflowAnalyticsResponse.StepAnalytics> stepStats = new ArrayList<>();
+        double maxHours = 0;
+        int bottleneckIndex = -1;
+
+        for (int i = 0; i < steps.size(); i++) {
+            WorkflowStep step = steps.get(i);
+
+            long completed = studentWorkflowStepRepository
+                    .countByWorkflowStepIdAndStatus(step.getId(), StepStatus.COMPLETED);
+            long onStep = studentWorkflowStepRepository
+                    .countByWorkflowStepIdAndStatus(step.getId(), StepStatus.IN_PROGRESS);
+            long pending = studentWorkflowStepRepository
+                    .countByWorkflowStepIdAndStatus(step.getId(), StepStatus.PENDING);
+
+            double avgHours = 0;
+            var allTracking = studentWorkflowStepRepository.findAll();
+            var onThisStep = allTracking.stream()
+                    .filter(t -> t.getWorkflowStep().getId().equals(step.getId())
+                            && t.getStatus() == StepStatus.COMPLETED
+                            && t.getStartedAt() != null
+                            && t.getCompletedAt() != null)
+                    .toList();
+            if (!onThisStep.isEmpty()) {
+                avgHours = onThisStep.stream()
+                        .mapToLong(t -> Duration.between(t.getStartedAt(), t.getCompletedAt()).toHours())
+                        .average()
+                        .orElse(0);
+            }
+
+            if (avgHours > maxHours) {
+                maxHours = avgHours;
+                bottleneckIndex = i;
+            }
+
+            stepStats.add(WorkflowAnalyticsResponse.StepAnalytics.builder()
+                    .order(step.getStepOrder())
+                    .queueId(step.getQueue().getId())
+                    .queueName(step.getQueue().getName())
+                    .label(step.getLabel())
+                    .completedCount(completed)
+                    .currentlyOnCount(onStep)
+                    .pendingCount(pending)
+                    .avgHoursOnStep(Math.round(avgHours * 10.0) / 10.0)
+                    .isBottleneck(false)
+                    .build());
+        }
+
+        if (bottleneckIndex >= 0 && maxHours > 0 && stepStats.size() > 1) {
+            stepStats.get(bottleneckIndex).setIsBottleneck(true);
+        }
+
+        return WorkflowAnalyticsResponse.builder()
+                .workflowId(w.getId())
+                .workflowName(w.getName())
+                .session(w.getSession())
+                .totalEnrolled(totalEnrolled)
+                .totalCompleted(totalCompleted)
+                .totalInProgress(totalInProgress)
+                .totalAbandoned(totalAbandoned)
+                .avgCompletionDays(Math.round(avgDays * 10.0) / 10.0)
+                .totalSteps(steps.size())
+                .steps(stepStats)
+                .build();
     }
 
     // ============================================================
@@ -222,7 +320,7 @@ public class WorkflowService {
         notificationService.notify(student, NotificationType.SYSTEM,
                 "Workflow started: " + workflow.getName(),
                 "First step: " + stepLabel(firstStep) + ". Join the \"" +
-                        firstStep.getQueue().getName() + "\" queue to proceed.");
+                        firstStep.getQueue().getName() + "\" queue to proceed.","/student/clearance");
 
         auditService.record(studentId, workflow.getUniversity().getId(),
                 AuditAction.WORKFLOW_STARTED, "StudentWorkflow", sw.getId(),
@@ -274,7 +372,89 @@ public class WorkflowService {
     }
 
     // ============================================================
-    //  STUDENT — rich progress view
+    //  STUDENT — my workflow progress (Phase A)
+    // ============================================================
+
+    @Transactional(readOnly = true)
+    public WorkflowProgressResponse getMyProgress(Long studentId) {
+        StudentWorkflow enrollment = studentWorkflowRepository
+                .findFirstByStudentIdAndStatusOrderByStartedAtDesc(studentId, WorkflowStatus.IN_PROGRESS)
+                .orElseGet(() -> studentWorkflowRepository
+                        .findFirstByStudentIdOrderByStartedAtDesc(studentId)
+                        .orElseThrow(() -> new ResourceNotFoundException("You are not enrolled in any workflow")));
+
+        Workflow workflow = enrollment.getWorkflow();
+        List<WorkflowStep> steps = stepRepository.findByWorkflowIdOrderByStepOrderAsc(workflow.getId());
+
+        List<StudentWorkflowStep> tracking = studentWorkflowStepRepository
+                .findByStudentWorkflowIdOrderByWorkflowStepStepOrderAsc(enrollment.getId());
+        Map<Long, StudentWorkflowStep> byStepId = tracking.stream()
+                .collect(Collectors.toMap(t -> t.getWorkflowStep().getId(), t -> t, (a, b) -> a));
+
+        List<WorkflowProgressResponse.StepProgress> stepList = new ArrayList<>();
+        int completedCount = 0;
+        Integer currentOrder = null;
+
+        for (WorkflowStep step : steps) {
+            StudentWorkflowStep t = byStepId.get(step.getId());
+            StepStatus s = (t != null) ? t.getStatus() : StepStatus.PENDING;
+
+            if (s == StepStatus.COMPLETED) completedCount++;
+            if (s == StepStatus.IN_PROGRESS && currentOrder == null) {
+                currentOrder = step.getStepOrder();
+            }
+
+            stepList.add(WorkflowProgressResponse.StepProgress.builder()
+                    .order(step.getStepOrder())
+                    .queueId(step.getQueue() != null ? step.getQueue().getId() : null)
+                    .queueName(step.getQueue() != null ? step.getQueue().getName() : null)
+                    .officeName(step.getQueue() != null && step.getQueue().getOffice() != null
+                            ? step.getQueue().getOffice().getName() : null)
+                    .label(step.getLabel())
+                    .status(s)
+                    .startedAt(t != null ? t.getStartedAt() : null)
+                    .completedAt(t != null ? t.getCompletedAt() : null)
+                    .isCurrent(false)
+                    .build());
+        }
+
+        if (currentOrder != null && currentOrder - 1 < stepList.size()) {
+            stepList.get(currentOrder - 1).setIsCurrent(true);
+        }
+
+        int total = steps.size();
+        int pct = total > 0 ? (int) Math.round((completedCount * 100.0) / total) : 0;
+
+        WorkflowProgressResponse.NextAction nextAction = null;
+        if (currentOrder != null && currentOrder - 1 < stepList.size()) {
+            var cur = stepList.get(currentOrder - 1);
+            nextAction = WorkflowProgressResponse.NextAction.builder()
+                    .queueId(cur.getQueueId())
+                    .queueName(cur.getQueueName())
+                    .officeName(cur.getOfficeName())
+                    .label(cur.getLabel())
+                    .build();
+        }
+
+        return WorkflowProgressResponse.builder()
+                .enrollmentId(enrollment.getId())
+                .workflowId(workflow.getId())
+                .workflowName(workflow.getName())
+                .session(workflow.getSession())
+                .status(enrollment.getStatus().name())   // ← FIX: enum → String
+                .startedAt(enrollment.getStartedAt())
+                .completedAt(enrollment.getCompletedAt())
+                .currentStepOrder(currentOrder)
+                .totalSteps(total)
+                .completedSteps(completedCount)
+                .progressPercent(pct)
+                .nextAction(nextAction)
+                .steps(stepList)
+                .build();
+    }
+
+    // ============================================================
+    //  STUDENT — rich progress view (legacy)
     // ============================================================
 
     @Transactional
@@ -361,7 +541,7 @@ public class WorkflowService {
                 .currentQueueName(current != null ? current.getQueueName() : null)
                 .currentStepLabel(current != null ? current.getLabel() : null)
                 .currentStepInstructions(current != null ? current.getInstructions() : null)
-                .steps(stepViews)
+                .progressSteps(stepViews)   // ← FIX: was .steps(stepViews)
                 .build();
     }
 
@@ -433,7 +613,7 @@ public class WorkflowService {
 
                 notificationService.notify(sw.getStudent(), NotificationType.SYSTEM,
                         "Workflow complete! 🎉",
-                        "You've completed all steps of \"" + sw.getWorkflow().getName() + "\".");
+                        "You've completed all steps of \"" + sw.getWorkflow().getName() + "\".","/student/clearance");
 
                 auditService.record(studentId, sw.getWorkflow().getUniversity().getId(),
                         AuditAction.WORKFLOW_COMPLETED, "StudentWorkflow", sw.getId(), null);
@@ -446,7 +626,7 @@ public class WorkflowService {
                 notificationService.notify(sw.getStudent(), NotificationType.SYSTEM,
                         "Step " + step.getStepOrder() + " completed",
                         "Next step: " + stepLabel(nextStep) + ". Join the \"" +
-                                nextStep.getQueue().getName() + "\" queue when ready.");
+                                nextStep.getQueue().getName() + "\" queue when ready.", "/student/clearance");
             }
         }
     }

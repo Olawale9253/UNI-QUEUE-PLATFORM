@@ -17,6 +17,7 @@ import AppointmentsTab from './student/AppointmentsTab'
 import WorkflowsTab from './student/WorkflowsTab'
 import MyClearancePage from './student/MyClearancePage'
 import DocumentsTab from './student/DocumentsTab'
+import StudentWorkflowProgress from './student/StudentWorkflowProgress'
 import { useUniversityStore } from '../store/universityStore'
 
 const ROUTE_SUBTITLES = {
@@ -25,7 +26,8 @@ const ROUTE_SUBTITLES = {
     '/student/offices': 'Browse every office and the services it offers.',
     '/student/history': 'Your past queue tickets and how long you waited.',
     '/student/appointments': 'Book and manage your appointments.',
-    '/student/workflows': 'Track your multi-step clearance processes.',
+    '/student/clearance': 'Your current clearance step and what to do next.',
+    '/student/workflows': 'Browse and start any clearance process open to you.',
     '/student/documents': 'Your uploaded documents.',
 }
 
@@ -43,15 +45,16 @@ export default function StudentDashboard() {
         tabs.push({ to: '/student/appointments', label: 'Appointments', icon: Calendar })
     }
     if (!university || university.featureWorkflows !== false) {
-        tabs.push({ to: '/student/workflows', label: 'Workflows', icon: RouteIcon })
+        tabs.push({ to: '/student/clearance', label: 'My Clearance', icon: RouteIcon })
     }
     if (!university || university.featureDocuments !== false) {
         tabs.push({ to: '/student/documents', label: 'Documents', icon: FileText })
     }
 
-    // Subtitle picks the most specific match first so /student/workflows/123
-    // gets the clearance page subtitle rather than the workflows tab subtitle.
     const subtitle = (() => {
+        if (location.pathname === '/student/clearance') {
+            return 'Your current clearance step and what to do next.'
+        }
         if (location.pathname.startsWith('/student/workflows/')) {
             return 'Track your progress through this clearance step by step.'
         }
@@ -69,6 +72,7 @@ export default function StudentDashboard() {
                 <Route path="appointments" element={<AppointmentsTab />} />
                 <Route path="workflows" element={<WorkflowsTab />} />
                 <Route path="workflows/:id" element={<MyClearancePage />} />
+                <Route path="clearance" element={<StudentWorkflowProgress />} />
                 <Route path="documents" element={<DocumentsTab />} />
                 <Route path="*" element={<Navigate to="/student" replace />} />
             </Routes>

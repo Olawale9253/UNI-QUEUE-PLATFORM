@@ -6,12 +6,12 @@ import com.uniqueeue.exception.ResourceNotFoundException;
 import com.uniqueeue.model.Notification;
 import com.uniqueeue.model.User;
 import com.uniqueeue.repository.NotificationRepository;
-import com.uniqueeue.security.TenantGuard;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,15 +21,23 @@ import java.util.Map;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
-    private final WebPushService webPushService;
+    private final AsyncPushService asyncPushService;
 
-    /**
-     * Fire-and-forget notification.
-     * Persists an in-app notification and sends a Web Push to all of the
-     * user's subscribed devices. Failures are logged but never break the caller.
-     */
+    /** Fire-and-forget notification with no deep-link. */
     @Transactional
     public void notify(User user, NotificationType type, String title, String message) {
+        notify(user, type, title, message, null);
+    }
+
+    /**
+     * Fire-and-forget notification with optional deep-link.
+     *
+     * Persists the in-app notification synchronously (fast DB write), then hands
+     * the Web Push off to AsyncPushService so the request thread returns immediately.
+     * The push runs on the "pushExecutor" thread pool.
+     */
+    @Transactional
+    public void notify(User user, NotificationType type, String title, String message, String link) {
         if (user == null) return;
         try {
             Notification n = Notification.builder()
@@ -37,12 +45,17 @@ public class NotificationService {
                     .type(type)
                     .title(title)
                     .message(message)
+                    .link(link)
                     .isRead(false)
                     .build();
             notificationRepository.save(n);
 
-            webPushService.sendToUser(user.getId(), title, message,
-                    Map.of("type", type.name()));
+            Map<String, Object> data = new HashMap<>();
+            data.put("type", type.name());
+            if (link != null) data.put("link", link);
+
+            // Off-thread: returns instantly, HTTP push happens in the background.
+            asyncPushService.send(user.getId(), title, message, data);
         } catch (Exception ex) {
             log.error("Failed to send notification to user {}: {}", user.getId(), ex.getMessage());
         }
@@ -72,7 +85,7 @@ public class NotificationService {
         Notification n = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
 
-        if (!n.getUser().getId().equals(TenantGuard.currentUserId())) {
+        if (!n.getUser().getId().equals(userId)) {
             throw new ResourceNotFoundException("Notification not found");
         }
         n.setIsRead(true);

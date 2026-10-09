@@ -14,7 +14,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useUniversityStore } from '../../store/universityStore'
 import { useUIStore } from '../../store/uiStore'
 import { getInitials } from '../../lib/format'
-import NotificationBell from './NotificationBell'
+import NotificationBell from './NotificationBell';
 import ThemeToggle from '../ui/ThemeToggle'
 import Logo from '../ui/Logo'
 
