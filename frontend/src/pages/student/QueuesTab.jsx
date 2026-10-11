@@ -18,6 +18,7 @@ import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { useStudentTicketAlerts } from '../../hooks/useNotificationSound'
 import { groupQueuesByOffice } from '../../lib/groupQueues'
+import { syncBus } from '../../lib/syncBus'
 
 const STATUS_VARIANTS = {
     WAITING: 'warning',
@@ -128,6 +129,15 @@ export default function QueuesTab() {
     useEffect(() => { load() }, [load])
     useAdaptivePoll(load, { fastMs: 5000, slowMs: 30000 })
 
+    // Refetch when another tab (staff page) makes a change
+    useEffect(() => {
+        const unsub = syncBus.subscribe('data-changed', (payload) => {
+            if (payload?.source === 'student-queue') return
+            load()
+        })
+        return unsub
+    }, [load])
+
     const activeWorkflow = workflows.find((w) => w.status === 'IN_PROGRESS')
     const lockedQueueIds = useMemo(() => {
         const m = new Set()
@@ -210,6 +220,7 @@ export default function QueuesTab() {
         setJoining(true)
         try {
             const res = await api.post('/api/user/tickets/join', { queueId: selectedService.id })
+            syncBus.publish('data-changed', { source: 'student-queue', at: Date.now() })
             push({ type: 'success', message: `Joined. Ticket: ${res.data.data.ticketNumber}` })
             setSelectedServiceId('')
             await load()
@@ -225,6 +236,7 @@ export default function QueuesTab() {
         setLeaving(true)
         try {
             await api.delete(`/api/user/tickets/${activeTicket.id}`)
+            syncBus.publish('data-changed', { source: 'student-queue', at: Date.now() })
             push({ type: 'success', message: 'You left the queue' })
             setConfirmLeave(false)
             await load()
@@ -239,6 +251,7 @@ export default function QueuesTab() {
         setActing(`reschedule-${ticket.id}`)
         try {
             await api.post(`/api/user/tickets/${ticket.id}/reschedule`)
+            syncBus.publish('data-changed', { source: 'student-queue', at: Date.now() })
             push({ type: 'success', message: 'Turn rescheduled. You are now at the end of the queue.' })
             await load()
         } catch (err) {
@@ -252,6 +265,7 @@ export default function QueuesTab() {
         setActing(`skip-${ticket.id}`)
         try {
             await api.post(`/api/user/tickets/${ticket.id}/skip`)
+            syncBus.publish('data-changed', { source: 'student-queue', at: Date.now() })
             push({ type: 'success', message: 'Turn skipped' })
             await load()
         } catch (err) {

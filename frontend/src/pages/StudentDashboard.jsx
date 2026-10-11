@@ -6,6 +6,7 @@ import {
     Route as RouteIcon,
     FileText,
     Building2,
+    Settings,
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import StudentHeader from '../components/student/StudentHeader'
@@ -18,6 +19,7 @@ import WorkflowsTab from './student/WorkflowsTab'
 import MyClearancePage from './student/MyClearancePage'
 import DocumentsTab from './student/DocumentsTab'
 import StudentWorkflowProgress from './student/StudentWorkflowProgress'
+import StudentSettings from './student/StudentSettings'
 import { useUniversityStore } from '../store/universityStore'
 
 const ROUTE_SUBTITLES = {
@@ -29,6 +31,7 @@ const ROUTE_SUBTITLES = {
     '/student/clearance': 'Your current clearance step and what to do next.',
     '/student/workflows': 'Browse and start any clearance process open to you.',
     '/student/documents': 'Your uploaded documents.',
+    '/student/settings': 'Manage your profile, security, and preferences.',
 }
 
 export default function StudentDashboard() {
@@ -46,11 +49,15 @@ export default function StudentDashboard() {
     }
     if (!university || university.featureWorkflows !== false) {
         tabs.push({ to: '/student/clearance', label: 'My Clearance', icon: RouteIcon })
+        tabs.push({ to: '/student/workflows', label: 'Workflows', icon: ListOrdered })
     }
     if (!university || university.featureDocuments !== false) {
         tabs.push({ to: '/student/documents', label: 'Documents', icon: FileText })
     }
+    tabs.push({ to: '/student/settings', label: 'Settings', icon: Settings })
 
+    // Subtitle picks the most specific match first so /student/workflows/123
+    // gets the clearance page subtitle rather than the workflows tab subtitle.
     const subtitle = (() => {
         if (location.pathname === '/student/clearance') {
             return 'Your current clearance step and what to do next.'
@@ -74,6 +81,7 @@ export default function StudentDashboard() {
                 <Route path="workflows/:id" element={<MyClearancePage />} />
                 <Route path="clearance" element={<StudentWorkflowProgress />} />
                 <Route path="documents" element={<DocumentsTab />} />
+                <Route path="settings" element={<StudentSettings />} />
                 <Route path="*" element={<Navigate to="/student" replace />} />
             </Routes>
         </DashboardLayout>

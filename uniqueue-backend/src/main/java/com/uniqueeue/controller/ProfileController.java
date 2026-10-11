@@ -57,7 +57,7 @@ public class ProfileController {
     }
 
     // ───────────────────────────────────────────────────────────
-    //  EMAIL CHANGE (2-step)
+    //  EMAIL CHANGE (2-step + resend)
     // ───────────────────────────────────────────────────────────
 
     @PostMapping("/email/request")
@@ -69,10 +69,28 @@ public class ProfileController {
         Map<String, Object> data = new HashMap<>();
         data.put("email", request.getNewEmail().toLowerCase().trim());
         data.put("expiresInMinutes", 15);
-        // Dev mode only — remove in prod
         if (devCode != null) data.put("devCode", devCode);
 
         return ResponseEntity.ok(ApiResponse.success("Verification code sent", data));
+    }
+
+    /**
+     * Resend the verification code to the pending email without requiring
+     * the password again — as long as the pending request hasn't expired.
+     * Rate-limited server-side (30s cooldown).
+     */
+    @PostMapping("/email/resend")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> resendEmailChangeCode(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        EmailChangeService.ResendResult result =
+                emailChangeService.resendPending(principal.getId());
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("email", result.pendingEmail());
+        data.put("expiresInMinutes", result.expiresInMinutes());
+        if (result.devCode() != null) data.put("devCode", result.devCode());
+
+        return ResponseEntity.ok(ApiResponse.success("Code resent", data));
     }
 
     @PostMapping("/email/verify")
@@ -80,7 +98,6 @@ public class ProfileController {
             @Valid @RequestBody EmailChangeVerifyRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
         emailChangeService.verifyChange(principal.getId(), request);
-        // Refetch the profile so the response shows the new email + recovery email
         return ResponseEntity.ok(ApiResponse.success(
                 "Email updated",
                 profileService.getProfile(principal.getId())));

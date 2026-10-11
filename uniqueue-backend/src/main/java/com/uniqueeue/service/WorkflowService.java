@@ -215,13 +215,9 @@ public class WorkflowService {
                     .countByWorkflowStepIdAndStatus(step.getId(), StepStatus.PENDING);
 
             double avgHours = 0;
-            var allTracking = studentWorkflowStepRepository.findAll();
-            var onThisStep = allTracking.stream()
-                    .filter(t -> t.getWorkflowStep().getId().equals(step.getId())
-                            && t.getStatus() == StepStatus.COMPLETED
-                            && t.getStartedAt() != null
-                            && t.getCompletedAt() != null)
-                    .toList();
+            var onThisStep = studentWorkflowStepRepository
+                    .findByWorkflowStepIdAndStatusAndStartedAtIsNotNullAndCompletedAtIsNotNull(
+                            step.getId(), StepStatus.COMPLETED);
             if (!onThisStep.isEmpty()) {
                 avgHours = onThisStep.stream()
                         .mapToLong(t -> Duration.between(t.getStartedAt(), t.getCompletedAt()).toHours())
@@ -451,6 +447,50 @@ public class WorkflowService {
                 .nextAction(nextAction)
                 .steps(stepList)
                 .build();
+    }
+
+    // ============================================================
+//  AUTO-ENROLL — fired when a student joins a queue
+// ============================================================
+
+    @Transactional
+    public void autoEnrollOnQueueJoin(Long studentId, Long queueId) {
+        User student = userRepository.findById(studentId).orElse(null);
+        if (student == null || student.getUniversity() == null) return;
+
+        // Skip if the student already has an active workflow
+        boolean hasActive = studentWorkflowRepository
+                .findByStudentIdOrderByStartedAtDesc(studentId).stream()
+                .anyMatch(sw -> sw.getStatus() == WorkflowStatus.IN_PROGRESS);
+        if (hasActive) return;
+
+        // Find an active workflow where this queue is the first step
+        List<Workflow> candidates = workflowRepository
+                .findByUniversityIdAndIsActiveTrueOrderByCreatedAtDesc(student.getUniversity().getId());
+
+        Workflow match = null;
+        for (Workflow w : candidates) {
+            List<WorkflowStep> steps = stepRepository.findByWorkflowIdOrderByStepOrderAsc(w.getId());
+            if (steps.isEmpty()) continue;
+            if (steps.get(0).getQueue().getId().equals(queueId)) {
+                match = w;
+                break;
+            }
+        }
+        if (match == null) return;
+
+        // Replace any previous enrollment for this workflow so `start()` won't reject it
+        studentWorkflowRepository.findByStudentIdAndWorkflowId(studentId, match.getId())
+                .ifPresent(old -> {
+                    studentWorkflowStepRepository.deleteByStudentWorkflowId(old.getId());
+                    studentWorkflowRepository.delete(old);
+                });
+
+        // Reuse the existing start() logic
+        start(studentId, match.getId());
+
+        log.info("Auto-enrolled student {} into workflow {} via queue {}",
+                studentId, match.getId(), queueId);
     }
 
     // ============================================================

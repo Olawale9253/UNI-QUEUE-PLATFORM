@@ -20,13 +20,15 @@ import {
 import { toast } from '../../components/ui/Toast'
 import api from '../../api/axios'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
+import EmptyState from '../../components/ui/EmptyState'
+import { SkeletonQueueGrid } from '../../components/ui/Skeleton'
 import WorkflowAnalyticsModal from '../../components/admin/WorkflowAnalyticsModal'
 
 /* ============================================================
-   Small presentational helpers
+   Page header
    ============================================================ */
 
-function PageHeader({ onCreate, onRefresh, refreshing }) {
+function PageHeaderBlock({ onCreate, onRefresh, refreshing }) {
     return (
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -59,14 +61,6 @@ function PageHeader({ onCreate, onRefresh, refreshing }) {
     )
 }
 
-function LoadingState() {
-    return (
-        <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-        </div>
-    )
-}
-
 function ErrorState({ message, onRetry }) {
     return (
         <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-8 text-center dark:border-rose-900 dark:bg-rose-950/20">
@@ -83,28 +77,9 @@ function ErrorState({ message, onRetry }) {
     )
 }
 
-function EmptyState({ onCreate }) {
-    return (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-12 text-center dark:border-slate-700 dark:bg-slate-900/40">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-950/40">
-                <WorkflowIcon className="h-6 w-6 text-brand-600 dark:text-brand-400" />
-            </div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                No workflows yet
-            </h3>
-            <p className="mx-auto mt-1 max-w-sm text-xs text-slate-500 dark:text-slate-400">
-                Create your first workflow to route students through offices step by step.
-            </p>
-            <button
-                onClick={onCreate}
-                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
-            >
-                <Plus className="h-4 w-4" />
-                Create Workflow
-            </button>
-        </div>
-    )
-}
+/* ============================================================
+   Workflow card
+   ============================================================ */
 
 function WorkflowCard({ workflow, onAnalytics, onDelete }) {
     const stepCount = workflow.stepCount ?? workflow.steps?.length ?? 0
@@ -203,7 +178,7 @@ function WorkflowCard({ workflow, onAnalytics, onDelete }) {
 }
 
 /* ============================================================
-   Create Workflow Modal
+   Create workflow modal
    ============================================================ */
 
 function CreateWorkflowModal({ open, onClose, onCreated }) {
@@ -324,7 +299,7 @@ function CreateWorkflowModal({ open, onClose, onCreated }) {
 
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                             Workflow Name
                                         </label>
                                         <input
@@ -338,7 +313,7 @@ function CreateWorkflowModal({ open, onClose, onCreated }) {
                                     </div>
 
                                     <div>
-                                        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                             Session (optional)
                                         </label>
                                         <input
@@ -351,7 +326,7 @@ function CreateWorkflowModal({ open, onClose, onCreated }) {
                                     </div>
 
                                     <div>
-                                        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                             Steps
                                         </label>
 
@@ -405,7 +380,7 @@ function CreateWorkflowModal({ open, onClose, onCreated }) {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => removeStep(i)}
-                                                                className="rounded p-1 text-slate-400 hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-950/40"
+                                                                className="rounded p-1 text-slate-400 hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
                                                                 aria-label="Remove step"
                                                             >
                                                                 <Trash2 className="h-3.5 w-3.5" />
@@ -438,7 +413,7 @@ function CreateWorkflowModal({ open, onClose, onCreated }) {
                                                             key={q.id}
                                                             type="button"
                                                             onClick={() => addStep(q)}
-                                                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-brand-700 dark:hover:bg-brand-950/40"
+                                                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-brand-700 dark:hover:bg-brand-950/40 dark:hover:text-brand-300"
                                                         >
                                                             <Plus className="h-3 w-3" />
                                                             {q.name}
@@ -481,7 +456,7 @@ function CreateWorkflowModal({ open, onClose, onCreated }) {
 }
 
 /* ============================================================
-   Main Page
+   Main page
    ============================================================ */
 
 export default function Workflows() {
@@ -536,18 +511,32 @@ export default function Workflows() {
 
     return (
         <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-            <PageHeader
+            <PageHeaderBlock
                 onCreate={() => setCreateOpen(true)}
                 onRefresh={() => load(true)}
                 refreshing={refreshing}
             />
 
             {loading ? (
-                <LoadingState />
+                <SkeletonQueueGrid count={6} />
             ) : error ? (
                 <ErrorState message={error} onRetry={() => load()} />
             ) : workflows.length === 0 ? (
-                <EmptyState onCreate={() => setCreateOpen(true)} />
+                <EmptyState
+                    icon={WorkflowIcon}
+                    variant="info"
+                    title="No workflows yet"
+                    description="Create your first workflow to route students through offices step by step."
+                    action={
+                        <button
+                            onClick={() => setCreateOpen(true)}
+                            className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+                        >
+                            <Plus className="h-4 w-4" />
+                            Create Workflow
+                        </button>
+                    }
+                />
             ) : (
                 <motion.div
                     layout

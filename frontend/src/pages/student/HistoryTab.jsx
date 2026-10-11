@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Search, Ticket, Clock, Building2, Star, CheckCircle2,
-    XCircle, AlertCircle, Copy, Check, Filter,
+    XCircle, AlertCircle, Copy, Check, Filter, ArrowRight,
+    History as HistoryIcon, ListOrdered,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import EmptyState from '../../components/ui/EmptyState'
-import { SkeletonRow } from '../../components/ui/Skeleton'
+import { SkeletonList } from '../../components/ui/Skeleton'
 import RatingModal from '../../components/student/RatingModal'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
@@ -100,6 +102,7 @@ function formatDateTime(dt) {
 
 export default function HistoryTab() {
     const { push } = useToastStore()
+    const navigate = useNavigate()
     const [tickets, setTickets] = useState([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
@@ -172,11 +175,12 @@ export default function HistoryTab() {
                     <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                         History
                     </h2>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        Every queue you've joined. Rate completed tickets to help improve service.
+                    </p>
                 </div>
                 <Card padded={false}>
-                    {Array.from({ length: 5 }).map((_, i) => (
-                        <SkeletonRow key={i} />
-                    ))}
+                    <SkeletonList count={5} />
                 </Card>
             </div>
         )
@@ -186,7 +190,6 @@ export default function HistoryTab() {
         <div>
             {/* ═══ Sticky top: title + search + filters ═══ */}
             <div className="sticky top-[120px] z-20 -mx-3 mb-4 bg-slate-50/95 px-3 pb-3 pt-2 backdrop-blur-sm dark:bg-slate-950/95 sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8">
-                {/* Page title */}
                 <div className="mb-4">
                     <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                         History
@@ -196,69 +199,76 @@ export default function HistoryTab() {
                     </p>
                 </div>
 
-                {/* Search */}
                 {tickets.length > 0 && (
-                    <div className="mb-3">
-                        <div className="relative">
-                            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Search by ticket ID or queue name"
-                                className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
-                            />
+                    <>
+                        <div className="mb-3">
+                            <div className="relative">
+                                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Search by ticket ID or queue name"
+                                    className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                                />
+                            </div>
                         </div>
-                    </div>
-                )}
 
-                {/* Filter chips */}
-                {tickets.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                        {FILTERS.map((f) => {
-                            const count = statusCounts[f.value] ?? 0
-                            const isActive = filter === f.value
-                            return (
-                                <button
-                                    key={f.value}
-                                    type="button"
-                                    onClick={() => setFilter(f.value)}
-                                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                                        isActive
-                                            ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                                            : 'bg-white text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
-                                    }`}
-                                >
-                                    {f.label}
-                                    <span
-                                        className={`text-[10px] font-bold ${
-                                            isActive ? 'opacity-80' : 'opacity-60'
+                        <div className="flex flex-wrap gap-1.5">
+                            {FILTERS.map((f) => {
+                                const count = statusCounts[f.value] ?? 0
+                                const isActive = filter === f.value
+                                return (
+                                    <button
+                                        key={f.value}
+                                        type="button"
+                                        onClick={() => setFilter(f.value)}
+                                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                                            isActive
+                                                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                                                : 'bg-white text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
                                         }`}
                                     >
-                    {count}
-                  </span>
-                                </button>
-                            )
-                        })}
-                    </div>
+                                        {f.label}
+                                        <span
+                                            className={`text-[10px] font-bold ${
+                                                isActive ? 'opacity-80' : 'opacity-60'
+                                            }`}
+                                        >
+                                            {count}
+                                        </span>
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </>
                 )}
             </div>
 
             {/* ═══ Ticket list ═══ */}
             {tickets.length === 0 ? (
                 <EmptyState
-                    icon={Ticket}
+                    icon={HistoryIcon}
                     title="No ticket history yet"
-                    description="Once you join a queue, your tickets will appear here."
+                    description="Once you join a queue, every ticket you collect will appear here with its wait time and outcome."
+                    action={
+                        <Button
+                            icon={ListOrdered}
+                            onClick={() => navigate('/student/queues')}
+                        >
+                            Browse queues
+                        </Button>
+                    }
                 />
             ) : filtered.length === 0 ? (
                 <EmptyState
                     icon={Filter}
+                    variant="info"
                     title="No tickets match"
                     description={
                         search.trim()
-                            ? 'Try a different search term.'
-                            : 'Try a different filter.'
+                            ? 'Try a different search term or clear the filter.'
+                            : 'No tickets with this status yet.'
                     }
                     action={
                         <Button
@@ -295,9 +305,9 @@ export default function HistoryTab() {
 
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-mono text-sm font-bold text-slate-900 dark:text-slate-100">
-                            {t.ticketNumber}
-                          </span>
+                                                    <span className="font-mono text-sm font-bold text-slate-900 dark:text-slate-100">
+                                                        {t.ticketNumber}
+                                                    </span>
                                                     <CopyButton text={t.ticketNumber} />
                                                     <Badge variant={STATUS_VARIANTS[t.status] || 'default'}>
                                                         {STATUS_LABELS[t.status] || t.status}
@@ -308,35 +318,35 @@ export default function HistoryTab() {
                                                     <div className="mt-1.5 flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
                                                         <Building2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                                                         <span className="truncate">
-                              {t.queueName || t.officeName}
-                            </span>
+                                                            {t.queueName || t.officeName}
+                                                        </span>
                                                     </div>
                                                 )}
 
                                                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
                                                     {t.joinedAt && (
                                                         <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              Joined {formatDateTime(t.joinedAt)}
-                            </span>
+                                                            <Clock className="h-3 w-3" />
+                                                            Joined {formatDateTime(t.joinedAt)}
+                                                        </span>
                                                     )}
                                                     {t.completedAt && (
                                                         <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                              <CheckCircle2 className="h-3 w-3" />
-                              Completed {formatDateTime(t.completedAt)}
-                            </span>
+                                                            <CheckCircle2 className="h-3 w-3" />
+                                                            Completed {formatDateTime(t.completedAt)}
+                                                        </span>
                                                     )}
                                                     {t.status === 'NO_SHOW' && (
                                                         <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
-                              <AlertCircle className="h-3 w-3" />
-                              Marked as no-show
-                            </span>
+                                                            <AlertCircle className="h-3 w-3" />
+                                                            Marked as no-show
+                                                        </span>
                                                     )}
                                                     {t.status === 'CANCELLED' && (
-                                                        <span className="flex items-center gap-1 text-slate-500">
-                              <XCircle className="h-3 w-3" />
-                              Cancelled
-                            </span>
+                                                        <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                                                            <XCircle className="h-3 w-3" />
+                                                            Cancelled
+                                                        </span>
                                                     )}
                                                 </div>
                                             </div>
@@ -357,10 +367,10 @@ export default function HistoryTab() {
 
                                         {isCompleted && t.rated && (
                                             <div className="shrink-0 text-xs text-slate-500 sm:pt-2 dark:text-slate-400">
-                        <span className="inline-flex items-center gap-1">
-                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                          Rated {t.rating ?? ''}
-                        </span>
+                                                <span className="inline-flex items-center gap-1">
+                                                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                                                    Rated {t.rating ?? ''}
+                                                </span>
                                             </div>
                                         )}
                                     </div>

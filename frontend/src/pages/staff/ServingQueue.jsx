@@ -9,13 +9,14 @@ import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import CopyButton from '../../components/ui/CopyButton'
-import { SkeletonRow } from '../../components/ui/Skeleton'
+import { SkeletonRow, SkeletonBox } from '../../components/ui/Skeleton'
 import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { stagger, staggerItem } from '../../lib/motion'
 import { useNotificationSound } from '../../hooks/useNotificationSound'
 import { useBrowserNotifications } from '../../hooks/useBrowserNotifications'
+import { syncBus } from '../../lib/syncBus'
 import { useEffect, useState, useCallback, useRef } from 'react'
 
 const STATUS_VARIANTS = {
@@ -52,6 +53,58 @@ function formatTime(dt) {
     }
 }
 
+/* ------------------------------------------------------------------ */
+/*  Loading skeleton                                                   */
+/* ------------------------------------------------------------------ */
+
+function ServingQueueSkeleton() {
+    return (
+        <div className="space-y-6">
+            {/* Header */}
+            <div>
+                <SkeletonBox className="h-7 w-56" />
+                <SkeletonBox className="mt-2 h-4 w-72" />
+            </div>
+
+            {/* Toolbar card */}
+            <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                <div className="flex items-center justify-between gap-3">
+                    <SkeletonBox className="h-5 w-48" />
+                    <div className="flex gap-2">
+                        <SkeletonBox className="h-10 w-32 rounded-lg" />
+                        <SkeletonBox className="h-10 w-28 rounded-lg" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Current serving */}
+            <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+                <SkeletonBox className="h-5 w-40" />
+                <div className="mt-8 flex flex-col items-center gap-3">
+                    <SkeletonBox className="h-10 w-32" />
+                    <SkeletonBox className="h-6 w-20 rounded-full" />
+                    <SkeletonBox className="mt-2 h-4 w-40" />
+                </div>
+            </div>
+
+            {/* Waiting tickets list */}
+            <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+                <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+                    <SkeletonBox className="h-5 w-32" />
+                    <SkeletonBox className="h-6 w-8 rounded-full" />
+                </div>
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <SkeletonRow key={i} />
+                ))}
+            </div>
+        </div>
+    )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Main component                                                     */
+/* ------------------------------------------------------------------ */
+
 export default function ServingQueue() {
     const { user } = useAuthStore()
     const { push } = useToastStore()
@@ -66,7 +119,6 @@ export default function ServingQueue() {
     const browserNotif = useBrowserNotifications()
     const prevTicketIdsRef = useRef(null)
 
-    // ── Race-protection refs ──
     const actingRef = useRef(false)
     const actionVersionRef = useRef(0)
     const suppressPollUntilRef = useRef(0)
@@ -131,7 +183,15 @@ export default function ServingQueue() {
         { fastMs: 5000, slowMs: 30000, enabled: !!activeQueueId }
     )
 
-    // ─── Detect new tickets and play sound + notify ───
+    useEffect(() => {
+        const unsub = syncBus.subscribe('data-changed', (payload) => {
+            if (payload?.source === 'serving-queue') return
+            if (activeQueueId) loadTickets(activeQueueId, false)
+        })
+        return unsub
+    }, [activeQueueId, loadTickets])
+
+    // Detect new tickets and play sound + notify
     useEffect(() => {
         if (!tickets.length) return
 
@@ -179,10 +239,7 @@ export default function ServingQueue() {
 
         prevTicketIdsRef.current = currentIds
     }, [tickets, playNewTicket, playAttention, browserNotif, activeQueueId])
-
-    // ─── act(): optimistic UI + re-entry guard + race protection ───
     const act = async (fn, successMsg, actionKey, optimistic) => {
-        // Ignore re-entry — second click while an action is in flight
         if (actingRef.current) return
 
         const snapshot = tickets
@@ -195,22 +252,46 @@ export default function ServingQueue() {
         try {
             await fn()
             push({ type: 'success', message: successMsg })
-            // Give the server a moment to commit before the next poll fires.
             suppressPollUntilRef.current = Date.now() + 2000
-        } catch (err) {
-            // Log the real cause so we can see it in DevTools
-            // eslint-disable-next-line no-console
-            console.error('[ServingQueue] action failed', {
+
+            syncBus.publish('data-changed', {
+                source: 'serving-queue',
                 actionKey,
-                status: err.response?.status,
-                message: err.response?.data?.message,
-                data: err.response?.data,
+                queueId: activeQueueId,
+                at: Date.now(),
             })
-            setTickets(snapshot)
-            push({
-                type: 'error',
-                message: err.response?.data?.message || 'Action failed',
-            })
+        } catch (err) {
+            const status = err.response?.status
+            const message = err.response?.data?.message || ''
+
+            // Concurrency conflicts — another staff (or a stale tab) got there first.
+            // Don't roll back with an error; refetch and let state settle.
+            const isConcurrencyConflict =
+                status === 400 &&
+                /already being called|already served|no waiting tickets|already in (CALLED|SERVING)|not in CALLED/i.test(message)
+
+            if (isConcurrencyConflict) {
+                // Quietly resync — no error toast, no rollback
+                if (activeQueueId) {
+                    // Small delay so any in-flight writes commit first
+                    setTimeout(() => loadTickets(activeQueueId, false), 300)
+                }
+                // The optimistic update will be overwritten by the refetch.
+            } else {
+                // Real error — roll back and toast
+                // eslint-disable-next-line no-console
+                console.error('[ServingQueue] action failed', {
+                    actionKey,
+                    status,
+                    message,
+                    data: err.response?.data,
+                })
+                setTickets(snapshot)
+                push({
+                    type: 'error',
+                    message: message || 'Action failed',
+                })
+            }
         } finally {
             actingRef.current = false
             setActing(null)
@@ -223,7 +304,6 @@ export default function ServingQueue() {
             'Next ticket called',
             'next',
             (prev) => {
-                // Never call if someone is already being served locally
                 if (prev.some((t) => t.status === 'CALLED' || t.status === 'SERVING')) {
                     return prev
                 }
@@ -262,7 +342,7 @@ export default function ServingQueue() {
             (prev) =>
                 prev.map((t) => {
                     if (t.id !== id) return t
-                    if (t.status !== 'CALLED' && t.status !== 'SERVING') return t
+                    if (t.status !== 'SERVING') return t
                     return { ...t, status: 'COMPLETED' }
                 })
         )
@@ -300,13 +380,7 @@ export default function ServingQueue() {
     )
 
     if (loading) {
-        return (
-            <div className="space-y-4">
-                <div className="h-20 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
-                <div className="h-48 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
-                <div className="h-64 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
-            </div>
-        )
+        return <ServingQueueSkeleton />
     }
 
     if (queues.length === 0) {
@@ -322,8 +396,9 @@ export default function ServingQueue() {
                 </div>
                 <EmptyState
                     icon={ListOrdered}
-                    title="No queues assigned"
-                    description="You haven't been assigned to any queues yet. Contact your administrator to get started."
+                    variant="info"
+                    title="No queues assigned to you"
+                    description="Once an admin assigns you to a service, it will appear here for you to manage."
                 />
             </>
         )
@@ -495,7 +570,7 @@ export default function ServingQueue() {
                                         Start Service
                                     </Button>
                                 )}
-                                {(called.status === 'SERVING' || called.status === 'CALLED') && (
+                                {called.status === 'SERVING' && (
                                     <Button
                                         variant="success"
                                         icon={CheckCircle2}
@@ -568,19 +643,18 @@ export default function ServingQueue() {
                         ))}
                     </div>
                 ) : waiting.length === 0 ? (
-                    <div className="px-6 py-12 text-center">
-                        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-                            <ListOrdered className="h-6 w-6 text-slate-400" />
-                        </div>
-                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                            No waiting tickets
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            {isClosed
-                                ? 'This service is closed. New tickets will appear when it reopens.'
-                                : 'New tickets will appear here automatically.'}
-                        </p>
-                    </div>
+                    <EmptyState
+                        icon={ListOrdered}
+                        variant={isClosed ? 'warning' : 'neutral'}
+                        size="sm"
+                        bordered={false}
+                        title={isClosed ? 'Service is closed' : 'No waiting tickets'}
+                        description={
+                            isClosed
+                                ? 'New tickets will appear here when the service reopens.'
+                                : 'New tickets will appear here automatically as students join.'
+                        }
+                    />
                 ) : (
                     <motion.ul
                         variants={stagger(0, 0.04)}

@@ -15,7 +15,7 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
     long countByUniversityId(Long universityId);
     List<Queue> findByOfficeId(Long officeId);
     List<Queue> findByOfficeIsNull();
-
+    List<Queue> findByUniversityIdOrderByNameAsc(Long universityId);
     List<Queue> findByOfficeIsNullAndDepartmentIsNotNull();
 
     long countByOfficeId(Long officeId);

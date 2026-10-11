@@ -9,19 +9,18 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface StudentWorkflowStepRepository
-        extends JpaRepository<StudentWorkflowStep, Long> {
+public interface StudentWorkflowStepRepository extends JpaRepository<StudentWorkflowStep, Long> {
 
-    List<StudentWorkflowStep> findByStudentWorkflowIdOrderByWorkflowStepStepOrderAsc(
-            Long studentWorkflowId);
+    List<StudentWorkflowStep> findByStudentWorkflowIdOrderByWorkflowStepStepOrderAsc(Long studentWorkflowId);
 
-    Optional<StudentWorkflowStep> findByStudentWorkflowIdAndWorkflowStepId(
-            Long studentWorkflowId, Long workflowStepId);
+    Optional<StudentWorkflowStep> findByStudentWorkflowIdAndWorkflowStepId(Long studentWorkflowId, Long workflowStepId);
 
     long countByStudentWorkflowIdAndStatus(Long studentWorkflowId, StepStatus status);
 
-    /** For the admin dashboard — how many students are stuck on this step right now. */
     long countByWorkflowStepIdAndStatus(Long workflowStepId, StepStatus status);
 
     void deleteByStudentWorkflowId(Long studentWorkflowId);
+
+    List<StudentWorkflowStep> findByWorkflowStepIdAndStatusAndStartedAtIsNotNullAndCompletedAtIsNotNull(
+            Long workflowStepId, StepStatus status);
 }

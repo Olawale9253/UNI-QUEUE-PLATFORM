@@ -14,4 +14,5 @@ public interface QueueStaffRepository extends JpaRepository<QueueStaff, Long> {
     Optional<QueueStaff> findByQueueIdAndUserId(Long queueId, Long userId);
     boolean existsByQueueIdAndUserId(Long queueId, Long userId);
     void deleteByQueueIdAndUserId(Long queueId, Long userId);
+    long countByQueueId(Long queueId);
 }

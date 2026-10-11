@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     Building2, MapPin, Clock, Users, ListOrdered, Search, Ticket,
-    ArrowRight, GraduationCap, Mail, UserCircle2,
+    ArrowRight, GraduationCap, Mail, UserCircle2, Info,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
+import { SkeletonBox, SkeletonSettingsCard } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { useAuthStore } from '../../store/authStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
@@ -17,6 +18,43 @@ function formatTime(t) {
     if (!t) return null
     return String(t).slice(0, 5)
 }
+
+/* ------------------------------------------------------------------ */
+/*  Loading skeleton — matches the two-column layout                   */
+/* ------------------------------------------------------------------ */
+
+function OfficesSkeleton() {
+    return (
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[320px_1fr]">
+            {/* Left: office list skeleton */}
+            <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+                <SkeletonBox className="h-4 w-24" />
+                <SkeletonBox className="mt-4 h-9 w-full" />
+                <div className="mt-4 space-y-2">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <div
+                            key={i}
+                            className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5"
+                        >
+                            <SkeletonBox className="h-3.5 w-32" />
+                            <SkeletonBox className="h-4 w-6 rounded-full" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Right: detail skeleton */}
+            <div className="space-y-6">
+                <SkeletonSettingsCard />
+                <SkeletonSettingsCard />
+            </div>
+        </div>
+    )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Main component                                                     */
+/* ------------------------------------------------------------------ */
 
 export default function OfficesTab() {
     const { push } = useToastStore()
@@ -107,9 +145,16 @@ export default function OfficesTab() {
 
     if (loading) {
         return (
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr]">
-                <div className="h-96 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
-                <div className="h-96 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
+            <div>
+                <div className="mb-5">
+                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                        Offices
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        Browse offices on campus and the services they offer.
+                    </p>
+                </div>
+                <OfficesSkeleton />
             </div>
         )
     }
@@ -120,6 +165,9 @@ export default function OfficesTab() {
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                     Offices
                 </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    Browse offices on campus and the services they offer.
+                </p>
             </div>
 
             {isFresher && (
@@ -150,8 +198,18 @@ export default function OfficesTab() {
             {offices.length === 0 ? (
                 <EmptyState
                     icon={Building2}
-                    title="No offices available"
-                    description="Your university hasn't opened any offices yet."
+                    variant="info"
+                    title="No offices available yet"
+                    description="Your university hasn't set up any offices. Check back soon or contact your admin."
+                    action={
+                        <button
+                            onClick={() => navigate('/student')}
+                            className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+                        >
+                            Back to home
+                            <ArrowRight className="h-3.5 w-3.5" />
+                        </button>
+                    }
                 />
             ) : (
                 <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[320px_1fr]">
@@ -173,8 +231,14 @@ export default function OfficesTab() {
                             </div>
 
                             {filtered.length === 0 ? (
-                                <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">
-                                    No offices match your search.
+                                <div className="rounded-lg border border-dashed border-slate-300 px-4 py-8 text-center dark:border-slate-700">
+                                    <Search className="mx-auto mb-2 h-5 w-5 text-slate-400" />
+                                    <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                                        No offices match
+                                    </p>
+                                    <p className="mt-0.5 text-[11px] text-slate-400">
+                                        Try a different search term.
+                                    </p>
                                 </div>
                             ) : (
                                 <ul className="space-y-1">
@@ -200,8 +264,8 @@ export default function OfficesTab() {
                                                                 : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                                                         }`}
                                                     >
-                            {e.services.length}
-                          </span>
+                                                        {e.services.length}
+                                                    </span>
                                                 </button>
                                             </li>
                                         )
@@ -243,7 +307,7 @@ export default function OfficesTab() {
 
                             <div className="mt-5 grid grid-cols-2 gap-4">
                                 <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-                                    <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                    <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                         Working hours
                                     </div>
                                     <div className="mt-1 flex items-center gap-1.5 text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -255,13 +319,13 @@ export default function OfficesTab() {
                                             </>
                                         ) : (
                                             <span className="font-normal italic text-slate-400 dark:text-slate-500">
-                        Not set
-                      </span>
+                                                Not set
+                                            </span>
                                         )}
                                     </div>
                                 </div>
                                 <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-                                    <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                    <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                         Slot duration
                                     </div>
                                     <div className="mt-1 flex items-center gap-1.5 text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -270,8 +334,8 @@ export default function OfficesTab() {
                                             <>{selected.office.slotDurationMinutes} minutes</>
                                         ) : (
                                             <span className="font-normal italic text-slate-400 dark:text-slate-500">
-                        Not set
-                      </span>
+                                                Not set
+                                            </span>
                                         )}
                                     </div>
                                 </div>
@@ -279,7 +343,7 @@ export default function OfficesTab() {
 
                             <div className="mt-5 grid grid-cols-3 gap-4">
                                 <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-                                    <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                    <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                         <ListOrdered className="h-3 w-3" />
                                         Services
                                     </div>
@@ -288,7 +352,7 @@ export default function OfficesTab() {
                                     </div>
                                 </div>
                                 <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-                                    <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                    <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                         <Users className="h-3 w-3" />
                                         Staff
                                     </div>
@@ -297,7 +361,7 @@ export default function OfficesTab() {
                                     </div>
                                 </div>
                                 <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-                                    <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                    <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                         <Ticket className="h-3 w-3" />
                                         Waiting
                                     </div>
@@ -313,23 +377,29 @@ export default function OfficesTab() {
                                 </h4>
 
                                 {selected.services.length === 0 ? (
-                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-                                        No services yet.
-                                    </div>
+                                    <EmptyState
+                                        icon={ListOrdered}
+                                        size="sm"
+                                        title="No services yet"
+                                        description="This office hasn't opened any services."
+                                    />
                                 ) : (
                                     <div className="max-h-[420px] overflow-y-auto pr-1">
                                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                             {selected.services.map((q) => (
                                                 <div
                                                     key={q.id}
-                                                    className="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
+                                                    className="rounded-lg border border-slate-200 p-4 transition-colors hover:border-brand-300 dark:border-slate-700 dark:hover:border-brand-700"
                                                 >
                                                     <div className="flex items-start justify-between gap-2">
                                                         <h5 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                                                             {q.name}
                                                         </h5>
                                                         {q.matricRequired && (
-                                                            <GraduationCap className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                                                            <GraduationCap
+                                                                className="h-3.5 w-3.5 shrink-0 text-amber-500"
+                                                                title="Matric number required"
+                                                            />
                                                         )}
                                                     </div>
 
@@ -344,19 +414,19 @@ export default function OfficesTab() {
                                                     )}
 
                                                     <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                            <span className="flex items-center gap-1 font-bold text-brand-600 dark:text-brand-400">
-                              <Users className="h-3 w-3" />
-                                {q.waitingCount ?? 0} waiting
-                            </span>
+                                                        <span className="flex items-center gap-1 font-bold text-brand-600 dark:text-brand-400">
+                                                            <Users className="h-3 w-3" />
+                                                            {q.waitingCount ?? 0} waiting
+                                                        </span>
                                                         <span className="flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400">
-                              <Clock className="h-3 w-3" />
-                              ~{q.estimatedMinutes ?? 0} min
-                            </span>
+                                                            <Clock className="h-3 w-3" />
+                                                            ~{q.estimatedMinutes ?? 0} min
+                                                        </span>
                                                     </div>
 
                                                     <button
                                                         onClick={() => navigate('/student/queues')}
-                                                        className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400"
+                                                        className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
                                                     >
                                                         Join this service
                                                         <ArrowRight className="h-3 w-3" />
@@ -381,7 +451,9 @@ export default function OfficesTab() {
                                                     className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700"
                                                 >
                                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
-                                                        {s.fullName?.slice(0, 1).toUpperCase() || <UserCircle2 className="h-5 w-5" />}
+                                                        {s.fullName?.slice(0, 1).toUpperCase() || (
+                                                            <UserCircle2 className="h-5 w-5" />
+                                                        )}
                                                     </div>
                                                     <div className="min-w-0">
                                                         <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -403,17 +475,14 @@ export default function OfficesTab() {
                         </Card>
                     ) : (
                         <Card>
-                            <div className="py-20 text-center">
-                                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-                                    <Building2 className="h-8 w-8 text-slate-400" />
-                                </div>
-                                <p className="text-base font-medium text-slate-900 dark:text-slate-100">
-                                    Select an office to view details
-                                </p>
-                                <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-                                    Pick an office from the list on the left to see its services, staff, and working hours.
-                                </p>
-                            </div>
+                            <EmptyState
+                                icon={Info}
+                                variant="info"
+                                size="lg"
+                                bordered={false}
+                                title="Select an office to view details"
+                                description="Pick an office from the list on the left to see its services, staff, and working hours."
+                            />
                         </Card>
                     )}
                 </div>

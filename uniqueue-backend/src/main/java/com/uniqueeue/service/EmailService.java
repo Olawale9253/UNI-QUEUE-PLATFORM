@@ -1,5 +1,6 @@
 package com.uniqueeue.service;
 
+import com.uniqueeue.dto.response.WorkflowAnalyticsResponse;
 import com.uniqueeue.model.Queue;
 import com.uniqueeue.model.Ticket;
 import com.uniqueeue.model.User;
@@ -228,6 +229,49 @@ public class EmailService {
         sendHtml(user.getEmail(), subject, html);
     }
 
+    /**
+     * Bottleneck alert — sent to admins when a workflow step is stalling.
+     * Aggregates analytics for the whole workflow + the slow step.
+     */
+    public void sendBottleneckAlert(
+            User admin,
+            WorkflowAnalyticsResponse analytics,
+            WorkflowAnalyticsResponse.StepAnalytics step) {
+
+        if (admin == null || analytics == null || step == null) return;
+
+        String workflowName = analytics.getWorkflowName() != null
+                ? analytics.getWorkflowName()
+                : "Workflow";
+
+        String subject = "⚠️ Bottleneck alert — " + workflowName;
+
+        String stepLabel = step.getLabel() != null && !step.getLabel().isBlank()
+                ? step.getLabel()
+                : (step.getQueueName() != null ? step.getQueueName() : "Step " + step.getOrder());
+
+        String body = "Hi " + firstName(admin) + ",<br><br>" +
+                "We detected a bottleneck in <strong>" + escape(workflowName) + "</strong>. " +
+                "Students are spending significantly longer than usual at one step, " +
+                "and a growing number are currently waiting there.";
+
+        String table = bottleneckTable(analytics, step, stepLabel);
+
+        String analyticsUrl = baseUrl + "/admin/workflows/" + analytics.getWorkflowId() + "/analytics";
+
+        String html = wrap(
+                admin,
+                null,                      // no queue — falls back to university name
+                "Bottleneck detected",
+                body,
+                table,
+                "View analytics",
+                analyticsUrl
+        );
+
+        sendHtml(admin.getEmail(), subject, html);
+    }
+
     // ============================================================
     //  HTML builders
     // ============================================================
@@ -338,6 +382,77 @@ public class EmailService {
                 .append(escape(code)).append("</div>")
                 .append("</td></tr></table>");
         return sb.toString();
+    }
+
+    /**
+     * Two-column key-value table used inside the bottleneck alert.
+     * Highlights the two numbers that justify the alert (stuck count + avg hours)
+     * in red so the message reads at a glance.
+     */
+    private String bottleneckTable(
+            WorkflowAnalyticsResponse analytics,
+            WorkflowAnalyticsResponse.StepAnalytics step,
+            String stepLabel) {
+
+        String sessionSuffix = analytics.getSession() != null
+                ? " (" + escape(analytics.getSession()) + ")"
+                : "";
+
+        double avgHours = step.getAvgHoursOnStep() != null ? step.getAvgHoursOnStep() : 0;
+        long stuck = step.getCurrentlyOnCount() != null ? step.getCurrentlyOnCount() : 0;
+        long completed = step.getCompletedCount() != null ? step.getCompletedCount() : 0;
+
+        StringBuilder sb = new StringBuilder(1024);
+
+        sb.append("<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" ")
+                .append("style=\"background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;\">")
+                .append("<tr><td style=\"padding:16px 18px;\">")
+
+                .append(row("Workflow",
+                        escape(analytics.getWorkflowName()) + sessionSuffix))
+                .append(row("Step",
+                        step.getOrder() + " — " + escape(stepLabel)))
+                .append(row("Queue",
+                        escape(step.getQueueName())))
+
+                .append(rowHighlighted("Students stuck",
+                        String.valueOf(stuck)))
+                .append(rowHighlighted("Avg time per student",
+                        formatHours(avgHours)))
+                .append(row("Already completed", String.valueOf(completed)))
+
+                .append("</td></tr></table>");
+
+        return sb.toString();
+    }
+
+    private String row(String label, String value) {
+        return "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" " +
+                "style=\"margin:0 0 10px 0;\"><tr>" +
+                "<td style=\"width:45%;padding:2px 0;font-size:12px;color:#64748b;vertical-align:top;\">"
+                + escape(label) + "</td>" +
+                "<td style=\"padding:2px 0;font-size:13px;font-weight:600;color:#0f172a;vertical-align:top;\">"
+                + value + "</td>" +
+                "</tr></table>";
+    }
+
+    private String rowHighlighted(String label, String value) {
+        return "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" " +
+                "style=\"margin:0 0 10px 0;\"><tr>" +
+                "<td style=\"width:45%;padding:2px 0;font-size:12px;color:#64748b;vertical-align:top;\">"
+                + escape(label) + "</td>" +
+                "<td style=\"padding:2px 0;font-size:15px;font-weight:700;color:#dc2626;vertical-align:top;\">"
+                + value + "</td>" +
+                "</tr></table>";
+    }
+
+    /** Format an hours value into a readable string: "27.5h" or "3.2 days". */
+    private String formatHours(double hours) {
+        if (hours < 48) {
+            return String.format("%.1f hours", hours);
+        }
+        double days = hours / 24.0;
+        return String.format("%.1f days", days);
     }
 
     private String firstName(User user) {

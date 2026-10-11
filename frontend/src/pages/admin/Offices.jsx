@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Building2, MapPin, Users, ListOrdered, Search, X, Ticket, Pencil,
@@ -41,12 +41,10 @@ function OfficeCard({ office, onEdit, onOpen }) {
                         </div>
                     </button>
                     <div className="flex shrink-0 items-center gap-1">
-                        {!office.isActive && (
-                            <Badge variant="default">Inactive</Badge>
-                        )}
+                        {!office.isActive && <Badge variant="default">Inactive</Badge>}
                         <button
                             onClick={onEdit}
-                            className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
+                            className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                             aria-label="Edit office"
                         >
                             <Pencil className="h-3.5 w-3.5" />
@@ -62,7 +60,7 @@ function OfficeCard({ office, onEdit, onOpen }) {
 
                 <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
                     <div>
-                        <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                        <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                             <ListOrdered className="h-3 w-3" /> Services
                         </div>
                         <div className="mt-1 text-base font-bold text-brand-600 dark:text-brand-400">
@@ -70,7 +68,7 @@ function OfficeCard({ office, onEdit, onOpen }) {
                         </div>
                     </div>
                     <div>
-                        <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                        <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                             <Users className="h-3 w-3" /> Staff
                         </div>
                         <div className="mt-1 text-base font-bold text-sky-600 dark:text-sky-400">
@@ -78,7 +76,7 @@ function OfficeCard({ office, onEdit, onOpen }) {
                         </div>
                     </div>
                     <div>
-                        <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                        <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                             <Ticket className="h-3 w-3" /> Waiting
                         </div>
                         <div className="mt-1 text-base font-bold text-amber-600 dark:text-amber-400">
@@ -89,7 +87,7 @@ function OfficeCard({ office, onEdit, onOpen }) {
 
                 <button
                     onClick={onOpen}
-                    className="mt-3 flex items-center gap-1 self-start text-xs font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400"
+                    className="mt-3 flex items-center gap-1 self-start text-xs font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
                 >
                     View services
                     <ArrowRight className="h-3.5 w-3.5" />
@@ -100,6 +98,7 @@ function OfficeCard({ office, onEdit, onOpen }) {
 }
 
 function OfficeDetail({ office, queues, onClose }) {
+    const navigate = useNavigate()
     const services = queues.filter((q) => q.officeId === office.id)
 
     return (
@@ -161,18 +160,22 @@ function OfficeDetail({ office, queues, onClose }) {
                         </h3>
 
                         {services.length === 0 ? (
-                            <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-800">
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    No services yet.
-                                </p>
-                                <Link
-                                    to="/admin/queues"
-                                    className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline"
-                                >
-                                    <Plus className="h-3 w-3" />
-                                    Create a service
-                                </Link>
-                            </div>
+                            <EmptyState
+                                icon={ListOrdered}
+                                variant="info"
+                                size="sm"
+                                title="No services yet"
+                                description="Add services to this office so students can join them."
+                                action={
+                                    <Button
+                                        icon={Plus}
+                                        size="sm"
+                                        onClick={() => navigate('/admin/queues')}
+                                    >
+                                        Create service
+                                    </Button>
+                                }
+                            />
                         ) : (
                             <div className="space-y-3">
                                 {services.map((q) => (
@@ -197,19 +200,19 @@ function OfficeDetail({ office, queues, onClose }) {
                                         </div>
 
                                         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                      <span className="flex items-center gap-1 font-bold text-brand-600 dark:text-brand-400">
-                        <Users className="h-3 w-3" />
-                          {q.waitingCount ?? 0} waiting
-                      </span>
+                                            <span className="flex items-center gap-1 font-bold text-brand-600 dark:text-brand-400">
+                                                <Users className="h-3 w-3" />
+                                                {q.waitingCount ?? 0} waiting
+                                            </span>
                                             <span className="flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400">
-                        <Ticket className="h-3 w-3" />
-                        ~{q.estimatedMinutes ?? 0} min
-                      </span>
+                                                <Ticket className="h-3 w-3" />
+                                                ~{q.estimatedMinutes ?? 0} min
+                                            </span>
                                             {q.staffCount > 0 && (
                                                 <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
-                          <Users className="h-3 w-3" />
+                                                    <Users className="h-3 w-3" />
                                                     {q.staffCount} staff
-                        </span>
+                                                </span>
                                             )}
                                         </div>
 
@@ -224,11 +227,11 @@ function OfficeDetail({ office, queues, onClose }) {
                                                             key={s.id}
                                                             className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-300"
                                                         >
-                              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-brand-600 text-[8px] font-bold text-white">
-                                {s.fullName?.slice(0, 1).toUpperCase()}
-                              </span>
+                                                            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-brand-600 text-[8px] font-bold text-white">
+                                                                {s.fullName?.slice(0, 1).toUpperCase()}
+                                                            </span>
                                                             {s.fullName}
-                            </span>
+                                                        </span>
                                                     ))}
                                                 </div>
                                             </div>
@@ -340,6 +343,7 @@ export default function Offices() {
             {offices.length === 0 ? (
                 <EmptyState
                     icon={Building2}
+                    variant="info"
                     title="No offices yet"
                     description="Create your first office — Bursary, Registry, Library — then add services under it."
                     action={<Button icon={Plus} onClick={openCreate}>Create office</Button>}
@@ -349,7 +353,11 @@ export default function Offices() {
                     icon={Search}
                     title="No matches"
                     description="Try a different search term."
-                    action={<Button variant="secondary" onClick={() => setSearch('')}>Clear search</Button>}
+                    action={
+                        <Button variant="secondary" onClick={() => setSearch('')}>
+                            Clear search
+                        </Button>
+                    }
                 />
             ) : (
                 <motion.div

@@ -1,0 +1,500 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
+import {
+    Activity, Users, ListOrdered, Clock, RefreshCw, AlertTriangle,
+    Search, Building2, TrendingUp, Filter,
+} from 'lucide-react'
+import api from '../../api/axios'
+import Card from '../../components/ui/Card'
+import Badge from '../../components/ui/Badge'
+import EmptyState from '../../components/ui/EmptyState'
+import PageHeader from '../../components/layout/PageHeader'
+import { SkeletonBox, SkeletonSettingsCard } from '../../components/ui/Skeleton'
+import { useToastStore } from '../../store/toastStore'
+import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
+
+/* ------------------------------------------------------------------ */
+/*  Level palettes                                                     */
+/* ------------------------------------------------------------------ */
+
+const LEVEL_STYLES = {
+    LOW: {
+        chip: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900',
+        bar: 'bg-emerald-500',
+        label: 'Low load',
+    },
+    MEDIUM: {
+        chip: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900',
+        bar: 'bg-amber-500',
+        label: 'Moderate',
+    },
+    HIGH: {
+        chip: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-900',
+        bar: 'bg-orange-500',
+        label: 'High load',
+    },
+    CRITICAL: {
+        chip: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900',
+        bar: 'bg-rose-500',
+        label: 'Critical',
+    },
+}
+
+const LEVEL_ORDER = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 }
+
+function levelStyle(level) {
+    return LEVEL_STYLES[level] || LEVEL_STYLES.LOW
+}
+
+function formatHours(minutes) {
+    if (!minutes || minutes <= 0) return '—'
+    if (minutes < 60) return `${minutes} min`
+    const h = Math.floor(minutes / 60)
+    const m = minutes % 60
+    return m > 0 ? `${h}h ${m}m` : `${h}h`
+}
+
+/* ------------------------------------------------------------------ */
+/*  Skeleton                                                           */
+/* ------------------------------------------------------------------ */
+
+function WorkloadSkeleton() {
+    return (
+        <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                    <div
+                        key={i}
+                        className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+                    >
+                        <SkeletonBox className="h-3 w-20" />
+                        <SkeletonBox className="mt-3 h-7 w-16" />
+                        <SkeletonBox className="mt-2 h-3 w-24" />
+                    </div>
+                ))}
+            </div>
+            <SkeletonSettingsCard />
+            <SkeletonSettingsCard />
+        </div>
+    )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Summary tile                                                       */
+/* ------------------------------------------------------------------ */
+
+function SummaryTile({ label, value, hint, icon: Icon, accent, valueColor }) {
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+        >
+            <Card className="flex h-full flex-col">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                        <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                            {label}
+                        </div>
+                        <div className={`mt-2 text-3xl font-bold tracking-tight ${valueColor}`}>
+                            {value}
+                        </div>
+                        {hint && (
+                            <div className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                                {hint}
+                            </div>
+                        )}
+                    </div>
+                    {Icon && (
+                        <div
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${accent}`}
+                        >
+                            <Icon className="h-5 w-5" />
+                        </div>
+                    )}
+                </div>
+            </Card>
+        </motion.div>
+    )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Queue row inside an office                                         */
+/* ------------------------------------------------------------------ */
+
+function QueueRow({ q, showRatioBar }) {
+    const s = levelStyle(q.level)
+    return (
+        <div className="grid grid-cols-12 items-center gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0 dark:border-slate-800">
+            <div className="col-span-4 min-w-0">
+                <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                    {q.queueName}
+                </div>
+                {!q.isOpen && (
+                    <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                        Closed
+                    </div>
+                )}
+            </div>
+
+            <div className="col-span-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {q.waitingCount}
+            </div>
+
+            <div className="col-span-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {q.staffCount}
+            </div>
+
+            <div className="col-span-2">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold tabular-nums text-slate-900 dark:text-slate-100">
+                        {q.ratio.toFixed(1)}
+                    </span>
+                    {showRatioBar && (
+                        <div className="h-1.5 w-10 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                            <div
+                                className={`h-full ${s.bar}`}
+                                style={{
+                                    width: `${Math.min(100, (q.ratio / 20) * 100)}%`,
+                                }}
+                            />
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className="col-span-2 text-right text-xs font-medium text-slate-500 dark:text-slate-400">
+                {formatHours(q.estWaitMinutes)}
+            </div>
+        </div>
+    )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Office card                                                        */
+/* ------------------------------------------------------------------ */
+
+function OfficeCard({ office }) {
+    const s = levelStyle(office.level)
+    const criticalQueues = office.queues.filter(
+        (q) => q.level === 'CRITICAL' || q.level === 'HIGH'
+    ).length
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+        >
+            <Card padded={false}>
+                {/* Header */}
+                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+                    <div className="flex min-w-0 items-start gap-3">
+                        <div
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border ${s.chip}`}
+                        >
+                            <Building2 className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                            <h3 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+                                {office.officeName}
+                            </h3>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                <span>
+                                    {office.queueCount}{' '}
+                                    {office.queueCount === 1 ? 'service' : 'services'}
+                                </span>
+                                <span className="text-slate-300 dark:text-slate-700">·</span>
+                                <span>
+                                    Ratio{' '}
+                                    <strong className="text-slate-700 dark:text-slate-300">
+                                        {office.ratio.toFixed(1)}
+                                    </strong>
+                                </span>
+                                <span className="text-slate-300 dark:text-slate-700">·</span>
+                                <span>
+                                    Est wait{' '}
+                                    <strong className="text-slate-700 dark:text-slate-300">
+                                        {formatHours(office.estWaitMinutes)}
+                                    </strong>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                        <span
+                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${s.chip}`}
+                        >
+                            {office.level === 'CRITICAL' && (
+                                <AlertTriangle className="h-2.5 w-2.5" />
+                            )}
+                            {s.label}
+                        </span>
+                        {criticalQueues > 0 && (
+                            <span className="text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                                {criticalQueues}{' '}
+                                {criticalQueues === 1 ? 'queue' : 'queues'} hot
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Table header */}
+                <div className="grid grid-cols-12 gap-3 border-b border-slate-100 bg-slate-50/60 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
+                    <div className="col-span-4">Service</div>
+                    <div className="col-span-2">Waiting</div>
+                    <div className="col-span-2">Staff</div>
+                    <div className="col-span-2">Ratio</div>
+                    <div className="col-span-2 text-right">Est. wait</div>
+                </div>
+
+                {/* Rows */}
+                <div>
+                    {office.queues.map((q) => (
+                        <QueueRow key={q.queueId} q={q} showRatioBar />
+                    ))}
+                </div>
+            </Card>
+        </motion.div>
+    )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Main page                                                          */
+/* ------------------------------------------------------------------ */
+
+export default function Workload() {
+    const { push } = useToastStore()
+    const [data, setData] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const [refreshing, setRefreshing] = useState(false)
+    const [error, setError] = useState(null)
+    const [search, setSearch] = useState('')
+    const [levelFilter, setLevelFilter] = useState('ALL')
+
+    const load = useCallback(
+        async (silent = false) => {
+            if (!silent) setLoading(true)
+            else setRefreshing(true)
+            setError(null)
+            try {
+                const res = await api.get('/api/admin/workload')
+                setData(res.data?.data || null)
+            } catch (err) {
+                const msg = err.response?.data?.message || 'Failed to load workload'
+                setError(msg)
+                if (!silent) push({ type: 'error', message: msg })
+            } finally {
+                setLoading(false)
+                setRefreshing(false)
+            }
+        },
+        [push]
+    )
+
+    useEffect(() => {
+        load()
+    }, [load])
+
+    useAdaptivePoll(() => load(true), { fastMs: 15000, slowMs: 60000 })
+
+    const filteredOffices = useMemo(() => {
+        if (!data?.offices) return []
+        let list = data.offices
+        if (levelFilter !== 'ALL') {
+            list = list.filter((o) => o.level === levelFilter)
+        }
+        if (search.trim()) {
+            const s = search.toLowerCase()
+            list = list
+                .map((o) => {
+                    const nameMatch = o.officeName.toLowerCase().includes(s)
+                    const matchingQueues = o.queues.filter((q) =>
+                        q.queueName.toLowerCase().includes(s)
+                    )
+                    if (nameMatch) return o
+                    if (matchingQueues.length > 0) {
+                        return { ...o, queues: matchingQueues }
+                    }
+                    return null
+                })
+                .filter(Boolean)
+        }
+        return list
+    }, [data, search, levelFilter])
+
+    if (loading) {
+        return (
+            <>
+                <PageHeader
+                    title="Workload"
+                    description="See where students are piling up vs how many staff serve them."
+                />
+                <WorkloadSkeleton />
+            </>
+        )
+    }
+
+    if (error || !data) {
+        return (
+            <>
+                <PageHeader
+                    title="Workload"
+                    description="See where students are piling up vs how many staff serve them."
+                />
+                <EmptyState
+                    icon={AlertTriangle}
+                    variant="danger"
+                    title="Couldn't load workload"
+                    description={error || 'Something went wrong.'}
+                    action={
+                        <button
+                            onClick={() => load()}
+                            className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+                        >
+                            <RefreshCw className="h-3.5 w-3.5" />
+                            Try again
+                        </button>
+                    }
+                />
+            </>
+        )
+    }
+
+    const s = data.summary
+
+    return (
+        <>
+            <PageHeader
+                title="Workload"
+                description="See where students are piling up vs how many staff serve them."
+                action={
+                    <button
+                        onClick={() => load(true)}
+                        disabled={refreshing}
+                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                    >
+                        <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </button>
+                }
+            />
+
+            {/* Summary tiles */}
+            <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                <SummaryTile
+                    label="Students waiting"
+                    value={s.totalWaiting}
+                    hint={`Across ${s.totalQueues} ${s.totalQueues === 1 ? 'service' : 'services'}`}
+                    icon={Users}
+                    accent="bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400"
+                    valueColor="text-brand-600 dark:text-brand-400"
+                />
+                <SummaryTile
+                    label="Staff assignments"
+                    value={s.totalStaff}
+                    hint="Staff-to-queue assignments"
+                    icon={Activity}
+                    accent="bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400"
+                    valueColor="text-sky-600 dark:text-sky-400"
+                />
+                <SummaryTile
+                    label="Worst office"
+                    value={s.worstOfficeName || '—'}
+                    hint={`${s.worstOfficeWaiting} waiting`}
+                    icon={TrendingUp}
+                    accent="bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+                    valueColor="text-amber-600 dark:text-amber-400"
+                />
+                <SummaryTile
+                    label="Overall load"
+                    value={levelStyle(s.overallLevel).label}
+                    hint={`${data.offices.length} offices`}
+                    icon={AlertTriangle}
+                    accent={
+                        s.overallLevel === 'CRITICAL'
+                            ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
+                            : s.overallLevel === 'HIGH'
+                                ? 'bg-orange-50 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400'
+                                : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
+                    }
+                    valueColor={
+                        s.overallLevel === 'CRITICAL'
+                            ? 'text-rose-600 dark:text-rose-400'
+                            : s.overallLevel === 'HIGH'
+                                ? 'text-orange-600 dark:text-orange-400'
+                                : 'text-emerald-600 dark:text-emerald-400'
+                    }
+                />
+            </div>
+
+            {/* Filter bar */}
+            {data.offices.length > 0 && (
+                <div className="mb-5 flex flex-wrap items-center gap-3">
+                    <div className="relative min-w-0 flex-1 sm:max-w-xs">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Search offices or services"
+                            className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                        />
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        <Filter className="mr-1 h-3.5 w-3.5 text-slate-400" />
+                        {['ALL', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map((lvl) => (
+                            <button
+                                key={lvl}
+                                type="button"
+                                onClick={() => setLevelFilter(lvl)}
+                                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                                    levelFilter === lvl
+                                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                                        : 'bg-white text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+                                }`}
+                            >
+                                {lvl === 'ALL' ? 'All' : levelStyle(lvl).label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* List */}
+            {data.offices.length === 0 ? (
+                <EmptyState
+                    icon={Activity}
+                    variant="info"
+                    title="No workload data yet"
+                    description="Once you have services and staff assigned, this dashboard will show you where the pressure is."
+                />
+            ) : filteredOffices.length === 0 ? (
+                <EmptyState
+                    icon={Search}
+                    title="No offices match"
+                    description="Try a different search term or clear the level filter."
+                    action={
+                        <button
+                            onClick={() => {
+                                setSearch('')
+                                setLevelFilter('ALL')
+                            }}
+                            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
+                        >
+                            Clear filters
+                        </button>
+                    }
+                />
+            ) : (
+                <div className="space-y-4">
+                    {filteredOffices.map((o) => (
+                        <OfficeCard key={o.officeId} office={o} />
+                    ))}
+                </div>
+            )}
+        </>
+    )
+}

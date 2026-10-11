@@ -68,6 +68,8 @@ public class TicketService {
         }
 
         workflowService.assertCanJoinQueue(userId, queueId);
+        workflowService.assertCanJoinQueue(userId, queueId);
+        workflowService.autoEnrollOnQueueJoin(userId, queueId);   // ← NEW
 
         List<Ticket> active = ticketRepository.findActiveByUserId(userId);
         if (!active.isEmpty()) {
@@ -367,9 +369,10 @@ public class TicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
         ensureStaffOwnsQueue(staffUserId, ticket.getQueue().getId());
 
-        if (ticket.getStatus() != TicketStatus.SERVING
-                && ticket.getStatus() != TicketStatus.CALLED) {
-            throw new BadRequestException("Only SERVING or CALLED tickets can be completed");
+        if (ticket.getStatus() != TicketStatus.SERVING) {
+            throw new BadRequestException(
+                    "Start the service before completing the ticket. "
+                            + "Current status: " + ticket.getStatus() + ".");
         }
         ticket.setStatus(TicketStatus.COMPLETED);
         ticket.setCompletedAt(LocalDateTime.now());
@@ -385,7 +388,6 @@ public class TicketService {
                 "Service complete",
                 "Thanks for using UniQueue. Please rate your experience.");
 
-        // NEW: also email the completion
         emailService.sendTicketCompleted(ticket.getUser(), ticket, ticket.getQueue());
 
         auditService.record(staffUserId, ticket.getQueue().getUniversity().getId(),

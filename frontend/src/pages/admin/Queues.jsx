@@ -196,7 +196,6 @@ export default function Queues() {
         }
     }
 
-    // Group queues by office — never produces an "unassigned" bucket
     const groups = (() => {
         const map = new Map()
         for (const q of queues) {
@@ -229,7 +228,12 @@ export default function Queues() {
         : groups
 
     if (loading) {
-        return <div className="space-y-4"><SkeletonQueueGrid count={6} /></div>
+        return (
+            <>
+                <PageHeader title="Services" description="Create and manage the services students can join." />
+                <SkeletonQueueGrid count={6} />
+            </>
+        )
     }
 
     const QueueCard = ({ q }) => (
@@ -237,7 +241,9 @@ export default function Queues() {
             <Card className="flex h-full flex-col">
                 <div className="mb-3 flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                        <h3 className="text-base font-semibold text-slate-900">{q.name}</h3>
+                        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                            {q.name}
+                        </h3>
                         {q.matricRequired && (
                             <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
                                 <GraduationCap className="h-3 w-3" />
@@ -251,31 +257,33 @@ export default function Queues() {
                 </div>
 
                 {q.location && (
-                    <p className="flex items-center gap-1.5 text-sm text-slate-500">
+                    <p className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
                         <MapPin className="h-3.5 w-3.5" />
                         {q.location}
                     </p>
                 )}
 
                 {q.description && (
-                    <p className="mt-2 line-clamp-2 text-sm text-slate-600">{q.description}</p>
+                    <p className="mt-2 line-clamp-2 text-sm text-slate-600 dark:text-slate-400">
+                        {q.description}
+                    </p>
                 )}
 
-                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-xs">
+                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-xs dark:border-slate-800">
                     <div>
-                        <div className="text-slate-500">Capacity</div>
+                        <div className="text-slate-500 dark:text-slate-400">Capacity</div>
                         <div className="mt-0.5 text-sm font-bold text-brand-600 dark:text-brand-400">
                             {q.maxCapacity}
                         </div>
                     </div>
                     <div>
-                        <div className="text-slate-500">Avg. min</div>
+                        <div className="text-slate-500 dark:text-slate-400">Avg. min</div>
                         <div className="mt-0.5 text-sm font-bold text-amber-600 dark:text-amber-400">
                             {q.averageServiceMinutes}
                         </div>
                     </div>
                     <div>
-                        <div className="text-slate-500">Staff</div>
+                        <div className="text-slate-500 dark:text-slate-400">Staff</div>
                         <div className="mt-0.5 text-sm font-bold text-sky-600 dark:text-sky-400">
                             {q.staffCount ?? 0}
                         </div>
@@ -283,14 +291,14 @@ export default function Queues() {
                 </div>
 
                 {q.opensAt && q.closesAt && (
-                    <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
+                    <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                         <Clock className="h-3.5 w-3.5" />
                         Open {String(q.opensAt).slice(0, 5)} – {String(q.closesAt).slice(0, 5)}
                     </div>
                 )}
 
                 {q.operatingDays && (
-                    <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500">
+                    <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                         <CalendarDays className="h-3.5 w-3.5" />
                         {formatDays(parseDays(q.operatingDays))}
                     </div>
@@ -302,7 +310,7 @@ export default function Queues() {
                     </Button>
                     <button
                         onClick={() => setDeleteTarget(q)}
-                        className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                        className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
                         aria-label="Delete service"
                     >
                         <Trash2 className="h-4 w-4" />
@@ -332,7 +340,7 @@ export default function Queues() {
                 {showForm && (
                     <motion.div id="queue-form" variants={expand} initial="initial" animate="animate" exit="exit" className="mb-8 overflow-hidden">
                         <Card>
-                            <h3 className="mb-4 text-base font-semibold text-slate-900">
+                            <h3 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">
                                 {editingId ? 'Edit service' : 'Create service'}
                             </h3>
                             <form onSubmit={save} className="space-y-4">
@@ -387,7 +395,6 @@ export default function Queues() {
                                     <Input label="Closes at" type="time" value={form.closesAt} onChange={setField('closesAt')} />
                                 </div>
 
-                                {/* ─── Operating days ─── */}
                                 <div className="rounded-lg border border-slate-200 p-4 dark:border-slate-700">
                                     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                                         <div>
@@ -448,7 +455,7 @@ export default function Queues() {
                                     </div>
 
                                     {(!form.operatingDays || form.operatingDays.length === 0) && (
-                                        <p className="mt-2 text-xs font-medium text-rose-600">
+                                        <p className="mt-2 text-xs font-medium text-rose-600 dark:text-rose-400">
                                             Pick at least one day — otherwise students can never join.
                                         </p>
                                     )}
@@ -503,8 +510,9 @@ export default function Queues() {
             {queues.length === 0 ? (
                 <EmptyState
                     icon={LayoutGrid}
+                    variant="info"
                     title="No services yet"
-                    description="Create your first service — students will see it under its office."
+                    description="Create your first service — students will see it grouped under its office."
                     action={<Button icon={Plus} onClick={() => openCreate()}>Create service</Button>}
                 />
             ) : filteredQueues.length === 0 ? (
@@ -512,7 +520,11 @@ export default function Queues() {
                     icon={Search}
                     title="No services match"
                     description="Try a different search term."
-                    action={<Button variant="secondary" onClick={() => setSearch('')}>Clear search</Button>}
+                    action={
+                        <Button variant="secondary" onClick={() => setSearch('')}>
+                            Clear search
+                        </Button>
+                    }
                 />
             ) : (
                 <div className="space-y-8">
@@ -525,7 +537,7 @@ export default function Queues() {
                         >
                             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2 dark:border-slate-700">
                                 <div className="flex items-center gap-2">
-                                    <Building2 className="h-4 w-4 text-brand-600" />
+                                    <Building2 className="h-4 w-4 text-brand-600 dark:text-brand-400" />
                                     <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300">
                                         {group.label}
                                     </h4>
@@ -535,7 +547,7 @@ export default function Queues() {
                                 </div>
                                 <button
                                     onClick={() => openCreate(group.queues[0]?.officeId || '')}
-                                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-brand-600 transition-colors hover:bg-brand-50"
+                                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-brand-600 transition-colors hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40"
                                 >
                                     <Plus className="h-3.5 w-3.5" />
                                     Add to {group.label}

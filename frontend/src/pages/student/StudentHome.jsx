@@ -1,14 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     Calendar, Ticket, FileText, CheckCircle2, Building2,
+    Route as RouteIcon, ArrowRight, Clock, PartyPopper,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
-import WorkflowProgressCard from '../../components/student/WorkflowProgressCard'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { groupQueuesByOffice } from '../../lib/groupQueues'
+import { syncBus } from '../../lib/syncBus'
+
+/* ------------------------------------------------------------------ */
 
 function StatTile({ label, value, icon: Icon, accent, valueColor, to, ctaLabel, delay }) {
     return (
@@ -113,28 +116,208 @@ function LiveQueueCard({ office }) {
     )
 }
 
+/* ------------------------------------------------------------------ */
+/*  Clearance card — handles BOTH in-progress and just-completed       */
+/* ------------------------------------------------------------------ */
+
+function ActiveClearanceCard({ data }) {
+    const isCompleted = data.status === 'COMPLETED'
+    const pct = data.progressPercent ?? 0
+    const next = data.nextAction
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className={`relative overflow-hidden rounded-xl border p-5 ${
+                isCompleted
+                    ? 'border-emerald-300 bg-gradient-to-br from-emerald-50 to-white dark:border-emerald-700 dark:from-emerald-950/40 dark:to-slate-900'
+                    : 'border-brand-300 bg-gradient-to-br from-brand-50 to-white dark:border-brand-700 dark:from-brand-950/40 dark:to-slate-900'
+            }`}
+        >
+            <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3">
+                    <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white shadow-sm ${
+                            isCompleted
+                                ? 'bg-gradient-to-br from-emerald-500 to-emerald-600'
+                                : 'bg-gradient-to-br from-brand-500 to-brand-600'
+                        }`}
+                    >
+                        {isCompleted ? (
+                            <PartyPopper className="h-5 w-5" />
+                        ) : (
+                            <RouteIcon className="h-5 w-5" />
+                        )}
+                    </div>
+
+                    <div className="min-w-0">
+                        <div
+                            className={`text-[10px] font-bold uppercase tracking-widest ${
+                                isCompleted
+                                    ? 'text-emerald-600 dark:text-emerald-400'
+                                    : 'text-brand-600 dark:text-brand-400'
+                            }`}
+                        >
+                            {isCompleted ? 'Clearance complete' : 'Active clearance'}
+                        </div>
+                        <h3 className="mt-0.5 truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+                            {data.workflowName}
+                        </h3>
+                        {data.session && (
+                            <div className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                <Clock className="h-3 w-3" />
+                                Session {data.session}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <span
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                        isCompleted
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                            : 'bg-brand-100 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300'
+                    }`}
+                >
+                    {isCompleted ? 'Done' : `${pct}%`}
+                </span>
+            </div>
+
+            {/* Progress bar */}
+            <div className="mt-4">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                        className={`h-full rounded-full ${
+                            isCompleted
+                                ? 'bg-gradient-to-r from-emerald-500 to-emerald-600'
+                                : 'bg-gradient-to-r from-brand-500 to-brand-600'
+                        }`}
+                    />
+                </div>
+                <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                    <strong className="text-slate-700 dark:text-slate-300">{data.completedSteps}</strong>
+                    {' '}of{' '}
+                    <strong className="text-slate-700 dark:text-slate-300">{data.totalSteps}</strong>
+                    {' '}steps complete
+                </div>
+            </div>
+
+            {/* Next action — only when in progress */}
+            {!isCompleted && next && (
+                <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-brand-200 bg-white/70 px-3 py-2.5 dark:border-brand-800 dark:bg-slate-900/60">
+                    <div className="min-w-0">
+                        <div className="text-[10px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">
+                            Next step
+                        </div>
+                        <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {next.label || next.queueName}
+                        </div>
+                        {next.officeName && (
+                            <div className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                                {next.officeName}
+                            </div>
+                        )}
+                    </div>
+                    <Link
+                        to="/student/clearance"
+                        className="shrink-0 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-brand-700"
+                    >
+                        Continue
+                    </Link>
+                </div>
+            )}
+
+            {/* Completion banner — only when just completed */}
+            {isCompleted && (
+                <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-white/70 px-3 py-2.5 dark:border-emerald-800 dark:bg-slate-900/60">
+                    <div className="text-xs text-emerald-800 dark:text-emerald-300">
+                        🎉 All steps done. Thanks for completing your clearance.
+                    </div>
+                    <Link
+                        to="/student/workflows"
+                        className="shrink-0 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 dark:border-emerald-800 dark:bg-slate-900 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
+                    >
+                        View history
+                    </Link>
+                </div>
+            )}
+
+            {/* Footer link */}
+            <div className="mt-3 flex justify-end">
+                <Link
+                    to="/student/workflows"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 transition-colors hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400"
+                >
+                    All workflows
+                    <ArrowRight className="h-3 w-3" />
+                </Link>
+            </div>
+        </motion.div>
+    )
+}
+
+/* ------------------------------------------------------------------ */
+
 export default function StudentHome() {
     const [queues, setQueues] = useState([])
     const [stats, setStats] = useState(null)
     const [appointments, setAppointments] = useState([])
     const [documents, setDocuments] = useState([])
-    const [workflows, setWorkflows] = useState([])
+    const [activeClearance, setActiveClearance] = useState(null)
     const [loading, setLoading] = useState(true)
+
+    // Resets on every mount (page load, nav away + back).
+    // Tracks whether we saw the workflow as IN_PROGRESS during this mount.
+    const sawInProgressRef = useRef(false)
 
     const load = useCallback(async () => {
         try {
-            const [q, s, a, d, wf] = await Promise.all([
+            const [q, s, a, d, mp] = await Promise.all([
                 api.get('/api/queues').catch(() => ({ data: { data: [] } })),
                 api.get('/api/user/stats').catch(() => ({ data: { data: null } })),
                 api.get('/api/user/appointments').catch(() => ({ data: { data: [] } })),
                 api.get('/api/user/documents').catch(() => ({ data: { data: [] } })),
-                api.get('/api/user/workflows').catch(() => ({ data: { data: [] } })),
+                api.get('/api/student/workflows/my-progress')
+                    .catch(() => ({ data: { data: null } })),
             ])
             setQueues(q.data?.data || [])
             setStats(s.data?.data || null)
             setAppointments(a.data?.data || [])
             setDocuments(d.data?.data || [])
-            setWorkflows(wf.data?.data || [])
+
+            const mpData = mp.data?.data || null
+
+            if (!mpData) {
+                // No enrollment at all
+                setActiveClearance(null)
+                return
+            }
+
+            if (mpData.status === 'IN_PROGRESS') {
+                // Live workflow — remember we saw it active
+                sawInProgressRef.current = true
+                setActiveClearance(mpData)
+                return
+            }
+
+            if (mpData.status === 'COMPLETED') {
+                // Only show if it completed *during this page visit*.
+                // Fresh load or after navigation → ref is false → hidden.
+                if (sawInProgressRef.current) {
+                    setActiveClearance(mpData)
+                } else {
+                    setActiveClearance(null)
+                }
+                return
+            }
+
+            // ABANDONED or anything else — hide
+            setActiveClearance(null)
         } catch {
             // silent
         } finally {
@@ -160,12 +343,6 @@ export default function StudentHome() {
             })
             .sort((a, b) => a.name.localeCompare(b.name))
     }, [queues])
-
-    // Only show active clearances on the dashboard — completed ones live in the workflows tab
-    const inProgressWorkflows = useMemo(
-        () => workflows.filter((w) => w.status === 'IN_PROGRESS'),
-        [workflows]
-    )
 
     const myAppointments = appointments.filter(
         (a) => a.status === 'BOOKED' || a.status === 'CONFIRMED'
@@ -218,8 +395,8 @@ export default function StudentHome() {
                 />
             </div>
 
-            {/* Active clearances */}
-            {inProgressWorkflows.length > 0 && (
+            {/* Clearance card — in-progress OR just-completed in this session */}
+            {activeClearance && (
                 <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -228,7 +405,9 @@ export default function StudentHome() {
                 >
                     <div className="mb-4 flex items-center justify-between">
                         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                            Active Clearances
+                            {activeClearance.status === 'COMPLETED'
+                                ? 'Clearance Complete'
+                                : 'Active Clearance'}
                         </h2>
                         <Link
                             to="/student/workflows"
@@ -237,11 +416,7 @@ export default function StudentHome() {
                             View all →
                         </Link>
                     </div>
-                    <div className="space-y-3">
-                        {inProgressWorkflows.slice(0, 2).map((w) => (
-                            <WorkflowProgressCard key={w.id} progress={w} />
-                        ))}
-                    </div>
+                    <ActiveClearanceCard data={activeClearance} />
                 </motion.div>
             )}
 
