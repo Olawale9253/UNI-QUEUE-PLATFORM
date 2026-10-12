@@ -28,7 +28,7 @@ const ROUTE_SUBTITLES = {
     '/student/offices': 'Browse every office and the services it offers.',
     '/student/history': 'Your past queue tickets and how long you waited.',
     '/student/appointments': 'Book and manage your appointments.',
-    '/student/clearance': 'Your current clearance step and what to do next.',
+    '/student/clearance': 'Your current progress and what to do next.',
     '/student/workflows': 'Browse and start any clearance process open to you.',
     '/student/documents': 'Your uploaded documents.',
     '/student/settings': 'Manage your profile, security, and preferences.',
@@ -48,7 +48,7 @@ export default function StudentDashboard() {
         tabs.push({ to: '/student/appointments', label: 'Appointments', icon: Calendar })
     }
     if (!university || university.featureWorkflows !== false) {
-        tabs.push({ to: '/student/clearance', label: 'My Clearance', icon: RouteIcon })
+        tabs.push({ to: '/student/clearance', label: 'My Progress', icon: RouteIcon })
         tabs.push({ to: '/student/workflows', label: 'Workflows', icon: ListOrdered })
     }
     if (!university || university.featureDocuments !== false) {
@@ -56,11 +56,9 @@ export default function StudentDashboard() {
     }
     tabs.push({ to: '/student/settings', label: 'Settings', icon: Settings })
 
-    // Subtitle picks the most specific match first so /student/workflows/123
-    // gets the clearance page subtitle rather than the workflows tab subtitle.
     const subtitle = (() => {
         if (location.pathname === '/student/clearance') {
-            return 'Your current clearance step and what to do next.'
+            return 'Your current progress and what to do next.'
         }
         if (location.pathname.startsWith('/student/workflows/')) {
             return 'Track your progress through this clearance step by step.'

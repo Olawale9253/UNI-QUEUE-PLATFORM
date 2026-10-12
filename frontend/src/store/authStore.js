@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import api from '../api/axios'
 import { useUniversityStore } from './universityStore'
+import { usePrefsStore } from './prefsStore'
 
 const TOKEN_KEY = 'uniqueue_token'
 const REFRESH_KEY = 'uniqueue_refresh_token'
@@ -28,15 +29,6 @@ function clearSession() {
     localStorage.removeItem('uniqueue_impersonation')
 }
 
-/**
- * If this browser already has a push subscription (from a previous session
- * or a different user), tell the backend it now belongs to the currently
- * logged-in user. Runs in the background — never blocks login.
- *
- * The browser subscription itself is per-device, not per-user, so this is
- * how we reassign ownership when different accounts log in on the same
- * device.
- */
 async function syncExistingPushSubscription() {
     if (typeof window === 'undefined') return
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
@@ -55,7 +47,6 @@ async function syncExistingPushSubscription() {
         })
         console.debug('[push] subscription synced for current user')
     } catch (err) {
-        // Push is best-effort — never let it block or break login
         console.debug('[push] re-sync skipped:', err?.message)
     }
 }
@@ -65,6 +56,7 @@ if (typeof window !== 'undefined') {
     window.addEventListener('storage', (e) => {
         if (e.key === TOKEN_KEY && e.newValue === null) {
             useUniversityStore.getState().reset()
+            usePrefsStore.getState().reset()
             useAuthStore.setState({ user: null, token: null })
             if (!window.location.pathname.startsWith('/login')) {
                 window.location.href = '/login'
@@ -96,13 +88,16 @@ export const useAuthStore = create((set, get) => ({
             persistSession(d.accessToken, d.refreshToken, user)
 
             useUniversityStore.getState().reset()
+            usePrefsStore.getState().reset()
             set({ token: d.accessToken, user, loading: false })
 
             if (d.role !== 'SUPER_ADMIN') {
                 useUniversityStore.getState().load()
             }
 
-            // Reassign any existing push subscription on this device to this user.
+            // Fresh prefs for the logged-in user
+            usePrefsStore.getState().load()
+
             syncExistingPushSubscription()
 
             return { success: true, role: d.role }
@@ -128,14 +123,15 @@ export const useAuthStore = create((set, get) => ({
             persistSession(d.accessToken, d.refreshToken, user)
 
             useUniversityStore.getState().reset()
+            usePrefsStore.getState().reset()
             set({ token: d.accessToken, user, loading: false })
 
             if (d.role !== 'SUPER_ADMIN') {
                 useUniversityStore.getState().load()
             }
 
-            // A user registering on a device that already had a subscription
-            // should also have it reassigned to them.
+            usePrefsStore.getState().load()
+
             syncExistingPushSubscription()
 
             return {
@@ -155,20 +151,17 @@ export const useAuthStore = create((set, get) => ({
         persistSession(token, refreshToken, user)
 
         useUniversityStore.getState().reset()
+        usePrefsStore.getState().reset()
         set({ token, user })
 
         if (user?.role && user.role !== 'SUPER_ADMIN') {
             useUniversityStore.getState().load()
         }
 
-        // Used by impersonation. The impersonated user's device should also
-        // receive their own pushes if the super admin had subscribed.
+        usePrefsStore.getState().load()
         syncExistingPushSubscription()
     },
 
-    /**
-     * Update tokens after a password change (backend returns fresh ones).
-     */
     updateTokens: (accessToken, refreshToken) => {
         if (accessToken) localStorage.setItem(TOKEN_KEY, accessToken)
         if (refreshToken) localStorage.setItem(REFRESH_KEY, refreshToken)
@@ -212,8 +205,8 @@ export const useAuthStore = create((set, get) => ({
     logout: () => {
         clearSession()
         useUniversityStore.getState().reset()
+        usePrefsStore.getState().reset()
         set({ user: null, token: null })
-        // The storage event will propagate the logout to other tabs automatically.
     },
 
     clearError: () => set({ error: null }),

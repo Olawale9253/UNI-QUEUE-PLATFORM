@@ -23,7 +23,9 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -42,6 +44,7 @@ public class TicketService {
     private final QueueScheduleService scheduleService;
     private final QueueService queueService;
     private final EmailService emailService;
+    private final EventService eventService;
 
     // ============================================================
     //  STUDENT
@@ -67,9 +70,15 @@ public class TicketService {
                             + ", closes at " + queue.getClosesAt() + ".");
         }
 
+        // Gate: if the student has an ACTIVE workflow and this queue is a
+        // non-current step of that workflow, reject. Plain standalone services
+        // (queues not part of the workflow) pass through untouched.
         workflowService.assertCanJoinQueue(userId, queueId);
-        workflowService.assertCanJoinQueue(userId, queueId);
-        workflowService.autoEnrollOnQueueJoin(userId, queueId);   // ← NEW
+
+        // NOTE: auto-enrollment on queue join was intentionally removed.
+        // Students who want the full clearance must explicitly Start the
+        // workflow from /student/workflows. Joining a queue does not commit
+        // them to a multi-step chain.
 
         List<Ticket> active = ticketRepository.findActiveByUserId(userId);
         if (!active.isEmpty()) {
@@ -106,6 +115,11 @@ public class TicketService {
         ticket = ticketRepository.save(ticket);
 
         recalculatePositions(queueId);
+
+        eventService.broadcastToUniversity(queue.getUniversity().getId(), "queue:updated",
+                Map.of("queueId", queueId, "reason", "ticket-joined"));
+        eventService.broadcastToUser(userId, "my-ticket:updated",
+                Map.of("ticketId", ticket.getId(), "status", initialStatus.name()));
 
         Ticket fresh = ticketRepository.findById(ticket.getId()).orElseThrow();
         int pos = fresh.getPosition() != null ? fresh.getPosition() : 1;
@@ -166,6 +180,12 @@ public class TicketService {
             promoteFromWaitlist(ticket.getQueue().getId());
         }
 
+        Long uniId = ticket.getQueue().getUniversity().getId();
+        eventService.broadcastToUniversity(uniId, "queue:updated",
+                Map.of("queueId", ticket.getQueue().getId(), "reason", "ticket-cancelled"));
+        eventService.broadcastToUser(userId, "my-ticket:updated",
+                Map.of("ticketId", ticketId, "status", "CANCELLED"));
+
         auditService.record(userId, ticket.getQueue().getUniversity().getId(),
                 AuditAction.TICKET_CANCELLED, "Ticket", ticketId, null);
     }
@@ -195,6 +215,12 @@ public class TicketService {
         ticketRepository.save(ticket);
 
         recalculatePositions(queueId);
+
+        Long uniId = ticket.getQueue().getUniversity().getId();
+        eventService.broadcastToUniversity(uniId, "queue:updated",
+                Map.of("queueId", queueId, "reason", "ticket-rescheduled"));
+        eventService.broadcastToUser(userId, "my-ticket:updated",
+                Map.of("ticketId", ticketId, "status", "WAITING"));
 
         notificationService.notify(ticket.getUser(), NotificationType.QUEUE_UPDATE,
                 "Turn rescheduled",
@@ -235,6 +261,12 @@ public class TicketService {
             promoteFromWaitlist(queueId);
         }
 
+        Long uniId = ticket.getQueue().getUniversity().getId();
+        eventService.broadcastToUniversity(uniId, "queue:updated",
+                Map.of("queueId", queueId, "reason", "ticket-skipped"));
+        eventService.broadcastToUser(userId, "my-ticket:updated",
+                Map.of("ticketId", ticketId, "status", "NO_SHOW"));
+
         notificationService.notify(ticket.getUser(), NotificationType.QUEUE_UPDATE,
                 "Turn skipped",
                 "Your ticket " + ticket.getTicketNumber() + " has been marked as skipped. "
@@ -274,9 +306,6 @@ public class TicketService {
 
         List<Ticket> called = ticketRepository.findCalledByQueueId(queueId);
 
-        // Only block if a ticket was called TODAY. Yesterday's stale CALLED tickets
-        // (left over because the sweeper no longer cancels them) must not block
-        // the next operating session.
         boolean hasActiveCalled = called.stream()
                 .anyMatch(t -> t.getCalledAt() != null
                         && t.getCalledAt().toLocalDate().equals(LocalDate.now()));
@@ -294,16 +323,22 @@ public class TicketService {
         next.setStatus(TicketStatus.CALLED);
         next.setCalledAt(LocalDateTime.now());
         next.setServedBy(staff);
+        next.setPosition(null);
         ticketRepository.save(next);
 
         recalculatePositions(queueId);
         promoteFromWaitlist(queueId);
 
+        Long uniId = next.getQueue().getUniversity().getId();
+        eventService.broadcastToUniversity(uniId, "queue:updated",
+                Map.of("queueId", queueId, "reason", "ticket-called"));
+        eventService.broadcastToUser(next.getUser().getId(), "my-ticket:updated",
+                Map.of("ticketId", next.getId(), "status", "CALLED"));
+
         notificationService.notify(next.getUser(), NotificationType.TICKET_CALLED,
                 "It's your turn!",
                 "Ticket " + next.getTicketNumber() + " is now being called at " + next.getQueue().getName() + ".");
 
-        // Also email — user may have the app closed.
         emailService.sendTicketCalled(next.getUser(), next, next.getQueue());
 
         auditService.record(staffUserId, next.getQueue().getUniversity().getId(),
@@ -327,15 +362,21 @@ public class TicketService {
         ticket.setStatus(TicketStatus.CALLED);
         ticket.setCalledAt(LocalDateTime.now());
         ticket.setServedBy(staff);
+        ticket.setPosition(null);
         ticketRepository.save(ticket);
         recalculatePositions(ticket.getQueue().getId());
         promoteFromWaitlist(ticket.getQueue().getId());
+
+        Long uniId = ticket.getQueue().getUniversity().getId();
+        eventService.broadcastToUniversity(uniId, "queue:updated",
+                Map.of("queueId", ticket.getQueue().getId(), "reason", "ticket-called"));
+        eventService.broadcastToUser(ticket.getUser().getId(), "my-ticket:updated",
+                Map.of("ticketId", ticket.getId(), "status", "CALLED"));
 
         notificationService.notify(ticket.getUser(), NotificationType.TICKET_CALLED,
                 "It's your turn!",
                 "Ticket " + ticket.getTicketNumber() + " is now being called.");
 
-        // FIX: this is a CALLED event, not completed
         emailService.sendTicketCalled(ticket.getUser(), ticket, ticket.getQueue());
 
         auditService.record(staffUserId, ticket.getQueue().getUniversity().getId(),
@@ -356,6 +397,12 @@ public class TicketService {
         ticket.setStatus(TicketStatus.SERVING);
         ticket.setServedAt(LocalDateTime.now());
         ticketRepository.save(ticket);
+
+        Long uniId = ticket.getQueue().getUniversity().getId();
+        eventService.broadcastToUniversity(uniId, "queue:updated",
+                Map.of("queueId", ticket.getQueue().getId(), "reason", "ticket-served"));
+        eventService.broadcastToUser(ticket.getUser().getId(), "my-ticket:updated",
+                Map.of("ticketId", ticket.getId(), "status", "SERVING"));
 
         auditService.record(staffUserId, ticket.getQueue().getUniversity().getId(),
                 AuditAction.TICKET_SERVED, "Ticket", ticketId, null);
@@ -381,6 +428,12 @@ public class TicketService {
         }
         ticketRepository.save(ticket);
         recalculatePositions(ticket.getQueue().getId());
+
+        Long uniId = ticket.getQueue().getUniversity().getId();
+        eventService.broadcastToUniversity(uniId, "queue:updated",
+                Map.of("queueId", ticket.getQueue().getId(), "reason", "ticket-completed"));
+        eventService.broadcastToUser(ticket.getUser().getId(), "my-ticket:updated",
+                Map.of("ticketId", ticket.getId(), "status", "COMPLETED"));
 
         workflowService.onTicketCompleted(ticket.getUser().getId(), ticket.getQueue().getId());
 
@@ -408,6 +461,7 @@ public class TicketService {
         }
         TicketStatus oldStatus = ticket.getStatus();
         ticket.setStatus(TicketStatus.NO_SHOW);
+        ticket.setPosition(null);
         ticketRepository.save(ticket);
         recalculatePositions(ticket.getQueue().getId());
 
@@ -415,11 +469,16 @@ public class TicketService {
             promoteFromWaitlist(ticket.getQueue().getId());
         }
 
+        Long uniId = ticket.getQueue().getUniversity().getId();
+        eventService.broadcastToUniversity(uniId, "queue:updated",
+                Map.of("queueId", ticket.getQueue().getId(), "reason", "ticket-no-show"));
+        eventService.broadcastToUser(ticket.getUser().getId(), "my-ticket:updated",
+                Map.of("ticketId", ticket.getId(), "status", "NO_SHOW"));
+
         notificationService.notify(ticket.getUser(), NotificationType.SYSTEM,
                 "You missed your turn",
                 "Ticket " + ticket.getTicketNumber() + " was marked as a no-show.");
 
-        // NEW: also email the no-show
         emailService.sendTicketNoShow(ticket.getUser(), ticket, ticket.getQueue());
 
         auditService.record(staffUserId, ticket.getQueue().getUniversity().getId(),
@@ -439,9 +498,16 @@ public class TicketService {
         }
         ticket.setStatus(TicketStatus.TRANSFERRED);
         if (notes != null) ticket.setNotes(notes);
+        ticket.setPosition(null);
         ticketRepository.save(ticket);
         recalculatePositions(ticket.getQueue().getId());
         promoteFromWaitlist(ticket.getQueue().getId());
+
+        Long uniId = ticket.getQueue().getUniversity().getId();
+        eventService.broadcastToUniversity(uniId, "queue:updated",
+                Map.of("queueId", ticket.getQueue().getId(), "reason", "ticket-transferred"));
+        eventService.broadcastToUser(ticket.getUser().getId(), "my-ticket:updated",
+                Map.of("ticketId", ticket.getId(), "status", "TRANSFERRED"));
 
         notificationService.notify(ticket.getUser(), NotificationType.SYSTEM,
                 "Ticket transferred",
@@ -474,6 +540,10 @@ public class TicketService {
         ticket.setPriority(priority);
         ticketRepository.save(ticket);
         recalculatePositions(ticket.getQueue().getId());
+
+        Long uniId = ticket.getQueue().getUniversity().getId();
+        eventService.broadcastToUniversity(uniId, "queue:updated",
+                Map.of("queueId", ticket.getQueue().getId(), "reason", "ticket-priority-changed"));
 
         auditService.record(staffUserId, ticket.getQueue().getUniversity().getId(),
                 AuditAction.TICKET_PRIORITY_CHANGED, "Ticket", ticketId,
@@ -558,14 +628,28 @@ public class TicketService {
 
     private void recalculatePositions(Long queueId) {
         List<Ticket> waiting = ticketRepository.findWaitingByQueueId(queueId);
+        List<Ticket> toUpdate = new ArrayList<>();
         int pos = 1;
-        for (Ticket t : waiting) t.setPosition(pos++);
-        ticketRepository.saveAll(waiting);
+        for (Ticket t : waiting) {
+            if (t.getPosition() == null || t.getPosition() != pos) {
+                t.setPosition(pos);
+                toUpdate.add(t);
+            }
+            pos++;
+        }
+        if (!toUpdate.isEmpty()) ticketRepository.saveAll(toUpdate);
 
         List<Ticket> waitlisted = ticketRepository.findWaitlistedByQueueId(queueId);
+        List<Ticket> waitlistedToUpdate = new ArrayList<>();
         int wpos = 1;
-        for (Ticket t : waitlisted) t.setPosition(wpos++);
-        ticketRepository.saveAll(waitlisted);
+        for (Ticket t : waitlisted) {
+            if (t.getPosition() == null || t.getPosition() != wpos) {
+                t.setPosition(wpos);
+                waitlistedToUpdate.add(t);
+            }
+            wpos++;
+        }
+        if (!waitlistedToUpdate.isEmpty()) ticketRepository.saveAll(waitlistedToUpdate);
     }
 
     private void promoteFromWaitlist(Long queueId) {
@@ -598,29 +682,41 @@ public class TicketService {
         }
 
         recalculatePositions(queueId);
+
+        eventService.broadcastToUniversity(queue.getUniversity().getId(), "queue:updated",
+                Map.of("queueId", queueId, "reason", "waitlist-promoted"));
     }
 
     private TicketResponse enrichWithPosition(Ticket ticket) {
         Integer position = ticket.getPosition();
         Integer estimated = null;
 
-        if (ticket.getStatus() == TicketStatus.WAITING) {
+        if (position == null && ticket.getStatus() == TicketStatus.WAITING) {
             List<Ticket> waiting = ticketRepository.findWaitingByQueueId(ticket.getQueue().getId());
             for (int i = 0; i < waiting.size(); i++) {
-                if (waiting.get(i).getId().equals(ticket.getId())) { position = i + 1; break; }
+                if (waiting.get(i).getId().equals(ticket.getId())) {
+                    position = i + 1;
+                    break;
+                }
             }
-            int per = ticket.getQueue().getAverageServiceMinutes() != null
-                    ? ticket.getQueue().getAverageServiceMinutes() : 5;
-            estimated = position != null ? position * per : null;
-        } else if (ticket.getStatus() == TicketStatus.WAITLISTED) {
+        } else if (position == null && ticket.getStatus() == TicketStatus.WAITLISTED) {
             List<Ticket> waitlisted = ticketRepository.findWaitlistedByQueueId(ticket.getQueue().getId());
             for (int i = 0; i < waitlisted.size(); i++) {
-                if (waitlisted.get(i).getId().equals(ticket.getId())) { position = i + 1; break; }
+                if (waitlisted.get(i).getId().equals(ticket.getId())) {
+                    position = i + 1;
+                    break;
+                }
             }
-            int per = ticket.getQueue().getAverageServiceMinutes() != null
-                    ? ticket.getQueue().getAverageServiceMinutes() : 5;
+        }
+
+        int per = ticket.getQueue().getAverageServiceMinutes() != null
+                ? ticket.getQueue().getAverageServiceMinutes() : 5;
+
+        if (ticket.getStatus() == TicketStatus.WAITING && position != null) {
+            estimated = position * per;
+        } else if (ticket.getStatus() == TicketStatus.WAITLISTED && position != null) {
             int ahead = ticketRepository.findWaitingByQueueId(ticket.getQueue().getId()).size()
-                    + (position != null ? position - 1 : 0);
+                    + (position - 1);
             estimated = ahead * per;
         }
 

@@ -53,6 +53,22 @@ public class User {
     @Column(length = 20)
     private String phone;
 
+    // ───────── Notification preferences (server-side) ─────────
+
+    @Column(name = "sound_enabled", nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+    @Builder.Default
+    private Boolean soundEnabled = true;
+
+    @Column(name = "push_enabled", nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+    @Builder.Default
+    private Boolean pushEnabled = true;
+
+    @Column(name = "ticket_emails_enabled", nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+    @Builder.Default
+    private Boolean ticketEmailsEnabled = true;
+
+    // ───────── Status flags ─────────
+
     @Column(name = "is_active")
     @Builder.Default
     private Boolean isActive = true;

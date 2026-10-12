@@ -43,6 +43,7 @@ public class WorkflowService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final AuditService auditService;
+    private final EventService eventService;
 
     // ============================================================
     //  ADMIN — create & manage workflows
@@ -316,11 +317,15 @@ public class WorkflowService {
         notificationService.notify(student, NotificationType.SYSTEM,
                 "Workflow started: " + workflow.getName(),
                 "First step: " + stepLabel(firstStep) + ". Join the \"" +
-                        firstStep.getQueue().getName() + "\" queue to proceed.","/student/clearance");
+                        firstStep.getQueue().getName() + "\" queue to proceed.",
+                "/student/clearance");
 
         auditService.record(studentId, workflow.getUniversity().getId(),
                 AuditAction.WORKFLOW_STARTED, "StudentWorkflow", sw.getId(),
                 "{\"workflowId\":" + workflowId + "}");
+
+        eventService.broadcastToUser(studentId, "workflow:updated",
+                Map.of("studentId", studentId, "status", "IN_PROGRESS"));
 
         return StudentWorkflowResponse.from(sw, steps);
     }
@@ -365,6 +370,9 @@ public class WorkflowService {
 
         auditService.record(studentId, sw.getWorkflow().getUniversity().getId(),
                 AuditAction.WORKFLOW_ABANDONED, "StudentWorkflow", sw.getId(), null);
+
+        eventService.broadcastToUser(studentId, "workflow:updated",
+                Map.of("studentId", studentId, "status", "ABANDONED"));
     }
 
     // ============================================================
@@ -437,7 +445,7 @@ public class WorkflowService {
                 .workflowId(workflow.getId())
                 .workflowName(workflow.getName())
                 .session(workflow.getSession())
-                .status(enrollment.getStatus().name())   // ← FIX: enum → String
+                .status(enrollment.getStatus().name())
                 .startedAt(enrollment.getStartedAt())
                 .completedAt(enrollment.getCompletedAt())
                 .currentStepOrder(currentOrder)
@@ -450,21 +458,19 @@ public class WorkflowService {
     }
 
     // ============================================================
-//  AUTO-ENROLL — fired when a student joins a queue
-// ============================================================
+    //  AUTO-ENROLL
+    // ============================================================
 
     @Transactional
     public void autoEnrollOnQueueJoin(Long studentId, Long queueId) {
         User student = userRepository.findById(studentId).orElse(null);
         if (student == null || student.getUniversity() == null) return;
 
-        // Skip if the student already has an active workflow
         boolean hasActive = studentWorkflowRepository
                 .findByStudentIdOrderByStartedAtDesc(studentId).stream()
                 .anyMatch(sw -> sw.getStatus() == WorkflowStatus.IN_PROGRESS);
         if (hasActive) return;
 
-        // Find an active workflow where this queue is the first step
         List<Workflow> candidates = workflowRepository
                 .findByUniversityIdAndIsActiveTrueOrderByCreatedAtDesc(student.getUniversity().getId());
 
@@ -479,14 +485,12 @@ public class WorkflowService {
         }
         if (match == null) return;
 
-        // Replace any previous enrollment for this workflow so `start()` won't reject it
         studentWorkflowRepository.findByStudentIdAndWorkflowId(studentId, match.getId())
                 .ifPresent(old -> {
                     studentWorkflowStepRepository.deleteByStudentWorkflowId(old.getId());
                     studentWorkflowRepository.delete(old);
                 });
 
-        // Reuse the existing start() logic
         start(studentId, match.getId());
 
         log.info("Auto-enrolled student {} into workflow {} via queue {}",
@@ -581,12 +585,12 @@ public class WorkflowService {
                 .currentQueueName(current != null ? current.getQueueName() : null)
                 .currentStepLabel(current != null ? current.getLabel() : null)
                 .currentStepInstructions(current != null ? current.getInstructions() : null)
-                .progressSteps(stepViews)   // ← FIX: was .steps(stepViews)
+                .progressSteps(stepViews)
                 .build();
     }
 
     // ============================================================
-    //  GATE CHECK — called by TicketService
+    //  GATE CHECK
     // ============================================================
 
     @Transactional(readOnly = true)
@@ -625,6 +629,8 @@ public class WorkflowService {
                 .filter(sw -> sw.getStatus() == WorkflowStatus.IN_PROGRESS)
                 .toList();
 
+        Long universityIdForBroadcast = null;
+
         for (StudentWorkflow sw : active) {
             List<WorkflowStep> steps = stepRepository
                     .findByWorkflowIdOrderByStepOrderAsc(sw.getWorkflow().getId());
@@ -634,6 +640,8 @@ public class WorkflowService {
                     .findFirst().orElse(null);
             if (step == null) continue;
             if (!step.getStepOrder().equals(sw.getCurrentStepOrder())) continue;
+
+            universityIdForBroadcast = sw.getWorkflow().getUniversity().getId();
 
             markStepCompleted(sw, step);
 
@@ -653,7 +661,8 @@ public class WorkflowService {
 
                 notificationService.notify(sw.getStudent(), NotificationType.SYSTEM,
                         "Workflow complete! 🎉",
-                        "You've completed all steps of \"" + sw.getWorkflow().getName() + "\".","/student/clearance");
+                        "You've completed all steps of \"" + sw.getWorkflow().getName() + "\".",
+                        "/student/clearance");
 
                 auditService.record(studentId, sw.getWorkflow().getUniversity().getId(),
                         AuditAction.WORKFLOW_COMPLETED, "StudentWorkflow", sw.getId(), null);
@@ -666,8 +675,16 @@ public class WorkflowService {
                 notificationService.notify(sw.getStudent(), NotificationType.SYSTEM,
                         "Step " + step.getStepOrder() + " completed",
                         "Next step: " + stepLabel(nextStep) + ". Join the \"" +
-                                nextStep.getQueue().getName() + "\" queue when ready.", "/student/clearance");
+                                nextStep.getQueue().getName() + "\" queue when ready.",
+                        "/student/clearance");
             }
+        }
+
+        if (universityIdForBroadcast != null) {
+            eventService.broadcastToUser(studentId, "workflow:updated",
+                    Map.of("studentId", studentId));
+            eventService.broadcastToUniversity(universityIdForBroadcast, "queue:updated",
+                    Map.of("reason", "workflow-step-completed", "studentId", studentId));
         }
     }
 

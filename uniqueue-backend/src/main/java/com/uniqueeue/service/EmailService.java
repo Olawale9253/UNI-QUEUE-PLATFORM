@@ -15,15 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.format.DateTimeFormatter;
 
-/**
- * Sends transactional emails. Runs async so callers never block on SMTP.
- *
- * Modes:
- *   app.email.enabled=false  → the email content is logged at INFO (dev)
- *   app.email.enabled=true   → the email is sent via the configured SMTP server
- *
- * All template methods build inline HTML — no external template engine.
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -54,7 +45,6 @@ public class EmailService {
         if (to == null || to.isBlank()) return;
 
         if (!emailEnabled) {
-            // Dev mode — log instead of send
             log.info("📧 [EMAIL DISABLED] to={} subject={}", to, subject);
             log.debug("📧 [EMAIL BODY]\n{}", htmlBody);
             return;
@@ -70,25 +60,34 @@ public class EmailService {
             }
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(htmlBody, true);   // true = HTML
+            helper.setText(htmlBody, true);
 
             mailSender.send(message);
             log.info("📧 Sent email to {} · {}", to, subject);
         } catch (Exception e) {
             log.error("📧 Failed to send email to {} — {}", to, e.getMessage());
-            // Never propagate — email is best-effort
         }
+    }
+
+    /**
+     * Transactional emails (verification, password reset) always send.
+     * Ticket notifications honour the user's `ticketEmailsEnabled` preference.
+     */
+    private boolean wantsTicketEmails(User user) {
+        if (user == null) return false;
+        return !Boolean.FALSE.equals(user.getTicketEmailsEnabled());
     }
 
     // ============================================================
     //  Domain templates
     // ============================================================
 
-    /**
-     * "It's your turn" — the most important email in the system.
-     */
     public void sendTicketCalled(User user, Ticket ticket, Queue queue) {
         if (user == null || ticket == null) return;
+        if (!wantsTicketEmails(user)) {
+            log.debug("Skipping ticket-called email — user {} disabled ticket emails", user.getId());
+            return;
+        }
 
         String subject = "🎫 It's your turn — Ticket " + ticket.getTicketNumber();
 
@@ -113,11 +112,12 @@ public class EmailService {
         sendHtml(user.getEmail(), subject, html);
     }
 
-    /**
-     * Service completed — satisfaction confirmation.
-     */
     public void sendTicketCompleted(User user, Ticket ticket, Queue queue) {
         if (user == null || ticket == null) return;
+        if (!wantsTicketEmails(user)) {
+            log.debug("Skipping ticket-completed email — user {} disabled ticket emails", user.getId());
+            return;
+        }
 
         String subject = "✅ Service complete — Ticket " + ticket.getTicketNumber();
 
@@ -136,11 +136,12 @@ public class EmailService {
         sendHtml(user.getEmail(), subject, html);
     }
 
-    /**
-     * No-show — the ticket was marked as missed.
-     */
     public void sendTicketNoShow(User user, Ticket ticket, Queue queue) {
         if (user == null || ticket == null) return;
+        if (!wantsTicketEmails(user)) {
+            log.debug("Skipping ticket-no-show email — user {} disabled ticket emails", user.getId());
+            return;
+        }
 
         String subject = "⚠️ You missed your turn — Ticket " + ticket.getTicketNumber();
 
@@ -159,11 +160,12 @@ public class EmailService {
         sendHtml(user.getEmail(), subject, html);
     }
 
-    /**
-     * Queue closed while the student was waiting — their ticket was auto-cancelled.
-     */
     public void sendQueueClosed(User user, Ticket ticket, Queue queue) {
         if (user == null || ticket == null) return;
+        if (!wantsTicketEmails(user)) {
+            log.debug("Skipping queue-closed email — user {} disabled ticket emails", user.getId());
+            return;
+        }
 
         String subject = "🔒 Queue closed — Ticket " + ticket.getTicketNumber();
 
@@ -182,9 +184,7 @@ public class EmailService {
         sendHtml(user.getEmail(), subject, html);
     }
 
-    /**
-     * Verification code — sent on registration and resend.
-     */
+    /** Transactional — always sends regardless of prefs. */
     public void sendVerificationCode(User user, String code) {
         if (user == null) return;
 
@@ -205,9 +205,7 @@ public class EmailService {
         sendHtml(user.getEmail(), subject, html);
     }
 
-    /**
-     * Password reset link.
-     */
+    /** Transactional — always sends regardless of prefs. */
     public void sendPasswordReset(User user, String token) {
         if (user == null) return;
 
@@ -229,10 +227,7 @@ public class EmailService {
         sendHtml(user.getEmail(), subject, html);
     }
 
-    /**
-     * Bottleneck alert — sent to admins when a workflow step is stalling.
-     * Aggregates analytics for the whole workflow + the slow step.
-     */
+    /** Admin-facing — always sends regardless of prefs. */
     public void sendBottleneckAlert(
             User admin,
             WorkflowAnalyticsResponse analytics,
@@ -261,7 +256,7 @@ public class EmailService {
 
         String html = wrap(
                 admin,
-                null,                      // no queue — falls back to university name
+                null,
                 "Bottleneck detected",
                 body,
                 table,
@@ -303,31 +298,25 @@ public class EmailService {
                 .append("style=\"max-width:540px;background:#ffffff;border-radius:14px;overflow:hidden;")
                 .append("box-shadow:0 1px 3px rgba(15,23,42,0.06),0 10px 30px rgba(15,23,42,0.04);\">");
 
-        // Accent bar
         sb.append("<tr><td style=\"height:4px;background:").append(accent).append(";\"></td></tr>");
 
-        // Brand header
         sb.append("<tr><td style=\"padding:28px 32px 0 32px;\">")
                 .append("<div style=\"font-size:11px;font-weight:700;letter-spacing:2px;")
                 .append("text-transform:uppercase;color:").append(accent).append(";\">")
                 .append("UniQueue · ").append(escape(uniName))
                 .append("</div></td></tr>");
 
-        // Heading
         sb.append("<tr><td style=\"padding:20px 32px 0 32px;\">")
                 .append("<h1 style=\"margin:0;font-size:24px;line-height:1.3;font-weight:700;color:#0f172a;\">")
                 .append(escape(heading)).append("</h1></td></tr>");
 
-        // Body
         sb.append("<tr><td style=\"padding:16px 32px 0 32px;font-size:15px;line-height:1.65;color:#475569;\">")
                 .append(body).append("</td></tr>");
 
-        // Callout
         if (callout != null) {
             sb.append("<tr><td style=\"padding:24px 32px 0 32px;\">").append(callout).append("</td></tr>");
         }
 
-        // CTA button
         if (ctaLabel != null && ctaUrl != null) {
             sb.append("<tr><td style=\"padding:28px 32px 0 32px;\">")
                     .append("<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\"><tr><td ")
@@ -338,10 +327,8 @@ public class EmailService {
                     .append(escape(ctaLabel)).append("</a></td></tr></table></td></tr>");
         }
 
-        // Spacer
         sb.append("<tr><td style=\"padding:32px 0 0 0;\"></td></tr>");
 
-        // Footer
         sb.append("<tr><td style=\"padding:20px 32px 28px 32px;border-top:1px solid #e2e8f0;")
                 .append("font-size:11px;line-height:1.5;color:#94a3b8;\">")
                 .append("You're receiving this because you have a UniQueue account at ")
@@ -384,11 +371,6 @@ public class EmailService {
         return sb.toString();
     }
 
-    /**
-     * Two-column key-value table used inside the bottleneck alert.
-     * Highlights the two numbers that justify the alert (stuck count + avg hours)
-     * in red so the message reads at a glance.
-     */
     private String bottleneckTable(
             WorkflowAnalyticsResponse analytics,
             WorkflowAnalyticsResponse.StepAnalytics step,
@@ -407,20 +389,12 @@ public class EmailService {
         sb.append("<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" ")
                 .append("style=\"background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;\">")
                 .append("<tr><td style=\"padding:16px 18px;\">")
-
-                .append(row("Workflow",
-                        escape(analytics.getWorkflowName()) + sessionSuffix))
-                .append(row("Step",
-                        step.getOrder() + " — " + escape(stepLabel)))
-                .append(row("Queue",
-                        escape(step.getQueueName())))
-
-                .append(rowHighlighted("Students stuck",
-                        String.valueOf(stuck)))
-                .append(rowHighlighted("Avg time per student",
-                        formatHours(avgHours)))
+                .append(row("Workflow", escape(analytics.getWorkflowName()) + sessionSuffix))
+                .append(row("Step", step.getOrder() + " — " + escape(stepLabel)))
+                .append(row("Queue", escape(step.getQueueName())))
+                .append(rowHighlighted("Students stuck", String.valueOf(stuck)))
+                .append(rowHighlighted("Avg time per student", formatHours(avgHours)))
                 .append(row("Already completed", String.valueOf(completed)))
-
                 .append("</td></tr></table>");
 
         return sb.toString();
@@ -446,7 +420,6 @@ public class EmailService {
                 "</tr></table>";
     }
 
-    /** Format an hours value into a readable string: "27.5h" or "3.2 days". */
     private String formatHours(double hours) {
         if (hours < 48) {
             return String.format("%.1f hours", hours);
@@ -461,7 +434,6 @@ public class EmailService {
         return parts.length > 0 ? parts[0] : "there";
     }
 
-    /** Minimal HTML escaping for user-supplied values. */
     private String escape(String s) {
         if (s == null) return "";
         return s.replace("&", "&amp;")

@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     User, CheckCircle2, ListOrdered, Clock, Info, Building2,
-    RefreshCw, XCircle, AlertCircle, Ticket, Lock,
+    RefreshCw, XCircle, AlertCircle, Ticket, Lock, Users,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -53,20 +53,13 @@ function formatTime(dt) {
     }
 }
 
-/* ------------------------------------------------------------------ */
-/*  Loading skeleton                                                   */
-/* ------------------------------------------------------------------ */
-
 function ServingQueueSkeleton() {
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div>
                 <SkeletonBox className="h-7 w-56" />
                 <SkeletonBox className="mt-2 h-4 w-72" />
             </div>
-
-            {/* Toolbar card */}
             <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex items-center justify-between gap-3">
                     <SkeletonBox className="h-5 w-48" />
@@ -76,8 +69,6 @@ function ServingQueueSkeleton() {
                     </div>
                 </div>
             </div>
-
-            {/* Current serving */}
             <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
                 <SkeletonBox className="h-5 w-40" />
                 <div className="mt-8 flex flex-col items-center gap-3">
@@ -86,8 +77,6 @@ function ServingQueueSkeleton() {
                     <SkeletonBox className="mt-2 h-4 w-40" />
                 </div>
             </div>
-
-            {/* Waiting tickets list */}
             <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
                     <SkeletonBox className="h-5 w-32" />
@@ -101,9 +90,30 @@ function ServingQueueSkeleton() {
     )
 }
 
-/* ------------------------------------------------------------------ */
-/*  Main component                                                     */
-/* ------------------------------------------------------------------ */
+/**
+ * Builds a context-aware message describing the current queue state.
+ * Called when the staff clicks "Call Next" but there is nothing to call.
+ */
+function describeEmptyQueue(queue, tickets) {
+    if (!queue) return 'No one is waiting in this queue.'
+    const waiting = tickets.filter((t) => t.status === 'WAITING' || t.status === 'WAITLISTED').length
+    const serving = tickets.find((t) => t.status === 'CALLED' || t.status === 'SERVING')
+
+    if (queue.isOpen === false) {
+        const openAt = queue.opensAt ? String(queue.opensAt).slice(0, 5) : null
+        return openAt
+            ? `${queue.name} is closed. Reopens at ${openAt}.`
+            : `${queue.name} is closed for the day.`
+    }
+    if (serving) {
+        return `${queue.name} has no one waiting — ${serving.ticketNumber} is currently being served.`
+    }
+    if (waiting === 0) {
+        return `No one is waiting in ${queue.name}. New students will appear here as they join.`
+    }
+    // Fallback — shouldn't normally hit
+    return `No one is waiting in ${queue.name}.`
+}
 
 export default function ServingQueue() {
     const { user } = useAuthStore()
@@ -122,6 +132,7 @@ export default function ServingQueue() {
     const actingRef = useRef(false)
     const actionVersionRef = useRef(0)
     const suppressPollUntilRef = useRef(0)
+    const lastLocalActionAtRef = useRef(0)
 
     const activeQueue = queues.find((q) => q.id === activeQueueId) || null
     const isClosed = activeQueue?.isOpen === false
@@ -186,12 +197,13 @@ export default function ServingQueue() {
     useEffect(() => {
         const unsub = syncBus.subscribe('data-changed', (payload) => {
             if (payload?.source === 'serving-queue') return
+            loadQueues()
+            if (Date.now() - lastLocalActionAtRef.current < 800) return
             if (activeQueueId) loadTickets(activeQueueId, false)
         })
         return unsub
-    }, [activeQueueId, loadTickets])
+    }, [activeQueueId, loadTickets, loadQueues])
 
-    // Detect new tickets and play sound + notify
     useEffect(() => {
         if (!tickets.length) return
 
@@ -239,6 +251,7 @@ export default function ServingQueue() {
 
         prevTicketIdsRef.current = currentIds
     }, [tickets, playNewTicket, playAttention, browserNotif, activeQueueId])
+
     const act = async (fn, successMsg, actionKey, optimistic) => {
         if (actingRef.current) return
 
@@ -253,6 +266,7 @@ export default function ServingQueue() {
             await fn()
             push({ type: 'success', message: successMsg })
             suppressPollUntilRef.current = Date.now() + 2000
+            lastLocalActionAtRef.current = Date.now()
 
             syncBus.publish('data-changed', {
                 source: 'serving-queue',
@@ -260,25 +274,33 @@ export default function ServingQueue() {
                 queueId: activeQueueId,
                 at: Date.now(),
             })
+
+            loadQueues()
         } catch (err) {
             const status = err.response?.status
             const message = err.response?.data?.message || ''
 
-            // Concurrency conflicts — another staff (or a stale tab) got there first.
-            // Don't roll back with an error; refetch and let state settle.
+            // ─── Empty queue: informational, not an error ───
+            if (/no waiting tickets/i.test(message)) {
+                push({
+                    type: 'info',
+                    message: describeEmptyQueue(activeQueue, tickets),
+                    duration: 5000,
+                })
+                // Silent resync in case the queue changed under us
+                if (activeQueueId) loadTickets(activeQueueId, false)
+                return
+            }
+
             const isConcurrencyConflict =
                 status === 400 &&
-                /already being called|already served|no waiting tickets|already in (CALLED|SERVING)|not in CALLED/i.test(message)
+                /already being called|already served|already in (CALLED|SERVING)|not in CALLED/i.test(message)
 
             if (isConcurrencyConflict) {
-                // Quietly resync — no error toast, no rollback
                 if (activeQueueId) {
-                    // Small delay so any in-flight writes commit first
                     setTimeout(() => loadTickets(activeQueueId, false), 300)
                 }
-                // The optimistic update will be overwritten by the refetch.
             } else {
-                // Real error — roll back and toast
                 // eslint-disable-next-line no-console
                 console.error('[ServingQueue] action failed', {
                     actionKey,
@@ -379,6 +401,14 @@ export default function ServingQueue() {
         (t) => t.status === 'WAITING' || t.status === 'WAITLISTED'
     )
 
+    // Dynamic label for the Call Next button
+    const callNextLabel = (() => {
+        if (isClosed) return 'Closed'
+        if (called) return 'Currently serving'
+        if (waiting.length === 0) return 'No one waiting'
+        return 'Call Next'
+    })()
+
     if (loading) {
         return <ServingQueueSkeleton />
     }
@@ -457,13 +487,13 @@ export default function ServingQueue() {
                             onClick={callNext}
                             disabled={!!called || !!acting || isClosed}
                             loading={acting === 'next'}
-                            className="!bg-emerald-600 hover:!bg-emerald-700"
+                            className={
+                                waiting.length === 0 && !called && !isClosed
+                                    ? '!bg-slate-400 hover:!bg-slate-500'
+                                    : '!bg-emerald-600 hover:!bg-emerald-700'
+                            }
                         >
-                            {isClosed
-                                ? 'Closed'
-                                : called
-                                    ? 'Currently serving'
-                                    : 'Call Next'}
+                            {callNextLabel}
                         </Button>
                         <button
                             onClick={refresh}
@@ -478,31 +508,56 @@ export default function ServingQueue() {
 
                 {queues.length > 1 && (
                     <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-                        {queues.map((q) => (
-                            <button
-                                key={q.id}
-                                onClick={() => setActiveQueueId(q.id)}
-                                disabled={!!acting}
-                                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors disabled:opacity-60 ${
-                                    activeQueueId === q.id
-                                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
-                                }`}
-                            >
-                                <Building2 className="h-3 w-3" />
-                                {q.name}
-                                {q.isOpen === false && <span className="opacity-60">· closed</span>}
-                                {q.waitingCount > 0 && (
+                        {queues.map((q) => {
+                            const isActive = activeQueueId === q.id
+                            const waitingCount = q.waitingCount ?? 0
+                            const isClosedChip = q.isOpen === false
+                            return (
+                                <button
+                                    key={q.id}
+                                    onClick={() => setActiveQueueId(q.id)}
+                                    disabled={!!acting}
+                                    className={`inline-flex items-center gap-2 rounded-lg border-2 px-3 py-2 transition-all disabled:opacity-60 ${
+                                        isActive
+                                            ? 'border-brand-500 bg-brand-50 dark:border-brand-600 dark:bg-brand-950/40'
+                                            : 'border-slate-200 bg-white hover:border-brand-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-brand-700 dark:hover:bg-slate-800/60'
+                                    }`}
+                                >
+                                    <Building2
+                                        className={`h-4 w-4 shrink-0 ${
+                                            isActive
+                                                ? 'text-brand-600 dark:text-brand-400'
+                                                : 'text-slate-400'
+                                        }`}
+                                    />
                                     <span
-                                        className={`text-[10px] font-bold ${
-                                            activeQueueId === q.id ? 'opacity-80' : 'opacity-60'
+                                        className={`max-w-[160px] truncate text-sm font-semibold ${
+                                            isActive
+                                                ? 'text-slate-900 dark:text-slate-100'
+                                                : 'text-slate-700 dark:text-slate-300'
                                         }`}
                                     >
-                                        {q.waitingCount}
+                                        {q.name}
                                     </span>
-                                )}
-                            </button>
-                        ))}
+                                    {isClosedChip && (
+                                        <span className="text-[10px] font-bold uppercase tracking-wide text-rose-600 dark:text-rose-400">
+                                            Closed
+                                        </span>
+                                    )}
+                                    <span
+                                        className={`ml-1 inline-flex min-w-[28px] items-center justify-center rounded-md px-2 py-0.5 text-sm font-bold tabular-nums ${
+                                            waitingCount === 0
+                                                ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
+                                                : isActive
+                                                    ? 'bg-brand-600 text-white'
+                                                    : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
+                                        }`}
+                                    >
+                                        {waitingCount}
+                                    </span>
+                                </button>
+                            )
+                        })}
                     </div>
                 )}
             </Card>
@@ -553,11 +608,16 @@ export default function ServingQueue() {
                                 )}
                             </div>
 
-                            <div className="mt-5 text-sm text-slate-500 dark:text-slate-400">
-                                Waiting:{' '}
-                                <span className="font-bold text-amber-600 dark:text-amber-400">
-                                    {waiting.length}
-                                </span>
+                            <div className="mt-6 flex justify-center">
+                                <div className="inline-flex items-center gap-3 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 dark:border-amber-900 dark:bg-amber-950/40">
+                                    <Users className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                    <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                                        Waiting
+                                    </span>
+                                    <span className="text-xl font-bold text-amber-700 dark:text-amber-300">
+                                        {waiting.length}
+                                    </span>
+                                </div>
                             </div>
 
                             <div className="mt-6 flex flex-wrap justify-center gap-2">
@@ -600,12 +660,24 @@ export default function ServingQueue() {
                             <div className="text-3xl font-bold text-slate-300 dark:text-slate-600 sm:text-4xl">
                                 None
                             </div>
-                            <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-                                Waiting:{' '}
-                                <span className="font-bold text-amber-600 dark:text-amber-400">
-                                    {waiting.length}
-                                </span>
+                            <div className="mt-5 flex justify-center">
+                                <div className="inline-flex items-center gap-3 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 dark:border-amber-900 dark:bg-amber-950/40">
+                                    <Users className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                    <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                                        Waiting
+                                    </span>
+                                    <span className="text-xl font-bold text-amber-700 dark:text-amber-300">
+                                        {waiting.length}
+                                    </span>
+                                </div>
                             </div>
+
+                            {waiting.length === 0 && !isClosed && (
+                                <p className="mt-5 text-xs text-slate-500 dark:text-slate-400">
+                                    No students are waiting. New tickets will appear here as they join.
+                                </p>
+                            )}
+
                             {waiting.length > 0 && !isClosed && (
                                 <button
                                     onClick={callNext}
@@ -616,6 +688,7 @@ export default function ServingQueue() {
                                     {acting === 'next' ? 'Calling…' : 'Call Next Ticket'}
                                 </button>
                             )}
+
                             {waiting.length > 0 && isClosed && (
                                 <p className="mt-5 text-xs text-amber-700 dark:text-amber-400">
                                     Service is closed — Call Next is disabled.

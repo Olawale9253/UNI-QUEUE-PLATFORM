@@ -12,21 +12,18 @@ import EmptyState from '../../components/ui/EmptyState'
 import { SkeletonBox, SkeletonSettingsCard } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { useAuthStore } from '../../store/authStore'
+import { useUniversityStore } from '../../store/universityStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
+import { withAlpha } from '../../lib/colors'
 
 function formatTime(t) {
     if (!t) return null
     return String(t).slice(0, 5)
 }
 
-/* ------------------------------------------------------------------ */
-/*  Loading skeleton — matches the two-column layout                   */
-/* ------------------------------------------------------------------ */
-
 function OfficesSkeleton() {
     return (
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[320px_1fr]">
-            {/* Left: office list skeleton */}
             <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
                 <SkeletonBox className="h-4 w-24" />
                 <SkeletonBox className="mt-4 h-9 w-full" />
@@ -43,7 +40,6 @@ function OfficesSkeleton() {
                 </div>
             </div>
 
-            {/* Right: detail skeleton */}
             <div className="space-y-6">
                 <SkeletonSettingsCard />
                 <SkeletonSettingsCard />
@@ -52,13 +48,10 @@ function OfficesSkeleton() {
     )
 }
 
-/* ------------------------------------------------------------------ */
-/*  Main component                                                     */
-/* ------------------------------------------------------------------ */
-
 export default function OfficesTab() {
     const { push } = useToastStore()
     const { user } = useAuthStore()
+    const { university } = useUniversityStore()
     const navigate = useNavigate()
 
     const [offices, setOffices] = useState([])
@@ -68,6 +61,7 @@ export default function OfficesTab() {
     const [selectedOfficeId, setSelectedOfficeId] = useState(null)
 
     const isFresher = user?.role === 'FRESHER'
+    const primaryColor = university?.primaryColor || '#4f46e5'
 
     const load = useCallback(async () => {
         try {
@@ -174,19 +168,30 @@ export default function OfficesTab() {
                 <motion.div
                     initial={{ opacity: 0, y: -6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/40"
+                    className="mb-6 flex items-start gap-3 rounded-xl border p-4"
+                    style={{
+                        backgroundColor: withAlpha(primaryColor, 0.08),
+                        borderColor: withAlpha(primaryColor, 0.28),
+                    }}
                 >
-                    <GraduationCap className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-400" />
+                    <div
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                        style={{ backgroundColor: primaryColor }}
+                    >
+                        <GraduationCap className="h-5 w-5 text-white" />
+                    </div>
                     <div className="flex-1 text-sm">
-                        <p className="font-medium text-amber-900 dark:text-amber-200">
+                        <p className="font-semibold text-slate-900 dark:text-slate-100">
                             You're registered as a fresher
                         </p>
-                        <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
-                            Some services require a matric number. Upgrade from your profile when you have one.
+                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                            Some services require a matric number. Once you receive yours,
+                            update your profile to unlock everything.
                         </p>
                         <button
                             onClick={() => navigate('/profile')}
-                            className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-amber-700"
+                            className="mt-3 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+                            style={{ backgroundColor: primaryColor }}
                         >
                             Go to profile
                             <ArrowRight className="h-3 w-3" />
@@ -204,7 +209,8 @@ export default function OfficesTab() {
                     action={
                         <button
                             onClick={() => navigate('/student')}
-                            className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+                            className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                            style={{ backgroundColor: primaryColor }}
                         >
                             Back to home
                             <ArrowRight className="h-3.5 w-3.5" />
@@ -252,17 +258,30 @@ export default function OfficesTab() {
                                                     onClick={() => setSelectedOfficeId(id)}
                                                     className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
                                                         isSelected
-                                                            ? 'bg-brand-50 font-medium text-brand-700 dark:bg-brand-950/40 dark:text-brand-300'
+                                                            ? 'font-medium'
                                                             : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
                                                     }`}
+                                                    style={
+                                                        isSelected
+                                                            ? {
+                                                                backgroundColor: withAlpha(primaryColor, 0.1),
+                                                                color: primaryColor,
+                                                            }
+                                                            : undefined
+                                                    }
                                                 >
                                                     <span className="truncate">{e.office.name}</span>
                                                     <span
                                                         className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
                                                             isSelected
-                                                                ? 'bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300'
+                                                                ? 'text-white'
                                                                 : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                                                         }`}
+                                                        style={
+                                                            isSelected
+                                                                ? { backgroundColor: primaryColor }
+                                                                : undefined
+                                                        }
                                                     >
                                                         {e.services.length}
                                                     </span>
@@ -279,8 +298,14 @@ export default function OfficesTab() {
                         <Card>
                             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
                                 <div className="flex min-w-0 items-start gap-3">
-                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-950/40">
-                                        <Building2 className="h-6 w-6 text-brand-600 dark:text-brand-400" />
+                                    <div
+                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+                                        style={{ backgroundColor: withAlpha(primaryColor, 0.15) }}
+                                    >
+                                        <Building2
+                                            className="h-6 w-6"
+                                            style={{ color: primaryColor }}
+                                        />
                                     </div>
                                     <div className="min-w-0">
                                         <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -347,7 +372,10 @@ export default function OfficesTab() {
                                         <ListOrdered className="h-3 w-3" />
                                         Services
                                     </div>
-                                    <div className="mt-1 text-xl font-bold text-brand-600 dark:text-brand-400">
+                                    <div
+                                        className="mt-1 text-xl font-bold"
+                                        style={{ color: primaryColor }}
+                                    >
                                         {selected.services.length}
                                     </div>
                                 </div>
@@ -389,7 +417,10 @@ export default function OfficesTab() {
                                             {selected.services.map((q) => (
                                                 <div
                                                     key={q.id}
-                                                    className="rounded-lg border border-slate-200 p-4 transition-colors hover:border-brand-300 dark:border-slate-700 dark:hover:border-brand-700"
+                                                    className="rounded-lg border border-slate-200 p-4 transition-colors dark:border-slate-700"
+                                                    style={{
+                                                        borderColor: withAlpha(primaryColor, 0.2),
+                                                    }}
                                                 >
                                                     <div className="flex items-start justify-between gap-2">
                                                         <h5 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -414,7 +445,10 @@ export default function OfficesTab() {
                                                     )}
 
                                                     <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                                                        <span className="flex items-center gap-1 font-bold text-brand-600 dark:text-brand-400">
+                                                        <span
+                                                            className="flex items-center gap-1 font-bold"
+                                                            style={{ color: primaryColor }}
+                                                        >
                                                             <Users className="h-3 w-3" />
                                                             {q.waitingCount ?? 0} waiting
                                                         </span>
@@ -426,7 +460,8 @@ export default function OfficesTab() {
 
                                                     <button
                                                         onClick={() => navigate('/student/queues')}
-                                                        className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+                                                        className="mt-3 inline-flex items-center gap-1 text-xs font-medium transition-opacity hover:opacity-80"
+                                                        style={{ color: primaryColor }}
                                                     >
                                                         Join this service
                                                         <ArrowRight className="h-3 w-3" />
@@ -450,7 +485,10 @@ export default function OfficesTab() {
                                                     key={s.id}
                                                     className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700"
                                                 >
-                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
+                                                    <div
+                                                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                                                        style={{ backgroundColor: primaryColor }}
+                                                    >
                                                         {s.fullName?.slice(0, 1).toUpperCase() || (
                                                             <UserCircle2 className="h-5 w-5" />
                                                         )}

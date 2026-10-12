@@ -11,37 +11,14 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import ThemeToggle from '../../components/ui/ThemeToggle'
 import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../store/toastStore'
+import { usePrefsStore } from '../../store/prefsStore'
 import ChangeEmailModal from '../../components/student/ChangeEmailModal'
 import { useWebPush } from '../../hooks/useWebPush'
-
-/* ------------------------------------------------------------------ */
-/*  Constants                                                          */
-/* ------------------------------------------------------------------ */
-
-const PREFS_KEY = 'uniqueue_student_prefs'
-
-function readPrefs() {
-    try {
-        const raw = localStorage.getItem(PREFS_KEY)
-        return raw ? JSON.parse(raw) : { sound: true }
-    } catch {
-        return { sound: true }
-    }
-}
-
-function writePrefs(prefs) {
-    localStorage.setItem(PREFS_KEY, JSON.stringify(prefs))
-}
 
 /* ------------------------------------------------------------------ */
 /*  Layout primitives                                                  */
 /* ------------------------------------------------------------------ */
 
-/**
- * SettingsPage — root wrapper.
- * No horizontal padding here; the DashboardLayout already provides it.
- * Vertical rhythm is controlled by `space-y-6`.
- */
 function SettingsPage({ children }) {
     return (
         <div className="mx-auto w-full max-w-3xl space-y-6">
@@ -67,13 +44,6 @@ function PageHeader() {
     )
 }
 
-/**
- * SectionCard — consistent frame for every settings section.
- *
- * Layout: icon + title + description row, then a divider, then the body.
- * This creates a clear visual rhythm between sections without them
- * bleeding into each other.
- */
 function SectionCard({ icon: Icon, title, description, danger = false, children }) {
     return (
         <motion.div
@@ -89,7 +59,6 @@ function SectionCard({ icon: Icon, title, description, danger = false, children 
                         : undefined
                 }
             >
-                {/* Header */}
                 <div className="flex items-start gap-3 border-b border-slate-100 px-5 py-4 sm:px-6 dark:border-slate-800">
                     <div
                         className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
@@ -118,16 +87,12 @@ function SectionCard({ icon: Icon, title, description, danger = false, children 
                     </div>
                 </div>
 
-                {/* Body */}
                 <div className="px-5 py-5 sm:px-6">{children}</div>
             </Card>
         </motion.div>
     )
 }
 
-/**
- * Field — label + input row with consistent spacing.
- */
 function Field({ label, icon: Icon, hint, error, children }) {
     return (
         <div className="space-y-1.5">
@@ -186,15 +151,31 @@ function Toggle({ checked, onChange, disabled, busy }) {
     )
 }
 
-/**
- * ActionBar — consistent right-aligned action row at the bottom of a section.
- * Separated from the body with a subtle divider so it visually belongs to the
- * section but is clearly an "action" zone.
- */
 function ActionBar({ children }) {
     return (
         <div className="mt-6 flex items-center justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
             {children}
+        </div>
+    )
+}
+
+function SettingRow({ icon: Icon, title, hint, control }) {
+    return (
+        <div className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0">
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+                <Icon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                <div className="min-w-0">
+                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        {title}
+                    </div>
+                    {hint && (
+                        <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                            {hint}
+                        </div>
+                    )}
+                </div>
+            </div>
+            <div className="shrink-0">{control}</div>
         </div>
     )
 }
@@ -349,6 +330,7 @@ function ProfileSection({ profile, onSaved, onEmailChange }) {
         </SectionCard>
     )
 }
+
 /* ------------------------------------------------------------------ */
 /*  Password                                                           */
 /* ------------------------------------------------------------------ */
@@ -455,24 +437,35 @@ function PasswordSection() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Notifications                                                      */
+/*  Notifications — server-backed                                      */
 /* ------------------------------------------------------------------ */
 
 function NotificationsSection() {
     const { push } = useToastStore()
     const webPush = useWebPush()
-    const [prefs, setPrefs] = useState(readPrefs)
+    const prefs = usePrefsStore((s) => s.prefs)
+    const updatePrefs = usePrefsStore((s) => s.update)
     const [busy, setBusy] = useState(false)
 
-    const update = (patch) => {
-        const next = { ...prefs, ...patch }
-        setPrefs(next)
-        writePrefs(next)
+    const toggleSound = async (on) => {
+        const res = await updatePrefs({ soundEnabled: on })
+        if (res.success) {
+            push({ type: 'success', message: on ? 'Sound on' : 'Sound muted' })
+        } else {
+            push({ type: 'error', message: res.error })
+        }
     }
 
-    const toggleSound = (on) => {
-        update({ sound: on })
-        push({ type: 'success', message: on ? 'Sound on' : 'Sound muted' })
+    const toggleTicketEmails = async (on) => {
+        const res = await updatePrefs({ ticketEmailsEnabled: on })
+        if (res.success) {
+            push({
+                type: 'success',
+                message: on ? 'Email notifications on' : 'Email notifications off',
+            })
+        } else {
+            push({ type: 'error', message: res.error })
+        }
     }
 
     const togglePush = async (on) => {
@@ -482,6 +475,7 @@ function NotificationsSection() {
             if (on) {
                 const result = await webPush.subscribe()
                 if (result === 'granted') {
+                    await updatePrefs({ pushEnabled: true })
                     push({ type: 'success', message: 'Push notifications enabled' })
                 } else if (result === 'denied') {
                     push({
@@ -508,6 +502,7 @@ function NotificationsSection() {
                     }
                     await sub.unsubscribe()
                 }
+                await updatePrefs({ pushEnabled: false })
                 push({ type: 'success', message: 'Push notifications off' })
             }
         } catch (err) {
@@ -520,7 +515,7 @@ function NotificationsSection() {
         }
     }
 
-    const pushEnabled = !!webPush.subscription
+    const pushEnabled = !!webPush.subscription && prefs.pushEnabled !== false
     const pushSupported = webPush.supported
     const pushDenied = webPush.permission === 'denied'
 
@@ -556,35 +551,25 @@ function NotificationsSection() {
                     title="Sound"
                     hint="Play a chime when your turn is near."
                     control={
-                        <Toggle checked={prefs.sound} onChange={toggleSound} />
+                        <Toggle
+                            checked={prefs.soundEnabled !== false}
+                            onChange={toggleSound}
+                        />
+                    }
+                />
+                <SettingRow
+                    icon={Mail}
+                    title="Ticket emails"
+                    hint="Get an email when your ticket is called or completed."
+                    control={
+                        <Toggle
+                            checked={prefs.ticketEmailsEnabled !== false}
+                            onChange={toggleTicketEmails}
+                        />
                     }
                 />
             </div>
         </SectionCard>
-    )
-}
-
-/**
- * SettingRow — a consistent row for toggle-style preferences.
- */
-function SettingRow({ icon: Icon, title, hint, control }) {
-    return (
-        <div className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0">
-            <div className="flex min-w-0 flex-1 items-start gap-3">
-                <Icon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-                <div className="min-w-0">
-                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                        {title}
-                    </div>
-                    {hint && (
-                        <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                            {hint}
-                        </div>
-                    )}
-                </div>
-            </div>
-            <div className="shrink-0">{control}</div>
-        </div>
     )
 }
 
@@ -610,7 +595,7 @@ function AppearanceSection() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Account (danger zone)                                              */
+/*  Account                                                            */
 /* ------------------------------------------------------------------ */
 
 function AccountSection() {

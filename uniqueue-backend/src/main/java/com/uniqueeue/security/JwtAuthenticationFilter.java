@@ -33,7 +33,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (StringUtils.hasText(token) && tokenProvider.validateToken(token)) {
 
-                // Reject refresh tokens presented as access tokens.
                 String type = tokenProvider.getTokenType(token);
                 if (!JwtTokenProvider.TYPE_ACCESS.equals(type)) {
                     log.debug("Rejecting non-access token on protected route");
@@ -47,8 +46,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
                 UserPrincipal principal = (UserPrincipal) userDetails;
 
-                // Session invalidation: reject if the JWT's token version
-                // doesn't match the DB. Triggers on password change / deactivation.
                 if (principal.getTokenVersion() != null
                         && !principal.getTokenVersion().equals(tokenTv)) {
                     log.debug("Token version mismatch for {} — rejecting token", email);
@@ -56,7 +53,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return;
                 }
 
-                // Reject inactive users immediately.
                 if (!principal.isEnabled()) {
                     log.debug("Disabled user {} — rejecting token", email);
                     filterChain.doFilter(request, response);
@@ -82,6 +78,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(bearer) && bearer.startsWith("Bearer ")) {
             return bearer.substring(7);
         }
+
+        if (request.getRequestURI() != null
+                && request.getRequestURI().startsWith("/api/events/")) {
+            String tokenParam = request.getParameter("token");
+            if (StringUtils.hasText(tokenParam)) {
+                return tokenParam;
+            }
+        }
+
         return null;
     }
 }

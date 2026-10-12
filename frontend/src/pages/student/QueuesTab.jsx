@@ -14,10 +14,12 @@ import EmptyState from '../../components/ui/EmptyState'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import EnablePushPrompt from '../../components/student/EnablePushPrompt'
 import { useAuthStore } from '../../store/authStore'
+import { useUniversityStore } from '../../store/universityStore'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { useStudentTicketAlerts } from '../../hooks/useNotificationSound'
 import { groupQueuesByOffice } from '../../lib/groupQueues'
+import { withAlpha } from '../../lib/colors'
 import { syncBus } from '../../lib/syncBus'
 
 const STATUS_VARIANTS = {
@@ -78,6 +80,7 @@ function CopyButton({ text }) {
 
 export default function QueuesTab() {
     const { user } = useAuthStore()
+    const { university } = useUniversityStore()
     const { push } = useToastStore()
     const navigate = useNavigate()
     const { checkTicket } = useStudentTicketAlerts()
@@ -86,6 +89,7 @@ export default function QueuesTab() {
     const [activeTicket, setActiveTicket] = useState(null)
     const [history, setHistory] = useState([])
     const [workflows, setWorkflows] = useState([])
+    const [availableWorkflows, setAvailableWorkflows] = useState([])
     const [closedDates, setClosedDates] = useState({
         todayClosed: false,
         todayReason: null,
@@ -104,19 +108,24 @@ export default function QueuesTab() {
 
     const isFresher = user?.role === 'FRESHER'
     const showPushPrompt = !!activeTicket
+    const primaryColor = university?.primaryColor || '#4f46e5'
+
+    const lastLocalActionAtRef = useRef(0)
 
     const load = useCallback(async () => {
         try {
-            const [q, t, w, h, cd] = await Promise.all([
+            const [q, t, w, aw, h, cd] = await Promise.all([
                 api.get('/api/queues'),
                 api.get('/api/user/tickets/active'),
                 api.get('/api/user/workflows').catch(() => ({ data: { data: [] } })),
+                api.get('/api/user/workflows/available').catch(() => ({ data: { data: [] } })),
                 api.get('/api/user/tickets/history').catch(() => ({ data: { data: [] } })),
                 api.get('/api/closed-dates').catch(() => ({ data: { data: null } })),
             ])
             setQueues(q.data.data || [])
             setActiveTicket(t.data.data || null)
             setWorkflows(w.data.data || [])
+            setAvailableWorkflows(aw.data.data || [])
             setHistory(h.data.data || [])
             setClosedDates(cd.data?.data || { todayClosed: false, todayReason: null, upcoming: [] })
         } catch (err) {
@@ -129,16 +138,40 @@ export default function QueuesTab() {
     useEffect(() => { load() }, [load])
     useAdaptivePoll(load, { fastMs: 5000, slowMs: 30000 })
 
-    // Refetch when another tab (staff page) makes a change
     useEffect(() => {
         const unsub = syncBus.subscribe('data-changed', (payload) => {
             if (payload?.source === 'student-queue') return
+            if (Date.now() - lastLocalActionAtRef.current < 2000) return
             load()
         })
         return unsub
     }, [load])
 
     const activeWorkflow = workflows.find((w) => w.status === 'IN_PROGRESS')
+
+    const workflowByQueueId = useMemo(() => {
+        const map = new Map()
+
+        const ingest = (w) => {
+            const steps = w.steps || []
+            const total = w.totalSteps || steps.length || 0
+            steps.forEach((s) => {
+                if (!s.queueId) return
+                if (map.has(s.queueId)) return
+                map.set(s.queueId, {
+                    workflowId: w.workflowId ?? w.id,
+                    workflowName: w.workflowName ?? w.name ?? 'Clearance',
+                    stepOrder: s.order ?? s.stepOrder,
+                    totalSteps: total,
+                })
+            })
+        }
+
+        workflows.forEach(ingest)
+        availableWorkflows.forEach(ingest)
+        return map
+    }, [workflows, availableWorkflows])
+
     const lockedQueueIds = useMemo(() => {
         const m = new Set()
         if (activeWorkflow) {
@@ -220,6 +253,7 @@ export default function QueuesTab() {
         setJoining(true)
         try {
             const res = await api.post('/api/user/tickets/join', { queueId: selectedService.id })
+            lastLocalActionAtRef.current = Date.now()
             syncBus.publish('data-changed', { source: 'student-queue', at: Date.now() })
             push({ type: 'success', message: `Joined. Ticket: ${res.data.data.ticketNumber}` })
             setSelectedServiceId('')
@@ -236,6 +270,7 @@ export default function QueuesTab() {
         setLeaving(true)
         try {
             await api.delete(`/api/user/tickets/${activeTicket.id}`)
+            lastLocalActionAtRef.current = Date.now()
             syncBus.publish('data-changed', { source: 'student-queue', at: Date.now() })
             push({ type: 'success', message: 'You left the queue' })
             setConfirmLeave(false)
@@ -251,6 +286,7 @@ export default function QueuesTab() {
         setActing(`reschedule-${ticket.id}`)
         try {
             await api.post(`/api/user/tickets/${ticket.id}/reschedule`)
+            lastLocalActionAtRef.current = Date.now()
             syncBus.publish('data-changed', { source: 'student-queue', at: Date.now() })
             push({ type: 'success', message: 'Turn rescheduled. You are now at the end of the queue.' })
             await load()
@@ -265,6 +301,7 @@ export default function QueuesTab() {
         setActing(`skip-${ticket.id}`)
         try {
             await api.post(`/api/user/tickets/${ticket.id}/skip`)
+            lastLocalActionAtRef.current = Date.now()
             syncBus.publish('data-changed', { source: 'student-queue', at: Date.now() })
             push({ type: 'success', message: 'Turn skipped' })
             await load()
@@ -324,20 +361,30 @@ export default function QueuesTab() {
                 <motion.div
                     initial={{ opacity: 0, y: -6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/40"
+                    className="mb-6 flex items-start gap-3 rounded-xl border p-4"
+                    style={{
+                        backgroundColor: withAlpha(primaryColor, 0.08),
+                        borderColor: withAlpha(primaryColor, 0.28),
+                    }}
                 >
-                    <GraduationCap className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-400" />
+                    <div
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                        style={{ backgroundColor: primaryColor }}
+                    >
+                        <GraduationCap className="h-5 w-5 text-white" />
+                    </div>
                     <div className="flex-1 text-sm">
-                        <p className="font-medium text-amber-900 dark:text-amber-200">
+                        <p className="font-semibold text-slate-900 dark:text-slate-100">
                             You're registered as a fresher
                         </p>
-                        <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
+                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                             Some services require a matric number. Once you receive yours,
                             update your profile to unlock everything.
                         </p>
                         <button
                             onClick={() => navigate('/profile')}
-                            className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-amber-700"
+                            className="mt-3 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+                            style={{ backgroundColor: primaryColor }}
                         >
                             Go to profile
                             <ArrowRight className="h-3 w-3" />
@@ -350,19 +397,30 @@ export default function QueuesTab() {
                 <motion.div
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 overflow-hidden rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 dark:border-amber-900 dark:from-amber-950/30 dark:to-orange-950/20"
+                    className="mb-6 overflow-hidden rounded-xl border"
+                    style={{
+                        backgroundColor: withAlpha(primaryColor, 0.06),
+                        borderColor: withAlpha(primaryColor, 0.25),
+                    }}
                 >
                     <div className="p-5 sm:p-6">
                         <div className="mb-4 flex items-start gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/40">
-                                <RouteIcon className="h-5 w-5 text-amber-700 dark:text-amber-400" />
+                            <div
+                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                                style={{ backgroundColor: withAlpha(primaryColor, 0.18) }}
+                            >
+                                <RouteIcon
+                                    className="h-5 w-5"
+                                    style={{ color: primaryColor }}
+                                />
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                                     You're completing: {activeWorkflow.workflowName}
                                 </h3>
-                                <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
-                                    This is a required {activeWorkflow.totalSteps}-step clearance. Complete each step in order.
+                                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                                    This is a required {activeWorkflow.totalSteps}-step clearance.
+                                    Complete each step in order.
                                 </p>
                             </div>
                         </div>
@@ -372,7 +430,7 @@ export default function QueuesTab() {
                                     key={step.order}
                                     className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm ${
                                         step.state === 'CURRENT'
-                                            ? 'bg-amber-100/80 font-medium text-amber-900 dark:bg-amber-950/40 dark:text-amber-200'
+                                            ? 'bg-white/70 font-medium text-slate-900 dark:bg-slate-900/60 dark:text-slate-100'
                                             : step.state === 'COMPLETED'
                                                 ? 'text-emerald-700 dark:text-emerald-400'
                                                 : 'text-slate-500 dark:text-slate-400'
@@ -383,9 +441,14 @@ export default function QueuesTab() {
                                             step.state === 'COMPLETED'
                                                 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
                                                 : step.state === 'CURRENT'
-                                                    ? 'bg-amber-500 text-white'
+                                                    ? 'text-white'
                                                     : 'bg-slate-200 text-slate-500 dark:bg-slate-800'
                                         }`}
+                                        style={
+                                            step.state === 'CURRENT'
+                                                ? { backgroundColor: primaryColor }
+                                                : undefined
+                                        }
                                     >
                                         {step.state === 'COMPLETED' ? (
                                             <CheckCircle2 className="h-3.5 w-3.5" />
@@ -400,7 +463,10 @@ export default function QueuesTab() {
                                         {step.label && ` · ${step.label}`}
                                     </span>
                                     {step.state === 'CURRENT' && (
-                                        <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold uppercase text-white">
+                                        <span
+                                            className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase text-white"
+                                            style={{ backgroundColor: primaryColor }}
+                                        >
                                             Current
                                         </span>
                                     )}
@@ -477,28 +543,75 @@ export default function QueuesTab() {
                                     <motion.div
                                         initial={{ opacity: 0, y: 4 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs dark:border-slate-700 dark:bg-slate-800/50"
+                                        className="rounded-xl border p-4"
+                                        style={{
+                                            borderColor: withAlpha(primaryColor, 0.28),
+                                            backgroundColor: withAlpha(primaryColor, 0.06),
+                                        }}
                                     >
-                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                            {selectedService.location && (
-                                                <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
-                                                    <MapPin className="h-3 w-3" />
-                                                    {selectedService.location}
-                                                </span>
-                                            )}
-                                            <span className="flex items-center gap-1 font-bold text-brand-600 dark:text-brand-400">
-                                                <Users className="h-3 w-3" />
-                                                {selectedService.waitingCount ?? 0} waiting
-                                            </span>
-                                            <span className="flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400">
-                                                <Clock className="h-3 w-3" />
-                                                ~{selectedService.estimatedMinutes ?? 0} min
-                                            </span>
+                                        {workflowByQueueId.has(selectedService.id) && (
+                                            <div
+                                                className="mb-3 flex items-start gap-2 rounded-lg border bg-white/80 px-3 py-2 dark:bg-slate-900/70"
+                                                style={{ borderColor: withAlpha(primaryColor, 0.25) }}
+                                            >
+                                                <RouteIcon
+                                                    className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                                                    style={{ color: primaryColor }}
+                                                />
+                                                <div className="min-w-0">
+                                                    <div
+                                                        className="text-[11px] font-bold uppercase tracking-wider"
+                                                        style={{ color: primaryColor }}
+                                                    >
+                                                        Part of {workflowByQueueId.get(selectedService.id).workflowName}
+                                                    </div>
+                                                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                        Step {workflowByQueueId.get(selectedService.id).stepOrder} of{' '}
+                                                        {workflowByQueueId.get(selectedService.id).totalSteps}
+                                                        {' '}· joining here alone won't start the workflow
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="rounded-lg bg-white/70 p-3 shadow-sm dark:bg-slate-800/60">
+                                                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                    <Users className="h-3 w-3" />
+                                                    Waiting
+                                                </div>
+                                                <div
+                                                    className="mt-1 text-2xl font-bold"
+                                                    style={{ color: primaryColor }}
+                                                >
+                                                    {selectedService.waitingCount ?? 0}
+                                                </div>
+                                            </div>
+                                            <div className="rounded-lg bg-white/70 p-3 shadow-sm dark:bg-slate-800/60">
+                                                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                    <Clock className="h-3 w-3" />
+                                                    Est. wait
+                                                </div>
+                                                <div className="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">
+                                                    {selectedService.estimatedMinutes ?? 0}
+                                                    <span className="ml-0.5 text-sm font-semibold">min</span>
+                                                </div>
+                                            </div>
                                         </div>
+
+                                        {selectedService.location && (
+                                            <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                                                <MapPin className="h-3 w-3" />
+                                                {selectedService.location}
+                                            </div>
+                                        )}
+
                                         {selectedService.currentlyServing && (
-                                            <div className="mt-2 text-slate-600 dark:text-slate-400">
-                                                Now serving:{' '}
-                                                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                            <div className="mt-3 flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50/60 px-3 py-2 dark:border-emerald-900 dark:bg-emerald-950/30">
+                                                <span className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+                                                    Now serving
+                                                </span>
+                                                <span className="font-mono text-sm font-bold text-emerald-700 dark:text-emerald-300">
                                                     {selectedService.currentlyServing}
                                                 </span>
                                             </div>
@@ -542,6 +655,7 @@ export default function QueuesTab() {
                                     loading={joining}
                                     fullWidth
                                     className="!mt-4"
+                                    style={{ backgroundColor: primaryColor }}
                                 >
                                     {activeTicket
                                         ? 'Queue turn is near'
@@ -625,9 +739,17 @@ export default function QueuesTab() {
                                             animate={{ opacity: 1, y: 0 }}
                                             className={`rounded-lg border p-4 transition-colors ${
                                                 isActive
-                                                    ? 'border-brand-200 bg-gradient-to-br from-brand-50/60 to-white dark:border-brand-900 dark:from-brand-950/30 dark:to-slate-900'
+                                                    ? 'bg-white dark:bg-slate-900'
                                                     : 'border-slate-200 dark:border-slate-800'
                                             }`}
+                                            style={
+                                                isActive
+                                                    ? {
+                                                        borderColor: withAlpha(primaryColor, 0.4),
+                                                        backgroundColor: withAlpha(primaryColor, 0.05),
+                                                    }
+                                                    : undefined
+                                            }
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="min-w-0 flex-1">
@@ -671,7 +793,8 @@ export default function QueuesTab() {
                                                     <button
                                                         onClick={() => rescheduleTurn(t)}
                                                         disabled={acting === `reschedule-${t.id}`}
-                                                        className="font-medium text-brand-600 transition-colors hover:text-brand-700 disabled:opacity-50 dark:text-brand-400"
+                                                        className="font-medium transition-colors disabled:opacity-50"
+                                                        style={{ color: primaryColor }}
                                                     >
                                                         {acting === `reschedule-${t.id}` ? 'Rescheduling…' : 'Reschedule turn'}
                                                     </button>

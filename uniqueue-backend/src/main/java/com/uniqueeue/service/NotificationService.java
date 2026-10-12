@@ -22,20 +22,13 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final AsyncPushService asyncPushService;
+    private final EventService eventService;
 
-    /** Fire-and-forget notification with no deep-link. */
     @Transactional
     public void notify(User user, NotificationType type, String title, String message) {
         notify(user, type, title, message, null);
     }
 
-    /**
-     * Fire-and-forget notification with optional deep-link.
-     *
-     * Persists the in-app notification synchronously (fast DB write), then hands
-     * the Web Push off to AsyncPushService so the request thread returns immediately.
-     * The push runs on the "pushExecutor" thread pool.
-     */
     @Transactional
     public void notify(User user, NotificationType type, String title, String message, String link) {
         if (user == null) return;
@@ -50,11 +43,19 @@ public class NotificationService {
                     .build();
             notificationRepository.save(n);
 
+            eventService.broadcastToUser(user.getId(), "notification:new",
+                    Map.of("title", title, "message", message));
+
+            boolean pushAllowed = !Boolean.FALSE.equals(user.getPushEnabled());
+            if (!pushAllowed) {
+                log.debug("Skipping push for user {} — push_enabled=false", user.getId());
+                return;
+            }
+
             Map<String, Object> data = new HashMap<>();
             data.put("type", type.name());
             if (link != null) data.put("link", link);
 
-            // Off-thread: returns instantly, HTTP push happens in the background.
             asyncPushService.send(user.getId(), title, message, data);
         } catch (Exception ex) {
             log.error("Failed to send notification to user {}: {}", user.getId(), ex.getMessage());

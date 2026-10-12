@@ -6,6 +6,7 @@ import api from '../../api/axios'
 import { useAuthStore } from '../../store/authStore'
 import { formatTimeAgo } from '../../lib/format'
 import { playAttentionSound } from '../../lib/soundService'
+import { usePrefsStore } from '../../store/prefsStore'
 
 export default function NotificationBell() {
     const { token } = useAuthStore()
@@ -24,7 +25,10 @@ export default function NotificationBell() {
             const next = res.data.data?.count ?? 0
             setUnread((prev) => {
                 if (next > prev) {
-                    try { playAttentionSound() } catch { /* audio locked */ }
+                    const soundOn = usePrefsStore.getState().prefs.soundEnabled !== false
+                    if (soundOn) {
+                        try { playAttentionSound() } catch { /* audio locked */ }
+                    }
                 }
                 return next
             })
@@ -81,7 +85,6 @@ export default function NotificationBell() {
     }, [open, loadNotifications])
 
     const markOneRead = async (notification) => {
-        // Optimistic read
         if (!notification.isRead) {
             setNotifications((prev) =>
                 prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n))
@@ -97,7 +100,6 @@ export default function NotificationBell() {
             }
         }
 
-        // Deep-link if present
         if (notification.link) {
             setOpen(false)
             navigate(notification.link)

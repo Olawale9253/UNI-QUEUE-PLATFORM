@@ -19,6 +19,8 @@ import AdminDashboard from './pages/AdminDashboard'
 import SuperAdminDashboard from './pages/SuperAdminDashboard'
 import NotFound from './pages/NotFound'
 import { initSoundUnlock } from './lib/soundService'
+import { usePrefsStore } from './store/prefsStore'
+import { useServerEvents } from './hooks/useServerEvents'
 
 const AUTH_ROUTES = [
     '/login',
@@ -32,20 +34,19 @@ export default function App() {
     const location = useLocation()
     const hideNavbar = AUTH_ROUTES.includes(location.pathname)
 
-    // Register click/keypress/touch listeners once at app boot.
-    // These unlock the AudioContext so notification chimes can play later.
-    // Browsers block audio until the user has interacted at least once.
-    useEffect(() => {
-        initSoundUnlock()
-    }, [])
+    useServerEvents()
 
     useEffect(() => {
         initSoundUnlock()
-        // Register the push service worker so subscriptions can be created later
+
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').catch((err) => {
                 console.warn('SW registration failed:', err)
             })
+        }
+
+        if (localStorage.getItem('uniqueue_token')) {
+            usePrefsStore.getState().load()
         }
     }, [])
 

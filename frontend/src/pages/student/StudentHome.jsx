@@ -3,15 +3,12 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     Calendar, Ticket, FileText, CheckCircle2, Building2,
-    Route as RouteIcon, ArrowRight, Clock, PartyPopper,
+    Route as RouteIcon, ArrowRight, Clock,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { groupQueuesByOffice } from '../../lib/groupQueues'
-import { syncBus } from '../../lib/syncBus'
-
-/* ------------------------------------------------------------------ */
 
 function StatTile({ label, value, icon: Icon, accent, valueColor, to, ctaLabel, delay }) {
     return (
@@ -81,7 +78,7 @@ function LiveQueueCard({ office }) {
 
             <div className="mt-4 grid grid-cols-2 gap-3">
                 <div>
-                    <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                    <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                         Now Serving
                     </div>
                     <div
@@ -95,7 +92,7 @@ function LiveQueueCard({ office }) {
                     </div>
                 </div>
                 <div>
-                    <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                    <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                         Avg Wait
                     </div>
                     <div className="mt-1 text-sm font-bold text-amber-600 dark:text-amber-400">
@@ -116,12 +113,7 @@ function LiveQueueCard({ office }) {
     )
 }
 
-/* ------------------------------------------------------------------ */
-/*  Clearance card — handles BOTH in-progress and just-completed       */
-/* ------------------------------------------------------------------ */
-
 function ActiveClearanceCard({ data }) {
-    const isCompleted = data.status === 'COMPLETED'
     const pct = data.progressPercent ?? 0
     const next = data.nextAction
 
@@ -130,37 +122,17 @@ function ActiveClearanceCard({ data }) {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className={`relative overflow-hidden rounded-xl border p-5 ${
-                isCompleted
-                    ? 'border-emerald-300 bg-gradient-to-br from-emerald-50 to-white dark:border-emerald-700 dark:from-emerald-950/40 dark:to-slate-900'
-                    : 'border-brand-300 bg-gradient-to-br from-brand-50 to-white dark:border-brand-700 dark:from-brand-950/40 dark:to-slate-900'
-            }`}
+            className="relative overflow-hidden rounded-xl border border-brand-300 bg-gradient-to-br from-brand-50 to-white p-5 dark:border-brand-700 dark:from-brand-950/40 dark:to-slate-900"
         >
             <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-3">
-                    <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white shadow-sm ${
-                            isCompleted
-                                ? 'bg-gradient-to-br from-emerald-500 to-emerald-600'
-                                : 'bg-gradient-to-br from-brand-500 to-brand-600'
-                        }`}
-                    >
-                        {isCompleted ? (
-                            <PartyPopper className="h-5 w-5" />
-                        ) : (
-                            <RouteIcon className="h-5 w-5" />
-                        )}
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-sm">
+                        <RouteIcon className="h-5 w-5" />
                     </div>
 
                     <div className="min-w-0">
-                        <div
-                            className={`text-[10px] font-bold uppercase tracking-widest ${
-                                isCompleted
-                                    ? 'text-emerald-600 dark:text-emerald-400'
-                                    : 'text-brand-600 dark:text-brand-400'
-                            }`}
-                        >
-                            {isCompleted ? 'Clearance complete' : 'Active clearance'}
+                        <div className="text-[10px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">
+                            Active progress
                         </div>
                         <h3 className="mt-0.5 truncate text-base font-semibold text-slate-900 dark:text-slate-100">
                             {data.workflowName}
@@ -174,29 +146,18 @@ function ActiveClearanceCard({ data }) {
                     </div>
                 </div>
 
-                <span
-                    className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
-                        isCompleted
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
-                            : 'bg-brand-100 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300'
-                    }`}
-                >
-                    {isCompleted ? 'Done' : `${pct}%`}
+                <span className="shrink-0 rounded-full bg-brand-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">
+                    {pct}%
                 </span>
             </div>
 
-            {/* Progress bar */}
             <div className="mt-4">
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                     <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${pct}%` }}
                         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                        className={`h-full rounded-full ${
-                            isCompleted
-                                ? 'bg-gradient-to-r from-emerald-500 to-emerald-600'
-                                : 'bg-gradient-to-r from-brand-500 to-brand-600'
-                        }`}
+                        className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-600"
                     />
                 </div>
                 <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
@@ -207,8 +168,7 @@ function ActiveClearanceCard({ data }) {
                 </div>
             </div>
 
-            {/* Next action — only when in progress */}
-            {!isCompleted && next && (
+            {next && (
                 <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-brand-200 bg-white/70 px-3 py-2.5 dark:border-brand-800 dark:bg-slate-900/60">
                     <div className="min-w-0">
                         <div className="text-[10px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">
@@ -232,22 +192,6 @@ function ActiveClearanceCard({ data }) {
                 </div>
             )}
 
-            {/* Completion banner — only when just completed */}
-            {isCompleted && (
-                <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-white/70 px-3 py-2.5 dark:border-emerald-800 dark:bg-slate-900/60">
-                    <div className="text-xs text-emerald-800 dark:text-emerald-300">
-                        🎉 All steps done. Thanks for completing your clearance.
-                    </div>
-                    <Link
-                        to="/student/workflows"
-                        className="shrink-0 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 dark:border-emerald-800 dark:bg-slate-900 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
-                    >
-                        View history
-                    </Link>
-                </div>
-            )}
-
-            {/* Footer link */}
             <div className="mt-3 flex justify-end">
                 <Link
                     to="/student/workflows"
@@ -261,8 +205,6 @@ function ActiveClearanceCard({ data }) {
     )
 }
 
-/* ------------------------------------------------------------------ */
-
 export default function StudentHome() {
     const [queues, setQueues] = useState([])
     const [stats, setStats] = useState(null)
@@ -271,8 +213,6 @@ export default function StudentHome() {
     const [activeClearance, setActiveClearance] = useState(null)
     const [loading, setLoading] = useState(true)
 
-    // Resets on every mount (page load, nav away + back).
-    // Tracks whether we saw the workflow as IN_PROGRESS during this mount.
     const sawInProgressRef = useRef(false)
 
     const load = useCallback(async () => {
@@ -282,8 +222,7 @@ export default function StudentHome() {
                 api.get('/api/user/stats').catch(() => ({ data: { data: null } })),
                 api.get('/api/user/appointments').catch(() => ({ data: { data: [] } })),
                 api.get('/api/user/documents').catch(() => ({ data: { data: [] } })),
-                api.get('/api/student/workflows/my-progress')
-                    .catch(() => ({ data: { data: null } })),
+                api.get('/api/student/workflows/my-progress').catch(() => ({ data: { data: null } })),
             ])
             setQueues(q.data?.data || [])
             setStats(s.data?.data || null)
@@ -291,33 +230,18 @@ export default function StudentHome() {
             setDocuments(d.data?.data || [])
 
             const mpData = mp.data?.data || null
-
-            if (!mpData) {
-                // No enrollment at all
-                setActiveClearance(null)
-                return
-            }
-
-            if (mpData.status === 'IN_PROGRESS') {
-                // Live workflow — remember we saw it active
+            if (mpData && mpData.status === 'IN_PROGRESS') {
                 sawInProgressRef.current = true
                 setActiveClearance(mpData)
-                return
-            }
-
-            if (mpData.status === 'COMPLETED') {
-                // Only show if it completed *during this page visit*.
-                // Fresh load or after navigation → ref is false → hidden.
+            } else if (mpData && mpData.status === 'COMPLETED') {
                 if (sawInProgressRef.current) {
                     setActiveClearance(mpData)
                 } else {
                     setActiveClearance(null)
                 }
-                return
+            } else {
+                setActiveClearance(null)
             }
-
-            // ABANDONED or anything else — hide
-            setActiveClearance(null)
         } catch {
             // silent
         } finally {
@@ -353,7 +277,6 @@ export default function StudentHome() {
 
     return (
         <>
-            {/* Stat tiles */}
             <div className="mb-7 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
                 <StatTile
                     label="My Appointments"
@@ -395,7 +318,6 @@ export default function StudentHome() {
                 />
             </div>
 
-            {/* Clearance card — in-progress OR just-completed in this session */}
             {activeClearance && (
                 <motion.div
                     initial={{ opacity: 0, y: 8 }}
@@ -405,9 +327,7 @@ export default function StudentHome() {
                 >
                     <div className="mb-4 flex items-center justify-between">
                         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                            {activeClearance.status === 'COMPLETED'
-                                ? 'Clearance Complete'
-                                : 'Active Clearance'}
+                            My Progress
                         </h2>
                         <Link
                             to="/student/workflows"
@@ -420,7 +340,6 @@ export default function StudentHome() {
                 </motion.div>
             )}
 
-            {/* Live Queues */}
             <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
