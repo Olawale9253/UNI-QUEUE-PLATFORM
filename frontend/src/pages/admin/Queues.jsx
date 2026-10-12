@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Plus, Pencil, Trash2, MapPin, Clock, LayoutGrid, Search,
-    Building2, GraduationCap, CalendarDays,
+    Building2, GraduationCap, CalendarDays, Check, Power, PowerOff, X,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -11,12 +11,12 @@ import Input from '../../components/ui/Input'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
+import ExportButton from '../../components/ui/ExportButton'
 import PageHeader from '../../components/layout/PageHeader'
 import { SkeletonQueueGrid } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { stagger, staggerItem, expand } from '../../lib/motion'
 
-// ─── Weekday helpers ───
 const WEEKDAYS = [
     { iso: 1, short: 'Mon', label: 'Monday' },
     { iso: 2, short: 'Tue', label: 'Tuesday' },
@@ -58,6 +58,83 @@ const emptyForm = {
     operatingDays: [...DEFAULT_DAYS],
 }
 
+function SelectCheckbox({ checked, onChange, disabled }) {
+    return (
+        <button
+            type="button"
+            onClick={(e) => {
+                e.stopPropagation()
+                if (disabled) return
+                onChange(!checked)
+            }}
+            disabled={disabled}
+            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors disabled:opacity-50 ${
+                checked
+                    ? 'border-brand-600 bg-brand-600 text-white'
+                    : 'border-slate-300 bg-white hover:border-brand-400 dark:border-slate-600 dark:bg-slate-900'
+            }`}
+            aria-label={checked ? 'Deselect' : 'Select'}
+        >
+            {checked && <Check className="h-3 w-3" strokeWidth={3} />}
+        </button>
+    )
+}
+
+function BulkToolbar({ count, onClear, onActivate, onDeactivate, onDelete, busy }) {
+    return (
+        <AnimatePresence>
+            {count > 0 && (
+                <motion.div
+                    initial={{ y: 80, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: 80, opacity: 0 }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                    className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2"
+                >
+                    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+                        <span className="px-2 text-sm font-bold text-slate-900 tabular-nums dark:text-slate-100">
+                            {count} selected
+                        </span>
+                        <div className="h-5 w-px bg-slate-200 dark:bg-slate-700" />
+                        <button
+                            onClick={onActivate}
+                            disabled={busy}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
+                        >
+                            <Power className="h-3.5 w-3.5" />
+                            Activate
+                        </button>
+                        <button
+                            onClick={onDeactivate}
+                            disabled={busy}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-amber-600 disabled:opacity-60"
+                        >
+                            <PowerOff className="h-3.5 w-3.5" />
+                            Deactivate
+                        </button>
+                        <button
+                            onClick={onDelete}
+                            disabled={busy}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-rose-700 disabled:opacity-60"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Delete
+                        </button>
+                        <button
+                            onClick={onClear}
+                            disabled={busy}
+                            className="rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50 dark:hover:bg-slate-800"
+                            aria-label="Clear selection"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    )
+}
+
 export default function Queues() {
     const { push } = useToastStore()
     const [queues, setQueues] = useState([])
@@ -70,6 +147,10 @@ export default function Queues() {
     const [deleteTarget, setDeleteTarget] = useState(null)
     const [deleting, setDeleting] = useState(false)
     const [search, setSearch] = useState('')
+
+    const [selectedIds, setSelectedIds] = useState(() => new Set())
+    const [bulkBusy, setBulkBusy] = useState(false)
+    const [bulkConfirm, setBulkConfirm] = useState(null)
 
     const load = useCallback(async () => {
         try {
@@ -196,6 +277,59 @@ export default function Queues() {
         }
     }
 
+    const toggleSelect = (id) => {
+        setSelectedIds((prev) => {
+            const next = new Set(prev)
+            if (next.has(id)) next.delete(id)
+            else next.add(id)
+            return next
+        })
+    }
+
+    const clearSelection = () => setSelectedIds(new Set())
+
+    const handleBulk = async (action) => {
+        const ids = Array.from(selectedIds)
+        if (ids.length === 0) return
+        setBulkBusy(true)
+        try {
+            const endpoint =
+                action === 'activate' ? '/api/admin/bulk/queues/activate'
+                    : action === 'deactivate' ? '/api/admin/bulk/queues/deactivate'
+                        : '/api/admin/bulk/queues/delete'
+            const res = await api.post(endpoint, { ids })
+            const result = res.data?.data || {}
+            const succeeded = result.succeeded ?? 0
+            const failed = result.failed?.length ?? 0
+
+            if (failed === 0) {
+                push({
+                    type: 'success',
+                    message:
+                        action === 'delete'
+                            ? `${succeeded} service${succeeded === 1 ? '' : 's'} deleted`
+                            : `${succeeded} service${succeeded === 1 ? '' : 's'} ${action}d`,
+                })
+            } else {
+                push({
+                    type: 'warning',
+                    message: `${succeeded} succeeded, ${failed} failed — ${result.failed[0]?.reason || 'see logs'}`,
+                })
+            }
+
+            setBulkConfirm(null)
+            clearSelection()
+            await load()
+        } catch (err) {
+            push({
+                type: 'error',
+                message: err.response?.data?.message || `Bulk ${action} failed`,
+            })
+        } finally {
+            setBulkBusy(false)
+        }
+    }
+
     const groups = (() => {
         const map = new Map()
         for (const q of queues) {
@@ -227,6 +361,21 @@ export default function Queues() {
             .filter((g) => g.queues.length > 0)
         : groups
 
+    const allVisibleSelected =
+        filteredQueues.length > 0 && filteredQueues.every((q) => selectedIds.has(q.id))
+
+    const toggleSelectAllVisible = () => {
+        setSelectedIds((prev) => {
+            const next = new Set(prev)
+            if (allVisibleSelected) {
+                filteredQueues.forEach((q) => next.delete(q.id))
+            } else {
+                filteredQueues.forEach((q) => next.add(q.id))
+            }
+            return next
+        })
+    }
+
     if (loading) {
         return (
             <>
@@ -236,89 +385,106 @@ export default function Queues() {
         )
     }
 
-    const QueueCard = ({ q }) => (
-        <motion.div variants={staggerItem}>
-            <Card className="flex h-full flex-col">
-                <div className="mb-3 flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                            {q.name}
-                        </h3>
-                        {q.matricRequired && (
-                            <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
-                                <GraduationCap className="h-3 w-3" />
-                                Matric required
-                            </span>
-                        )}
+    const QueueCard = ({ q }) => {
+        const isSelected = selectedIds.has(q.id)
+        return (
+            <motion.div variants={staggerItem}>
+                <Card
+                    className={`flex h-full flex-col ${
+                        isSelected
+                            ? '!border-brand-400 ring-2 ring-brand-100 dark:!border-brand-600 dark:ring-brand-950/40'
+                            : ''
+                    }`}
+                >
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 flex-1 items-start gap-3">
+                            <div className="pt-1">
+                                <SelectCheckbox
+                                    checked={isSelected}
+                                    onChange={() => toggleSelect(q.id)}
+                                />
+                            </div>
+                            <div className="min-w-0">
+                                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                                    {q.name}
+                                </h3>
+                                {q.matricRequired && (
+                                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                                        <GraduationCap className="h-3 w-3" />
+                                        Matric required
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        <Badge variant={q.isActive ? 'success' : 'default'}>
+                            {q.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
                     </div>
-                    <Badge variant={q.isActive ? 'success' : 'default'}>
-                        {q.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
-                </div>
 
-                {q.location && (
-                    <p className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-                        <MapPin className="h-3.5 w-3.5" />
-                        {q.location}
-                    </p>
-                )}
+                    {q.location && (
+                        <p className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+                            <MapPin className="h-3.5 w-3.5" />
+                            {q.location}
+                        </p>
+                    )}
 
-                {q.description && (
-                    <p className="mt-2 line-clamp-2 text-sm text-slate-600 dark:text-slate-400">
-                        {q.description}
-                    </p>
-                )}
+                    {q.description && (
+                        <p className="mt-2 line-clamp-2 text-sm text-slate-600 dark:text-slate-400">
+                            {q.description}
+                        </p>
+                    )}
 
-                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-xs dark:border-slate-800">
-                    <div>
-                        <div className="text-slate-500 dark:text-slate-400">Capacity</div>
-                        <div className="mt-0.5 text-sm font-bold text-brand-600 dark:text-brand-400">
-                            {q.maxCapacity}
+                    <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-xs dark:border-slate-800">
+                        <div>
+                            <div className="text-slate-500 dark:text-slate-400">Capacity</div>
+                            <div className="mt-0.5 text-sm font-bold text-brand-600 dark:text-brand-400">
+                                {q.maxCapacity}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="text-slate-500 dark:text-slate-400">Avg. min</div>
+                            <div className="mt-0.5 text-sm font-bold text-amber-600 dark:text-amber-400">
+                                {q.averageServiceMinutes}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="text-slate-500 dark:text-slate-400">Staff</div>
+                            <div className="mt-0.5 text-sm font-bold text-sky-600 dark:text-sky-400">
+                                {q.staffCount ?? 0}
+                            </div>
                         </div>
                     </div>
-                    <div>
-                        <div className="text-slate-500 dark:text-slate-400">Avg. min</div>
-                        <div className="mt-0.5 text-sm font-bold text-amber-600 dark:text-amber-400">
-                            {q.averageServiceMinutes}
+
+                    {q.opensAt && q.closesAt && (
+                        <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                            <Clock className="h-3.5 w-3.5" />
+                            Open {String(q.opensAt).slice(0, 5)} – {String(q.closesAt).slice(0, 5)}
                         </div>
-                    </div>
-                    <div>
-                        <div className="text-slate-500 dark:text-slate-400">Staff</div>
-                        <div className="mt-0.5 text-sm font-bold text-sky-600 dark:text-sky-400">
-                            {q.staffCount ?? 0}
+                    )}
+
+                    {q.operatingDays && (
+                        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                            <CalendarDays className="h-3.5 w-3.5" />
+                            {formatDays(parseDays(q.operatingDays))}
                         </div>
-                    </div>
-                </div>
+                    )}
 
-                {q.opensAt && q.closesAt && (
-                    <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                        <Clock className="h-3.5 w-3.5" />
-                        Open {String(q.opensAt).slice(0, 5)} – {String(q.closesAt).slice(0, 5)}
+                    <div className="mt-auto flex items-center gap-2 pt-5">
+                        <Button size="sm" variant="secondary" icon={Pencil} onClick={() => openEdit(q)} fullWidth>
+                            Edit
+                        </Button>
+                        <button
+                            onClick={() => setDeleteTarget(q)}
+                            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
+                            aria-label="Delete service"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </button>
                     </div>
-                )}
-
-                {q.operatingDays && (
-                    <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                        <CalendarDays className="h-3.5 w-3.5" />
-                        {formatDays(parseDays(q.operatingDays))}
-                    </div>
-                )}
-
-                <div className="mt-auto flex items-center gap-2 pt-5">
-                    <Button size="sm" variant="secondary" icon={Pencil} onClick={() => openEdit(q)} fullWidth>
-                        Edit
-                    </Button>
-                    <button
-                        onClick={() => setDeleteTarget(q)}
-                        className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
-                        aria-label="Delete service"
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </button>
-                </div>
-            </Card>
-        </motion.div>
-    )
+                </Card>
+            </motion.div>
+        )
+    }
 
     return (
         <>
@@ -497,13 +663,60 @@ export default function Queues() {
             </AnimatePresence>
 
             {queues.length > 0 && (
-                <div className="mb-4">
-                    <Input
-                        placeholder="Search by service name, office, or location"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        icon={Search}
+                <div className="mb-4 flex flex-wrap items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                        <Input
+                            placeholder="Search by service name, office, or location"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            icon={Search}
+                        />
+                    </div>
+                    <ExportButton
+                        rows={filteredQueues}
+                        columns={[
+                            { key: 'id', label: 'Service ID' },
+                            { key: 'name', label: 'Service Name' },
+                            { key: 'officeName', label: 'Office' },
+                            { key: 'location', label: 'Location' },
+                            {
+                                key: 'isActive',
+                                label: 'Status',
+                                value: (q) => (q.isActive ? 'Active' : 'Inactive'),
+                            },
+                            { key: 'maxCapacity', label: 'Max Capacity' },
+                            { key: 'averageServiceMinutes', label: 'Avg Minutes' },
+                            { key: 'waitingCount', label: 'Waiting' },
+                            { key: 'staffCount', label: 'Staff' },
+                            { key: 'opensAt', label: 'Opens At' },
+                            { key: 'closesAt', label: 'Closes At' },
+                            { key: 'operatingDays', label: 'Operating Days' },
+                            {
+                                key: 'matricRequired',
+                                label: 'Matric Required',
+                                value: (q) => (q.matricRequired ? 'Yes' : 'No'),
+                            },
+                        ]}
+                        filename="uniqueue-services"
+                        label="Export"
                     />
+                    {filteredQueues.length > 0 && (
+                        <button
+                            onClick={toggleSelectAllVisible}
+                            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                        >
+                            <span
+                                className={`flex h-4 w-4 items-center justify-center rounded border-2 ${
+                                    allVisibleSelected
+                                        ? 'border-brand-600 bg-brand-600 text-white'
+                                        : 'border-slate-300 dark:border-slate-600'
+                                }`}
+                            >
+                                {allVisibleSelected && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
+                            </span>
+                            {allVisibleSelected ? 'Deselect all' : 'Select all'}
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -567,6 +780,15 @@ export default function Queues() {
                 </div>
             )}
 
+            <BulkToolbar
+                count={selectedIds.size}
+                onClear={clearSelection}
+                onActivate={() => setBulkConfirm('activate')}
+                onDeactivate={() => setBulkConfirm('deactivate')}
+                onDelete={() => setBulkConfirm('delete')}
+                busy={bulkBusy}
+            />
+
             <ConfirmDialog
                 open={!!deleteTarget}
                 onClose={() => !deleting && setDeleteTarget(null)}
@@ -576,6 +798,39 @@ export default function Queues() {
                 confirmLabel="Delete service"
                 variant="danger"
                 loading={deleting}
+            />
+
+            <ConfirmDialog
+                open={bulkConfirm === 'activate'}
+                onClose={() => !bulkBusy && setBulkConfirm(null)}
+                onConfirm={() => handleBulk('activate')}
+                title={`Activate ${selectedIds.size} service${selectedIds.size === 1 ? '' : 's'}?`}
+                description="Students will be able to join these services again."
+                confirmLabel="Activate"
+                variant="info"
+                loading={bulkBusy}
+            />
+
+            <ConfirmDialog
+                open={bulkConfirm === 'deactivate'}
+                onClose={() => !bulkBusy && setBulkConfirm(null)}
+                onConfirm={() => handleBulk('deactivate')}
+                title={`Deactivate ${selectedIds.size} service${selectedIds.size === 1 ? '' : 's'}?`}
+                description="Students will no longer be able to join these services. Existing tickets are unaffected."
+                confirmLabel="Deactivate"
+                variant="warning"
+                loading={bulkBusy}
+            />
+
+            <ConfirmDialog
+                open={bulkConfirm === 'delete'}
+                onClose={() => !bulkBusy && setBulkConfirm(null)}
+                onConfirm={() => handleBulk('delete')}
+                title={`Delete ${selectedIds.size} service${selectedIds.size === 1 ? '' : 's'}?`}
+                description="This permanently removes the selected services and all their ticket history. This cannot be undone."
+                confirmLabel="Delete services"
+                variant="danger"
+                loading={bulkBusy}
             />
         </>
     )

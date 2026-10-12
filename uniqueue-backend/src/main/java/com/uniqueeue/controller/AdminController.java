@@ -1,9 +1,11 @@
 package com.uniqueeue.controller;
 
+import com.uniqueeue.dto.request.BulkIdsRequest;
 import com.uniqueeue.dto.request.CreateQueueRequest;
 import com.uniqueeue.dto.request.CreateStaffRequest;
 import com.uniqueeue.dto.request.UpdateQueueRequest;
 import com.uniqueeue.dto.response.ApiResponse;
+import com.uniqueeue.dto.response.BulkResult;
 import com.uniqueeue.dto.response.QueueResponse;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.QueueService;
@@ -99,5 +101,47 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success(
                 "Staff unassigned",
                 queueService.unassignStaff(queueId, principal.getUniversityId(), staffId)));
+    }
+
+    // ---------- BULK ----------
+
+    @PostMapping("/bulk/staff/remove-from-all-queues")
+    public ResponseEntity<ApiResponse<BulkResult>> bulkRemoveStaff(
+            @RequestBody BulkIdsRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Staff removed from all queues",
+                queueService.bulkUnassignStaffFromAllQueues(
+                        principal.getUniversityId(), request.getIds())));
+    }
+
+    @PostMapping("/bulk/queues/activate")
+    public ResponseEntity<ApiResponse<BulkResult>> bulkActivateQueues(
+            @RequestBody BulkIdsRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Queues activated",
+                queueService.bulkSetQueuesActive(
+                        principal.getUniversityId(), request.getIds(), true)));
+    }
+
+    @PostMapping("/bulk/queues/deactivate")
+    public ResponseEntity<ApiResponse<BulkResult>> bulkDeactivateQueues(
+            @RequestBody BulkIdsRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Queues deactivated",
+                queueService.bulkSetQueuesActive(
+                        principal.getUniversityId(), request.getIds(), false)));
+    }
+
+    @PostMapping("/bulk/queues/delete")
+    public ResponseEntity<ApiResponse<BulkResult>> bulkDeleteQueues(
+            @RequestBody BulkIdsRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Queues deleted",
+                queueService.bulkDeleteQueues(
+                        principal.getUniversityId(), request.getIds())));
     }
 }

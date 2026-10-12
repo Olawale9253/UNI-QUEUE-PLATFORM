@@ -8,14 +8,11 @@ import api from '../../api/axios'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
+import ExportButton from '../../components/ui/ExportButton'
 import PageHeader from '../../components/layout/PageHeader'
 import { SkeletonBox, SkeletonSettingsCard } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
-
-/* ------------------------------------------------------------------ */
-/*  Level palettes                                                     */
-/* ------------------------------------------------------------------ */
 
 const LEVEL_STYLES = {
     LOW: {
@@ -40,8 +37,6 @@ const LEVEL_STYLES = {
     },
 }
 
-const LEVEL_ORDER = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 }
-
 function levelStyle(level) {
     return LEVEL_STYLES[level] || LEVEL_STYLES.LOW
 }
@@ -53,10 +48,6 @@ function formatHours(minutes) {
     const m = minutes % 60
     return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
-
-/* ------------------------------------------------------------------ */
-/*  Skeleton                                                           */
-/* ------------------------------------------------------------------ */
 
 function WorkloadSkeleton() {
     return (
@@ -78,10 +69,6 @@ function WorkloadSkeleton() {
         </div>
     )
 }
-
-/* ------------------------------------------------------------------ */
-/*  Summary tile                                                       */
-/* ------------------------------------------------------------------ */
 
 function SummaryTile({ label, value, hint, icon: Icon, accent, valueColor }) {
     return (
@@ -117,10 +104,6 @@ function SummaryTile({ label, value, hint, icon: Icon, accent, valueColor }) {
         </motion.div>
     )
 }
-
-/* ------------------------------------------------------------------ */
-/*  Queue row inside an office                                         */
-/* ------------------------------------------------------------------ */
 
 function QueueRow({ q, showRatioBar }) {
     const s = levelStyle(q.level)
@@ -170,10 +153,6 @@ function QueueRow({ q, showRatioBar }) {
     )
 }
 
-/* ------------------------------------------------------------------ */
-/*  Office card                                                        */
-/* ------------------------------------------------------------------ */
-
 function OfficeCard({ office }) {
     const s = levelStyle(office.level)
     const criticalQueues = office.queues.filter(
@@ -187,7 +166,6 @@ function OfficeCard({ office }) {
             transition={{ duration: 0.3 }}
         >
             <Card padded={false}>
-                {/* Header */}
                 <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
                     <div className="flex min-w-0 items-start gap-3">
                         <div
@@ -240,7 +218,6 @@ function OfficeCard({ office }) {
                     </div>
                 </div>
 
-                {/* Table header */}
                 <div className="grid grid-cols-12 gap-3 border-b border-slate-100 bg-slate-50/60 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
                     <div className="col-span-4">Service</div>
                     <div className="col-span-2">Waiting</div>
@@ -249,7 +226,6 @@ function OfficeCard({ office }) {
                     <div className="col-span-2 text-right">Est. wait</div>
                 </div>
 
-                {/* Rows */}
                 <div>
                     {office.queues.map((q) => (
                         <QueueRow key={q.queueId} q={q} showRatioBar />
@@ -259,10 +235,6 @@ function OfficeCard({ office }) {
         </motion.div>
     )
 }
-
-/* ------------------------------------------------------------------ */
-/*  Main page                                                          */
-/* ------------------------------------------------------------------ */
 
 export default function Workload() {
     const { push } = useToastStore()
@@ -370,18 +342,43 @@ export default function Workload() {
                 title="Workload"
                 description="See where students are piling up vs how many staff serve them."
                 action={
-                    <button
-                        onClick={() => load(true)}
-                        disabled={refreshing}
-                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                    >
-                        <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                        Refresh
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => load(true)}
+                            disabled={refreshing}
+                            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                        >
+                            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                            Refresh
+                        </button>
+                        <ExportButton
+                            rows={(data?.offices || []).map((o) => ({
+                                officeId: o.officeId,
+                                officeName: o.officeName,
+                                queueCount: o.queueCount,
+                                waitingCount: o.waitingCount,
+                                staffCount: o.staffCount,
+                                ratio: o.ratio,
+                                estWaitMinutes: o.estWaitMinutes,
+                                level: o.level,
+                            }))}
+                            columns={[
+                                { key: 'officeId', label: 'Office ID' },
+                                { key: 'officeName', label: 'Office' },
+                                { key: 'queueCount', label: 'Services' },
+                                { key: 'waitingCount', label: 'Waiting' },
+                                { key: 'staffCount', label: 'Staff' },
+                                { key: 'ratio', label: 'Ratio (students / staff)' },
+                                { key: 'estWaitMinutes', label: 'Est. Wait (min)' },
+                                { key: 'level', label: 'Load Level' },
+                            ]}
+                            filename="uniqueue-workload"
+                            label="Export"
+                        />
+                    </div>
                 }
             />
 
-            {/* Summary tiles */}
             <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
                 <SummaryTile
                     label="Students waiting"
@@ -429,7 +426,6 @@ export default function Workload() {
                 />
             </div>
 
-            {/* Filter bar */}
             {data.offices.length > 0 && (
                 <div className="mb-5 flex flex-wrap items-center gap-3">
                     <div className="relative min-w-0 flex-1 sm:max-w-xs">
@@ -463,7 +459,6 @@ export default function Workload() {
                 </div>
             )}
 
-            {/* List */}
             {data.offices.length === 0 ? (
                 <EmptyState
                     icon={Activity}

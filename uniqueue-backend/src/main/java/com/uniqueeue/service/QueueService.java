@@ -3,6 +3,7 @@ package com.uniqueeue.service;
 import com.uniqueeue.dto.request.CreateQueueRequest;
 import com.uniqueeue.dto.request.CreateStaffRequest;
 import com.uniqueeue.dto.request.UpdateQueueRequest;
+import com.uniqueeue.dto.response.BulkResult;
 import com.uniqueeue.dto.response.QueueResponse;
 import com.uniqueeue.enums.AuditAction;
 import com.uniqueeue.enums.Role;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -76,7 +78,7 @@ public class QueueService {
                 .office(office)
                 .name(request.getName())
                 .description(request.getDescription())
-                .department(office != null ? office.getName() : null) // keep in sync for legacy
+                .department(office != null ? office.getName() : null)
                 .subDepartment(request.getSubDepartment() != null ? request.getSubDepartment().trim() : null)
                 .location(request.getLocation())
                 .opensAt(request.getOpensAt() != null ? request.getOpensAt() : LocalTime.of(8, 0))
@@ -126,7 +128,6 @@ public class QueueService {
         if (request.getMatricRequired() != null) queue.setMatricRequired(request.getMatricRequired());
         if (request.getOperatingDays() != null) queue.setOperatingDays(request.getOperatingDays().trim());
 
-        // Office change
         if (request.getOfficeId() != null) {
             Office office = officeRepository.findByIdAndUniversityId(request.getOfficeId(), universityId)
                     .orElseThrow(() -> new BadRequestException("Office not found"));
@@ -154,7 +155,6 @@ public class QueueService {
                 "{\"name\":\"" + queue.getName() + "\"}");
     }
 
-    /** Resolves the office FK from officeId, or falls back to the department string. */
     private Office resolveOffice(Long universityId, CreateQueueRequest request) {
         if (request.getOfficeId() != null) {
             return officeRepository.findByIdAndUniversityId(request.getOfficeId(), universityId)
@@ -260,13 +260,138 @@ public class QueueService {
     }
 
     // ────────────────────────────────────────────────────────────
-    //  HELPERS
+    //  BULK OPERATIONS
     // ────────────────────────────────────────────────────────────
 
     /**
-     * Enriches a queue with live schedule state, staff, and counters.
-     * Public so TicketService can reuse it for the staff queue list.
+     * Remove a batch of staff from ALL queues they're currently assigned to
+     * (only queues belonging to the calling admin's university).
      */
+    @Transactional
+    public BulkResult bulkUnassignStaffFromAllQueues(Long universityId, List<Long> staffIds) {
+        if (staffIds == null || staffIds.isEmpty()) {
+            return BulkResult.of(0, 0, List.of());
+        }
+
+        int succeeded = 0;
+        List<BulkResult.Failure> failures = new ArrayList<>();
+
+        for (Long staffId : staffIds) {
+            try {
+                User staff = userRepository.findById(staffId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
+
+                if (staff.getRole() != Role.STAFF) {
+                    throw new BadRequestException("Not a staff member");
+                }
+                if (staff.getUniversity() == null
+                        || !staff.getUniversity().getId().equals(universityId)) {
+                    throw new BadRequestException("Staff does not belong to your university");
+                }
+
+                List<QueueStaff> assignments = queueStaffRepository.findByUserId(staffId);
+                int removed = 0;
+                for (QueueStaff qs : assignments) {
+                    if (qs.getQueue() != null
+                            && qs.getQueue().getUniversity() != null
+                            && qs.getQueue().getUniversity().getId().equals(universityId)) {
+                        queueStaffRepository.delete(qs);
+                        removed++;
+                    }
+                }
+
+                auditService.record(null, universityId,
+                        AuditAction.STAFF_UNASSIGNED, "User", staffId,
+                        "{\"removedFrom\":" + removed + ",\"bulk\":true}");
+
+                succeeded++;
+            } catch (Exception ex) {
+                failures.add(BulkResult.Failure.builder()
+                        .id(staffId)
+                        .reason(ex.getMessage() != null ? ex.getMessage() : "Unknown error")
+                        .build());
+            }
+        }
+
+        return BulkResult.of(staffIds.size(), succeeded, failures);
+    }
+
+    /**
+     * Set `isActive` on a batch of queues (only queues in the admin's university).
+     */
+    @Transactional
+    public BulkResult bulkSetQueuesActive(Long universityId, List<Long> queueIds, boolean active) {
+        if (queueIds == null || queueIds.isEmpty()) {
+            return BulkResult.of(0, 0, List.of());
+        }
+
+        int succeeded = 0;
+        List<BulkResult.Failure> failures = new ArrayList<>();
+
+        for (Long queueId : queueIds) {
+            try {
+                Queue queue = queueRepository.findByIdAndUniversityId(queueId, universityId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Queue not found"));
+
+                queue.setIsActive(active);
+                queueRepository.save(queue);
+
+                auditService.record(null, universityId,
+                        AuditAction.QUEUE_UPDATED, "Queue", queueId,
+                        "{\"bulk\":true,\"isActive\":" + active + "}");
+
+                succeeded++;
+            } catch (Exception ex) {
+                failures.add(BulkResult.Failure.builder()
+                        .id(queueId)
+                        .reason(ex.getMessage() != null ? ex.getMessage() : "Unknown error")
+                        .build());
+            }
+        }
+
+        return BulkResult.of(queueIds.size(), succeeded, failures);
+    }
+
+    /**
+     * Delete a batch of queues and their staff assignments.
+     */
+    @Transactional
+    public BulkResult bulkDeleteQueues(Long universityId, List<Long> queueIds) {
+        if (queueIds == null || queueIds.isEmpty()) {
+            return BulkResult.of(0, 0, List.of());
+        }
+
+        int succeeded = 0;
+        List<BulkResult.Failure> failures = new ArrayList<>();
+
+        for (Long queueId : queueIds) {
+            try {
+                Queue queue = queueRepository.findByIdAndUniversityId(queueId, universityId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Queue not found"));
+
+                queueStaffRepository.deleteAll(queueStaffRepository.findByQueueId(queueId));
+                queueRepository.delete(queue);
+
+                auditService.record(null, universityId,
+                        AuditAction.QUEUE_DELETED, "Queue", queueId,
+                        "{\"name\":\"" + queue.getName() + "\",\"bulk\":true}");
+
+                succeeded++;
+            } catch (Exception ex) {
+                failures.add(BulkResult.Failure.builder()
+                        .id(queueId)
+                        .reason(ex.getMessage() != null ? ex.getMessage() : "Unknown error")
+                        .build());
+            }
+        }
+
+        return BulkResult.of(queueIds.size(), succeeded, failures);
+    }
+
+    // ────────────────────────────────────────────────────────────
+    //  HELPERS
+    // ────────────────────────────────────────────────────────────
+
     public QueueResponse enrichWithStaff(Queue queue) {
         QueueResponse response = QueueResponse.from(queue)
                 .withIsOpen(scheduleService.isWithinOperatingHours(queue));

@@ -10,6 +10,7 @@ import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
+import ExportButton from '../../components/ui/ExportButton'
 import PageHeader from '../../components/layout/PageHeader'
 import { SkeletonQueueGrid } from '../../components/ui/Skeleton'
 import OfficeFormModal from '../../components/admin/OfficeFormModal'
@@ -304,6 +305,29 @@ export default function Offices() {
         setShowModal(true)
     }
 
+    // Enrich for export — join service + staff info per office
+    const enrichedForExport = useMemo(() => {
+        return filtered.map((o) => {
+            const services = queues.filter((q) => q.officeId === o.id)
+            const staffSet = new Set()
+            let waiting = 0
+            services.forEach((q) => {
+                waiting += q.waitingCount ?? 0
+                ;(q.staff || []).forEach((s) => staffSet.add(s.id))
+            })
+            return {
+                id: o.id,
+                name: o.name,
+                location: o.location || '',
+                description: o.description || '',
+                isActive: o.isActive === false ? 'Inactive' : 'Active',
+                serviceCount: services.length,
+                staffCount: staffSet.size,
+                waitingTotal: waiting,
+            }
+        })
+    }, [filtered, queues])
+
     if (loading) {
         return (
             <>
@@ -326,8 +350,8 @@ export default function Offices() {
             />
 
             {offices.length > 0 && (
-                <div className="mb-5">
-                    <div className="relative">
+                <div className="mb-5 flex flex-wrap items-center gap-3">
+                    <div className="relative min-w-0 flex-1">
                         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                         <input
                             type="text"
@@ -337,6 +361,21 @@ export default function Offices() {
                             className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                         />
                     </div>
+                    <ExportButton
+                        rows={enrichedForExport}
+                        columns={[
+                            { key: 'id', label: 'Office ID' },
+                            { key: 'name', label: 'Office Name' },
+                            { key: 'location', label: 'Location' },
+                            { key: 'description', label: 'Description' },
+                            { key: 'isActive', label: 'Status' },
+                            { key: 'serviceCount', label: 'Services' },
+                            { key: 'staffCount', label: 'Staff' },
+                            { key: 'waitingTotal', label: 'Waiting' },
+                        ]}
+                        filename="uniqueue-offices"
+                        label="Export"
+                    />
                 </div>
             )}
 
