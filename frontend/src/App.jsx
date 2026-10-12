@@ -21,6 +21,7 @@ import NotFound from './pages/NotFound'
 import { initSoundUnlock } from './lib/soundService'
 import { usePrefsStore } from './store/prefsStore'
 import { useServerEvents } from './hooks/useServerEvents'
+import { useUniversityTheme } from './hooks/useUniversityTheme'
 
 const AUTH_ROUTES = [
     '/login',
@@ -34,17 +35,26 @@ export default function App() {
     const location = useLocation()
     const hideNavbar = AUTH_ROUTES.includes(location.pathname)
 
+    // Cross-device real-time: opens an SSE connection while authenticated.
     useServerEvents()
 
+    // Themes the entire app with the current university's primary color
+    // by overriding Tailwind's --color-brand-* CSS variables on <html>.
+    useUniversityTheme()
+
     useEffect(() => {
+        // Register click/keypress/touch listeners once at app boot.
+        // Browsers block audio until the user has interacted at least once.
         initSoundUnlock()
 
+        // Register the push service worker so subscriptions can be created later.
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').catch((err) => {
                 console.warn('SW registration failed:', err)
             })
         }
 
+        // Load notification preferences for the logged-in user (if any).
         if (localStorage.getItem('uniqueue_token')) {
             usePrefsStore.getState().load()
         }

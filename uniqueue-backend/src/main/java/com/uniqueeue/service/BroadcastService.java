@@ -5,9 +5,7 @@ import com.uniqueeue.enums.AuditAction;
 import com.uniqueeue.enums.NotificationType;
 import com.uniqueeue.enums.Role;
 import com.uniqueeue.exception.BadRequestException;
-import com.uniqueeue.model.Notification;
 import com.uniqueeue.model.User;
-import com.uniqueeue.repository.NotificationRepository;
 import com.uniqueeue.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +21,7 @@ import java.util.List;
 public class BroadcastService {
 
     private final UserRepository userRepository;
-    private final NotificationRepository notificationRepository;
+    private final NotificationService notificationService;
     private final AuditService auditService;
 
     @Transactional
@@ -34,26 +32,43 @@ public class BroadcastService {
             throw new BadRequestException("No recipients match the current filters");
         }
 
-        List<Notification> notifications = new ArrayList<>(recipients.size());
+        String title = request.getTitle();
+        String message = request.getMessage();
+
+        // Route each recipient through NotificationService.notify(...) so the
+        // exact same pipeline that powers ticket notifications also powers
+        // broadcasts. This does three things per user:
+        //   1. Saves the Notification row
+        //   2. Fires a per-user SSE event (bell chimes + badge bumps live)
+        //   3. Sends a Web Push to subscribed devices (respects push_enabled)
+        //
+        // The EventService defers the SSE send until after this transaction
+        // commits, so clients don't refetch stale data.
         for (User u : recipients) {
-            notifications.add(Notification.builder()
-                    .user(u)
-                    .type(NotificationType.BROADCAST)
-                    .title(request.getTitle())
-                    .message(request.getMessage())
-                    .isRead(false)
-                    .build());
+            try {
+                notificationService.notify(
+                        u,
+                        NotificationType.BROADCAST,
+                        title,
+                        message
+                );
+            } catch (Exception ex) {
+                // A single bad recipient shouldn't take down the whole broadcast.
+                log.warn("Broadcast notify failed for user {}: {}", u.getId(), ex.getMessage());
+            }
         }
 
-        notificationRepository.saveAll(notifications);
-
-        auditService.record(senderId, request.getUniversityId(),
+        auditService.record(
+                senderId,
+                request.getUniversityId(),
                 AuditAction.UNIVERSITY_UPDATED,
-                "Broadcast", null,
-                "{\"title\":\"" + escape(request.getTitle()) +
+                "Broadcast",
+                null,
+                "{\"title\":\"" + escape(title) +
                         "\",\"recipients\":" + recipients.size() +
                         ",\"universityId\":" + request.getUniversityId() +
-                        ",\"role\":\"" + request.getRole() + "\"}");
+                        ",\"role\":\"" + request.getRole() + "\"}"
+        );
 
         log.info("Broadcast sent to {} users by super admin {}", recipients.size(), senderId);
         return recipients.size();

@@ -13,18 +13,6 @@ import ClosedDatesPanel from '../../components/admin/ClosedDatesPanel'
 import { useToastStore } from '../../store/toastStore'
 import { useUniversityStore } from '../../store/universityStore'
 
-const PRESET_COLORS = [
-    { label: 'Indigo', value: '#4f46e5' },
-    { label: 'Blue', value: '#2563eb' },
-    { label: 'Emerald', value: '#059669' },
-    { label: 'Rose', value: '#e11d48' },
-    { label: 'Amber', value: '#d97706' },
-    { label: 'Violet', value: '#7c3aed' },
-    { label: 'Slate', value: '#0f172a' },
-    { label: 'Crimson', value: '#b91c1c' },
-    { label: 'Teal', value: '#0d9488' },
-]
-
 const VERIFICATION_MODES = [
     { value: 'PATTERN', label: 'Pattern only',   hint: 'Fast — validates format only' },
     { value: 'LIST',    label: 'Admission list', hint: 'Matches against uploaded list' },
@@ -118,33 +106,6 @@ export default function Settings() {
 
     useEffect(() => { load() }, [])
 
-    useEffect(() => {
-        const root = document.documentElement
-        const base = form.primaryColor || '#4f46e5'
-        const hexToRgb = (hex) => {
-            const h = hex.replace('#', '')
-            const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h
-            const n = parseInt(full, 16)
-            return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }
-        }
-        const rgbToHex = (r, g, b) =>
-            `#${[r, g, b].map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('')}`
-        const mix = (color, target, amount) => {
-            const c = hexToRgb(color)
-            const t = target === 'white' ? { r: 255, g: 255, b: 255 } : { r: 0, g: 0, b: 0 }
-            const a = Math.abs(amount)
-            return rgbToHex(c.r + (t.r - c.r) * a, c.g + (t.g - c.g) * a, c.b + (t.b - c.b) * a)
-        }
-        const shades = {
-            50: mix(base, 'white', 0.95), 100: mix(base, 'white', 0.88),
-            200: mix(base, 'white', 0.72), 300: mix(base, 'white', 0.5),
-            400: mix(base, 'white', 0.24), 500: mix(base, 'white', 0.1),
-            600: base, 700: mix(base, 'black', 0.18), 800: mix(base, 'black', 0.32),
-            900: mix(base, 'black', 0.48), 950: mix(base, 'black', 0.65),
-        }
-        Object.entries(shades).forEach(([k, v]) => root.style.setProperty(`--color-brand-${k}`, v))
-    }, [form.primaryColor])
-
     const save = async (e) => {
         e.preventDefault()
         setSaving(true)
@@ -196,32 +157,43 @@ export default function Settings() {
                         </div>
                         <div>
                             <h2 className="text-base font-semibold text-slate-900">Branding</h2>
-                            <p className="text-xs text-slate-500">Logo, campus photo and colors.</p>
+                            <p className="text-xs text-slate-500">Logo and campus photo.</p>
                         </div>
                     </div>
 
-                    <Input label="University name" value={form.name} onChange={setField('name')} placeholder="University of Lagos" required icon={Building2} />
-                    <Input label="Tagline" value={form.tagline} onChange={setField('tagline')} placeholder="Skip the line. Not the service." hint="Shown on the login page hero." />
+                    <Input
+                        label="University name"
+                        value={form.name}
+                        onChange={setField('name')}
+                        placeholder="University of Lagos"
+                        required
+                        icon={Building2}
+                    />
+                    <Input
+                        label="Tagline"
+                        value={form.tagline}
+                        onChange={setField('tagline')}
+                        placeholder="Skip the line. Not the service."
+                        hint="Shown on the login page hero."
+                    />
 
                     <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <ImageUrlInput label="University logo URL" value={form.logoUrl} onChange={(url) => setForm({ ...form, logoUrl: url })} placeholder="https://unilag.edu.ng/logo.png" hint="Right-click the logo on your school's site → Copy image address." previewHeight="h-32" />
-                        <ImageUrlInput label="Campus photo URL" value={form.campusImageUrl} onChange={(url) => setForm({ ...form, campusImageUrl: url })} placeholder="https://unilag.edu.ng/campus.jpg" hint="Paste any public image URL of your campus." previewHeight="h-32" />
-                    </div>
-
-                    <div className="mt-4">
-                        <label className="mb-1.5 block text-sm font-medium text-slate-700">Primary color</label>
-                        <div className="flex flex-wrap items-center gap-2">
-                            {PRESET_COLORS.map((c) => (
-                                <button key={c.value} type="button" onClick={() => setForm({ ...form, primaryColor: c.value })}
-                                        className={`h-9 w-9 rounded-lg border-2 transition-transform hover:scale-110 ${form.primaryColor === c.value ? 'border-slate-900 ring-2 ring-slate-900 ring-offset-1' : 'border-white shadow-sm'}`}
-                                        style={{ backgroundColor: c.value }} title={c.label} aria-label={c.label}
-                                />
-                            ))}
-                            <label className="ml-2 flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50">
-                                <input type="color" value={form.primaryColor} onChange={(e) => setForm({ ...form, primaryColor: e.target.value })} className="h-5 w-5 cursor-pointer rounded border-0 bg-transparent p-0" />
-                                <span className="font-mono text-xs text-slate-600">{form.primaryColor}</span>
-                            </label>
-                        </div>
+                        <ImageUrlInput
+                            label="University logo URL"
+                            value={form.logoUrl}
+                            onChange={(url) => setForm({ ...form, logoUrl: url })}
+                            placeholder="https://unilag.edu.ng/logo.png"
+                            hint="Paste your school's logo URL, or use /logos/your-file.png if you've uploaded one."
+                            previewHeight="h-32"
+                        />
+                        <ImageUrlInput
+                            label="Campus photo URL"
+                            value={form.campusImageUrl}
+                            onChange={(url) => setForm({ ...form, campusImageUrl: url })}
+                            placeholder="https://unilag.edu.ng/campus.jpg"
+                            hint="Paste any public image URL of your campus."
+                            previewHeight="h-32"
+                        />
                     </div>
                 </Card>
 
@@ -303,8 +275,20 @@ export default function Settings() {
                         </div>
                     </div>
 
-                    <Input label="Email domain" value={form.emailDomain} onChange={setField('emailDomain')} placeholder="@unilag.edu.ng" hint="Only emails ending with this are accepted for continuing students." />
-                    <Input label="Matric number pattern (regex)" value={form.matricPattern} onChange={setField('matricPattern')} placeholder="^\d{2}/\d{5}/\d{3}$" hint="Format enforced when students submit a matric." />
+                    <Input
+                        label="Email domain"
+                        value={form.emailDomain}
+                        onChange={setField('emailDomain')}
+                        placeholder="@unilag.edu.ng"
+                        hint="Only emails ending with this are accepted for continuing students."
+                    />
+                    <Input
+                        label="Matric number pattern (regex)"
+                        value={form.matricPattern}
+                        onChange={setField('matricPattern')}
+                        placeholder="^\d{2}/\d{5}/\d{3}$"
+                        hint="Format enforced when students submit a matric."
+                    />
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <Input label="Matric example" value={form.matricExample} onChange={setField('matricExample')} placeholder="21/12345/001" />

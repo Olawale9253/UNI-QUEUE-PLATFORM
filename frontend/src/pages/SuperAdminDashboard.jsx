@@ -18,6 +18,7 @@ import {
     Pencil,
     Trash2,
     AlertTriangle,
+    Palette,
 } from 'lucide-react'
 import api from '../api/axios'
 import Card from '../components/ui/Card'
@@ -34,6 +35,7 @@ import { useAuthStore } from '../store/authStore'
 import { useUniversityStore } from '../store/universityStore'
 import { startImpersonation } from '../components/layout/ImpersonationBanner'
 import { stagger, staggerItem, expand } from '../lib/motion'
+import { DEFAULT_BRAND } from '../lib/colors'
 import AuditLogs from './super-admin/AuditLogs'
 import SystemAnalytics from './super-admin/SystemAnalytics'
 import UsersPage from './super-admin/Users'
@@ -41,6 +43,65 @@ import TiersAndFeatures from './super-admin/TiersAndFeatures'
 import Broadcast from './super-admin/Broadcast'
 import Plans from './super-admin/Plans'
 import AdmittedStudentsButton from './super-admin/AdmittedStudentsButton'
+
+/* ⬅️ NEW — preset brand colors super admin can pick from */
+const PRESET_COLORS = [
+    { label: 'Deep Navy',  value: '#1e3a8a' },
+    { label: 'Indigo',     value: '#4f46e5' },
+    { label: 'Royal Blue', value: '#2563eb' },
+    { label: 'Emerald',    value: '#059669' },
+    { label: 'Crimson',    value: '#b91c1c' },
+    { label: 'Amber',      value: '#d97706' },
+    { label: 'Violet',     value: '#7c3aed' },
+    { label: 'Slate',      value: '#0f172a' },
+    { label: 'Teal',       value: '#0d9488' },
+]
+
+/* ⬅️ NEW — reusable color picker */
+function ColorPicker({ value, onChange }) {
+    const current = value || DEFAULT_BRAND
+    return (
+        <div>
+            <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Palette className="h-3.5 w-3.5 text-slate-400" />
+                Primary color
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+                {PRESET_COLORS.map((c) => (
+                    <button
+                        key={c.value}
+                        type="button"
+                        onClick={() => onChange(c.value)}
+                        title={c.label}
+                        aria-label={c.label}
+                        className={`h-9 w-9 rounded-lg border-2 transition-transform hover:scale-110 ${
+                            current.toLowerCase() === c.value.toLowerCase()
+                                ? 'border-slate-900 ring-2 ring-slate-900 ring-offset-1 dark:border-white dark:ring-white'
+                                : 'border-white shadow-sm dark:border-slate-700'
+                        }`}
+                        style={{ backgroundColor: c.value }}
+                    />
+                ))}
+
+                <label className="ml-2 flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700">
+                    <input
+                        type="color"
+                        value={current}
+                        onChange={(e) => onChange(e.target.value)}
+                        className="h-5 w-5 cursor-pointer rounded border-0 bg-transparent p-0"
+                    />
+                    <span className="font-mono text-xs uppercase text-slate-600 dark:text-slate-300">
+                        {current}
+                    </span>
+                </label>
+            </div>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                Used across the university's dashboards, sidebar, and buttons.
+                Leave as navy for the neutral default.
+            </p>
+        </div>
+    )
+}
 
 const emptyForm = {
     name: '',
@@ -55,6 +116,7 @@ const emptyForm = {
     logoUrl: null,
     campusImageUrl: null,
     tagline: '',
+    primaryColor: DEFAULT_BRAND,   // ⬅️ NEW
 }
 
 const emptyAdminForm = {
@@ -85,22 +147,18 @@ function UniversitiesTab() {
     const [analytics, setAnalytics] = useState(null)
     const [loading, setLoading] = useState(true)
 
-    // Create
     const [showCreate, setShowCreate] = useState(false)
     const [creating, setCreating] = useState(false)
     const [form, setForm] = useState(emptyForm)
 
-    // Edit
     const [editTarget, setEditTarget] = useState(null)
     const [editing, setEditing] = useState(false)
     const [editForm, setEditForm] = useState(emptyForm)
 
-    // Delete
     const [deleteTarget, setDeleteTarget] = useState(null)
     const [deleting, setDeleting] = useState(false)
     const [deleteConfirmCode, setDeleteConfirmCode] = useState('')
 
-    // Other
     const [toggling, setToggling] = useState(null)
     const [confirmDeactivate, setConfirmDeactivate] = useState(null)
     const [addAdminTarget, setAddAdminTarget] = useState(null)
@@ -160,6 +218,7 @@ function UniversitiesTab() {
             logoUrl: u.logoUrl || null,
             campusImageUrl: u.campusImageUrl || null,
             tagline: u.tagline || '',
+            primaryColor: u.primaryColor || DEFAULT_BRAND,   // ⬅️ NEW
         })
     }
 
@@ -182,6 +241,7 @@ function UniversitiesTab() {
                 logoUrl: editForm.logoUrl,
                 campusImageUrl: editForm.campusImageUrl,
                 tagline: editForm.tagline,
+                primaryColor: editForm.primaryColor,   // ⬅️ NEW
             })
             push({ type: 'success', message: 'University updated' })
             closeEdit()
@@ -347,7 +407,7 @@ function UniversitiesTab() {
                         className="mb-8 overflow-hidden"
                     >
                         <Card>
-                            <h3 className="mb-4 text-base font-semibold text-slate-900">
+                            <h3 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">
                                 Register a new university
                             </h3>
                             <form onSubmit={createUniversity} className="space-y-6">
@@ -359,7 +419,7 @@ function UniversitiesTab() {
                                 </div>
 
                                 <div>
-                                    <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Matric number format</h4>
+                                    <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Matric number format</h4>
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                                         <Input label="Pattern (regex)" value={form.matricPattern} onChange={(e) => setForm({ ...form, matricPattern: e.target.value })} placeholder="^\\d{2}/\\d{5}/\\d{3}$" />
                                         <Input label="Example" value={form.matricExample} onChange={(e) => setForm({ ...form, matricExample: e.target.value })} placeholder="21/12345/001" />
@@ -368,7 +428,7 @@ function UniversitiesTab() {
                                 </div>
 
                                 <div>
-                                    <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Branding</h4>
+                                    <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Branding</h4>
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                         <ImageUrlInput
                                             label="University logo URL"
@@ -387,10 +447,18 @@ function UniversitiesTab() {
                                             previewHeight="h-32"
                                         />
                                     </div>
+
+                                    {/* ⬅️ NEW — color picker */}
+                                    <div className="mt-4">
+                                        <ColorPicker
+                                            value={form.primaryColor}
+                                            onChange={(hex) => setForm({ ...form, primaryColor: hex })}
+                                        />
+                                    </div>
                                 </div>
 
                                 <div>
-                                    <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">First administrator</h4>
+                                    <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">First administrator</h4>
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                         <Input label="Full name" value={form.adminFullName} onChange={(e) => setForm({ ...form, adminFullName: e.target.value })} placeholder="Jane Doe" required />
                                         <Input label="Email" type="email" value={form.adminEmail} onChange={(e) => setForm({ ...form, adminEmail: e.target.value })} placeholder="admin@unilag.edu.ng" required />
@@ -414,47 +482,53 @@ function UniversitiesTab() {
 
             {/* Table */}
             <Card padded={false}>
-                <div className="border-b border-slate-100 px-6 py-4">
-                    <h3 className="text-sm font-semibold text-slate-900">Registered universities</h3>
+                <div className="border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Registered universities</h3>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-slate-50">
+                        <thead className="bg-slate-50 dark:bg-slate-800/50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Code</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Plan</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Status</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500">Actions</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Code</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Name</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Plan</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Status</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Actions</th>
                         </tr>
                         </thead>
                         <motion.tbody
                             variants={stagger(0, 0.03)}
                             initial="initial"
                             animate="animate"
-                            className="divide-y divide-slate-100"
+                            className="divide-y divide-slate-100 dark:divide-slate-800"
                         >
                             {universities.map((u) => (
                                 <motion.tr key={u.id} variants={staggerItem}>
-                                    <td className="px-6 py-3 font-mono text-sm text-slate-700">{u.code}</td>
-                                    <td className="px-6 py-3 text-sm text-slate-900">
+                                    <td className="px-6 py-3 font-mono text-sm text-slate-700 dark:text-slate-300">{u.code}</td>
+                                    <td className="px-6 py-3 text-sm text-slate-900 dark:text-slate-100">
                                         <div className="flex items-center gap-3">
                                             {u.logoUrl ? (
                                                 <img
                                                     src={u.logoUrl}
                                                     alt={u.name}
-                                                    className="h-8 w-8 shrink-0 rounded-md object-contain ring-1 ring-slate-200"
+                                                    className="h-8 w-8 shrink-0 rounded-md object-contain ring-1 ring-slate-200 dark:ring-slate-700"
                                                     onError={(e) => { e.target.style.display = 'none' }}
                                                 />
                                             ) : (
-                                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-semibold text-slate-500">
+                                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                                                     {(u.code || '?').slice(0, 2)}
                                                 </div>
                                             )}
                                             <span>{u.name}</span>
+                                            {/* ⬅️ NEW — tiny color dot so admin can see the color at a glance */}
+                                            <span
+                                                className="h-3 w-3 shrink-0 rounded-full ring-2 ring-white dark:ring-slate-900"
+                                                style={{ backgroundColor: u.primaryColor || DEFAULT_BRAND }}
+                                                title={`Brand color: ${u.primaryColor || DEFAULT_BRAND}`}
+                                            />
                                         </div>
                                     </td>
-                                    <td className="px-6 py-3 text-sm text-slate-600">{u.plan}</td>
+                                    <td className="px-6 py-3 text-sm text-slate-600 dark:text-slate-400">{u.plan}</td>
                                     <td className="px-6 py-3">
                                         <Badge variant={u.isActive ? 'success' : 'default'}>
                                             {u.isActive ? 'Active' : 'Inactive'}
@@ -464,7 +538,7 @@ function UniversitiesTab() {
                                         <div className="flex items-center justify-end gap-3">
                                             <button
                                                 onClick={() => openEdit(u)}
-                                                className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 transition-colors hover:text-slate-900"
+                                                className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                                             >
                                                 <Pencil className="h-3.5 w-3.5" />
                                                 Edit
@@ -486,7 +560,7 @@ function UniversitiesTab() {
                                                     setAddAdminTarget(u)
                                                     setAdminForm(emptyAdminForm)
                                                 }}
-                                                className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 transition-colors hover:text-brand-700"
+                                                className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
                                             >
                                                 <UserPlus className="h-3.5 w-3.5" />
                                                 Add admin
@@ -626,6 +700,14 @@ function UniversitiesTab() {
                                                 previewHeight="h-32"
                                             />
                                         </div>
+
+                                        {/* ⬅️ NEW — color picker */}
+                                        <div className="mt-4">
+                                            <ColorPicker
+                                                value={editForm.primaryColor}
+                                                onChange={(hex) => setEditForm({ ...editForm, primaryColor: hex })}
+                                            />
+                                        </div>
                                     </div>
 
                                     <div className="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
@@ -643,7 +725,7 @@ function UniversitiesTab() {
                 )}
             </AnimatePresence>
 
-            {/* DELETE MODAL */}
+            {/* DELETE MODAL — unchanged */}
             <AnimatePresence>
                 {deleteTarget && (
                     <>
@@ -723,7 +805,7 @@ function UniversitiesTab() {
                 )}
             </AnimatePresence>
 
-            {/* ADD ADMIN MODAL */}
+            {/* ADD ADMIN MODAL — unchanged */}
             <AnimatePresence>
                 {addAdminTarget && (
                     <>
@@ -740,20 +822,20 @@ function UniversitiesTab() {
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: 8 }}
                                 onClick={(e) => e.stopPropagation()}
-                                className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 shadow-xl"
+                                className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900"
                             >
                                 <button
                                     onClick={() => !addingAdmin && setAddAdminTarget(null)}
-                                    className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100"
+                                    className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                                     aria-label="Close"
                                 >
                                     <X className="h-4 w-4" />
                                 </button>
 
-                                <h3 className="text-base font-semibold text-slate-900">
+                                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                                     Add admin to {addAdminTarget.name}
                                 </h3>
-                                <p className="mt-1 text-sm text-slate-500">
+                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                     They'll get full admin access for this university.
                                 </p>
 

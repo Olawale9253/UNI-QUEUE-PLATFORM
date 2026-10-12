@@ -39,7 +39,7 @@ public class UniversityService {
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
     private final PlanConfigRepository planConfigRepository;
-    private final UniversityStarterPackService starterPackService;   // ⬅ NEW
+    private final UniversityStarterPackService starterPackService;
 
     @Transactional(readOnly = true)
     public List<UniversityResponse> listAll() {
@@ -77,7 +77,10 @@ public class UniversityService {
                 .logoUrl(request.getLogoUrl())
                 .campusImageUrl(request.getCampusImageUrl())
                 .tagline(request.getTagline())
-                .primaryColor(request.getPrimaryColor() != null ? request.getPrimaryColor() : "#3B82F6")
+                // ⬇ Default is deep navy — matches the frontend default in lib/colors.js
+                .primaryColor(request.getPrimaryColor() != null
+                        ? request.getPrimaryColor()
+                        : "#1e3a8a")
                 .plan(request.getPlan() != null ? request.getPlan() : "FREE")
                 .maxStaff(request.getMaxStaff() != null ? request.getMaxStaff() : 10)
                 .maxQueues(request.getMaxQueues() != null ? request.getMaxQueues() : 5)
@@ -102,21 +105,17 @@ public class UniversityService {
                 "{\"code\":\"" + code + "\",\"adminEmail\":\"" + request.getAdminEmail() + "\"}");
 
         // ─── Starter pack ───
-        // Auto-seed standard offices, services, and workflows so the admin
-        // has a working university from minute one.
-        // Failures here must NOT roll back the university creation.
         try {
             var result = starterPackService.seed(
                     university.getId(),
                     admin.getId(),
-                    true,   // includeOffices
-                    true,   // includeServices
-                    true    // includeWorkflows
+                    true,
+                    true,
+                    true
             );
             log.info("Starter pack auto-seeded for university {} — offices={}, services={}, workflows={}",
                     code, result.officesCreated(), result.servicesCreated(), result.workflowsCreated());
         } catch (Exception e) {
-            // Non-fatal: the university is registered; the admin can seed manually later
             log.warn("Starter pack seeding failed for new university {}: {}", code, e.getMessage());
         }
 
@@ -140,6 +139,7 @@ public class UniversityService {
         if (request.getLogoUrl() != null) u.setLogoUrl(request.getLogoUrl());
         if (request.getCampusImageUrl() != null) u.setCampusImageUrl(request.getCampusImageUrl());
         if (request.getTagline() != null) u.setTagline(request.getTagline());
+        // ⬇ primaryColor update already handled — leave as-is
         if (request.getPrimaryColor() != null) u.setPrimaryColor(request.getPrimaryColor());
         if (request.getTimezone() != null) {
             u.setTimezone(request.getTimezone().trim());
@@ -195,7 +195,6 @@ public class UniversityService {
         String code = u.getCode();
         String name = u.getName();
 
-        // 1. Delete all queues' tickets + feedback + queue staff
         List<Queue> queues = queueRepository.findByUniversityId(id);
         for (Queue q : queues) {
             List<Ticket> tickets = ticketRepository.findByQueueId(q.getId());
@@ -206,20 +205,16 @@ public class UniversityService {
             queueStaffRepository.deleteAll(queueStaffRepository.findByQueueId(q.getId()));
         }
 
-        // 2. Delete queues
         queueRepository.deleteAll(queues);
 
-        // 3. Delete users + their notifications
         List<User> users = userRepository.findByUniversityId(id);
         for (User user : users) {
             notificationRepository.deleteAll(notificationRepository.findByUserId(user.getId()));
         }
         userRepository.deleteAll(users);
 
-        // 4. Delete university
         universityRepository.delete(u);
 
-        // 5. Audit
         auditService.record(null, null, AuditAction.UNIVERSITY_DELETED,
                 "University", id,
                 "{\"code\":\"" + code + "\",\"name\":\"" + name + "\"}");

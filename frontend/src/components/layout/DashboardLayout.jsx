@@ -128,9 +128,9 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                             className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-white shadow-2xl md:hidden dark:bg-slate-900"
                         >
                             <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-4 dark:border-slate-800">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  Menu
-                </span>
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                    Menu
+                                </span>
                                 <button
                                     onClick={closeMobileSidebar}
                                     className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
