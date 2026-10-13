@@ -44,6 +44,17 @@ public class University {
     @Column(name = "matric_description")
     private String matricDescription;
 
+    /**
+     * How to verify a continuing student's matric number:
+     * OPEN    — no checks, auto-verify everyone
+     * PATTERN — regex only (default)
+     * LIST    — must match the uploaded student registry
+     * BOTH    — regex + registry match
+     */
+    @Column(name = "matric_verification_mode", length = 20)
+    @Builder.Default
+    private String matricVerificationMode = "PATTERN";
+
     @Column(name = "logo_url", length = 500)
     private String logoUrl;
 
@@ -98,19 +109,10 @@ public class University {
     //  FRESHER REGISTRATION
     // ═══════════════════════════════════════════════════════════
 
-    /** Is fresher registration enabled at all? */
     @Column(name = "fresher_registration_enabled")
     @Builder.Default
     private Boolean fresherRegistrationEnabled = true;
 
-    /**
-     * How to verify freshers:
-     * <ul>
-     *   <li>{@code PATTERN} — regex on their ID(s) only. Fast, weak.</li>
-     *   <li>{@code LIST}    — must match a pre-uploaded admission list entry. Strong.</li>
-     *   <li>{@code BOTH}    — pattern must pass AND list must match. Strongest.</li>
-     * </ul>
-     */
     @Column(name = "fresher_verification_mode", length = 20)
     @Builder.Default
     private String fresherVerificationMode = "PATTERN";

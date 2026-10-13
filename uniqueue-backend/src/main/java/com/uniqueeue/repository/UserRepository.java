@@ -1,5 +1,6 @@
 package com.uniqueeue.repository;
 
+import com.uniqueeue.enums.RegistrationStatus;
 import com.uniqueeue.enums.Role;
 import com.uniqueeue.model.User;
 import org.springframework.data.domain.Page;
@@ -65,13 +66,47 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByIsActive(Boolean isActive);
 
     // ─────────────────────────────────────────────────────────────
+    //  Registration verification (NEW)
+    // ─────────────────────────────────────────────────────────────
+
+    @Query(
+            value = """
+                    SELECT u FROM User u
+                    LEFT JOIN FETCH u.university uni
+                    WHERE uni.id = :universityId
+                      AND u.registrationStatus = :status
+                      AND (:search IS NULL
+                           OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
+                           OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))
+                           OR LOWER(u.matricNumber) LIKE LOWER(CONCAT('%', :search, '%'))
+                           OR LOWER(u.jambRegNumber) LIKE LOWER(CONCAT('%', :search, '%')))
+                    ORDER BY u.createdAt ASC
+                    """,
+            countQuery = """
+                    SELECT COUNT(u) FROM User u
+                    LEFT JOIN u.university uni
+                    WHERE uni.id = :universityId
+                      AND u.registrationStatus = :status
+                      AND (:search IS NULL
+                           OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
+                           OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))
+                           OR LOWER(u.matricNumber) LIKE LOWER(CONCAT('%', :search, '%'))
+                           OR LOWER(u.jambRegNumber) LIKE LOWER(CONCAT('%', :search, '%')))
+                    """
+    )
+    Page<User> searchPendingVerifications(
+            @Param("universityId") Long universityId,
+            @Param("status") RegistrationStatus status,
+            @Param("search") String search,
+            Pageable pageable
+    );
+
+    long countByUniversityIdAndRegistrationStatus(Long universityId, RegistrationStatus status);
+
+    // ─────────────────────────────────────────────────────────────
     //  Phase 5 — Cleanup support
     // ─────────────────────────────────────────────────────────────
 
-    /**
-     * Clear expired verification codes. Only affects users who haven't
-     * verified yet — verified users have no code stored anyway.
-     */
     @Modifying
     @Query("""
             UPDATE User u
@@ -84,10 +119,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
             """)
     int clearExpiredVerificationCodes(@Param("cutoff") LocalDateTime cutoff);
 
-    /**
-     * Find unverified accounts created before the given cutoff.
-     * Used for weekly pruning of stale signups.
-     */
     @Query("""
             SELECT u FROM User u
             WHERE u.isVerified = false
@@ -95,9 +126,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
             """)
     List<User> findUnverifiedOlderThan(@Param("cutoff") LocalDateTime cutoff);
 
-    /**
-     * Count of unverified accounts older than the cutoff — for logging.
-     */
     @Query("""
             SELECT COUNT(u) FROM User u
             WHERE u.isVerified = false
