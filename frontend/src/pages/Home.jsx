@@ -1,4 +1,4 @@
-    import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
@@ -9,15 +9,22 @@ import {
     Users,
     Building2,
     ShieldCheck,
-    Clock,
     Bell,
     LineChart,
     Route as RouteIcon,
     Ticket,
     GraduationCap,
     CheckCircle2,
+    Activity,
+    UserPlus,
+    ClipboardList,
+    BadgeCheck,
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
+
+// ═══════════════════════════════════════════════════════════
+//  HERO CAROUSEL
+// ═══════════════════════════════════════════════════════════
 
 const SLIDES = [
     {
@@ -55,8 +62,8 @@ const SLIDES = [
     },
     {
         id: 'admins',
-        src: 'https://images.unsplash.com/photo-1550305550-ff3ab47ab63c?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8QWZyaWNhJTIwaW5zdGl0dXRpb25zJTIwc3R1ZGVudHMlMjBxdWV1ZXxlbnwwfHwwfHx8MA%3D%3D',
-        alt: 'Administrator viewing analytics on a laptop',
+        src: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1',
+        alt: 'Graduating students celebrating',
         eyebrow: { icon: LineChart, label: 'For administrators' },
         headline: 'See every queue.',
         headlineAccent: 'At a glance.',
@@ -70,8 +77,6 @@ const AUTO_ADVANCE_MS = 5000
 const SLIDE_MS = 800
 const SLIDE_COUNT = SLIDES.length
 
-// Source-set with a wide range of sizes so browsers pick the fastest
-// one that still looks sharp on their viewport.
 function buildSrcSet(baseUrl) {
     return [
         `${baseUrl}?auto=format&fit=crop&q=80&w=640&dpr=2 640w`,
@@ -108,19 +113,12 @@ function HeroCarousel() {
     const next = useCallback(() => goTo(index + 1), [goTo, index])
     const prev = useCallback(() => goTo(index - 1), [goTo, index])
 
-    // ─── Auto-advance ───
-    // FIX: On remount (navigating back to home), the paused state resets to
-    // false, so the timer always starts fresh.
     useEffect(() => {
         if (paused || reduceMotion) return
         const t = setTimeout(() => goTo(index + 1), AUTO_ADVANCE_MS)
         return () => clearTimeout(t)
     }, [index, paused, reduceMotion, goTo])
 
-    // ─── Global mouse tracking (replaces onMouseEnter/onMouseLeave) ───
-    // Only considers a hover "active" when the cursor actually MOVES inside
-    // the section. Prevents the carousel from getting stuck paused when the
-    // mouse happens to be sitting over the hero on remount.
     useEffect(() => {
         const onMove = (e) => {
             const el = sectionRef.current
@@ -137,9 +135,7 @@ function HeroCarousel() {
         return () => window.removeEventListener('mousemove', onMove)
     }, [])
 
-    // ─── Preload ALL slides on mount ───
-    // Using `img.srcset` so the browser picks the right size for the current
-    // viewport. By the time we're on slide 2+, every image is already cached.
+    // Preload all slide images so slides are instant when they cycle
     useEffect(() => {
         SLIDES.forEach((s, i) => {
             if (loaded.has(i)) return
@@ -159,7 +155,6 @@ function HeroCarousel() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    // Keyboard nav
     useEffect(() => {
         const onKey = (e) => {
             if (e.key === 'ArrowRight') next()
@@ -193,7 +188,7 @@ function HeroCarousel() {
                             className="relative h-full w-full shrink-0 overflow-hidden"
                             aria-hidden={!isActive}
                         >
-                            {/* ─── Skeleton shimmer while the image loads ─── */}
+                            {/* Skeleton shimmer while the image loads */}
                             <div
                                 className={`absolute inset-0 overflow-hidden bg-gradient-to-br from-slate-800 via-slate-700 to-slate-800 transition-opacity duration-500 ${
                                     isLoaded ? 'opacity-0' : 'opacity-100'
@@ -207,7 +202,7 @@ function HeroCarousel() {
                                 />
                             </div>
 
-                            {/* ─── Image ─── */}
+                            {/* Background image */}
                             <img
                                 src={FULL_URL(s.src)}
                                 srcSet={buildSrcSet(s.src)}
@@ -230,7 +225,7 @@ function HeroCarousel() {
                                 draggable={false}
                             />
 
-                            {/* ─── Gradient overlays ─── */}
+                            {/* Gradient overlays — keep text legible over any image */}
                             <div
                                 className="pointer-events-none absolute inset-0"
                                 style={{
@@ -240,25 +235,24 @@ function HeroCarousel() {
                             />
                             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950/75 via-slate-950/25 to-transparent" />
 
-                            {/* ─── Text content ─── */}
+                            {/* Slide text content */}
                             <div className="absolute inset-0 z-10 mx-auto flex max-w-7xl flex-col justify-center px-6 sm:px-8 lg:px-12">
                                 <div className="max-w-2xl">
-                                    {/* ─── Professional role badge ─── */}
                                     <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/[0.06] py-1.5 pl-1.5 pr-4 shadow-xl shadow-black/25 backdrop-blur-xl">
-                    <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 shadow-md shadow-brand-600/40">
-                      <span className="absolute inset-0 animate-ping rounded-full bg-brand-400/40" />
-                      <s.eyebrow.icon className="relative h-3.5 w-3.5 text-white" />
-                    </span>
+                                        <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 shadow-md shadow-brand-600/40">
+                                            <span className="absolute inset-0 animate-ping rounded-full bg-brand-400/40" />
+                                            <s.eyebrow.icon className="relative h-3.5 w-3.5 text-white" />
+                                        </span>
                                         <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-white">
-                      {s.eyebrow.label}
-                    </span>
+                                            {s.eyebrow.label}
+                                        </span>
                                     </div>
 
                                     <h1 className="text-4xl font-bold leading-[1.05] tracking-tight text-white drop-shadow-2xl sm:text-6xl lg:text-7xl">
                                         {s.headline}
                                         <span className="block bg-gradient-to-r from-brand-300 via-brand-400 to-brand-200 bg-clip-text text-transparent">
-                      {s.headlineAccent}
-                    </span>
+                                            {s.headlineAccent}
+                                        </span>
                                     </h1>
 
                                     <p className="mt-6 max-w-xl text-base leading-relaxed text-white/90 drop-shadow-lg sm:text-lg">
@@ -287,7 +281,7 @@ function HeroCarousel() {
                 })}
             </motion.div>
 
-            {/* ─── Arrows ─── */}
+            {/* Prev/next arrows — visible on lg+ */}
             <button
                 type="button"
                 onClick={prev}
@@ -305,7 +299,7 @@ function HeroCarousel() {
                 <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
             </button>
 
-            {/* ─── Dots + progress ─── */}
+            {/* Dots + progress bar */}
             <div className="absolute inset-x-0 bottom-8 z-20 flex flex-col items-center gap-3">
                 <div className="flex items-center gap-2.5">
                     {SLIDES.map((s, i) => {
@@ -319,17 +313,20 @@ function HeroCarousel() {
                                 className="group relative h-1.5 overflow-hidden rounded-full bg-white/30 transition-all"
                                 style={{ width: isActive ? 40 : 12 }}
                             >
-                <span
-                    className={`absolute inset-0 rounded-full transition-colors ${
-                        isActive ? 'bg-white' : 'bg-white/60 group-hover:bg-white'
-                    }`}
-                />
+                                <span
+                                    className={`absolute inset-0 rounded-full transition-colors ${
+                                        isActive ? 'bg-white' : 'bg-white/60 group-hover:bg-white'
+                                    }`}
+                                />
                                 {isActive && !paused && !reduceMotion && (
                                     <motion.span
                                         key={`progress-${index}`}
                                         initial={{ scaleX: 0 }}
                                         animate={{ scaleX: 1 }}
-                                        transition={{ duration: AUTO_ADVANCE_MS / 1000, ease: 'linear' }}
+                                        transition={{
+                                            duration: AUTO_ADVANCE_MS / 1000,
+                                            ease: 'linear',
+                                        }}
                                         className="absolute inset-0 origin-left rounded-full bg-brand-300"
                                     />
                                 )}
@@ -348,6 +345,7 @@ function HeroCarousel() {
 // ═══════════════════════════════════════════════════════════
 //  FEATURES
 // ═══════════════════════════════════════════════════════════
+
 const FEATURES = [
     {
         icon: Ticket,
@@ -386,16 +384,16 @@ function Features() {
         <section id="features" className="relative bg-white py-24 sm:py-32 dark:bg-slate-950">
             <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
                 <div className="mx-auto max-w-2xl text-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 dark:border-brand-900 dark:bg-brand-950/40 dark:text-brand-300">
-            <Sparkles className="h-3 w-3" />
-            Everything you need
-          </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 dark:border-brand-900 dark:bg-brand-950/40 dark:text-brand-300">
+                        <Sparkles className="h-3 w-3" />
+                        Everything you need
+                    </span>
                     <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-slate-100">
                         Built for how universities actually work
                     </h2>
                     <p className="mt-4 text-base text-slate-600 dark:text-slate-400">
-                        One platform for students, staff, and administrators — with the tools each
-                        role needs, without the clutter.
+                        One platform for students, staff, and administrators — with the tools
+                        each role needs, without the clutter.
                     </p>
                 </div>
 
@@ -432,21 +430,32 @@ function Features() {
 // ═══════════════════════════════════════════════════════════
 //  HOW IT WORKS
 // ═══════════════════════════════════════════════════════════
+
 const STEPS = [
     {
-        n: '01',
-        title: 'Join a queue',
-        body: 'Pick a department — Bursary, Registry, Library — and tap “Join”. You get a ticket instantly.',
+        icon: Building2,
+        title: 'Pick a service',
+        body: 'Browse every office and service in one place.',
     },
     {
-        n: '02',
+        icon: UserPlus,
+        title: 'Join the queue',
+        body: 'Get a ticket number from anywhere — no more standing in line.',
+    },
+    {
+        icon: Activity,
         title: 'Track your spot',
-        body: 'Watch your position and estimated wait time update live. Go grab coffee — you’ll be notified.',
+        body: 'Watch your position update live. No refreshing needed.',
     },
     {
-        n: '03',
-        title: 'Show up on time',
-        body: 'You get an alert when it’s your turn. Walk in, get served, done — no waiting room involved.',
+        icon: Bell,
+        title: 'Get notified',
+        body: "We ring a chime and push a notification when it's your turn.",
+    },
+    {
+        icon: BadgeCheck,
+        title: 'Get served',
+        body: 'Walk in exactly when called. Walk out with what you came for.',
     },
 ]
 
@@ -460,37 +469,73 @@ function HowItWorks() {
             <div className="pointer-events-none absolute -bottom-40 left-0 h-96 w-96 rounded-full bg-brand-500/10 blur-3xl" />
 
             <div className="relative mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
-                <div className="mx-auto max-w-2xl text-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-            <Clock className="h-3 w-3" />
-            How it works
-          </span>
+                <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-80px' }}
+                    transition={{ duration: 0.5 }}
+                    className="mx-auto max-w-2xl text-center"
+                >
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-brand-300">
+                        <ClipboardList className="h-3 w-3" />
+                        Simple process
+                    </span>
                     <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-slate-100">
-                        Three steps. Zero waiting rooms.
+                        How UniQueue works
                     </h2>
-                </div>
+                    <p className="mt-4 text-base text-slate-600 dark:text-slate-400">
+                        Five simple steps from your phone to the front of the line.
+                    </p>
+                </motion.div>
 
-                <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
-                    {STEPS.map((s, i) => (
-                        <motion.div
-                            key={s.n}
-                            initial={{ opacity: 0, y: 16 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true, margin: '-80px' }}
-                            transition={{ duration: 0.5, delay: i * 0.1 }}
-                            className="relative"
-                        >
-                            <div className="text-6xl font-black tracking-tight text-brand-200 dark:text-brand-900/60">
-                                {s.n}
-                            </div>
-                            <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
-                                {s.title}
-                            </h3>
-                            <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                                {s.body}
-                            </p>
-                        </motion.div>
-                    ))}
+                <div className="mt-16 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+                    {STEPS.map((step, i) => {
+                        const Icon = step.icon
+                        const isFirst = i === 0
+
+                        return (
+                            <motion.div
+                                key={step.title}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, margin: '-60px' }}
+                                transition={{ duration: 0.45, delay: i * 0.08 }}
+                                className={`group relative flex flex-col items-center rounded-2xl border-2 p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
+                                    isFirst
+                                        ? 'border-brand-300 bg-brand-50/60 shadow-sm dark:border-brand-700 dark:bg-brand-950/30'
+                                        : 'border-slate-200 bg-white hover:border-brand-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-brand-700'
+                                }`}
+                            >
+                                <div
+                                    className={`flex h-14 w-14 items-center justify-center rounded-full transition-colors ${
+                                        isFirst
+                                            ? 'bg-brand-600 text-white shadow-md shadow-brand-600/25'
+                                            : 'bg-brand-100 text-brand-700 group-hover:bg-brand-600 group-hover:text-white dark:bg-brand-950/60 dark:text-brand-300 dark:group-hover:bg-brand-600 dark:group-hover:text-white'
+                                    }`}
+                                >
+                                    <Icon className="h-6 w-6" strokeWidth={2.2} />
+                                </div>
+
+                                <div
+                                    className={`mt-4 text-[10px] font-bold uppercase tracking-[0.18em] ${
+                                        isFirst
+                                            ? 'text-brand-700 dark:text-brand-300'
+                                            : 'text-slate-400 dark:text-slate-500'
+                                    }`}
+                                >
+                                    Step {i + 1}
+                                </div>
+
+                                <h3 className="mt-1.5 text-base font-bold leading-snug text-slate-900 dark:text-slate-100">
+                                    {step.title}
+                                </h3>
+
+                                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                    {step.body}
+                                </p>
+                            </motion.div>
+                        )
+                    })}
                 </div>
             </div>
         </section>
@@ -498,8 +543,9 @@ function HowItWorks() {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  CTA
+//  FINAL CTA
 // ═══════════════════════════════════════════════════════════
+
 function FinalCTA() {
     const { user } = useAuthStore()
     const dashboards = {
@@ -546,16 +592,20 @@ function FinalCTA() {
                     {['No credit card required', 'Free tier for small universities', 'Set up in under 10 minutes'].map(
                         (item) => (
                             <span key={item} className="inline-flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-brand-400" />
+                                <CheckCircle2 className="h-4 w-4 text-brand-400" />
                                 {item}
-              </span>
-                        )
+                            </span>
+                        ),
                     )}
                 </div>
             </div>
         </section>
     )
 }
+
+// ═══════════════════════════════════════════════════════════
+//  PAGE
+// ═══════════════════════════════════════════════════════════
 
 export default function Home() {
     return (
