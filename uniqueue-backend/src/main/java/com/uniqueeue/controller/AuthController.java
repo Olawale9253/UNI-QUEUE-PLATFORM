@@ -9,6 +9,7 @@ import com.uniqueeue.dto.request.VerifyEmailRequest;
 import com.uniqueeue.dto.response.ApiResponse;
 import com.uniqueeue.dto.response.AuthResponse;
 import com.uniqueeue.repository.UniversityRepository;
+import com.uniqueeue.repository.UserRepository;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.AuthService;
 import com.uniqueeue.ratelimit.RateLimited;
@@ -32,6 +33,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final UniversityRepository universityRepository;
+    private final UserRepository userRepository;   // ⬅ NEW
 
     // ─────────────────────────────────────────────────────────────
     //  REGISTER — 3 attempts per IP per hour
@@ -42,12 +44,13 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Registration successful. Check your email for a verification code.", response));
+                .body(ApiResponse.success(
+                        "Registration successful. Check your email for a verification code.",
+                        response));
     }
 
     // ─────────────────────────────────────────────────────────────
     //  LOGIN — 5 attempts per email per 15 minutes
-    //  (kills credential stuffing / brute force)
     // ─────────────────────────────────────────────────────────────
     @PostMapping("/login")
     @RateLimited(limit = 5, windowSeconds = 900,
@@ -59,7 +62,6 @@ public class AuthController {
 
     // ─────────────────────────────────────────────────────────────
     //  VERIFY EMAIL — 5 attempts per email per 15 minutes
-    //  (kills 6-digit code brute-force)
     // ─────────────────────────────────────────────────────────────
     @PostMapping("/verify-email")
     @RateLimited(limit = 5, windowSeconds = 900,
@@ -72,7 +74,6 @@ public class AuthController {
 
     // ─────────────────────────────────────────────────────────────
     //  RESEND VERIFICATION — 3 per email per hour
-    //  (protects your SMTP quota + the victim's inbox)
     // ─────────────────────────────────────────────────────────────
     @PostMapping("/resend-verification")
     @RateLimited(limit = 3, windowSeconds = 3600,
@@ -90,7 +91,6 @@ public class AuthController {
 
     // ─────────────────────────────────────────────────────────────
     //  FORGOT PASSWORD — 3 per email per hour
-    //  (also protects the victim's inbox and your SMTP quota)
     // ─────────────────────────────────────────────────────────────
     @PostMapping("/forgot-password")
     @RateLimited(limit = 3, windowSeconds = 3600,
@@ -120,8 +120,12 @@ public class AuthController {
                 "Password reset successful. You can now sign in.", null));
     }
 
+    // ─────────────────────────────────────────────────────────────
+    //  CURRENT USER
+    // ─────────────────────────────────────────────────────────────
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> me(@AuthenticationPrincipal UserPrincipal principal) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> me(
+            @AuthenticationPrincipal UserPrincipal principal) {
         Map<String, Object> data = new HashMap<>();
         data.put("userId", principal.getId());
         data.put("email", principal.getEmail());
@@ -131,45 +135,75 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Current user", data));
     }
 
+    // ─────────────────────────────────────────────────────────────
+    //  MY VERIFICATION STATUS  ⬅ NEW
+    //  Used by PendingVerification.jsx to poll for approval/rejection.
+    // ─────────────────────────────────────────────────────────────
+    @GetMapping("/me/verification-status")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> myVerificationStatus(
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        var userOpt = userRepository.findById(principal.getId());
+        if (userOpt.isEmpty()) {
+            Map<String, Object> empty = new HashMap<>();
+            empty.put("status", "VERIFIED");
+            empty.put("reason", null);
+            return ResponseEntity.ok(ApiResponse.success("Not found", empty));
+        }
+
+        var user = userOpt.get();
+        Map<String, Object> data = new HashMap<>();
+        data.put("status", user.getRegistrationStatus() != null
+                ? user.getRegistrationStatus().name()
+                : "VERIFIED");
+        data.put("reason", user.getRejectionReason());
+        data.put("verifiedAt", user.getVerifiedAt() != null
+                ? user.getVerifiedAt().toString()
+                : null);
+        return ResponseEntity.ok(ApiResponse.success("Verification status", data));
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  UNIVERSITIES — public list used by Register.jsx
+    // ─────────────────────────────────────────────────────────────
     @GetMapping("/universities")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> universities() {
         List<Map<String, Object>> list = universityRepository.findAll().stream()
-                .filter(universityValue2 -> Boolean.TRUE.equals(universityValue2.getIsActive()))
-                .map(universityValue3 -> {
-                    Map<String, Object> object = new HashMap<>();
-                    object.put("id", universityValue3.getId());
-                    object.put("name", universityValue3.getName());
-                    object.put("code", universityValue3.getCode());
-                    object.put("emailDomain", universityValue3.getEmailDomain());
-                    object.put("matricExample", universityValue3.getMatricExample());
-                    object.put("matricDescription", universityValue3.getMatricDescription());
+                .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                .map(u -> {
+                    Map<String, Object> o = new HashMap<>();
+                    o.put("id", u.getId());
+                    o.put("name", u.getName());
+                    o.put("code", u.getCode());
+                    o.put("emailDomain", u.getEmailDomain());
+                    o.put("matricExample", u.getMatricExample());
+                    o.put("matricDescription", u.getMatricDescription());
 
-                    // ─── Fresher config ───
-                    object.put("fresherRegistrationEnabled", universityValue3.getFresherRegistrationEnabled());
-                    object.put("fresherVerificationMode", universityValue3.getFresherVerificationMode());
+                    // Fresher config
+                    o.put("fresherRegistrationEnabled", u.getFresherRegistrationEnabled());
+                    o.put("fresherVerificationMode", u.getFresherVerificationMode());
 
-                    object.put("requireJambReg", universityValue3.getRequireJambReg());
-                    object.put("jambRegExample", universityValue3.getJambRegExample());
-                    object.put("jambRegDescription", universityValue3.getJambRegDescription());
+                    o.put("requireJambReg", u.getRequireJambReg());
+                    o.put("jambRegExample", u.getJambRegExample());
+                    o.put("jambRegDescription", u.getJambRegDescription());
 
-                    object.put("requireAdmissionRef", universityValue3.getRequireAdmissionRef());
-                    object.put("admissionRefExample", universityValue3.getAdmissionRefExample());
-                    object.put("admissionRefDescription", universityValue3.getAdmissionRefDescription());
+                    o.put("requireAdmissionRef", u.getRequireAdmissionRef());
+                    o.put("admissionRefExample", u.getAdmissionRefExample());
+                    o.put("admissionRefDescription", u.getAdmissionRefDescription());
 
-                    object.put("requireApplicationNumber", universityValue3.getRequireApplicationNumber());
-                    object.put("applicationNumberExample", universityValue3.getApplicationNumberExample());
-                    object.put("applicationNumberDescription", universityValue3.getApplicationNumberDescription());
+                    o.put("requireApplicationNumber", u.getRequireApplicationNumber());
+                    o.put("applicationNumberExample", u.getApplicationNumberExample());
+                    o.put("applicationNumberDescription", u.getApplicationNumberDescription());
 
-                    return object;
+                    return o;
                 })
                 .toList();
         return ResponseEntity.ok(ApiResponse.success("Universities", list));
     }
 
-    /**
-     * Exchange a refresh token for a new access token.
-     * Public — no Authorization header required. The refresh token IS the credential.
-     */
+    // ─────────────────────────────────────────────────────────────
+    //  REFRESH
+    // ─────────────────────────────────────────────────────────────
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<AuthResponse>> refresh(
             @RequestBody Map<String, String> body) {
@@ -182,12 +216,9 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Session refreshed", response));
     }
 
-    /**
-     * Public, unauthenticated lookup used by the login page to brand itself
-     * from the visitor's email domain.
-     *
-     * Example: /api/auth/universities/lookup?domain=unilag.edu.ng
-     */
+    // ─────────────────────────────────────────────────────────────
+    //  UNIVERSITY LOOKUP BY EMAIL DOMAIN — used by Login.jsx branding
+    // ─────────────────────────────────────────────────────────────
     @GetMapping("/universities/lookup")
     public ResponseEntity<ApiResponse<Map<String, Object>>> lookupUniversity(
             @RequestParam(value = "domain", required = false) String domain) {
@@ -201,13 +232,13 @@ public class AuthController {
         final String lookupDomain = normalized;
 
         var uni = universityRepository.findAll().stream()
-                .filter(universityValue4 -> Boolean.TRUE.equals(universityValue4.getIsActive()))
-                .filter(universityValue5 -> {
-                    String stringValue = universityValue5.getEmailDomain();
-                    if (stringValue == null) return false;
-                    stringValue = stringValue.toLowerCase();
-                    if (stringValue.startsWith("@")) stringValue = stringValue.substring(1);
-                    return stringValue.equals(lookupDomain);
+                .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                .filter(u -> {
+                    String d = u.getEmailDomain();
+                    if (d == null) return false;
+                    d = d.toLowerCase();
+                    if (d.startsWith("@")) d = d.substring(1);
+                    return d.equals(lookupDomain);
                 })
                 .findFirst()
                 .orElse(null);

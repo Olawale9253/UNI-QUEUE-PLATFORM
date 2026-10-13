@@ -15,7 +15,7 @@ public class UniversityResponse {
     private String matricPattern;
     private String matricExample;
     private String matricDescription;
-    private String matricVerificationMode;   // NEW
+    private String matricVerificationMode;
 
     // Branding
     private String logoUrl;
@@ -61,6 +61,12 @@ public class UniversityResponse {
     private String applicationNumberExample;
     private String applicationNumberDescription;
 
+    // ─── Stats (populated by UniversityService for super-admin views) ───
+    private Long queueCount;
+    private Long staffCount;
+    private Long userCount;
+    private Long ticketCount;
+
     public static UniversityResponse from(University u) {
         if (u == null) return null;
         return UniversityResponse.builder()
@@ -101,6 +107,7 @@ public class UniversityResponse {
                 .applicationNumberPattern(u.getApplicationNumberPattern())
                 .applicationNumberExample(u.getApplicationNumberExample())
                 .applicationNumberDescription(u.getApplicationNumberDescription())
+                // Stats are left null here — UniversityService sets them after mapping.
                 .build();
     }
 }

@@ -22,6 +22,7 @@ import EmptyState from '../../components/ui/EmptyState'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import PageHeader from '../../components/layout/PageHeader'
 import ExportButton from '../../components/ui/ExportButton'
+import ChangeRoleButton from './ChangeRoleButton'
 import { useToastStore } from '../../store/toastStore'
 import { formatDate } from '../../lib/format'
 import { stagger, staggerItem } from '../../lib/motion'
@@ -31,7 +32,8 @@ const ROLE_OPTIONS = [
     { value: 'SUPER_ADMIN', label: 'Super Admin' },
     { value: 'ADMIN', label: 'Administrator' },
     { value: 'STAFF', label: 'Staff' },
-    { value: 'USER', label: 'Student' },
+    { value: 'USER', label: 'Student (returning)' },
+    { value: 'FRESHER', label: 'Fresher' },
 ]
 
 const STATUS_OPTIONS = [
@@ -45,6 +47,7 @@ const roleVariant = {
     ADMIN: 'warning',
     STAFF: 'info',
     USER: 'success',
+    FRESHER: 'info',
 }
 
 export default function Users() {
@@ -134,6 +137,11 @@ export default function Users() {
         }
     }
 
+    // Reload current page after a role change
+    const handleRoleChanged = () => {
+        loadUsers(page)
+    }
+
     const activeFilterCount = Object.values(filters).filter(Boolean).length
     const universityOptions = universities.map((university) => ({
         value: university.id,
@@ -180,7 +188,7 @@ export default function Users() {
                 }
             />
 
-            {/* Search bar (always visible) */}
+            {/* Search bar */}
             <div className="mb-4">
                 <Input
                     placeholder="Search by name, email, or matric number…"
@@ -346,7 +354,13 @@ export default function Users() {
                                         </div>
                                     </div>
 
-                                    <div className="shrink-0">
+                                    <div className="flex shrink-0 items-center gap-1.5">
+                                        <ChangeRoleButton
+                                            user={user}
+                                            onChanged={handleRoleChanged}
+                                            variant="compact"
+                                        />
+
                                         {user.role !== 'SUPER_ADMIN' && (
                                             <button
                                                 onClick={() => setToggleTarget(user)}

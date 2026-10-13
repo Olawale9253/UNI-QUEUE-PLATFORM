@@ -27,24 +27,30 @@ public class GlobalUserResponse {
     @JsonProperty("isVerified")
     private Boolean isVerified;
 
+    private String registrationStatus;   // ⬅ NEW: "PENDING" | "VERIFIED" | "REJECTED" | null
+
     private LocalDateTime createdAt;
     private LocalDateTime lastLoginAt;
 
-    public static GlobalUserResponse from(User userValue3) {
+    public static GlobalUserResponse from(User u) {
+        if (u == null) return null;
         return GlobalUserResponse.builder()
-                .id(userValue3.getId())
-                .email(userValue3.getEmail())
-                .fullName(userValue3.getFullName())
-                .role(userValue3.getRole() != null ? userValue3.getRole().name() : null)
-                .matricNumber(userValue3.getMatricNumber())
-                .department(userValue3.getDepartment())
-                .phone(userValue3.getPhone())
-                .universityId(userValue3.getUniversity() != null ? userValue3.getUniversity().getId() : null)
-                .universityName(userValue3.getUniversity() != null ? userValue3.getUniversity().getName() : null)
-                .universityCode(userValue3.getUniversity() != null ? userValue3.getUniversity().getCode() : null)
-                .isActive(userValue3.getIsActive())
-                .isVerified(userValue3.getIsVerified())
-                .createdAt(userValue3.getCreatedAt())
+                .id(u.getId())
+                .email(u.getEmail())
+                .fullName(u.getFullName())
+                .role(u.getRole() != null ? u.getRole().name() : null)
+                .matricNumber(u.getMatricNumber())
+                .department(u.getDepartment())
+                .phone(u.getPhone())
+                .universityId(u.getUniversity() != null ? u.getUniversity().getId() : null)
+                .universityName(u.getUniversity() != null ? u.getUniversity().getName() : null)
+                .universityCode(u.getUniversity() != null ? u.getUniversity().getCode() : null)
+                .isActive(u.getIsActive())
+                .isVerified(u.getIsVerified())
+                .registrationStatus(u.getRegistrationStatus() != null
+                        ? u.getRegistrationStatus().name()
+                        : null)                              // ⬅ NEW
+                .createdAt(u.getCreatedAt())
                 .build();
     }
 }

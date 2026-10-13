@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-    ArrowRight, ArrowLeft, Loader2, AlertCircle, Eye, EyeOff,
+    ArrowRight, ArrowLeft, Loader2, Eye, EyeOff,
     Ticket, ShieldCheck, Building2, Users,
 } from 'lucide-react'
 import api from '../api/axios'
@@ -21,7 +21,7 @@ function resolveImageUrl(url) {
 }
 
 /* ─────────────────────────────────────────────
-   Left panel — image + brief institutional copy
+   Left panel
    ───────────────────────────────────────────── */
 
 function LeftPanel({ university, imageError, onImageError }) {
@@ -65,7 +65,6 @@ function LeftPanel({ university, imageError, onImageError }) {
             />
 
             <div className="relative z-10 flex h-full flex-col justify-between p-8 xl:p-10">
-                {/* Brand */}
                 <Link to="/" className="flex items-center gap-3 text-white">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/15 ring-1 ring-white/25 backdrop-blur-md">
                         {logoUrl ? (
@@ -89,18 +88,15 @@ function LeftPanel({ university, imageError, onImageError }) {
                     </div>
                 </Link>
 
-                {/* Middle — pitch */}
                 <div className="max-w-md">
                     <h2 className="text-3xl font-bold leading-[1.1] tracking-tight text-white drop-shadow-lg xl:text-4xl">
                         Register once.
                         <span className="block text-white/75">Join every queue.</span>
                     </h2>
-
                     <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/80">
                         One account for every service at your university — Bursary,
                         Registry, Library, Health Center, and more.
                     </p>
-
                     <ul className="mt-6 grid gap-2.5">
                         <li className="flex items-center gap-2.5 text-xs text-white/85">
                             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15">
@@ -123,7 +119,6 @@ function LeftPanel({ university, imageError, onImageError }) {
                     </ul>
                 </div>
 
-                {/* Footer note */}
                 <div className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/40">
                     © {new Date().getFullYear()} UniQueue
                 </div>
@@ -141,8 +136,6 @@ export default function Register() {
     const { register, loading } = useAuthStore()
     const { push } = useToastStore()
 
-    // "student" (default) or "fresher". Not a visible tab — set via a small
-    // text link at the bottom of the form. Keeps the default experience clean.
     const [mode, setMode] = useState('student')
 
     const [universities, setUniversities] = useState([])
@@ -165,7 +158,8 @@ export default function Register() {
         applicationNumber: '',
     })
 
-    const setField = (file) => (event) => setForm({ ...form, [file]: event.target.value })
+    const setField = (field) => (event) =>
+        setForm((prev) => ({ ...prev, [field]: event.target.value }))
 
     useEffect(() => {
         let cancelled = false
@@ -177,7 +171,7 @@ export default function Register() {
     }, [push])
 
     const selectedUni = useMemo(
-        () => universities.find((university) => String(university.id) === String(form.universityId)) || null,
+        () => universities.find((u) => String(u.id) === String(form.universityId)) || null,
         [universities, form.universityId]
     )
 
@@ -185,8 +179,6 @@ export default function Register() {
 
     const fresherEnabled = selectedUni?.fresherRegistrationEnabled !== false
 
-    // If the selected university has fresher registration disabled, and the
-    // user is in fresher mode, force them back to student mode.
     useEffect(() => {
         if (mode === 'fresher' && selectedUni && !fresherEnabled) setMode('student')
     }, [mode, selectedUni, fresherEnabled])
@@ -252,46 +244,6 @@ export default function Register() {
         }
     }
 
-        const payload = {
-            email: form.email.trim(),
-            password: form.password,
-            fullName: form.fullName.trim(),
-            universityId: Number(form.universityId),
-            department: form.department.trim() || null,
-            phone: form.phone.trim() || null,
-            accountType: mode === 'fresher' ? 'FRESHER' : 'STUDENT',
-        }
-
-        if (mode === 'student') {
-            payload.matricNumber = form.matricNumber.trim()
-        } else {
-            if (selectedUni?.requireJambReg !== false) {
-                payload.jambRegNumber = form.jambRegNumber.trim() || null
-            }
-            if (selectedUni?.requireAdmissionRef) {
-                payload.admissionRef = form.admissionRef.trim() || null
-            }
-            if (selectedUni?.requireApplicationNumber) {
-                payload.applicationNumber = form.applicationNumber.trim() || null
-            }
-        }
-
-        const res = await register(payload)
-        if (res.success) {
-            push({
-                type: 'success',
-                message: mode === 'fresher'
-                    ? 'Registered as fresher. Check your email for the code.'
-                    : 'Account created. Check your email for the code.',
-            })
-            navigate('/verify-email', {
-                state: { email: form.email.trim(), devCode: res.devVerificationCode },
-            })
-        } else {
-            push({ type: 'error', message: res.error })
-        }
-    }
-
     const inputClass =
         'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 disabled:opacity-50'
 
@@ -306,7 +258,6 @@ export default function Register() {
                     onImageError={() => setImageError(true)}
                 />
 
-                {/* Right panel */}
                 <div className="flex h-full min-h-0 items-center justify-center overflow-hidden bg-white px-6 dark:bg-slate-950">
                     <motion.div
                         initial={{ opacity: 0, y: 8 }}
@@ -342,7 +293,7 @@ export default function Register() {
                         </div>
 
                         <form onSubmit={submit} className="space-y-3">
-                            {/* Row: University | Full name */}
+                            {/* University | Full name */}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
                                     <label className={labelClass}>University</label>
@@ -353,9 +304,11 @@ export default function Register() {
                                         disabled={loadingUnis}
                                         className={`${inputClass} appearance-none`}
                                     >
-                                        <option value="">{loadingUnis ? 'Loading…' : 'Select your university'}</option>
-                                        {universities.map((university) => (
-                                            <option key={university.id} value={university.id}>{university.name}</option>
+                                        <option value="">
+                                            {loadingUnis ? 'Loading…' : 'Select your university'}
+                                        </option>
+                                        {universities.map((u) => (
+                                            <option key={u.id} value={u.id}>{u.name}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -373,7 +326,7 @@ export default function Register() {
                                 </div>
                             </div>
 
-                            {/* Row: Email | (Matric or JAMB) */}
+                            {/* Email | Matric or JAMB */}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
                                     <label className={labelClass}>
@@ -418,7 +371,7 @@ export default function Register() {
                                 )}
                             </div>
 
-                            {/* Fresher-only extra IDs (conditional on university settings) */}
+                            {/* Fresher extras */}
                             {mode === 'fresher' && selectedUni &&
                                 (selectedUni.requireAdmissionRef || selectedUni.requireApplicationNumber) && (
                                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -449,7 +402,7 @@ export default function Register() {
                                     </div>
                                 )}
 
-                            {/* Row: Department | Phone */}
+                            {/* Department | Phone */}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
                                     <label className={labelClass}>
@@ -477,7 +430,7 @@ export default function Register() {
                                 </div>
                             </div>
 
-                            {/* Row: Password | Confirm */}
+                            {/* Password | Confirm */}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
                                     <label className={labelClass}>Password</label>
@@ -492,7 +445,7 @@ export default function Register() {
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => setShowPassword((item) => !item)}
+                                            onClick={() => setShowPassword((v) => !v)}
                                             className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
                                             aria-label={showPassword ? 'Hide password' : 'Show password'}
                                         >
@@ -513,7 +466,7 @@ export default function Register() {
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => setShowConfirm((item) => !item)}
+                                            onClick={() => setShowConfirm((v) => !v)}
                                             className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
                                             aria-label={showConfirm ? 'Hide password' : 'Show password'}
                                         >
@@ -542,7 +495,6 @@ export default function Register() {
                             </button>
                         </form>
 
-                        {/* Footer — sign in link + subtle fresher toggle */}
                         <div className="mt-5 space-y-2 text-center text-xs">
                             <p className="text-slate-500 dark:text-slate-400">
                                 Already have an account?{' '}
