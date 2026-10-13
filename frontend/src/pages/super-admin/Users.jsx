@@ -22,10 +22,11 @@ import EmptyState from '../../components/ui/EmptyState'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import PageHeader from '../../components/layout/PageHeader'
 import ExportButton from '../../components/ui/ExportButton'
-import ChangeRoleButton from './ChangeRoleButton'
+import ChangeRoleButton from '../../components/users/ChangeRoleButton'
 import { useToastStore } from '../../store/toastStore'
 import { formatDate } from '../../lib/format'
 import { stagger, staggerItem } from '../../lib/motion'
+
 
 const ROLE_OPTIONS = [
     { value: '', label: 'All roles' },
