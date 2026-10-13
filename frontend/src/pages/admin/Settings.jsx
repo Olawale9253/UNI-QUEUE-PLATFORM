@@ -56,6 +56,7 @@ export default function Settings() {
         maxStaff: 10, maxQueues: 5,
         fresherRegistrationEnabled: true,
         fresherVerificationMode: 'PATTERN',
+        matricVerificationMode: 'PATTERN',
         requireJambReg: true,
         jambRegPattern: '', jambRegExample: '', jambRegDescription: '',
         requireAdmissionRef: false,
@@ -84,6 +85,7 @@ export default function Settings() {
                 maxQueues: user.maxQueues ?? 5,
                 fresherRegistrationEnabled: user.fresherRegistrationEnabled !== false,
                 fresherVerificationMode: user.fresherVerificationMode || 'PATTERN',
+                matricVerificationMode: user.matricVerificationMode || 'PATTERN',
                 requireJambReg: user.requireJambReg !== false,
                 jambRegPattern: user.jambRegPattern || '',
                 jambRegExample: user.jambRegExample || '',
@@ -293,6 +295,44 @@ export default function Settings() {
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <Input label="Matric example" value={form.matricExample} onChange={setField('matricExample')} placeholder="21/12345/001" />
                         <Input label="Matric format description" value={form.matricDescription} onChange={setField('matricDescription')} placeholder="YY/XXXXX/XXX" />
+                    </div>
+
+                    {/* NEW — matric verification mode */}
+                    <div className="mt-5 rounded-lg border border-slate-200 p-4">
+                        <label className="mb-2 block text-sm font-medium text-slate-900">
+                            Matric verification mode
+                        </label>
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
+                            {[
+                                { v: 'OPEN',    label: 'Open',    hint: 'Auto-verify everyone' },
+                                { v: 'PATTERN', label: 'Pattern', hint: 'Regex only — queue for review' },
+                                { v: 'LIST',    label: 'Registry',hint: 'Must match uploaded list' },
+                                { v: 'BOTH',    label: 'Both',    hint: 'Regex + registry match' },
+                            ].map((m) => (
+                                <button
+                                    key={m.v}
+                                    type="button"
+                                    onClick={() => setForm({ ...form, matricVerificationMode: m.v })}
+                                    className={`rounded-lg border p-3 text-left transition-colors ${
+                                        form.matricVerificationMode === m.v
+                                            ? 'border-brand-500 bg-brand-50'
+                                            : 'border-slate-200 hover:border-slate-300'
+                                    }`}
+                                >
+                                    <div className={`text-sm font-semibold ${
+                                        form.matricVerificationMode === m.v ? 'text-brand-700' : 'text-slate-900'
+                                    }`}>
+                                        {m.label}
+                                    </div>
+                                    <div className="mt-0.5 text-[11px] text-slate-500">{m.hint}</div>
+                                </button>
+                            ))}
+                        </div>
+                        {(form.matricVerificationMode === 'LIST' || form.matricVerificationMode === 'BOTH') && (
+                            <p className="mt-2 text-xs text-amber-700">
+                                ⚠️ Requires an uploaded student registry. Upload it from the Verifications tab.
+                            </p>
+                        )}
                     </div>
                 </Card>
 

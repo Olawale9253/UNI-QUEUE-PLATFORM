@@ -1,16 +1,8 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import {
-    LayoutGrid,
-    BarChart3,
-    Star,
-    ListOrdered,
-    Users,
-    Route as RouteIcon,
-    Settings as SettingsIcon,
-    Building2,
-    CalendarCheck,
-    Activity,
-    History,
+    LayoutGrid, BarChart3, Star, ListOrdered, Users,
+    Route as RouteIcon, Settings as SettingsIcon, Building2,
+    CalendarCheck, Activity, History, ShieldCheck,
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import AdminHeader from '../components/admin/AdminHeader'
@@ -26,6 +18,7 @@ import Workflows from './admin/Workflows'
 import Workload from './admin/Workload'
 import AuditLog from './admin/AuditLog'
 import Settings from './admin/Settings'
+import Verification from './admin/Verification'
 
 const tabs = [
     { to: '/admin/overview', label: 'Overview', icon: LayoutGrid },
@@ -37,6 +30,7 @@ const tabs = [
     { to: '/admin/staff', label: 'Staff', icon: Users },
     { to: '/admin/workload', label: 'Workload', icon: Activity },
     { to: '/admin/workflows', label: 'Workflows', icon: RouteIcon },
+    { to: '/admin/verification', label: 'Verifications', icon: ShieldCheck },
     { to: '/admin/audit-logs', label: 'Audit Logs', icon: History },
     { to: '/admin/settings', label: 'Settings', icon: SettingsIcon },
 ]
@@ -52,6 +46,7 @@ const ROUTE_SUBTITLES = {
     '/admin/staff': 'Add staff, assign them to services, and manage accounts.',
     '/admin/workload': 'See where students are piling up vs how many staff serve them.',
     '/admin/workflows': 'Build multi-step clearance processes.',
+    '/admin/verification': 'Upload student lists and review pending registrations.',
     '/admin/audit-logs': 'Every meaningful action recorded at your university.',
     '/admin/settings': 'Configure your university branding, features, and limits.',
 }
@@ -74,6 +69,7 @@ export default function AdminDashboard() {
                 <Route path="staff" element={<Staff />} />
                 <Route path="workload" element={<Workload />} />
                 <Route path="workflows" element={<Workflows />} />
+                <Route path="verification" element={<Verification />} />
                 <Route path="audit-logs" element={<AuditLog />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />
