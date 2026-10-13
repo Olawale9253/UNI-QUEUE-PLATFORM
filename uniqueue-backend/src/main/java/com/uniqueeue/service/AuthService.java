@@ -4,12 +4,14 @@ import com.uniqueeue.dto.request.LoginRequest;
 import com.uniqueeue.dto.request.RegisterRequest;
 import com.uniqueeue.dto.response.AuthResponse;
 import com.uniqueeue.enums.AuditAction;
+import com.uniqueeue.enums.RegistrationStatus;
 import com.uniqueeue.enums.Role;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
 import com.uniqueeue.exception.UnauthorizedException;
 import com.uniqueeue.model.AdmittedStudent;
 import com.uniqueeue.model.PasswordResetToken;
+import com.uniqueeue.model.StudentRegistry;
 import com.uniqueeue.model.University;
 import com.uniqueeue.model.User;
 import com.uniqueeue.repository.PasswordResetTokenRepository;
@@ -30,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -53,7 +57,8 @@ public class AuthService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final MatricValidationService matricValidationService;
     private final AdmittedStudentService admittedStudentService;
-    private final EmailService emailService;   // ⬅ NEW
+    private final StudentRegistryService studentRegistryService;
+    private final EmailService emailService;
 
     // ============================================================
     //  REGISTER
@@ -94,7 +99,7 @@ public class AuthService {
             existing.setLastVerificationSentAt(LocalDateTime.now());
             userRepository.save(existing);
 
-            emailService.sendVerificationCode(existing, code);   // ⬅ NEW
+            emailService.sendVerificationCode(existing, code);
             log.info("🔐 [RESEND] Verification code for {}: {}", email, code);
         }
 
@@ -127,6 +132,8 @@ public class AuthService {
     // ─── Continuing student path ───
 
     private AuthResponse registerStudent(RegisterRequest request, String email, University university) {
+
+        // 1. Email domain check
         if (university.getEmailDomain() != null && !university.getEmailDomain().isBlank()) {
             String domain = university.getEmailDomain().startsWith("@")
                     ? university.getEmailDomain()
@@ -136,14 +143,45 @@ public class AuthService {
             }
         }
 
+        // 2. Matric present?
         if (request.getMatricNumber() == null || request.getMatricNumber().isBlank()) {
             throw new BadRequestException("Matric number is required");
         }
 
+        // 3. Pattern check
         matricValidationService.validate(request.getMatricNumber(), university);
+
         String matric = request.getMatricNumber().trim();
         if (userRepository.existsByUniversityIdAndMatricNumber(university.getId(), matric)) {
             throw new BadRequestException("Matric number already registered at this university");
+        }
+
+        // 4. Registry cross-check (mode-dependent)
+        String mode = university.getMatricVerificationMode() == null
+                ? "PATTERN"
+                : university.getMatricVerificationMode().toUpperCase();
+
+        RegistrationStatus status;
+        StudentRegistry matched = null;
+
+        if ("LIST".equals(mode) || "BOTH".equals(mode)) {
+            Optional<StudentRegistry> hit = studentRegistryService.matchByMatric(university, matric);
+            if (hit.isEmpty()) {
+                throw new BadRequestException(
+                        "We couldn't find your matric number on the university's student registry. "
+                                + "Please double-check it, or contact your department.");
+            }
+            matched = hit.get();
+            status = namesEquivalent(matched.getFullName(), request.getFullName())
+                    ? RegistrationStatus.VERIFIED
+                    : RegistrationStatus.PENDING;
+
+        } else if ("OPEN".equals(mode)) {
+            status = RegistrationStatus.VERIFIED;
+
+        } else {
+            // PATTERN — no registry check, queue for review
+            status = RegistrationStatus.PENDING;
         }
 
         String code = String.format("%06d", RANDOM.nextInt(1_000_000));
@@ -159,6 +197,7 @@ public class AuthService {
                 .phone(request.getPhone())
                 .isActive(true)
                 .isVerified(false)
+                .registrationStatus(status)
                 .verificationToken(code)
                 .verificationAttempts(0)
                 .verificationExpiresAt(LocalDateTime.now().plusHours(VERIFICATION_TTL_HOURS))
@@ -167,13 +206,17 @@ public class AuthService {
 
         User saved = userRepository.save(user);
 
-        // ⬅ NEW: send the verification email to the student
+        if (matched != null) {
+            studentRegistryService.markClaimed(matched.getId(), saved);
+        }
+
         emailService.sendVerificationCode(saved, code);
 
         auditService.record(saved.getId(), university.getId(),
-                AuditAction.USER_REGISTERED, "User", saved.getId(), null);
+                AuditAction.USER_REGISTERED, "User", saved.getId(),
+                "{\"registrationStatus\":\"" + status + "\"}");
 
-        log.info("🔐 Verification code for {}: {}", saved.getEmail(), code);
+        log.info("🔐 Verification code for {}: {} (status={})", saved.getEmail(), code, status);
         return buildAuthResponse(saved, code);
     }
 
@@ -208,6 +251,10 @@ public class AuthService {
             }
         }
 
+        RegistrationStatus regStatus = matched != null
+                ? RegistrationStatus.VERIFIED
+                : RegistrationStatus.PENDING;
+
         String code = String.format("%06d", RANDOM.nextInt(1_000_000));
 
         User user = User.builder()
@@ -224,6 +271,7 @@ public class AuthService {
                 .admittedStudentId(matched != null ? matched.getId() : null)
                 .isActive(true)
                 .isVerified(false)
+                .registrationStatus(regStatus)
                 .verificationToken(code)
                 .verificationAttempts(0)
                 .verificationExpiresAt(LocalDateTime.now().plusHours(VERIFICATION_TTL_HOURS))
@@ -236,7 +284,6 @@ public class AuthService {
             admittedStudentService.markClaimed(matched.getId(), saved);
         }
 
-        // ⬅ NEW: send the verification email to the fresher
         emailService.sendVerificationCode(saved, code);
 
         auditService.record(saved.getId(), university.getId(),
@@ -247,30 +294,34 @@ public class AuthService {
         return buildAuthResponse(saved, code);
     }
 
-    private void validateFresherPatterns(RegisterRequest req, University universityValue8) {
-        if (Boolean.TRUE.equals(universityValue8.getRequireJambReg())) {
+    private void validateFresherPatterns(RegisterRequest req, University university) {
+        if (Boolean.TRUE.equals(university.getRequireJambReg())) {
             requireNonBlank(req.getJambRegNumber(), "JAMB registration number is required");
-            validatePattern(req.getJambRegNumber(), universityValue8.getJambRegPattern(), "JAMB registration number", universityValue8);
+            validatePattern(req.getJambRegNumber(), university.getJambRegPattern(),
+                    "JAMB registration number", university);
         }
-        if (Boolean.TRUE.equals(universityValue8.getRequireAdmissionRef())) {
+        if (Boolean.TRUE.equals(university.getRequireAdmissionRef())) {
             requireNonBlank(req.getAdmissionRef(), "Admission reference is required");
-            validatePattern(req.getAdmissionRef(), universityValue8.getAdmissionRefPattern(), "Admission reference", universityValue8);
+            validatePattern(req.getAdmissionRef(), university.getAdmissionRefPattern(),
+                    "Admission reference", university);
         }
-        if (Boolean.TRUE.equals(universityValue8.getRequireApplicationNumber())) {
+        if (Boolean.TRUE.equals(university.getRequireApplicationNumber())) {
             requireNonBlank(req.getApplicationNumber(), "Application number is required");
-            validatePattern(req.getApplicationNumber(), universityValue8.getApplicationNumberPattern(), "Application number", universityValue8);
+            validatePattern(req.getApplicationNumber(), university.getApplicationNumberPattern(),
+                    "Application number", university);
         }
     }
 
-    private void requireNonBlank(String stringValueValue4, String message) {
-        if (stringValueValue4 == null || stringValueValue4.isBlank()) throw new BadRequestException(message);
+    private void requireNonBlank(String value, String message) {
+        if (value == null || value.isBlank()) throw new BadRequestException(message);
     }
 
-    private void validatePattern(String value, String pattern, String label, University universityValue9) {
+    private void validatePattern(String value, String pattern, String label, University university) {
         if (pattern == null || pattern.isBlank()) return;
         try {
             if (!Pattern.compile(pattern).matcher(value.trim()).matches()) {
-                String hint = universityValue9.getJambRegExample() != null ? " Expected format: " + universityValue9.getJambRegExample() : "";
+                String hint = university.getJambRegExample() != null
+                        ? " Expected format: " + university.getJambRegExample() : "";
                 throw new BadRequestException(label + " format is invalid." + hint);
             }
         } catch (BadRequestException ex) {
@@ -280,8 +331,20 @@ public class AuthService {
         }
     }
 
-    private String trimOrNull(String stringValueValue5) {
-        return stringValueValue5 == null ? null : (stringValueValue5.isBlank() ? null : stringValueValue5.trim());
+    private String trimOrNull(String value) {
+        return value == null ? null : (value.isBlank() ? null : value.trim());
+    }
+
+    /** Name equality after normalisation: lowercase, sorted tokens. */
+    private boolean namesEquivalent(String a, String b) {
+        if (a == null || b == null) return false;
+        return normalizeName(a).equals(normalizeName(b));
+    }
+
+    private String normalizeName(String name) {
+        String[] tokens = name.toLowerCase().trim().split("\\s+");
+        Arrays.sort(tokens);
+        return String.join(" ", tokens);
     }
 
     // ============================================================
@@ -378,7 +441,8 @@ public class AuthService {
                         "Too many incorrect attempts. Please request a new verification code.");
             }
             throw new BadRequestException(
-                    "Invalid verification code. " + remaining + " attempt" + (remaining == 1 ? "" : "s") + " remaining.");
+                    "Invalid verification code. " + remaining + " attempt"
+                            + (remaining == 1 ? "" : "s") + " remaining.");
         }
 
         user.setIsVerified(true);
@@ -423,7 +487,6 @@ public class AuthService {
         user.setLastVerificationSentAt(LocalDateTime.now());
         userRepository.save(user);
 
-        // ⬅ NEW: send the new code via email
         emailService.sendVerificationCode(user, code);
 
         log.info("🔐 New verification code for {}: {}", user.getEmail(), code);
@@ -458,7 +521,6 @@ public class AuthService {
                 .build();
         passwordResetTokenRepository.save(prt);
 
-        // ⬅ NEW: send the reset link via email
         emailService.sendPasswordReset(user, token);
 
         log.info("🔐 Password reset link for {}: /reset-password?token={}", user.getEmail(), token);
@@ -558,6 +620,7 @@ public class AuthService {
                 .role(user.getRole())
                 .universityId(user.getUniversity() != null ? user.getUniversity().getId() : null)
                 .isVerified(user.getIsVerified())
+                .registrationStatus(user.getRegistrationStatus())
                 .devVerificationCode(devVerificationCode)
                 .build();
     }

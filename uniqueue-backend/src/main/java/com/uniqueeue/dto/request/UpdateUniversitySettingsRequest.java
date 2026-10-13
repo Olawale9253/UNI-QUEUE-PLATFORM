@@ -1,57 +1,35 @@
 package com.uniqueeue.dto.request;
 
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class UpdateUniversitySettingsRequest {
 
-    @Size(max = 2)
-    private String countryCode;
-
-    @Size(max = 255)
+    // Identity
     private String name;
-
-    @Size(max = 100)
     private String emailDomain;
-
     private String matricPattern;
-
-    @Size(max = 100)
     private String matricExample;
-
     private String matricDescription;
+    private String matricVerificationMode;   // NEW
 
-    // ─── Branding ───
-    @Size(max = 500)
+    // Branding
     private String logoUrl;
-
-    @Size(max = 500)
     private String campusImageUrl;
-
-    @Size(max = 255)
     private String tagline;
-
-    @Size(max = 20)
     private String primaryColor;
 
-    // ─── Schedule ───
-    @Size(max = 64)
+    // Schedule
     private String timezone;
+    private String countryCode;
 
-    // ─── Limits ───
-    @Min(value = 1, message = "Max staff must be at least 1")
+    // Limits
     private Integer maxStaff;
-
-    @Min(value = 1, message = "Max queues must be at least 1")
     private Integer maxQueues;
 
-    // ─── Fresher registration ───
+    // Fresher registration
     private Boolean fresherRegistrationEnabled;
-
-    @Size(max = 20)
-    private String fresherVerificationMode; // PATTERN | LIST | BOTH
+    private String fresherVerificationMode;
 
     private Boolean requireJambReg;
     private String jambRegPattern;
