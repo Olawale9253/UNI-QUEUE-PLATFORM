@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-    X, Mail, Lock, Loader2, ArrowLeft, CheckCircle2, AlertTriangle,
+    X as CloseIcon, Mail, Lock, Loader2, ArrowLeft, CheckCircle2, AlertTriangle,
     Copy, Check, ShieldCheck, RefreshCw,
 } from 'lucide-react'
 import api from '../../api/axios'
@@ -46,8 +46,8 @@ function RequestStep({ onSuccess, onCancel }) {
     const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
     const canSubmit = validEmail && password.trim().length > 0
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
+    const handleSubmit = async (event) => {
+        event.preventDefault()
         if (!canSubmit) return
         setSubmitting(true)
         try {
@@ -83,7 +83,7 @@ function RequestStep({ onSuccess, onCancel }) {
                     autoFocus
                     autoComplete="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(eventValue) => setEmail(eventValue.target.value)}
                     placeholder="you@university.edu.ng"
                     disabled={submitting}
                     className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:disabled:bg-slate-900"
@@ -99,7 +99,7 @@ function RequestStep({ onSuccess, onCancel }) {
                     type="password"
                     autoComplete="current-password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(eventValue2) => setPassword(eventValue2.target.value)}
                     placeholder="Confirm with your password"
                     disabled={submitting}
                     className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:disabled:bg-slate-900"
@@ -150,15 +150,15 @@ function VerifyStep({ request, onSuccess, onBack, onResent }) {
 
     useEffect(() => {
         if (secondsLeft <= 0) return undefined
-        const t = setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000)
-        return () => clearInterval(t)
+        const token = setInterval(() => setSecondsLeft((item) => Math.max(0, item - 1)), 1000)
+        return () => clearInterval(token)
     }, [secondsLeft])
 
     const expired = secondsLeft <= 0
     const canSubmit = code.trim().length >= 4 && !submitting && !expired
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
+    const handleSubmit = async (event) => {
+        event.preventDefault()
         if (!canSubmit) return
         setSubmitting(true)
         try {
@@ -249,7 +249,7 @@ function VerifyStep({ request, onSuccess, onBack, onResent }) {
                     inputMode="numeric"
                     autoComplete="one-time-code"
                     value={code}
-                    onChange={(e) => setCode(e.target.value.replace(/\s+/g, ''))}
+                    onChange={(eventValue) => setCode(eventValue.target.value.replace(/\s+/g, ''))}
                     placeholder="Enter the code"
                     disabled={submitting || expired}
                     maxLength={10}
@@ -317,8 +317,8 @@ export default function ChangeEmailModal({ open, onClose, currentEmail, onUpdate
 
     useEffect(() => {
         if (!open) return undefined
-        const onKey = (e) => {
-            if (e.key === 'Escape') onClose?.()
+        const onKey = (event) => {
+            if (event.key === 'Escape') onClose?.()
         }
         window.addEventListener('keydown', onKey)
         return () => window.removeEventListener('keydown', onKey)
@@ -360,7 +360,7 @@ export default function ChangeEmailModal({ open, onClose, currentEmail, onUpdate
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.96, y: 12 }}
                             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(event) => event.stopPropagation()}
                             className="relative my-8 w-full max-w-md rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
                         >
                             <button
@@ -368,7 +368,7 @@ export default function ChangeEmailModal({ open, onClose, currentEmail, onUpdate
                                 className="absolute right-3 top-3 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                                 aria-label="Close"
                             >
-                                <X className="h-4 w-4" />
+                                <CloseIcon className="h-4 w-4" />
                             </button>
 
                             <div className="px-6 py-5">

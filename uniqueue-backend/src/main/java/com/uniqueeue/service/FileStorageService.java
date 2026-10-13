@@ -32,8 +32,8 @@ public class FileStorageService {
         try {
             Files.createDirectories(rootLocation);
             log.info("File storage root: {}", rootLocation);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not create upload directory", e);
+        } catch (IOException iOExceptionValue3) {
+            throw new RuntimeException("Could not create upload directory", iOExceptionValue3);
         }
     }
 
@@ -67,8 +67,8 @@ public class FileStorageService {
         try {
             Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
             log.info("Stored file {} ({} bytes)", stored, file.getSize());
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to store file", e);
+        } catch (IOException iOExceptionValue4) {
+            throw new RuntimeException("Failed to store file", iOExceptionValue4);
         }
 
         return stored;
@@ -93,8 +93,8 @@ public class FileStorageService {
             Path target = load(filename);
             Files.deleteIfExists(target);
             log.info("Deleted file {}", filename);
-        } catch (Exception e) {
-            log.warn("Failed to delete file {}: {}", filename, e.getMessage());
+        } catch (Exception exceptionValue8) {
+            log.warn("Failed to delete file {}: {}", filename, exceptionValue8.getMessage());
         }
     }
 

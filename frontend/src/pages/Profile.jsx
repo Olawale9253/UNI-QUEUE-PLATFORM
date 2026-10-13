@@ -66,7 +66,7 @@ function PasswordField({ label, value, onChange, placeholder, autoComplete }) {
                 />
                 <button
                     type="button"
-                    onClick={() => setShow((v) => !v)}
+                    onClick={() => setShow((item) => !item)}
                     className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
                     aria-label={show ? 'Hide password' : 'Show password'}
                 >
@@ -122,12 +122,12 @@ export default function Profile() {
     const load = async () => {
         try {
             const res = await api.get('/api/profile')
-            const p = res.data?.data
-            setProfile(p)
+            const parameter = res.data?.data
+            setProfile(parameter)
             setProfileForm({
-                fullName: p?.fullName || '',
-                department: p?.department || '',
-                phone: p?.phone || '',
+                fullName: parameter?.fullName || '',
+                department: parameter?.department || '',
+                phone: parameter?.phone || '',
             })
         } catch (err) {
             setLoadError(err.response?.data?.message || 'Failed to load profile')
@@ -141,8 +141,8 @@ export default function Profile() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    const updateProfile = async (e) => {
-        e.preventDefault()
+    const updateProfile = async (event) => {
+        event.preventDefault()
         if (!profileForm.fullName.trim()) {
             push({ type: 'error', message: 'Full name is required' })
             return
@@ -168,8 +168,8 @@ export default function Profile() {
     }
 
     // ── Fresher → Student upgrade ──
-    const upgradeToStudent = async (e) => {
-        e.preventDefault()
+    const upgradeToStudent = async (eventValue) => {
+        eventValue.preventDefault()
         if (!matricInput.trim()) {
             push({ type: 'error', message: 'Enter your matric number' })
             return
@@ -188,8 +188,8 @@ export default function Profile() {
         }
     }
 
-    const changePassword = async (e) => {
-        e.preventDefault()
+    const changePassword = async (eventValue2) => {
+        eventValue2.preventDefault()
         if (passwordForm.newPassword.length < 8) {
             push({ type: 'error', message: 'New password must be at least 8 characters' })
             return
@@ -206,9 +206,9 @@ export default function Profile() {
             })
 
             // Backend returns fresh tokens because it bumped tokenVersion.
-            const d = res.data?.data
-            if (d?.accessToken) {
-                useAuthStore.getState().updateTokens(d.accessToken, d.refreshToken)
+            const dateValue = res.data?.data
+            if (dateValue?.accessToken) {
+                useAuthStore.getState().updateTokens(dateValue.accessToken, dateValue.refreshToken)
             }
 
             push({ type: 'success', message: 'Password changed successfully' })
@@ -371,7 +371,7 @@ export default function Profile() {
                                     <input
                                         type="text"
                                         value={matricInput}
-                                        onChange={(e) => setMatricInput(e.target.value)}
+                                        onChange={(eventValue3) => setMatricInput(eventValue3.target.value)}
                                         placeholder="Enter your matric number"
                                         className="flex-1 rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                                     />
@@ -563,7 +563,7 @@ export default function Profile() {
                             <input
                                 type="text"
                                 value={profileForm.fullName}
-                                onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
+                                onChange={(eventValue4) => setProfileForm({ ...profileForm, fullName: eventValue4.target.value })}
                                 placeholder="Enter your full name"
                                 required
                                 className={inputClass}
@@ -591,7 +591,7 @@ export default function Profile() {
                                     <input
                                         type="text"
                                         value={profileForm.department}
-                                        onChange={(e) => setProfileForm({ ...profileForm, department: e.target.value })}
+                                        onChange={(eventValue5) => setProfileForm({ ...profileForm, department: eventValue5.target.value })}
                                         placeholder={isAdmin ? 'Enter your office or unit' : 'Enter your department'}
                                         className={inputClass}
                                     />
@@ -603,7 +603,7 @@ export default function Profile() {
                                 <input
                                     type="tel"
                                     value={profileForm.phone}
-                                    onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                                    onChange={(eventValue6) => setProfileForm({ ...profileForm, phone: eventValue6.target.value })}
                                     placeholder="Enter your phone number"
                                     className={inputClass}
                                 />
@@ -644,8 +644,8 @@ export default function Profile() {
                         <PasswordField
                             label="Current password"
                             value={passwordForm.currentPassword}
-                            onChange={(e) =>
-                                setPasswordForm({ ...passwordForm, currentPassword: e.target.value })
+                            onChange={(eventValue7) =>
+                                setPasswordForm({ ...passwordForm, currentPassword: eventValue7.target.value })
                             }
                             placeholder="Enter your current password"
                             autoComplete="current-password"
@@ -653,8 +653,8 @@ export default function Profile() {
                         <PasswordField
                             label="New password"
                             value={passwordForm.newPassword}
-                            onChange={(e) =>
-                                setPasswordForm({ ...passwordForm, newPassword: e.target.value })
+                            onChange={(eventValue8) =>
+                                setPasswordForm({ ...passwordForm, newPassword: eventValue8.target.value })
                             }
                             placeholder="At least 8 characters"
                             autoComplete="new-password"
@@ -662,8 +662,8 @@ export default function Profile() {
                         <PasswordField
                             label="Confirm new password"
                             value={passwordForm.confirmPassword}
-                            onChange={(e) =>
-                                setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
+                            onChange={(eventValue9) =>
+                                setPasswordForm({ ...passwordForm, confirmPassword: eventValue9.target.value })
                             }
                             placeholder="Re-enter new password"
                             autoComplete="new-password"

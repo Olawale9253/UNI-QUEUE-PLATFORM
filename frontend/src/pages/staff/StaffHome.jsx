@@ -92,9 +92,9 @@ export default function StaffHome() {
             }
 
             const ticketsByQueue = await Promise.all(
-                staffQueues.map((q) =>
+                staffQueues.map((staffQueue) =>
                     api
-                        .get(`/api/staff/queues/${q.id}/tickets`)
+                        .get(`/api/staff/queues/${staffQueue.id}/tickets`)
                         .then((res) => res.data?.data || [])
                         .catch(() => [])
                 )
@@ -102,9 +102,9 @@ export default function StaffHome() {
             const all = ticketsByQueue.flat()
 
             const sorted = all
-                .sort((a, b) => {
-                    const at = a.joinedAt ? new Date(a.joinedAt).getTime() : 0
-                    const bt = b.joinedAt ? new Date(b.joinedAt).getTime() : 0
+                .sort((leftValue, rightValue) => {
+                    const at = leftValue.joinedAt ? new Date(leftValue.joinedAt).getTime() : 0
+                    const bt = rightValue.joinedAt ? new Date(rightValue.joinedAt).getTime() : 0
                     return bt - at
                 })
                 .slice(0, 5)
@@ -134,29 +134,29 @@ export default function StaffHome() {
                 transition={{ delay: 0.1 }}
                 className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-3"
             >
-                {QUICK_ACTIONS.map((a, i) => {
-                    const Icon = a.icon
+                {QUICK_ACTIONS.map((item, index) => {
+                    const Icon = item.icon
                     return (
                         <motion.div
-                            key={a.to}
+                            key={item.to}
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.15 + i * 0.05 }}
+                            transition={{ delay: 0.15 + index * 0.05 }}
                         >
-                            <Link to={a.to} className="group block h-full">
+                            <Link to={item.to} className="group block h-full">
                                 <Card className="flex h-full items-center gap-4 transition-all hover:-translate-y-0.5 hover:shadow-md">
-                                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${a.accent}`}>
+                                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${item.accent}`}>
                                         <Icon className="h-6 w-6" />
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-1.5">
                                             <h3 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                {a.label}
+                                                {item.label}
                                             </h3>
                                             <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-600" />
                                         </div>
                                         <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
-                                            {a.description}
+                                            {item.description}
                                         </p>
                                     </div>
                                 </Card>
@@ -188,8 +188,8 @@ export default function StaffHome() {
 
                     {ticketsLoading ? (
                         <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                            {Array.from({ length: 3 }).map((_, i) => (
-                                <div key={i} className="flex items-center gap-4 px-6 py-4">
+                            {Array.from({ length: 3 }).map((unusedValue, indexValue) => (
+                                <div key={indexValue} className="flex items-center gap-4 px-6 py-4">
                                     <div className="h-4 w-32 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
                                     <div className="h-4 w-48 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
                                 </div>
@@ -209,32 +209,32 @@ export default function StaffHome() {
                         </div>
                     ) : (
                         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                            {recentTickets.map((t) => (
+                            {recentTickets.map((recentTicket) => (
                                 <li
-                                    key={t.id}
+                                    key={recentTicket.id}
                                     className="flex items-center justify-between gap-3 px-6 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
                                 >
                                     <div className="min-w-0 flex-1">
                                         <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                            {t.queueName || t.officeName || 'Service'}
+                                            {recentTicket.queueName || recentTicket.officeName || 'Service'}
                                         </div>
                                         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
                                             <span className="font-mono">
-                                                Ticket: {t.ticketNumber}
+                                                Ticket: {recentTicket.ticketNumber}
                                             </span>
-                                            {t.userFullName && (
-                                                <span>· {t.userFullName}</span>
+                                            {recentTicket.userFullName && (
+                                                <span>· {recentTicket.userFullName}</span>
                                             )}
-                                            {t.joinedAt && (
+                                            {recentTicket.joinedAt && (
                                                 <span className="flex items-center gap-1">
                                                     <Clock className="h-3 w-3" />
-                                                    {formatTime(t.joinedAt)}
+                                                    {formatTime(recentTicket.joinedAt)}
                                                 </span>
                                             )}
                                         </div>
                                     </div>
-                                    <Badge variant={STATUS_VARIANTS[t.status] || 'default'}>
-                                        {STATUS_LABELS[t.status] || t.status}
+                                    <Badge variant={STATUS_VARIANTS[recentTicket.status] || 'default'}>
+                                        {STATUS_LABELS[recentTicket.status] || recentTicket.status}
                                     </Badge>
                                 </li>
                             ))}

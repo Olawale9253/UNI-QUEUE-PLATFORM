@@ -82,8 +82,8 @@ function ServingQueueSkeleton() {
                     <SkeletonBox className="h-5 w-32" />
                     <SkeletonBox className="h-6 w-8 rounded-full" />
                 </div>
-                {Array.from({ length: 3 }).map((_, i) => (
-                    <SkeletonRow key={i} />
+                {Array.from({ length: 3 }).map((unusedValue, index) => (
+                    <SkeletonRow key={index} />
                 ))}
             </div>
         </div>
@@ -96,8 +96,8 @@ function ServingQueueSkeleton() {
  */
 function describeEmptyQueue(queue, tickets) {
     if (!queue) return 'No one is waiting in this queue.'
-    const waiting = tickets.filter((t) => t.status === 'WAITING' || t.status === 'WAITLISTED').length
-    const serving = tickets.find((t) => t.status === 'CALLED' || t.status === 'SERVING')
+    const waiting = tickets.filter((ticket) => ticket.status === 'WAITING' || ticket.status === 'WAITLISTED').length
+    const serving = tickets.find((ticketValue) => ticketValue.status === 'CALLED' || ticketValue.status === 'SERVING')
 
     if (queue.isOpen === false) {
         const openAt = queue.opensAt ? String(queue.opensAt).slice(0, 5) : null
@@ -134,7 +134,7 @@ export default function ServingQueue() {
     const suppressPollUntilRef = useRef(0)
     const lastLocalActionAtRef = useRef(0)
 
-    const activeQueue = queues.find((q) => q.id === activeQueueId) || null
+    const activeQueue = queues.find((queue) => queue.id === activeQueueId) || null
     const isClosed = activeQueue?.isOpen === false
 
     const loadQueues = useCallback(async () => {
@@ -207,7 +207,7 @@ export default function ServingQueue() {
     useEffect(() => {
         if (!tickets.length) return
 
-        const currentIds = new Set(tickets.map((t) => t.id))
+        const currentIds = new Set(tickets.map((ticket) => ticket.id))
 
         if (prevTicketIdsRef.current === null) {
             prevTicketIdsRef.current = currentIds
@@ -215,8 +215,8 @@ export default function ServingQueue() {
         }
 
         const prev = prevTicketIdsRef.current
-        const newTickets = tickets.filter((t) => !prev.has(t.id))
-        const newlyCalled = newTickets.filter((t) => t.status === 'CALLED')
+        const newTickets = tickets.filter((ticketValue) => !prev.has(ticketValue.id))
+        const newlyCalled = newTickets.filter((newTicket) => newTicket.status === 'CALLED')
 
         if (newTickets.length > 0) {
             playNewTicket()
@@ -230,7 +230,7 @@ export default function ServingQueue() {
                             : `${newTickets.length} new tickets`
                         const body = newTickets.length === 1
                             ? `${newTickets[0].userFullName} · ${newTickets[0].ticketNumber}`
-                            : newTickets.slice(0, 3).map((t) => t.ticketNumber).join(', ')
+                            : newTickets.slice(0, 3).map((token) => token.ticketNumber).join(', ')
 
                         browserNotif.notify(title, body, {
                             tag: 'uniqueue-tickets',
@@ -326,11 +326,11 @@ export default function ServingQueue() {
             'Next ticket called',
             'next',
             (prev) => {
-                if (prev.some((t) => t.status === 'CALLED' || t.status === 'SERVING')) {
+                if (prev.some((item) => item.status === 'CALLED' || item.status === 'SERVING')) {
                     return prev
                 }
                 const idx = prev.findIndex(
-                    (t) => t.status === 'WAITING' || t.status === 'WAITLISTED'
+                    (itemValue) => itemValue.status === 'WAITING' || itemValue.status === 'WAITLISTED'
                 )
                 if (idx === -1) return prev
                 const next = [...prev]
@@ -349,10 +349,10 @@ export default function ServingQueue() {
             'Service started',
             `serve-${id}`,
             (prev) =>
-                prev.map((t) => {
-                    if (t.id !== id) return t
-                    if (t.status !== 'CALLED') return t
-                    return { ...t, status: 'SERVING' }
+                prev.map((item) => {
+                    if (item.id !== id) return item
+                    if (item.status !== 'CALLED') return item
+                    return { ...item, status: 'SERVING' }
                 })
         )
 
@@ -362,10 +362,10 @@ export default function ServingQueue() {
             'Service completed',
             `complete-${id}`,
             (prev) =>
-                prev.map((t) => {
-                    if (t.id !== id) return t
-                    if (t.status !== 'SERVING') return t
-                    return { ...t, status: 'COMPLETED' }
+                prev.map((item) => {
+                    if (item.id !== id) return item
+                    if (item.status !== 'SERVING') return item
+                    return { ...item, status: 'COMPLETED' }
                 })
         )
 
@@ -375,11 +375,11 @@ export default function ServingQueue() {
             'Marked as no-show',
             `noshow-${id}`,
             (prev) =>
-                prev.map((t) => {
-                    if (t.id !== id) return t
+                prev.map((item) => {
+                    if (item.id !== id) return item
                     const allowed = ['WAITING', 'WAITLISTED', 'CALLED', 'SERVING']
-                    if (!allowed.includes(t.status)) return t
-                    return { ...t, status: 'NO_SHOW' }
+                    if (!allowed.includes(item.status)) return item
+                    return { ...item, status: 'NO_SHOW' }
                 })
         )
 
@@ -395,10 +395,10 @@ export default function ServingQueue() {
     }
 
     const called = tickets.find(
-        (t) => t.status === 'CALLED' || t.status === 'SERVING'
+        (ticket) => ticket.status === 'CALLED' || ticket.status === 'SERVING'
     )
     const waiting = tickets.filter(
-        (t) => t.status === 'WAITING' || t.status === 'WAITLISTED'
+        (ticketValue) => ticketValue.status === 'WAITING' || ticketValue.status === 'WAITLISTED'
     )
 
     // Dynamic label for the Call Next button
@@ -508,14 +508,14 @@ export default function ServingQueue() {
 
                 {queues.length > 1 && (
                     <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-                        {queues.map((q) => {
-                            const isActive = activeQueueId === q.id
-                            const waitingCount = q.waitingCount ?? 0
-                            const isClosedChip = q.isOpen === false
+                        {queues.map((queueValue) => {
+                            const isActive = activeQueueId === queueValue.id
+                            const waitingCount = queueValue.waitingCount ?? 0
+                            const isClosedChip = queueValue.isOpen === false
                             return (
                                 <button
-                                    key={q.id}
-                                    onClick={() => setActiveQueueId(q.id)}
+                                    key={queueValue.id}
+                                    onClick={() => setActiveQueueId(queueValue.id)}
                                     disabled={!!acting}
                                     className={`inline-flex items-center gap-2 rounded-lg border-2 px-3 py-2 transition-all disabled:opacity-60 ${
                                         isActive
@@ -537,7 +537,7 @@ export default function ServingQueue() {
                                                 : 'text-slate-700 dark:text-slate-300'
                                         }`}
                                     >
-                                        {q.name}
+                                        {queueValue.name}
                                     </span>
                                     {isClosedChip && (
                                         <span className="text-[10px] font-bold uppercase tracking-wide text-rose-600 dark:text-rose-400">
@@ -711,8 +711,8 @@ export default function ServingQueue() {
 
                 {ticketsLoading ? (
                     <div>
-                        {Array.from({ length: 3 }).map((_, i) => (
-                            <SkeletonRow key={i} />
+                        {Array.from({ length: 3 }).map((unusedValue, index) => (
+                            <SkeletonRow key={index} />
                         ))}
                     </div>
                 ) : waiting.length === 0 ? (
@@ -735,48 +735,48 @@ export default function ServingQueue() {
                         animate="animate"
                         className="divide-y divide-slate-100 dark:divide-slate-800"
                     >
-                        {waiting.map((t, i) => (
+                        {waiting.map((item, indexValue) => (
                             <motion.li
-                                key={t.id}
+                                key={item.id}
                                 variants={staggerItem}
                                 layout
                                 className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40"
                             >
                                 <div className="flex min-w-0 flex-1 items-center gap-4">
                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-sm font-bold text-brand-600 dark:bg-slate-800 dark:text-brand-400">
-                                        {t.position ?? i + 1}
+                                        {item.position ?? indexValue + 1}
                                     </div>
 
                                     <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2">
                                             <span className="font-mono text-sm font-bold text-slate-900 dark:text-slate-100">
-                                                {t.ticketNumber}
+                                                {item.ticketNumber}
                                             </span>
-                                            <CopyButton text={t.ticketNumber} title="Copy ticket ID" />
-                                            <Badge variant={STATUS_VARIANTS[t.status] || 'default'}>
-                                                {STATUS_LABELS[t.status] || t.status}
+                                            <CopyButton text={item.ticketNumber} title="Copy ticket ID" />
+                                            <Badge variant={STATUS_VARIANTS[item.status] || 'default'}>
+                                                {STATUS_LABELS[item.status] || item.status}
                                             </Badge>
                                         </div>
                                         <div className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
-                                            {t.userFullName}
-                                            {t.matricNumber ? ` · ${t.matricNumber}` : ''}
+                                            {item.userFullName}
+                                            {item.matricNumber ? ` · ${item.matricNumber}` : ''}
                                         </div>
-                                        {t.estimatedMinutesRemaining != null && (
+                                        {item.estimatedMinutesRemaining != null && (
                                             <div className="mt-0.5 flex items-center gap-1 text-xs text-slate-400">
                                                 <Clock className="h-3 w-3" />
-                                                ~{t.estimatedMinutesRemaining} min remaining
+                                                ~{item.estimatedMinutesRemaining} min remaining
                                             </div>
                                         )}
                                     </div>
                                 </div>
 
                                 <button
-                                    onClick={() => noShow(t.id)}
+                                    onClick={() => noShow(item.id)}
                                     disabled={!!acting}
                                     className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition-colors hover:bg-rose-100 disabled:opacity-60 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/60"
                                 >
                                     <XCircle className="h-3.5 w-3.5" />
-                                    {acting === `noshow-${t.id}` ? 'Marking…' : 'No-show'}
+                                    {acting === `noshow-${item.id}` ? 'Marking…' : 'No-show'}
                                 </button>
                             </motion.li>
                         ))}

@@ -16,8 +16,8 @@ export default function ForgotPassword() {
     const [sent, setSent] = useState(false)
     const [resetToken, setResetToken] = useState(null)
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
+    const handleSubmit = async (event) => {
+        event.preventDefault()
         setLoading(true)
         try {
             const res = await api.post('/api/auth/forgot-password', { email })
@@ -68,7 +68,7 @@ export default function ForgotPassword() {
                                     label="Email"
                                     type="email"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    onChange={(eventValue) => setEmail(eventValue.target.value)}
                                     placeholder="you@university.edu.ng"
                                     icon={Mail}
                                     required

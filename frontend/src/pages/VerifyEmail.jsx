@@ -36,8 +36,8 @@ export default function VerifyEmail() {
     // Resend cooldown timer
     useEffect(() => {
         if (resendIn <= 0) return
-        const t = setTimeout(() => setResendIn((s) => s - 1), 1000)
-        return () => clearTimeout(t)
+        const token = setTimeout(() => setResendIn((item) => item - 1), 1000)
+        return () => clearTimeout(token)
     }, [resendIn])
 
     // If no email passed, send the user back to login
@@ -48,8 +48,8 @@ export default function VerifyEmail() {
         }
     }, [passedEmail, location.state])
 
-    const verify = async (e) => {
-        e.preventDefault()
+    const verify = async (event) => {
+        event.preventDefault()
         setError(null)
 
         if (!email.trim()) {
@@ -231,7 +231,7 @@ export default function VerifyEmail() {
                             <input
                                 type="email"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(eventValue) => setEmail(eventValue.target.value)}
                                 placeholder="Enter your email"
                                 required
                                 disabled={loading}
@@ -250,7 +250,7 @@ export default function VerifyEmail() {
                             type="text"
                             inputMode="numeric"
                             value={code}
-                            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            onChange={(eventValue2) => setCode(eventValue2.target.value.replace(/\D/g, '').slice(0, 6))}
                             placeholder="Enter 6-digit code"
                             required
                             disabled={loading}

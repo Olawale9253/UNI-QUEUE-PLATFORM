@@ -23,18 +23,18 @@ public class PlanConfigResponse {
     private Integer displayOrder;
     private LocalDateTime updatedAt;
 
-    public static PlanConfigResponse from(PlanConfig p) {
+    public static PlanConfigResponse from(PlanConfig planConfig) {
         return PlanConfigResponse.builder()
-                .id(p.getId())
-                .code(p.getCode())
-                .label(p.getLabel())
-                .priceUsd(p.getPriceUsd())
-                .maxQueues(p.getMaxQueues())
-                .maxStaff(p.getMaxStaff())
-                .maxTicketsPerDay(p.getMaxTicketsPerDay())
-                .isActive(p.getIsActive())
-                .displayOrder(p.getDisplayOrder())
-                .updatedAt(p.getUpdatedAt())
+                .id(planConfig.getId())
+                .code(planConfig.getCode())
+                .label(planConfig.getLabel())
+                .priceUsd(planConfig.getPriceUsd())
+                .maxQueues(planConfig.getMaxQueues())
+                .maxStaff(planConfig.getMaxStaff())
+                .maxTicketsPerDay(planConfig.getMaxTicketsPerDay())
+                .isActive(planConfig.getIsActive())
+                .displayOrder(planConfig.getDisplayOrder())
+                .updatedAt(planConfig.getUpdatedAt())
                 .build();
     }
 }

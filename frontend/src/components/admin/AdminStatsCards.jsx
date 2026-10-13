@@ -36,12 +36,12 @@ export default function AdminStatsCards() {
 
     const load = useCallback(async () => {
         try {
-            const [s, a] = await Promise.all([
+            const [stringValue, firstValue] = await Promise.all([
                 api.get('/api/admin/analytics'),
                 api.get('/api/admin/appointments/stats').catch(() => ({ data: { data: null } })),
             ])
-            setStats(s.data?.data || null)
-            setApptStats(a.data?.data || null)
+            setStats(stringValue.data?.data || null)
+            setApptStats(firstValue.data?.data || null)
         } catch {
             // silent
         } finally {

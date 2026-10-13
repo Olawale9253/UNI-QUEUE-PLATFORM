@@ -25,24 +25,24 @@ public class UserStatsService {
         List<Ticket> all = ticketRepository.findByUserIdOrderByJoinedAtDesc(userId);
 
         Optional<Ticket> active = all.stream()
-                .filter(t -> t.getStatus() == TicketStatus.WAITING
-                        || t.getStatus() == TicketStatus.CALLED
-                        || t.getStatus() == TicketStatus.SERVING)
+                .filter(ticketValue32 -> ticketValue32.getStatus() == TicketStatus.WAITING
+                        || ticketValue32.getStatus() == TicketStatus.CALLED
+                        || ticketValue32.getStatus() == TicketStatus.SERVING)
                 .findFirst();
 
         LocalDate today = LocalDate.now();
         long todayJoined = all.stream()
-                .filter(t -> today.equals(t.getTicketDate()))
+                .filter(ticketValue33 -> today.equals(ticketValue33.getTicketDate()))
                 .count();
 
         LocalDateTime weekAgo = LocalDateTime.now().minusDays(7);
         long thisWeekCompleted = all.stream()
-                .filter(t -> t.getStatus() == TicketStatus.COMPLETED)
-                .filter(t -> t.getJoinedAt() != null && t.getJoinedAt().isAfter(weekAgo))
+                .filter(ticketValue34 -> ticketValue34.getStatus() == TicketStatus.COMPLETED)
+                .filter(ticketValue35 -> ticketValue35.getJoinedAt() != null && ticketValue35.getJoinedAt().isAfter(weekAgo))
                 .count();
 
         List<Ticket> completed = all.stream()
-                .filter(t -> t.getStatus() == TicketStatus.COMPLETED)
+                .filter(ticketValue36 -> ticketValue36.getStatus() == TicketStatus.COMPLETED)
                 .toList();
 
         long totalCompleted = completed.size();
@@ -51,27 +51,27 @@ public class UserStatsService {
         if (!completed.isEmpty()) {
             long totalMinutes = 0;
             int counted = 0;
-            for (Ticket t : completed) {
-                if (t.getJoinedAt() != null && t.getCompletedAt() != null) {
-                    totalMinutes += Duration.between(t.getJoinedAt(), t.getCompletedAt()).toMinutes();
+            for (Ticket ticketValue37 : completed) {
+                if (ticketValue37.getJoinedAt() != null && ticketValue37.getCompletedAt() != null) {
+                    totalMinutes += Duration.between(ticketValue37.getJoinedAt(), ticketValue37.getCompletedAt()).toMinutes();
                     counted++;
                 }
             }
             if (counted > 0) avgWait = totalMinutes / counted;
         }
 
-        UserStatsResponse.UserStatsResponseBuilder b = UserStatsResponse.builder()
+        UserStatsResponse.UserStatsResponseBuilder userStatsResponseBuilder = UserStatsResponse.builder()
                 .hasActiveTicket(active.isPresent())
                 .todayJoined(todayJoined)
                 .thisWeekCompleted(thisWeekCompleted)
                 .totalCompleted(totalCompleted)
                 .avgWaitMinutes(avgWait);
 
-        active.ifPresent(t -> {
-            b.activeTicketNumber(t.getTicketNumber());
-            b.activeQueueName(t.getQueue() != null ? t.getQueue().getName() : null);
+        active.ifPresent(ticketValue38 -> {
+            userStatsResponseBuilder.activeTicketNumber(ticketValue38.getTicketNumber());
+            userStatsResponseBuilder.activeQueueName(ticketValue38.getQueue() != null ? ticketValue38.getQueue().getName() : null);
         });
 
-        return b.build();
+        return userStatsResponseBuilder.build();
     }
 }

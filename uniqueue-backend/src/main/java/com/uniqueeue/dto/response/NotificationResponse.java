@@ -16,15 +16,15 @@ public class NotificationResponse {
     private Boolean isRead;
     private LocalDateTime createdAt;
 
-    public static NotificationResponse from(Notification n) {
+    public static NotificationResponse from(Notification notification) {
         return NotificationResponse.builder()
-                .id(n.getId())
-                .type(n.getType() != null ? n.getType().name() : "SYSTEM")
-                .title(n.getTitle())
-                .message(n.getMessage())
-                .link(n.getLink())
-                .isRead(Boolean.TRUE.equals(n.getIsRead()))
-                .createdAt(n.getCreatedAt())
+                .id(notification.getId())
+                .type(notification.getType() != null ? notification.getType().name() : "SYSTEM")
+                .title(notification.getTitle())
+                .message(notification.getMessage())
+                .link(notification.getLink())
+                .isRead(Boolean.TRUE.equals(notification.getIsRead()))
+                .createdAt(notification.getCreatedAt())
                 .build();
     }
 }

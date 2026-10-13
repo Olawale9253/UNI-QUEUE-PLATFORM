@@ -23,7 +23,7 @@ export function useBrowserNotifications() {
         if (document.visibilityState === 'visible' && !options.force) return null
 
         try {
-            const n = new Notification(title, {
+            const notification = new Notification(title, {
                 body,
                 icon: '/favicon.ico',
                 badge: '/favicon.ico',
@@ -34,14 +34,14 @@ export function useBrowserNotifications() {
                 ...options,
             })
 
-            n.onclick = () => {
+            notification.onclick = () => {
                 window.focus()
-                n.close()
+                notification.close()
                 if (options.onClick) options.onClick()
             }
 
-            setTimeout(() => n.close(), 8000)
-            return n
+            setTimeout(() => notification.close(), 8000)
+            return notification
         } catch (err) {
             console.warn('Notification failed:', err)
             return null

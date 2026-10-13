@@ -48,9 +48,9 @@ public class UniversityService {
 
     @Transactional(readOnly = true)
     public UniversityResponse getById(Long id) {
-        University u = universityRepository.findById(id)
+        University universityValue12 = universityRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
-        return enrich(u);
+        return enrich(universityValue12);
     }
 
     // ============================================================
@@ -115,8 +115,8 @@ public class UniversityService {
             );
             log.info("Starter pack auto-seeded for university {} — offices={}, services={}, workflows={}",
                     code, result.officesCreated(), result.servicesCreated(), result.workflowsCreated());
-        } catch (Exception e) {
-            log.warn("Starter pack seeding failed for new university {}: {}", code, e.getMessage());
+        } catch (Exception exceptionValue13) {
+            log.warn("Starter pack seeding failed for new university {}: {}", code, exceptionValue13.getMessage());
         }
 
         return enrich(university);
@@ -128,28 +128,28 @@ public class UniversityService {
 
     @Transactional
     public UniversityResponse update(Long id, UpdateUniversityRequest request) {
-        University u = universityRepository.findById(id)
+        University universityValue13 = universityRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
 
-        if (request.getName() != null) u.setName(request.getName());
-        if (request.getEmailDomain() != null) u.setEmailDomain(request.getEmailDomain());
-        if (request.getMatricPattern() != null) u.setMatricPattern(request.getMatricPattern());
-        if (request.getMatricExample() != null) u.setMatricExample(request.getMatricExample());
-        if (request.getMatricDescription() != null) u.setMatricDescription(request.getMatricDescription());
-        if (request.getLogoUrl() != null) u.setLogoUrl(request.getLogoUrl());
-        if (request.getCampusImageUrl() != null) u.setCampusImageUrl(request.getCampusImageUrl());
-        if (request.getTagline() != null) u.setTagline(request.getTagline());
+        if (request.getName() != null) universityValue13.setName(request.getName());
+        if (request.getEmailDomain() != null) universityValue13.setEmailDomain(request.getEmailDomain());
+        if (request.getMatricPattern() != null) universityValue13.setMatricPattern(request.getMatricPattern());
+        if (request.getMatricExample() != null) universityValue13.setMatricExample(request.getMatricExample());
+        if (request.getMatricDescription() != null) universityValue13.setMatricDescription(request.getMatricDescription());
+        if (request.getLogoUrl() != null) universityValue13.setLogoUrl(request.getLogoUrl());
+        if (request.getCampusImageUrl() != null) universityValue13.setCampusImageUrl(request.getCampusImageUrl());
+        if (request.getTagline() != null) universityValue13.setTagline(request.getTagline());
         // ⬇ primaryColor update already handled — leave as-is
-        if (request.getPrimaryColor() != null) u.setPrimaryColor(request.getPrimaryColor());
+        if (request.getPrimaryColor() != null) universityValue13.setPrimaryColor(request.getPrimaryColor());
         if (request.getTimezone() != null) {
-            u.setTimezone(request.getTimezone().trim());
+            universityValue13.setTimezone(request.getTimezone().trim());
         }
-        if (request.getPlan() != null) u.setPlan(request.getPlan());
-        if (request.getMaxStaff() != null) u.setMaxStaff(request.getMaxStaff());
-        if (request.getMaxQueues() != null) u.setMaxQueues(request.getMaxQueues());
-        if (request.getIsActive() != null) u.setIsActive(request.getIsActive());
+        if (request.getPlan() != null) universityValue13.setPlan(request.getPlan());
+        if (request.getMaxStaff() != null) universityValue13.setMaxStaff(request.getMaxStaff());
+        if (request.getMaxQueues() != null) universityValue13.setMaxQueues(request.getMaxQueues());
+        if (request.getIsActive() != null) universityValue13.setIsActive(request.getIsActive());
 
-        University saved = universityRepository.save(u);
+        University saved = universityRepository.save(universityValue13);
 
         auditService.record(null, id, AuditAction.UNIVERSITY_UPDATED, "University", id, null);
         return enrich(saved);
@@ -161,23 +161,23 @@ public class UniversityService {
 
     @Transactional
     public UniversityResponse deactivate(Long id) {
-        University u = universityRepository.findById(id)
+        University universityValue14 = universityRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
-        u.setIsActive(false);
-        University saved = universityRepository.save(u);
+        universityValue14.setIsActive(false);
+        University saved = universityRepository.save(universityValue14);
 
         auditService.record(null, id, AuditAction.UNIVERSITY_DEACTIVATED, "University", id,
-                "{\"code\":\"" + u.getCode() + "\"}");
+                "{\"code\":\"" + universityValue14.getCode() + "\"}");
 
         return enrich(saved);
     }
 
     @Transactional
     public UniversityResponse reactivate(Long id) {
-        University u = universityRepository.findById(id)
+        University universityValue15 = universityRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
-        u.setIsActive(true);
-        University saved = universityRepository.save(u);
+        universityValue15.setIsActive(true);
+        University saved = universityRepository.save(universityValue15);
 
         auditService.record(null, id, AuditAction.UNIVERSITY_REACTIVATED, "University", id, null);
         return enrich(saved);
@@ -189,20 +189,20 @@ public class UniversityService {
 
     @Transactional
     public void delete(Long id) {
-        University u = universityRepository.findById(id)
+        University universityValue16 = universityRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
 
-        String code = u.getCode();
-        String name = u.getName();
+        String code = universityValue16.getCode();
+        String name = universityValue16.getName();
 
         List<Queue> queues = queueRepository.findByUniversityId(id);
-        for (Queue q : queues) {
-            List<Ticket> tickets = ticketRepository.findByQueueId(q.getId());
-            for (Ticket t : tickets) {
-                feedbackRepository.deleteAll(feedbackRepository.findByTicketId(t.getId()));
+        for (Queue queueValue5 : queues) {
+            List<Ticket> tickets = ticketRepository.findByQueueId(queueValue5.getId());
+            for (Ticket ticketValue31 : tickets) {
+                feedbackRepository.deleteAll(feedbackRepository.findByTicketId(ticketValue31.getId()));
             }
             ticketRepository.deleteAll(tickets);
-            queueStaffRepository.deleteAll(queueStaffRepository.findByQueueId(q.getId()));
+            queueStaffRepository.deleteAll(queueStaffRepository.findByQueueId(queueValue5.getId()));
         }
 
         queueRepository.deleteAll(queues);
@@ -213,7 +213,7 @@ public class UniversityService {
         }
         userRepository.deleteAll(users);
 
-        universityRepository.delete(u);
+        universityRepository.delete(universityValue16);
 
         auditService.record(null, null, AuditAction.UNIVERSITY_DELETED,
                 "University", id,
@@ -228,15 +228,15 @@ public class UniversityService {
 
     @Transactional
     public UniversityResponse updateFeatures(Long id, UpdateFeaturesRequest request) {
-        University u = universityRepository.findById(id)
+        University universityValue17 = universityRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
 
-        if (request.getFeatureWaitlist() != null) u.setFeatureWaitlist(request.getFeatureWaitlist());
-        if (request.getFeatureAppointments() != null) u.setFeatureAppointments(request.getFeatureAppointments());
-        if (request.getFeatureWorkflows() != null) u.setFeatureWorkflows(request.getFeatureWorkflows());
-        if (request.getFeatureDocuments() != null) u.setFeatureDocuments(request.getFeatureDocuments());
+        if (request.getFeatureWaitlist() != null) universityValue17.setFeatureWaitlist(request.getFeatureWaitlist());
+        if (request.getFeatureAppointments() != null) universityValue17.setFeatureAppointments(request.getFeatureAppointments());
+        if (request.getFeatureWorkflows() != null) universityValue17.setFeatureWorkflows(request.getFeatureWorkflows());
+        if (request.getFeatureDocuments() != null) universityValue17.setFeatureDocuments(request.getFeatureDocuments());
 
-        University saved = universityRepository.save(u);
+        University saved = universityRepository.save(universityValue17);
         auditService.record(null, id,
                 AuditAction.UNIVERSITY_UPDATED,
                 "University", id,
@@ -251,7 +251,7 @@ public class UniversityService {
 
     @Transactional
     public UniversityResponse updatePlan(Long id, UpdatePlanRequest request) {
-        University u = universityRepository.findById(id)
+        University universityValue18 = universityRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
 
         String plan = request.getPlan().toUpperCase();
@@ -259,12 +259,12 @@ public class UniversityService {
         PlanConfig config = planConfigRepository.findByCode(plan)
                 .orElseThrow(() -> new BadRequestException("Unknown plan: " + plan));
 
-        u.setPlan(plan);
-        u.setMaxQueues(config.getMaxQueues());
-        u.setMaxStaff(config.getMaxStaff());
-        u.setMaxTicketsPerDay(config.getMaxTicketsPerDay());
+        universityValue18.setPlan(plan);
+        universityValue18.setMaxQueues(config.getMaxQueues());
+        universityValue18.setMaxStaff(config.getMaxStaff());
+        universityValue18.setMaxTicketsPerDay(config.getMaxTicketsPerDay());
 
-        University saved = universityRepository.save(u);
+        University saved = universityRepository.save(universityValue18);
 
         auditService.record(null, id,
                 AuditAction.UNIVERSITY_UPDATED,
@@ -321,12 +321,12 @@ public class UniversityService {
     //  HELPERS
     // ============================================================
 
-    private UniversityResponse enrich(University u) {
-        UniversityResponse response = UniversityResponse.from(u);
-        response.setQueueCount(queueRepository.countByUniversityId(u.getId()));
-        response.setStaffCount((long) userRepository.findByUniversityIdAndRole(u.getId(), Role.STAFF).size());
-        response.setUserCount((long) userRepository.findByUniversityIdAndRole(u.getId(), Role.USER).size());
-        response.setTicketCount(ticketRepository.countByUniversity(u.getId()));
+    private UniversityResponse enrich(University universityValue19) {
+        UniversityResponse response = UniversityResponse.from(universityValue19);
+        response.setQueueCount(queueRepository.countByUniversityId(universityValue19.getId()));
+        response.setStaffCount((long) userRepository.findByUniversityIdAndRole(universityValue19.getId(), Role.STAFF).size());
+        response.setUserCount((long) userRepository.findByUniversityIdAndRole(universityValue19.getId(), Role.USER).size());
+        response.setTicketCount(ticketRepository.countByUniversity(universityValue19.getId()));
         return response;
     }
 }

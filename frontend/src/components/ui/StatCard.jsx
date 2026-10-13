@@ -9,7 +9,7 @@ function AnimatedNumber({ value }) {
         const controls = animate(0, numeric, {
             duration: 0.9,
             ease: [0.16, 1, 0.3, 1],
-            onUpdate: (v) => setDisplay(Math.round(v)),
+            onUpdate: (valueValue) => setDisplay(Math.round(valueValue)),
         })
         return controls.stop
     }, [numeric])

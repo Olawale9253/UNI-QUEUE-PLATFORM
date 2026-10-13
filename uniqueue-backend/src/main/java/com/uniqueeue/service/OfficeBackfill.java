@@ -40,12 +40,12 @@ public class OfficeBackfill implements ApplicationRunner {
         int created = 0;
         int linked = 0;
 
-        for (Queue q : orphans) {
-            Long uniId = q.getUniversity().getId();
+        for (Queue queueValue3 : orphans) {
+            Long uniId = queueValue3.getUniversity().getId();
 
             String targetName;
-            if (q.getDepartment() != null && !q.getDepartment().isBlank()) {
-                targetName = q.getDepartment().trim();
+            if (queueValue3.getDepartment() != null && !queueValue3.getDepartment().isBlank()) {
+                targetName = queueValue3.getDepartment().trim();
             } else {
                 targetName = GENERAL_OFFICE_NAME;
             }
@@ -57,9 +57,9 @@ public class OfficeBackfill implements ApplicationRunner {
                     .orElseGet(() -> {
                         fresh[0] = true;
                         return officeRepository.save(Office.builder()
-                                .university(q.getUniversity())
+                                .university(queueValue3.getUniversity())
                                 .name(lookupName)
-                                .location(q.getLocation())
+                                .location(queueValue3.getLocation())
                                 .description(GENERAL_OFFICE_NAME.equals(lookupName)
                                         ? "Default office for services that haven't been categorized yet."
                                         : null)
@@ -68,9 +68,9 @@ public class OfficeBackfill implements ApplicationRunner {
                     });
 
             if (fresh[0]) created++;
-            q.setOffice(office);
-            q.setDepartment(office.getName()); // keep in sync
-            queueRepository.save(q);
+            queueValue3.setOffice(office);
+            queueValue3.setDepartment(office.getName()); // keep in sync
+            queueRepository.save(queueValue3);
             linked++;
         }
 

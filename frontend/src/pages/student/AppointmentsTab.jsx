@@ -80,18 +80,18 @@ function dateKey(iso) {
 
 function generateReference(appt) {
     if (!appt) return '—'
-    const d = appt.bookedAt ? new Date(appt.bookedAt) : new Date()
-    const yyyy = d.getFullYear()
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const dd = String(d.getDate()).padStart(2, '0')
+    const dateValue = appt.bookedAt ? new Date(appt.bookedAt) : new Date()
+    const yyyy = dateValue.getFullYear()
+    const mm = String(dateValue.getMonth() + 1).padStart(2, '0')
+    const dd = String(dateValue.getDate()).padStart(2, '0')
     const idPart = String(appt.id || 0).padStart(4, '0')
     return `APP${yyyy}${mm}${dd}${idPart}`
 }
 
 function CopyButton({ text }) {
     const [copied, setCopied] = useState(false)
-    const copy = async (e) => {
-        e.stopPropagation()
+    const copy = async (event) => {
+        event.stopPropagation()
         try {
             await navigator.clipboard.writeText(text)
             setCopied(true)
@@ -134,16 +134,16 @@ export default function AppointmentsTab() {
 
     const load = useCallback(async () => {
         try {
-            const [s, m, o, q] = await Promise.all([
+            const [stringValue, message, office, queue] = await Promise.all([
                 api.get('/api/user/appointments/available').catch(() => ({ data: { data: [] } })),
                 api.get('/api/user/appointments').catch(() => ({ data: { data: [] } })),
                 api.get('/api/offices').catch(() => ({ data: { data: [] } })),
                 api.get('/api/queues').catch(() => ({ data: { data: [] } })),
             ])
-            setSlots(s.data?.data || [])
-            setMine(m.data?.data || [])
-            setOffices(o.data?.data || [])
-            setServices(q.data?.data || [])
+            setSlots(stringValue.data?.data || [])
+            setMine(message.data?.data || [])
+            setOffices(office.data?.data || [])
+            setServices(queue.data?.data || [])
         } catch {
             // silent
         } finally {
@@ -157,31 +157,31 @@ export default function AppointmentsTab() {
     // ─── Office options: real offices + any queue-derived fallback ───
     const officeOptions = useMemo(() => {
         const map = new Map()
-        offices.forEach((o) => {
-            if (o.isActive === false) return
-            map.set(String(o.id), { id: String(o.id), name: o.name })
+        offices.forEach((office) => {
+            if (office.isActive === false) return
+            map.set(String(office.id), { id: String(office.id), name: office.name })
         })
-        services.forEach((q) => {
-            if (!q.officeId) return
-            const key = String(q.officeId)
+        services.forEach((service) => {
+            if (!service.officeId) return
+            const key = String(service.officeId)
             if (!map.has(key)) {
-                map.set(key, { id: key, name: q.officeName || 'General' })
+                map.set(key, { id: key, name: service.officeName || 'General' })
             }
         })
-        return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name))
+        return Array.from(map.values()).sort((firstValue, secondValue) => firstValue.name.localeCompare(secondValue.name))
     }, [offices, services])
 
     // ─── Services in selected office ───
     const serviceOptions = useMemo(() => {
         if (!selectedOfficeId) return []
         return services
-            .filter((q) => String(q.officeId) === String(selectedOfficeId) && q.isActive !== false)
-            .map((q) => ({ id: String(q.id), name: q.name }))
-            .sort((a, b) => a.name.localeCompare(b.name))
+            .filter((service) => String(service.officeId) === String(selectedOfficeId) && service.isActive !== false)
+            .map((queue) => ({ id: String(queue.id), name: queue.name }))
+            .sort((firstValue, secondValue) => firstValue.name.localeCompare(secondValue.name))
     }, [services, selectedOfficeId])
 
     const selectedService = useMemo(
-        () => services.find((s) => String(s.id) === String(selectedServiceId)) || null,
+        () => services.find((service) => String(service.id) === String(selectedServiceId)) || null,
         [services, selectedServiceId]
     )
 
@@ -191,17 +191,17 @@ export default function AppointmentsTab() {
         const svcName = (selectedService.name || '').toLowerCase()
         const officeName = (selectedService.officeName || '').toLowerCase()
         return slots.filter((sl) => {
-            const t = (sl.title || '').toLowerCase()
-            const o = (sl.officeName || sl.department || sl.faculty || '').toLowerCase()
-            return t === svcName && (!officeName || o === officeName || !o)
+            const token = (sl.title || '').toLowerCase()
+            const office = (sl.officeName || sl.department || sl.faculty || '').toLowerCase()
+            return token === svcName && (!officeName || office === officeName || !office)
         })
     }, [slots, selectedService])
 
     const dateOptions = useMemo(() => {
         const set = new Set()
-        matchingSlots.forEach((s) => {
-            const k = dateKey(s.startTime)
-            if (k) set.add(k)
+        matchingSlots.forEach((matchingSlot) => {
+            const key = dateKey(matchingSlot.startTime)
+            if (key) set.add(key)
         })
         return Array.from(set).sort()
     }, [matchingSlots])
@@ -209,12 +209,12 @@ export default function AppointmentsTab() {
     const timeSlots = useMemo(() => {
         if (!selectedDate) return []
         return matchingSlots
-            .filter((s) => dateKey(s.startTime) === selectedDate)
-            .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
+            .filter((matchingSlot) => dateKey(matchingSlot.startTime) === selectedDate)
+            .sort((firstValue, secondValue) => (firstValue.startTime || '').localeCompare(secondValue.startTime || ''))
     }, [matchingSlots, selectedDate])
 
     const selectedSlot = useMemo(
-        () => timeSlots.find((s) => String(s.id) === String(selectedSlotId)) || null,
+        () => timeSlots.find((timeSlot) => String(timeSlot.id) === String(selectedSlotId)) || null,
         [timeSlots, selectedSlotId]
     )
 
@@ -238,10 +238,10 @@ export default function AppointmentsTab() {
     const upcomingAppointments = useMemo(
         () =>
             mine.filter(
-                (a) =>
-                    (a.status === 'BOOKED' || a.status === 'CONFIRMED') &&
-                    a.startTime &&
-                    new Date(a.startTime).getTime() > Date.now()
+                (item) =>
+                    (item.status === 'BOOKED' || item.status === 'CONFIRMED') &&
+                    item.startTime &&
+                    new Date(item.startTime).getTime() > Date.now()
             ),
         [mine]
     )
@@ -300,9 +300,9 @@ export default function AppointmentsTab() {
 
     const sortedMine = useMemo(() => {
         const now = Date.now()
-        return [...mine].sort((a, b) => {
-            const at = a.startTime ? new Date(a.startTime).getTime() : 0
-            const bt = b.startTime ? new Date(b.startTime).getTime() : 0
+        return [...mine].sort((firstValue, secondValue) => {
+            const at = firstValue.startTime ? new Date(firstValue.startTime).getTime() : 0
+            const bt = secondValue.startTime ? new Date(secondValue.startTime).getTime() : 0
             const aFuture = at > now
             const bFuture = bt > now
             if (aFuture && !bFuture) return -1
@@ -364,14 +364,14 @@ export default function AppointmentsTab() {
                                     </label>
                                     <select
                                         value={selectedOfficeId}
-                                        onChange={(e) => setSelectedOfficeId(e.target.value)}
+                                        onChange={(event) => setSelectedOfficeId(event.target.value)}
                                         disabled={hasUpcoming}
                                         className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                     >
                                         <option value="">Select Office</option>
-                                        {officeOptions.map((o) => (
-                                            <option key={o.id} value={o.id}>
-                                                {o.name}
+                                        {officeOptions.map((officeOption) => (
+                                            <option key={officeOption.id} value={officeOption.id}>
+                                                {officeOption.name}
                                             </option>
                                         ))}
                                     </select>
@@ -384,7 +384,7 @@ export default function AppointmentsTab() {
                                     </label>
                                     <select
                                         value={selectedServiceId}
-                                        onChange={(e) => setSelectedServiceId(e.target.value)}
+                                        onChange={(eventValue) => setSelectedServiceId(eventValue.target.value)}
                                         disabled={!selectedOfficeId || hasUpcoming}
                                         className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                     >
@@ -395,9 +395,9 @@ export default function AppointmentsTab() {
                                                     ? 'No services in this office'
                                                     : 'Select Service'}
                                         </option>
-                                        {serviceOptions.map((s) => (
-                                            <option key={s.id} value={s.id}>
-                                                {s.name}
+                                        {serviceOptions.map((serviceOption) => (
+                                            <option key={serviceOption.id} value={serviceOption.id}>
+                                                {serviceOption.name}
                                             </option>
                                         ))}
                                     </select>
@@ -422,14 +422,14 @@ export default function AppointmentsTab() {
                                         </label>
                                         <select
                                             value={selectedDate}
-                                            onChange={(e) => setSelectedDate(e.target.value)}
+                                            onChange={(eventValue2) => setSelectedDate(eventValue2.target.value)}
                                             disabled={hasUpcoming}
                                             className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                         >
                                             <option value="">Select Date</option>
-                                            {dateOptions.map((d) => (
-                                                <option key={d} value={d}>
-                                                    {formatDate(d)}
+                                            {dateOptions.map((dateOption) => (
+                                                <option key={dateOption} value={dateOption}>
+                                                    {formatDate(dateOption)}
                                                 </option>
                                             ))}
                                         </select>
@@ -444,14 +444,14 @@ export default function AppointmentsTab() {
                                         </label>
                                         <select
                                             value={selectedSlotId}
-                                            onChange={(e) => setSelectedSlotId(e.target.value)}
+                                            onChange={(eventValue3) => setSelectedSlotId(eventValue3.target.value)}
                                             disabled={hasUpcoming}
                                             className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                         >
                                             <option value="">Select Time</option>
-                                            {timeSlots.map((s) => (
-                                                <option key={s.id} value={s.id}>
-                                                    {formatTimeOnly(s.startTime)} — {s.remaining} left
+                                            {timeSlots.map((timeSlot) => (
+                                                <option key={timeSlot.id} value={timeSlot.id}>
+                                                    {formatTimeOnly(timeSlot.startTime)} — {timeSlot.remaining} left
                                                 </option>
                                             ))}
                                         </select>
@@ -503,7 +503,7 @@ export default function AppointmentsTab() {
                                         <textarea
                                             rows={2}
                                             value={notes}
-                                            onChange={(e) => setNotes(e.target.value)}
+                                            onChange={(eventValue4) => setNotes(eventValue4.target.value)}
                                             placeholder="What would you like to discuss?"
                                             className="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                                         />
@@ -556,15 +556,15 @@ export default function AppointmentsTab() {
                         </div>
                     ) : (
                         <ul className="max-h-[600px] space-y-3 overflow-y-auto pr-1">
-                            {sortedMine.map((a) => {
-                                const reference = generateReference(a)
+                            {sortedMine.map((item) => {
+                                const reference = generateReference(item)
                                 const isUpcoming =
-                                    a.status === 'BOOKED' || a.status === 'CONFIRMED'
-                                const officeName = a.officeName || a.slotTitle || 'Appointment'
+                                    item.status === 'BOOKED' || item.status === 'CONFIRMED'
+                                const officeName = item.officeName || item.slotTitle || 'Appointment'
 
                                 return (
                                     <motion.li
-                                        key={a.id}
+                                        key={item.id}
                                         initial={{ opacity: 0, y: 4 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         className={`rounded-lg border p-4 transition-colors ${
@@ -579,21 +579,21 @@ export default function AppointmentsTab() {
                                                     {officeName}
                                                 </h4>
 
-                                                {a.slotTitle && a.slotTitle !== officeName && (
+                                                {item.slotTitle && item.slotTitle !== officeName && (
                                                     <p className="mt-0.5 truncate text-sm text-slate-500 dark:text-slate-400">
-                                                        {a.slotTitle}
+                                                        {item.slotTitle}
                                                     </p>
                                                 )}
 
                                                 <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                                                     <Calendar className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                                                    <span>{formatDateTime(a.startTime)}</span>
+                                                    <span>{formatDateTime(item.startTime)}</span>
                                                 </div>
 
-                                                {a.staffName && (
+                                                {item.staffName && (
                                                     <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                                                         <User className="h-3 w-3 shrink-0" />
-                                                        {a.staffName}
+                                                        {item.staffName}
                                                     </div>
                                                 )}
 
@@ -609,13 +609,13 @@ export default function AppointmentsTab() {
                                             </div>
 
                                             <div className="flex shrink-0 flex-col items-end gap-2">
-                                                <Badge variant={STATUS_VARIANTS[a.status] || 'default'}>
-                                                    {STATUS_LABELS[a.status] || a.status}
+                                                <Badge variant={STATUS_VARIANTS[item.status] || 'default'}>
+                                                    {STATUS_LABELS[item.status] || item.status}
                                                 </Badge>
 
                                                 {isUpcoming && (
                                                     <button
-                                                        onClick={() => setCancelTarget(a)}
+                                                        onClick={() => setCancelTarget(item)}
                                                         className="rounded-md px-2 py-1 text-xs text-rose-600 transition-colors hover:bg-rose-50 dark:hover:bg-rose-950/40"
                                                     >
                                                         Cancel

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-    X, Calendar, Clock, User, Mail, Hash, CheckCircle2, XCircle,
+    X as CloseIcon, Calendar, Clock, User, Mail, Hash, CheckCircle2, XCircle,
     AlertCircle, MapPin, MessageSquare, Loader2,
 } from 'lucide-react'
 import api from '../../api/axios'
@@ -57,10 +57,10 @@ function formatTimeOnly(dt) {
 
 function generateReference(appt) {
     if (!appt) return '—'
-    const d = appt.bookedAt ? new Date(appt.bookedAt) : new Date()
-    const yyyy = d.getFullYear()
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const dd = String(d.getDate()).padStart(2, '0')
+    const dateValue = appt.bookedAt ? new Date(appt.bookedAt) : new Date()
+    const yyyy = dateValue.getFullYear()
+    const mm = String(dateValue.getMonth() + 1).padStart(2, '0')
+    const dd = String(dateValue.getDate()).padStart(2, '0')
     const idPart = String(appt.id || 0).padStart(4, '0')
     return `APP${yyyy}${mm}${dd}${idPart}`
 }
@@ -148,7 +148,7 @@ export default function AppointmentDetailModal({ appointment, onClose, onUpdated
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.96, y: 12 }}
                     transition={{ duration: 0.2 }}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(event) => event.stopPropagation()}
                     className="relative my-8 w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
                 >
                     <button
@@ -156,7 +156,7 @@ export default function AppointmentDetailModal({ appointment, onClose, onUpdated
                         className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                         aria-label="Close"
                     >
-                        <X className="h-4 w-4" />
+                        <CloseIcon className="h-4 w-4" />
                     </button>
 
                     {/* Header */}
@@ -246,7 +246,7 @@ export default function AppointmentDetailModal({ appointment, onClose, onUpdated
                             <textarea
                                 rows={3}
                                 value={staffNotes}
-                                onChange={(e) => setStaffNotes(e.target.value)}
+                                onChange={(eventValue) => setStaffNotes(eventValue.target.value)}
                                 disabled={!!acting}
                                 placeholder="Add notes for the record — e.g. outcome of the meeting, follow-ups needed…"
                                 className="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"

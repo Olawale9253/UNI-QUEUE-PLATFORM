@@ -6,7 +6,7 @@ import {
     Clock,
     MapPin,
     Users,
-    X,
+    X as CloseIcon,
     GraduationCap,
 } from 'lucide-react'
 import api from '../../api/axios'
@@ -90,10 +90,10 @@ export default function AppointmentSlots() {
         loadBookings(slot.id)
     }
 
-    const setField = (f) => (e) => setForm({ ...form, [f]: e.target.value })
+    const setField = (file) => (event) => setForm({ ...form, [file]: event.target.value })
 
-    const submit = async (e) => {
-        e.preventDefault()
+    const submit = async (event) => {
+        event.preventDefault()
         setCreating(true)
         try {
             const startTime = `${form.date}T${form.startTime}:00`
@@ -158,7 +158,7 @@ export default function AppointmentSlots() {
                 action={
                     <Button
                         icon={Plus}
-                        onClick={() => setShowCreate((v) => !v)}
+                        onClick={() => setShowCreate((item) => !item)}
                         variant={showCreate ? 'secondary' : 'primary'}
                     >
                         {showCreate ? 'Cancel' : 'New slot'}
@@ -386,7 +386,7 @@ export default function AppointmentSlots() {
                                     className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
                                     aria-label="Close"
                                 >
-                                    <X className="h-4 w-4" />
+                                    <CloseIcon className="h-4 w-4" />
                                 </button>
                             </div>
 
@@ -394,7 +394,7 @@ export default function AppointmentSlots() {
                                 <div className="mb-4 flex items-center justify-between text-sm">
                   <span className="text-slate-600">
                     Bookings (
-                      {bookings.filter((b) => b.status === 'BOOKED').length} /{' '}
+                      {bookings.filter((booking) => booking.status === 'BOOKED').length} /{' '}
                       {selectedSlot.capacity})
                   </span>
                                     <Badge variant={selectedSlot.remaining > 0 ? 'success' : 'default'}>
@@ -412,28 +412,28 @@ export default function AppointmentSlots() {
                                     />
                                 ) : (
                                     <ul className="space-y-2">
-                                        {bookings.map((b) => (
+                                        {bookings.map((bookingValue) => (
                                             <li
-                                                key={b.id}
+                                                key={bookingValue.id}
                                                 className="rounded-lg border border-slate-200 px-4 py-3 text-sm"
                                             >
                                                 <div className="flex items-start justify-between gap-2">
                                                     <div className="min-w-0">
                                                         <div className="font-medium text-slate-900">
-                                                            {b.studentName}
+                                                            {bookingValue.studentName}
                                                         </div>
                                                         <div className="mt-0.5 text-xs text-slate-500">
-                                                            {b.studentEmail}
-                                                            {b.matricNumber ? ` · ${b.matricNumber}` : ''}
+                                                            {bookingValue.studentEmail}
+                                                            {bookingValue.matricNumber ? ` · ${bookingValue.matricNumber}` : ''}
                                                         </div>
-                                                        {b.notes && (
+                                                        {bookingValue.notes && (
                                                             <p className="mt-2 rounded bg-slate-50 px-2 py-1.5 text-xs text-slate-600">
-                                                                "{b.notes}"
+                                                                "{bookingValue.notes}"
                                                             </p>
                                                         )}
                                                     </div>
-                                                    <Badge variant={b.status === 'BOOKED' ? 'indigo' : 'default'}>
-                                                        {b.status}
+                                                    <Badge variant={bookingValue.status === 'BOOKED' ? 'indigo' : 'default'}>
+                                                        {bookingValue.status}
                                                     </Badge>
                                                 </div>
                                             </li>
@@ -506,7 +506,7 @@ function SlotCard({ slot, onClick, onDelete }) {
                     className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
                     aria-label="Delete slot"
                 >
-                    <X className="h-4 w-4" />
+                    <CloseIcon className="h-4 w-4" />
                 </button>
             </div>
         </div>

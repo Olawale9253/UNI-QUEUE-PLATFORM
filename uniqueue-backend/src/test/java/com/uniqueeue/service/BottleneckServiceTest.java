@@ -57,11 +57,11 @@ class BottleneckServiceTest {
         // Fresh enrollment → student is IN_PROGRESS on step 1 (currentlyOnCount = 1).
         workflowService.start(studentId, workflow.getId());
 
-        BottleneckService.ScanResult r = bottleneckService.scan();
+        BottleneckService.ScanResult scanResultValue = bottleneckService.scan();
 
-        assertThat(r.bottlenecksFound()).isGreaterThanOrEqualTo(1);
-        assertThat(r.alertsSent()).isGreaterThanOrEqualTo(1);
-        assertThat(r.workflowsScanned()).isGreaterThanOrEqualTo(1);
+        assertThat(scanResultValue.bottlenecksFound()).isGreaterThanOrEqualTo(1);
+        assertThat(scanResultValue.alertsSent()).isGreaterThanOrEqualTo(1);
+        assertThat(scanResultValue.workflowsScanned()).isGreaterThanOrEqualTo(1);
     }
 
     @Test
@@ -85,10 +85,10 @@ class BottleneckServiceTest {
 
         workflowService.start(studentId, workflow.getId());
 
-        BottleneckService.ScanResult r = bottleneckService.scan();
+        BottleneckService.ScanResult scanResultValue2 = bottleneckService.scan();
 
-        assertThat(r.bottlenecksFound()).isZero();
-        assertThat(r.alertsSent()).isZero();
+        assertThat(scanResultValue2.bottlenecksFound()).isZero();
+        assertThat(scanResultValue2.alertsSent()).isZero();
     }
 
     @Test

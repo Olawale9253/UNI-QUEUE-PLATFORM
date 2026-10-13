@@ -287,7 +287,7 @@ public class TicketService {
     public List<com.uniqueeue.dto.response.QueueResponse> listMyQueues(Long staffUserId) {
         List<com.uniqueeue.model.QueueStaff> assignments = queueStaffRepository.findByUserId(staffUserId);
         return assignments.stream()
-                .map(a -> queueService.enrichWithStaff(a.getQueue()))
+                .map(queueStaff -> queueService.enrichWithStaff(queueStaff.getQueue()))
                 .toList();
     }
 
@@ -307,8 +307,8 @@ public class TicketService {
         List<Ticket> called = ticketRepository.findCalledByQueueId(queueId);
 
         boolean hasActiveCalled = called.stream()
-                .anyMatch(t -> t.getCalledAt() != null
-                        && t.getCalledAt().toLocalDate().equals(LocalDate.now()));
+                .anyMatch(ticketValue24 -> ticketValue24.getCalledAt() != null
+                        && ticketValue24.getCalledAt().toLocalDate().equals(LocalDate.now()));
 
         if (hasActiveCalled) {
             throw new BadRequestException("A ticket is already being called. Serve or no-show it first.");
@@ -569,13 +569,13 @@ public class TicketService {
 
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         List<Ticket> todayDone = ticketRepository.findRecentByQueue(queueId, startOfDay).stream()
-                .filter(t -> t.getStatus() == TicketStatus.COMPLETED)
-                .filter(t -> t.getJoinedAt() != null && t.getCalledAt() != null)
+                .filter(ticketValue25 -> ticketValue25.getStatus() == TicketStatus.COMPLETED)
+                .filter(ticketValue26 -> ticketValue26.getJoinedAt() != null && ticketValue26.getCalledAt() != null)
                 .toList();
 
         double actualAvg = todayDone.isEmpty() ? 0
                 : todayDone.stream()
-                .mapToLong(t -> Duration.between(t.getJoinedAt(), t.getCalledAt()).toMinutes())
+                .mapToLong(ticketValue27 -> Duration.between(ticketValue27.getJoinedAt(), ticketValue27.getCalledAt()).toMinutes())
                 .average().orElse(0);
 
         int perTicket = queue.getAverageServiceMinutes() != null ? queue.getAverageServiceMinutes() : 5;
@@ -630,10 +630,10 @@ public class TicketService {
         List<Ticket> waiting = ticketRepository.findWaitingByQueueId(queueId);
         List<Ticket> toUpdate = new ArrayList<>();
         int pos = 1;
-        for (Ticket t : waiting) {
-            if (t.getPosition() == null || t.getPosition() != pos) {
-                t.setPosition(pos);
-                toUpdate.add(t);
+        for (Ticket ticketValue28 : waiting) {
+            if (ticketValue28.getPosition() == null || ticketValue28.getPosition() != pos) {
+                ticketValue28.setPosition(pos);
+                toUpdate.add(ticketValue28);
             }
             pos++;
         }
@@ -642,10 +642,10 @@ public class TicketService {
         List<Ticket> waitlisted = ticketRepository.findWaitlistedByQueueId(queueId);
         List<Ticket> waitlistedToUpdate = new ArrayList<>();
         int wpos = 1;
-        for (Ticket t : waitlisted) {
-            if (t.getPosition() == null || t.getPosition() != wpos) {
-                t.setPosition(wpos);
-                waitlistedToUpdate.add(t);
+        for (Ticket ticketValue29 : waitlisted) {
+            if (ticketValue29.getPosition() == null || ticketValue29.getPosition() != wpos) {
+                ticketValue29.setPosition(wpos);
+                waitlistedToUpdate.add(ticketValue29);
             }
             wpos++;
         }
@@ -666,19 +666,19 @@ public class TicketService {
         if (waitlisted.isEmpty()) return;
 
         int toPromote = Math.min(freeSlots, waitlisted.size());
-        for (int i = 0; i < toPromote; i++) {
-            Ticket t = waitlisted.get(i);
-            t.setStatus(TicketStatus.WAITING);
-            ticketRepository.save(t);
+        for (int indexValue7 = 0; indexValue7 < toPromote; indexValue7++) {
+            Ticket ticketValue30 = waitlisted.get(indexValue7);
+            ticketValue30.setStatus(TicketStatus.WAITING);
+            ticketRepository.save(ticketValue30);
 
-            notificationService.notify(t.getUser(), NotificationType.QUEUE_UPDATE,
+            notificationService.notify(ticketValue30.getUser(), NotificationType.QUEUE_UPDATE,
                     "A slot opened in " + queue.getName(),
-                    "You've been moved off the waitlist. Ticket " + t.getTicketNumber()
+                    "You've been moved off the waitlist. Ticket " + ticketValue30.getTicketNumber()
                             + " is now in the active queue.");
 
             auditService.record(null, queue.getUniversity().getId(),
-                    AuditAction.TICKET_WAITLIST_PROMOTED, "Ticket", t.getId(),
-                    "{\"ticketNumber\":\"" + t.getTicketNumber() + "\"}");
+                    AuditAction.TICKET_WAITLIST_PROMOTED, "Ticket", ticketValue30.getId(),
+                    "{\"ticketNumber\":\"" + ticketValue30.getTicketNumber() + "\"}");
         }
 
         recalculatePositions(queueId);
@@ -693,17 +693,17 @@ public class TicketService {
 
         if (position == null && ticket.getStatus() == TicketStatus.WAITING) {
             List<Ticket> waiting = ticketRepository.findWaitingByQueueId(ticket.getQueue().getId());
-            for (int i = 0; i < waiting.size(); i++) {
-                if (waiting.get(i).getId().equals(ticket.getId())) {
-                    position = i + 1;
+            for (int indexValue8 = 0; indexValue8 < waiting.size(); indexValue8++) {
+                if (waiting.get(indexValue8).getId().equals(ticket.getId())) {
+                    position = indexValue8 + 1;
                     break;
                 }
             }
         } else if (position == null && ticket.getStatus() == TicketStatus.WAITLISTED) {
             List<Ticket> waitlisted = ticketRepository.findWaitlistedByQueueId(ticket.getQueue().getId());
-            for (int i = 0; i < waitlisted.size(); i++) {
-                if (waitlisted.get(i).getId().equals(ticket.getId())) {
-                    position = i + 1;
+            for (int indexValue9 = 0; indexValue9 < waitlisted.size(); indexValue9++) {
+                if (waitlisted.get(indexValue9).getId().equals(ticket.getId())) {
+                    position = indexValue9 + 1;
                     break;
                 }
             }

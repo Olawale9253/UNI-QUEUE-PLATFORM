@@ -18,15 +18,15 @@ export function exportToCsv(rows, columns, filename = 'export') {
     if (!Array.isArray(rows) || rows.length === 0) return null
     if (!Array.isArray(columns) || columns.length === 0) return null
 
-    const header = columns.map((c) => escapeCell(c.label ?? c.key)).join(',')
+    const header = columns.map((column) => escapeCell(column.label ?? column.key)).join(',')
 
     const body = rows
         .map((row) =>
             columns
-                .map((c) => {
-                    const raw = typeof c.value === 'function'
-                        ? c.value(row)
-                        : resolvePath(row, c.key)
+                .map((columnValue) => {
+                    const raw = typeof columnValue.value === 'function'
+                        ? columnValue.value(row)
+                        : resolvePath(row, columnValue.key)
                     return escapeCell(raw)
                 })
                 .join(',')
@@ -58,18 +58,18 @@ export function exportToCsv(rows, columns, filename = 'export') {
 function escapeCell(value) {
     if (value === null || value === undefined) return ''
 
-    let s
-    if (typeof value === 'string') s = value
-    else if (typeof value === 'number' || typeof value === 'boolean') s = String(value)
-    else if (value instanceof Date) s = value.toISOString()
-    else if (Array.isArray(value)) s = value.join(', ')
-    else if (typeof value === 'object') s = JSON.stringify(value)
-    else s = String(value)
+    let stringValue
+    if (typeof value === 'string') stringValue = value
+    else if (typeof value === 'number' || typeof value === 'boolean') stringValue = String(value)
+    else if (value instanceof Date) stringValue = value.toISOString()
+    else if (Array.isArray(value)) stringValue = value.join(', ')
+    else if (typeof value === 'object') stringValue = JSON.stringify(value)
+    else stringValue = String(value)
 
-    if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
-        return `"${s.replace(/"/g, '""')}"`
+    if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n') || stringValue.includes('\r')) {
+        return `"${stringValue.replace(/"/g, '""')}"`
     }
-    return s
+    return stringValue
 }
 
 /** Resolve a dot-path on an object: "user.name" → obj.user.name */
@@ -79,12 +79,12 @@ function resolvePath(obj, path) {
 }
 
 /** "2026-10-12-0930" — date + hour + minute */
-function timestampSlug(d) {
-    const pad = (n) => String(n).padStart(2, '0')
+function timestampSlug(dateValue) {
+    const pad = (count) => String(count).padStart(2, '0')
     return (
-        d.getFullYear() +
-        '-' + pad(d.getMonth() + 1) +
-        '-' + pad(d.getDate()) +
-        '-' + pad(d.getHours()) + pad(d.getMinutes())
+        dateValue.getFullYear() +
+        '-' + pad(dateValue.getMonth() + 1) +
+        '-' + pad(dateValue.getDate()) +
+        '-' + pad(dateValue.getHours()) + pad(dateValue.getMinutes())
     )
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-    X,
+    X as CloseIcon,
     FileText,
     Download,
     Eye,
@@ -101,13 +101,13 @@ export default function DocumentReviewModal({ document: doc, onClose, onReviewed
             if (tab) {
                 tab.location.href = blobUrl
             } else {
-                const a = document.createElement('a')
-                a.href = blobUrl
-                a.target = '_blank'
-                a.rel = 'noopener noreferrer'
-                document.body.appendChild(a)
-                a.click()
-                a.remove()
+                const documentValue = document.createElement('a')
+                documentValue.href = blobUrl
+                documentValue.target = '_blank'
+                documentValue.rel = 'noopener noreferrer'
+                document.body.appendChild(documentValue)
+                documentValue.click()
+                documentValue.remove()
             }
             setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000)
         } catch {
@@ -122,12 +122,12 @@ export default function DocumentReviewModal({ document: doc, onClose, onReviewed
                 responseType: 'blob',
             })
             const blobUrl = URL.createObjectURL(res.data)
-            const a = document.createElement('a')
-            a.href = blobUrl
-            a.download = doc.originalFilename || 'document'
-            document.body.appendChild(a)
-            a.click()
-            a.remove()
+            const documentValue = document.createElement('a')
+            documentValue.href = blobUrl
+            documentValue.download = doc.originalFilename || 'document'
+            document.body.appendChild(documentValue)
+            documentValue.click()
+            documentValue.remove()
             URL.revokeObjectURL(blobUrl)
         } catch {
             push({ type: 'error', message: 'Download failed' })
@@ -149,7 +149,7 @@ export default function DocumentReviewModal({ document: doc, onClose, onReviewed
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.96, y: 12 }}
                     transition={{ duration: 0.2 }}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(event) => event.stopPropagation()}
                     className="relative my-8 w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
                 >
                     <button
@@ -158,7 +158,7 @@ export default function DocumentReviewModal({ document: doc, onClose, onReviewed
                         className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                         aria-label="Close"
                     >
-                        <X className="h-4 w-4" />
+                        <CloseIcon className="h-4 w-4" />
                     </button>
 
                     {/* Header */}
@@ -249,7 +249,7 @@ export default function DocumentReviewModal({ document: doc, onClose, onReviewed
                         <textarea
                             rows={3}
                             value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
+                            onChange={(eventValue) => setNotes(eventValue.target.value)}
                             disabled={!!acting}
                             placeholder="Add comments or the reason for rejection…"
                             className="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"

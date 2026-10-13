@@ -67,35 +67,35 @@ export default function Settings() {
     const load = async () => {
         try {
             const res = await api.get('/api/admin/settings')
-            const u = res.data.data
+            const user = res.data.data
             setForm({
-                name: u.name || '',
-                logoUrl: u.logoUrl || null,
-                campusImageUrl: u.campusImageUrl || null,
-                tagline: u.tagline || '',
-                primaryColor: u.primaryColor || '#4f46e5',
-                emailDomain: u.emailDomain || '',
-                timezone: u.timezone || 'Africa/Lagos',
-                countryCode: u.countryCode || 'NG',
-                matricPattern: u.matricPattern || '',
-                matricExample: u.matricExample || '',
-                matricDescription: u.matricDescription || '',
-                maxStaff: u.maxStaff ?? 10,
-                maxQueues: u.maxQueues ?? 5,
-                fresherRegistrationEnabled: u.fresherRegistrationEnabled !== false,
-                fresherVerificationMode: u.fresherVerificationMode || 'PATTERN',
-                requireJambReg: u.requireJambReg !== false,
-                jambRegPattern: u.jambRegPattern || '',
-                jambRegExample: u.jambRegExample || '',
-                jambRegDescription: u.jambRegDescription || '',
-                requireAdmissionRef: !!u.requireAdmissionRef,
-                admissionRefPattern: u.admissionRefPattern || '',
-                admissionRefExample: u.admissionRefExample || '',
-                admissionRefDescription: u.admissionRefDescription || '',
-                requireApplicationNumber: !!u.requireApplicationNumber,
-                applicationNumberPattern: u.applicationNumberPattern || '',
-                applicationNumberExample: u.applicationNumberExample || '',
-                applicationNumberDescription: u.applicationNumberDescription || '',
+                name: user.name || '',
+                logoUrl: user.logoUrl || null,
+                campusImageUrl: user.campusImageUrl || null,
+                tagline: user.tagline || '',
+                primaryColor: user.primaryColor || '#4f46e5',
+                emailDomain: user.emailDomain || '',
+                timezone: user.timezone || 'Africa/Lagos',
+                countryCode: user.countryCode || 'NG',
+                matricPattern: user.matricPattern || '',
+                matricExample: user.matricExample || '',
+                matricDescription: user.matricDescription || '',
+                maxStaff: user.maxStaff ?? 10,
+                maxQueues: user.maxQueues ?? 5,
+                fresherRegistrationEnabled: user.fresherRegistrationEnabled !== false,
+                fresherVerificationMode: user.fresherVerificationMode || 'PATTERN',
+                requireJambReg: user.requireJambReg !== false,
+                jambRegPattern: user.jambRegPattern || '',
+                jambRegExample: user.jambRegExample || '',
+                jambRegDescription: user.jambRegDescription || '',
+                requireAdmissionRef: !!user.requireAdmissionRef,
+                admissionRefPattern: user.admissionRefPattern || '',
+                admissionRefExample: user.admissionRefExample || '',
+                admissionRefDescription: user.admissionRefDescription || '',
+                requireApplicationNumber: !!user.requireApplicationNumber,
+                applicationNumberPattern: user.applicationNumberPattern || '',
+                applicationNumberExample: user.applicationNumberExample || '',
+                applicationNumberDescription: user.applicationNumberDescription || '',
             })
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed to load settings' })
@@ -106,8 +106,8 @@ export default function Settings() {
 
     useEffect(() => { load() }, [])
 
-    const save = async (e) => {
-        e.preventDefault()
+    const save = async (event) => {
+        event.preventDefault()
         setSaving(true)
         try {
             await api.put('/api/admin/settings', {
@@ -125,16 +125,16 @@ export default function Settings() {
         }
     }
 
-    const setField = (field) => (e) => setForm({ ...form, [field]: e.target.value })
-    const setCheck = (field) => (e) => setForm({ ...form, [field]: e.target.checked })
+    const setField = (field) => (eventValue) => setForm({ ...form, [field]: eventValue.target.value })
+    const setCheck = (field) => (eventValue) => setForm({ ...form, [field]: eventValue.target.checked })
 
     if (loading) {
         return (
             <div className="mx-auto max-w-4xl">
                 <div className="mb-8 h-10 w-1/3 animate-pulse rounded-lg bg-slate-200" />
                 <div className="space-y-6">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                        <div key={i} className="h-48 animate-pulse rounded-xl bg-slate-100" />
+                    {[1, 2, 3, 4, 5].map((index) => (
+                        <div key={index} className="h-48 animate-pulse rounded-xl bg-slate-100" />
                     ))}
                 </div>
             </div>
@@ -240,8 +240,8 @@ export default function Settings() {
                                 onChange={setField('countryCode')}
                                 className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                             >
-                                {COUNTRIES.map((c) => (
-                                    <option key={c.value} value={c.value}>{c.label}</option>
+                                {COUNTRIES.map((item) => (
+                                    <option key={item.value} value={item.value}>{item.label}</option>
                                 ))}
                             </select>
                             <p className="mt-1 text-xs text-slate-500">
@@ -330,21 +330,21 @@ export default function Settings() {
                             <div className="mt-5">
                                 <label className="mb-2 block text-sm font-medium text-slate-700">Verification mode</label>
                                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                                    {VERIFICATION_MODES.map((m) => (
+                                    {VERIFICATION_MODES.map((itemValue) => (
                                         <button
-                                            key={m.value}
+                                            key={itemValue.value}
                                             type="button"
-                                            onClick={() => setForm({ ...form, fresherVerificationMode: m.value })}
+                                            onClick={() => setForm({ ...form, fresherVerificationMode: itemValue.value })}
                                             className={`rounded-lg border p-3 text-left transition-colors ${
-                                                form.fresherVerificationMode === m.value
+                                                form.fresherVerificationMode === itemValue.value
                                                     ? 'border-brand-500 bg-brand-50'
                                                     : 'border-slate-200 hover:border-slate-300'
                                             }`}
                                         >
-                                            <div className={`text-sm font-semibold ${form.fresherVerificationMode === m.value ? 'text-brand-700' : 'text-slate-900'}`}>
-                                                {m.label}
+                                            <div className={`text-sm font-semibold ${form.fresherVerificationMode === itemValue.value ? 'text-brand-700' : 'text-slate-900'}`}>
+                                                {itemValue.label}
                                             </div>
-                                            <div className="mt-0.5 text-xs text-slate-500">{m.hint}</div>
+                                            <div className="mt-0.5 text-xs text-slate-500">{itemValue.hint}</div>
                                         </button>
                                     ))}
                                 </div>

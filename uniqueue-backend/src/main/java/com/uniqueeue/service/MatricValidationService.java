@@ -75,9 +75,9 @@ public class MatricValidationService {
      * `\d{2}/\d{5}/\d{3}` → `^\d{2}/\d{5}/\d{3}$`
      */
     private String anchorPattern(String pattern) {
-        String p = pattern.trim();
-        if (!p.startsWith("^")) p = "^" + p;
-        if (!p.endsWith("$")) p = p + "$";
-        return p;
+        String stringValueValue8 = pattern.trim();
+        if (!stringValueValue8.startsWith("^")) stringValueValue8 = "^" + stringValueValue8;
+        if (!stringValueValue8.endsWith("$")) stringValueValue8 = stringValueValue8 + "$";
+        return stringValueValue8;
     }
 }

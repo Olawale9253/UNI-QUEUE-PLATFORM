@@ -74,8 +74,8 @@ public class AdmittedStudentService {
                     log.warn("Skipping CSV line {}: {}", lineNumber, ex.getMessage());
                 }
             }
-        } catch (IOException e) {
-            throw new BadRequestException("Failed to read CSV: " + e.getMessage());
+        } catch (IOException iOException) {
+            throw new BadRequestException("Failed to read CSV: " + iOException.getMessage());
         }
 
         if (batch.isEmpty()) {
@@ -90,8 +90,8 @@ public class AdmittedStudentService {
     private Map<String, Integer> parseHeader(String header) {
         List<String> cols = parseCsvLine(header);
         Map<String, Integer> idx = new HashMap<>();
-        for (int i = 0; i < cols.size(); i++) {
-            idx.put(normalizeHeader(cols.get(i)), i);
+        for (int index = 0; index < cols.size(); index++) {
+            idx.put(normalizeHeader(cols.get(index)), index);
         }
         // Require at least full_name
         if (!idx.containsKey("fullname") && !idx.containsKey("name")) {
@@ -100,18 +100,18 @@ public class AdmittedStudentService {
         return idx;
     }
 
-    private String normalizeHeader(String h) {
-        return h.toLowerCase()
+    private String normalizeHeader(String stringValueValue2) {
+        return stringValueValue2.toLowerCase()
                 .replaceAll("[\\s_\\-]+", "")
                 .replaceAll("[^a-z0-9]", "");
     }
 
-    private AdmittedStudent buildFromCells(University u, List<String> cells, Map<String, Integer> idx) {
+    private AdmittedStudent buildFromCells(University universityValue7, List<String> cells, Map<String, Integer> idx) {
         String fullName = firstNonBlank(cells, idx, "fullname", "name", "studentname");
         if (fullName == null) return null;
 
         return AdmittedStudent.builder()
-                .university(u)
+                .university(universityValue7)
                 .fullName(fullName)
                 .jambRegNumber(firstNonBlank(cells, idx, "jambregnumber", "jambreg", "jamb", "jambregistrationnumber"))
                 .admissionRef(firstNonBlank(cells, idx, "admissionref", "admissionrefnumber", "admissionreference"))
@@ -124,23 +124,23 @@ public class AdmittedStudentService {
 
     private String firstNonBlank(List<String> cells, Map<String, Integer> idx, String... keys) {
         for (String key : keys) {
-            Integer i = idx.get(key);
-            if (i != null && i < cells.size()) {
-                String val = cells.get(i);
+            Integer indexValue = idx.get(key);
+            if (indexValue != null && indexValue < cells.size()) {
+                String val = cells.get(indexValue);
                 if (val != null && !val.isBlank()) return val.trim();
             }
         }
         return null;
     }
 
-    private Integer parseInt(String v) {
-        if (v == null || v.isBlank()) return null;
+    private Integer parseInt(String stringValueValue3) {
+        if (stringValueValue3 == null || stringValueValue3.isBlank()) return null;
         try {
             // Accept "2025", "2025/2026", "2025/26"
-            String cleaned = v.replaceAll("[^0-9]", " ").trim();
+            String cleaned = stringValueValue3.replaceAll("[^0-9]", " ").trim();
             String[] parts = cleaned.split("\\s+");
             return Integer.parseInt(parts[0]);
-        } catch (Exception e) {
+        } catch (Exception exceptionValue3) {
             return null;
         }
     }
@@ -150,20 +150,20 @@ public class AdmittedStudentService {
         List<String> out = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         boolean inQuotes = false;
-        for (int i = 0; i < line.length(); i++) {
-            char c = line.charAt(i);
-            if (c == '"') {
-                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+        for (int indexValue2 = 0; indexValue2 < line.length(); indexValue2++) {
+            char character = line.charAt(indexValue2);
+            if (character == '"') {
+                if (inQuotes && indexValue2 + 1 < line.length() && line.charAt(indexValue2 + 1) == '"') {
                     sb.append('"');
-                    i++;
+                    indexValue2++;
                 } else {
                     inQuotes = !inQuotes;
                 }
-            } else if (c == ',' && !inQuotes) {
+            } else if (character == ',' && !inQuotes) {
                 out.add(sb.toString());
                 sb.setLength(0);
             } else {
-                sb.append(c);
+                sb.append(character);
             }
         }
         out.add(sb.toString());
@@ -211,7 +211,7 @@ public class AdmittedStudentService {
                 candidates = admittedStudentRepository.findUnclaimedByName(uniId, "");
             }
             return candidates.stream()
-                    .filter(a -> normalizeName(a.getFullName()).equals(normalized))
+                    .filter(valueValue2 -> normalizeName(valueValue2.getFullName()).equals(normalized))
                     .findFirst()
                     .orElse(null);
         }
@@ -228,19 +228,19 @@ public class AdmittedStudentService {
 
     @Transactional
     public void markClaimed(Long admittedStudentId, User user) {
-        AdmittedStudent a = admittedStudentRepository.findById(admittedStudentId)
+        AdmittedStudent admittedStudentValue = admittedStudentRepository.findById(admittedStudentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Admitted student not found"));
 
         // Defensive: the admitting row must belong to the same university as the user.
-        if (a.getUniversity() == null
+        if (admittedStudentValue.getUniversity() == null
                 || user.getUniversity() == null
-                || !a.getUniversity().getId().equals(user.getUniversity().getId())) {
+                || !admittedStudentValue.getUniversity().getId().equals(user.getUniversity().getId())) {
             throw new ResourceNotFoundException("Admitted student not found");
         }
 
-        a.setClaimedBy(user);
-        a.setClaimedAt(LocalDateTime.now());
-        admittedStudentRepository.save(a);
+        admittedStudentValue.setClaimedBy(user);
+        admittedStudentValue.setClaimedAt(LocalDateTime.now());
+        admittedStudentRepository.save(admittedStudentValue);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -257,11 +257,11 @@ public class AdmittedStudentService {
 
     @Transactional(readOnly = true)
     public Map<String, Long> stats(Long universityId) {
-        Map<String, Long> m = new LinkedHashMap<>();
-        m.put("total", admittedStudentRepository.countByUniversityId(universityId));
-        m.put("unclaimed", admittedStudentRepository.countByUniversityIdAndClaimedByIsNull(universityId));
-        m.put("claimed", m.get("total") - m.get("unclaimed"));
-        return m;
+        Map<String, Long> statistics = new LinkedHashMap<>();
+        statistics.put("total", admittedStudentRepository.countByUniversityId(universityId));
+        statistics.put("unclaimed", admittedStudentRepository.countByUniversityIdAndClaimedByIsNull(universityId));
+        statistics.put("claimed", statistics.get("total") - statistics.get("unclaimed"));
+        return statistics;
     }
 
     @Transactional

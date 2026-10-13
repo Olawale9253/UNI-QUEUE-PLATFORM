@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import {
     History,
     Filter,
-    X,
+    X as CloseIcon,
     ChevronLeft,
     ChevronRight,
     User as UserIcon,
@@ -152,7 +152,7 @@ export default function AuditLog() {
         setFilters({ action: '', from: '', to: '' })
     }
 
-    const setFilter = (field) => (e) => setFilters({ ...filters, [field]: e.target.value })
+    const setFilter = (field) => (event) => setFilters({ ...filters, [field]: event.target.value })
 
     const activeFilterCount = Object.values(filters).filter(Boolean).length
 
@@ -165,7 +165,7 @@ export default function AuditLog() {
                     <Button
                         variant={showFilters ? 'secondary' : 'primary'}
                         icon={Filter}
-                        onClick={() => setShowFilters((v) => !v)}
+                        onClick={() => setShowFilters((setShowFilter) => !setShowFilter)}
                     >
                         Filters
                         {activeFilterCount > 0 && (
@@ -193,7 +193,7 @@ export default function AuditLog() {
                                     onClick={clearFilters}
                                     className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"
                                 >
-                                    <X className="h-3.5 w-3.5" />
+                                    <CloseIcon className="h-3.5 w-3.5" />
                                     Clear all
                                 </button>
                             )}
@@ -210,11 +210,11 @@ export default function AuditLog() {
                                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                 >
                                     <option value="">All actions</option>
-                                    {ACTION_GROUPS.map((g) => (
-                                        <optgroup key={g.label} label={g.label}>
-                                            {g.actions.map((a) => (
-                                                <option key={a} value={a}>
-                                                    {a.replace(/_/g, ' ')}
+                                    {ACTION_GROUPS.map((item) => (
+                                        <optgroup key={item.label} label={item.label}>
+                                            {item.actions.map((itemValue) => (
+                                                <option key={itemValue} value={itemValue}>
+                                                    {itemValue.replace(/_/g, ' ')}
                                                 </option>
                                             ))}
                                         </optgroup>
@@ -284,9 +284,9 @@ export default function AuditLog() {
 
             {loading ? (
                 <Card padded={false}>
-                    {Array.from({ length: 8 }).map((_, i) => (
+                    {Array.from({ length: 8 }).map((unusedValue, index) => (
                         <div
-                            key={i}
+                            key={index}
                             className="flex items-center gap-4 border-b border-slate-100 px-6 py-4 dark:border-slate-800"
                         >
                             <div className="h-10 w-10 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />

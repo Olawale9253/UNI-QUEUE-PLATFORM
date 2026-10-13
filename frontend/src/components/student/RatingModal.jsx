@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-    X, Star, Loader2, AlertCircle, CheckCircle2, MessageSquare,
+    X as CloseIcon, Star, Loader2, AlertCircle, CheckCircle2, MessageSquare,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Button from '../ui/Button'
@@ -16,8 +16,8 @@ export default function RatingModal({ ticket, onClose, onRated }) {
     const [error, setError] = useState(null)
     const [success, setSuccess] = useState(false)
 
-    const submit = async (e) => {
-        e.preventDefault()
+    const submit = async (event) => {
+        event.preventDefault()
         if (rating < 1) {
             setError('Please pick a star rating')
             return
@@ -66,7 +66,7 @@ export default function RatingModal({ ticket, onClose, onRated }) {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 8 }}
                     transition={{ duration: 0.2 }}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(eventValue) => eventValue.stopPropagation()}
                     className="relative w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
                 >
                     <button
@@ -74,7 +74,7 @@ export default function RatingModal({ ticket, onClose, onRated }) {
                         className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                         aria-label="Close"
                     >
-                        <X className="h-4 w-4" />
+                        <CloseIcon className="h-4 w-4" />
                     </button>
 
                     {/* ═══ SUCCESS STATE ═══ */}
@@ -113,18 +113,18 @@ export default function RatingModal({ ticket, onClose, onRated }) {
                             {/* Star rating */}
                             <div className="mb-5">
                                 <div className="flex justify-center gap-1.5">
-                                    {[1, 2, 3, 4, 5].map((n) => {
-                                        const isActive = (hovered || rating) >= n
+                                    {[1, 2, 3, 4, 5].map((count) => {
+                                        const isActive = (hovered || rating) >= count
                                         return (
                                             <button
-                                                key={n}
+                                                key={count}
                                                 type="button"
-                                                onClick={() => setRating(n)}
-                                                onMouseEnter={() => setHovered(n)}
+                                                onClick={() => setRating(count)}
+                                                onMouseEnter={() => setHovered(count)}
                                                 onMouseLeave={() => setHovered(0)}
                                                 disabled={submitting}
                                                 className="transition-transform hover:scale-110 focus:outline-none disabled:opacity-60"
-                                                aria-label={`${n} star${n === 1 ? '' : 's'}`}
+                                                aria-label={`${count} star${count === 1 ? '' : 's'}`}
                                             >
                                                 <Star
                                                     className={`h-10 w-10 transition-colors ${
@@ -159,7 +159,7 @@ export default function RatingModal({ ticket, onClose, onRated }) {
                                 </label>
                                 <textarea
                                     value={comment}
-                                    onChange={(e) => setComment(e.target.value)}
+                                    onChange={(eventValue2) => setComment(eventValue2.target.value)}
                                     rows={3}
                                     maxLength={500}
                                     disabled={submitting}

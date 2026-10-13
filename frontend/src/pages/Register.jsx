@@ -73,7 +73,7 @@ function LeftPanel({ university, imageError, onImageError }) {
                                 src={logoUrl}
                                 alt={brandName}
                                 className="h-full w-full object-contain p-1"
-                                onError={(e) => { e.target.style.display = 'none' }}
+                                onError={(event) => { event.target.style.display = 'none' }}
                             />
                         ) : (
                             <Building2 className="h-4.5 w-4.5 text-white" />
@@ -165,7 +165,7 @@ export default function Register() {
         applicationNumber: '',
     })
 
-    const setField = (f) => (e) => setForm({ ...form, [f]: e.target.value })
+    const setField = (file) => (event) => setForm({ ...form, [file]: event.target.value })
 
     useEffect(() => {
         let cancelled = false
@@ -177,7 +177,7 @@ export default function Register() {
     }, [push])
 
     const selectedUni = useMemo(
-        () => universities.find((u) => String(u.id) === String(form.universityId)) || null,
+        () => universities.find((university) => String(university.id) === String(form.universityId)) || null,
         [universities, form.universityId]
     )
 
@@ -191,8 +191,8 @@ export default function Register() {
         if (mode === 'fresher' && selectedUni && !fresherEnabled) setMode('student')
     }, [mode, selectedUni, fresherEnabled])
 
-    const submit = async (e) => {
-        e.preventDefault()
+    const submit = async (event) => {
+        event.preventDefault()
 
         if (form.password.length < 8) {
             push({ type: 'error', message: 'Password must be at least 8 characters' })
@@ -309,8 +309,8 @@ export default function Register() {
                                         className={`${inputClass} appearance-none`}
                                     >
                                         <option value="">{loadingUnis ? 'Loading…' : 'Select your university'}</option>
-                                        {universities.map((u) => (
-                                            <option key={u.id} value={u.id}>{u.name}</option>
+                                        {universities.map((university) => (
+                                            <option key={university.id} value={university.id}>{university.name}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -447,7 +447,7 @@ export default function Register() {
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => setShowPassword((v) => !v)}
+                                            onClick={() => setShowPassword((item) => !item)}
                                             className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
                                             aria-label={showPassword ? 'Hide password' : 'Show password'}
                                         >
@@ -468,7 +468,7 @@ export default function Register() {
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => setShowConfirm((v) => !v)}
+                                            onClick={() => setShowConfirm((item) => !item)}
                                             className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
                                             aria-label={showConfirm ? 'Hide password' : 'Show password'}
                                         >

@@ -7,5 +7,5 @@ export const useToastStore = create((set, get) => ({
         set({ toasts: [...get().toasts, { id, type: 'info', duration: 4000, ...toast }] })
         setTimeout(() => get().dismiss(id), toast.duration || 4000)
     },
-    dismiss: (id) => set({ toasts: get().toasts.filter((t) => t.id !== id) }),
+    dismiss: (id) => set({ toasts: get().toasts.filter((toast) => toast.id !== id) }),
 }))

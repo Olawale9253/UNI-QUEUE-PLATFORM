@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link as LinkIcon, X, ImageOff, ImageIcon } from 'lucide-react'
+import { Link as LinkIcon, X as CloseIcon, ImageOff, ImageIcon } from 'lucide-react'
 
 /**
  * URL input with live image preview + clear button.
@@ -52,8 +52,8 @@ export default function ImageUrlInput({
                 <input
                     type="text"
                     value={local}
-                    onChange={(e) => setLocal(e.target.value)}
-                    onBlur={(e) => commit(e.target.value)}
+                    onChange={(event) => setLocal(event.target.value)}
+                    onBlur={(eventValue) => commit(eventValue.target.value)}
                     placeholder={placeholder}
                     spellCheck={false}
                     autoComplete="off"
@@ -66,7 +66,7 @@ export default function ImageUrlInput({
                         className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-rose-600 dark:hover:bg-slate-700"
                         aria-label="Clear"
                     >
-                        <X className="h-3.5 w-3.5" />
+                        <CloseIcon className="h-3.5 w-3.5" />
                     </button>
                 )}
             </div>

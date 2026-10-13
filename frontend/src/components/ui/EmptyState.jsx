@@ -75,8 +75,8 @@ export default function EmptyState({
         },
     }
 
-    const v = variants[variant] ?? variants.neutral
-    const s = sizes[size] ?? sizes.md
+    const value = variants[variant] ?? variants.neutral
+    const stringValue = sizes[size] ?? sizes.md
 
     const wrapper = bordered
         ? 'rounded-xl border border-dashed border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900'
@@ -87,19 +87,19 @@ export default function EmptyState({
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className={`flex flex-col items-center justify-center text-center ${wrapper} ${s.pad} ${className}`}
+            className={`flex flex-col items-center justify-center text-center ${wrapper} ${stringValue.pad} ${className}`}
         >
             {Icon && (
                 <div
-                    className={`mb-4 flex items-center justify-center rounded-full ${s.iconBox} ${v.iconBg}`}
+                    className={`mb-4 flex items-center justify-center rounded-full ${stringValue.iconBox} ${value.iconBg}`}
                 >
-                    <Icon className={`${s.icon} ${v.iconColor}`} strokeWidth={2} />
+                    <Icon className={`${stringValue.icon} ${value.iconColor}`} strokeWidth={2} />
                 </div>
             )}
-            <h3 className={`font-semibold ${s.title} ${v.titleColor}`}>{title}</h3>
+            <h3 className={`font-semibold ${stringValue.title} ${value.titleColor}`}>{title}</h3>
             {description && (
                 <p
-                    className={`mt-1 max-w-sm text-slate-500 dark:text-slate-400 ${s.desc}`}
+                    className={`mt-1 max-w-sm text-slate-500 dark:text-slate-400 ${stringValue.desc}`}
                 >
                     {description}
                 </p>

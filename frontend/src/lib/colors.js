@@ -25,13 +25,13 @@ const FALLBACK = { r: 30, g: 58, b: 138 }    // rgb of deep navy
 /* ------------------------------------------------------------------ */
 
 export function withAlpha(hex, alpha = 1) {
-    const { r, g, b } = parseHex(hex)
-    return `rgba(${r},${g},${b},${alpha})`
+    const { r: red, g: green, b: blue } = parseHex(hex)
+    return `rgba(${red},${green},${blue},${alpha})`
 }
 
 export function solid(hex) {
-    const { r, g, b } = parseHex(hex)
-    return `rgb(${r},${g},${b})`
+    const { r: red, g: green, b: blue } = parseHex(hex)
+    return `rgb(${red},${green},${blue})`
 }
 
 /**
@@ -69,8 +69,8 @@ export function generatePalette(hex) {
  */
 export function normalizeBrandHex(hex) {
     if (!hex || typeof hex !== 'string') return DEFAULT_BRAND_HEX
-    const h = hex.trim().toLowerCase()
-    if (h === LEGACY_BRAND_HEX) return DEFAULT_BRAND_HEX
+    const normalizedHex = hex.trim().toLowerCase()
+    if (normalizedHex === LEGACY_BRAND_HEX) return DEFAULT_BRAND_HEX
     return hex
 }
 
@@ -82,31 +82,31 @@ export const DEFAULT_BRAND = DEFAULT_BRAND_HEX
 
 function parseHex(hex) {
     if (!hex || typeof hex !== 'string') return FALLBACK
-    let h = hex.replace('#', '').trim()
-    if (h.length === 3) h = h.split('').map((c) => c + c).join('')
-    if (h.length !== 6 || !/^[0-9a-f]{6}$/i.test(h)) return FALLBACK
+    let hexDigits = hex.replace('#', '').trim()
+    if (hexDigits.length === 3) hexDigits = hexDigits.split('').map((character) => character + character).join('')
+    if (hexDigits.length !== 6 || !/^[0-9a-f]{6}$/i.test(hexDigits)) return FALLBACK
     return {
-        r: parseInt(h.slice(0, 2), 16),
-        g: parseInt(h.slice(2, 4), 16),
-        b: parseInt(h.slice(4, 6), 16),
+        r: parseInt(hexDigits.slice(0, 2), 16),
+        g: parseInt(hexDigits.slice(2, 4), 16),
+        b: parseInt(hexDigits.slice(4, 6), 16),
     }
 }
 
-function rgbToHex({ r, g, b }) {
-    const h = (n) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0')
-    return `#${h(r)}${h(g)}${h(b)}`
+function rgbToHex({ r: red, g: green, b: blue }) {
+    const hexComponent = (channel) => Math.max(0, Math.min(255, Math.round(channel))).toString(16).padStart(2, '0')
+    return `#${hexComponent(red)}${hexComponent(green)}${hexComponent(blue)}`
 }
 
 function isValidHex(hex) {
     if (!hex || typeof hex !== 'string') return false
-    const h = hex.replace('#', '').trim()
-    return /^([0-9a-f]{3}|[0-9a-f]{6})$/i.test(h)
+    const normalizedHex = hex.replace('#', '').trim()
+    return /^([0-9a-f]{3}|[0-9a-f]{6})$/i.test(normalizedHex)
 }
 
 function normalizeHex(hex) {
-    let h = hex.replace('#', '').trim()
-    if (h.length === 3) h = h.split('').map((c) => c + c).join('')
-    return '#' + h.toLowerCase()
+    let normalizedHex = hex.replace('#', '').trim()
+    if (normalizedHex.length === 3) normalizedHex = normalizedHex.split('').map((character) => character + character).join('')
+    return '#' + normalizedHex.toLowerCase()
 }
 
 /**
@@ -115,10 +115,10 @@ function normalizeHex(hex) {
  *   ratio 1   → returns `targetHex`
  */
 function mix(fromHex, targetHex, ratio) {
-    const a = parseHex(fromHex)
-    const b = parseHex(targetHex)
-    const r = a.r + (b.r - a.r) * ratio
-    const g = a.g + (b.g - a.g) * ratio
-    const bl = a.b + (b.b - a.b) * ratio
-    return rgbToHex({ r, g, b: bl })
+    const fromColor = parseHex(fromHex)
+    const targetColor = parseHex(targetHex)
+    const red = fromColor.r + (targetColor.r - fromColor.r) * ratio
+    const green = fromColor.g + (targetColor.g - fromColor.g) * ratio
+    const blue = fromColor.b + (targetColor.b - fromColor.b) * ratio
+    return rgbToHex({ r: red, g: green, b: blue })
 }

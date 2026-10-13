@@ -130,17 +130,17 @@ function LeftPanel({ variant }) {
                     </p>
 
                     <ul className="mt-8 space-y-3">
-                        {copy.bullets.map((b) => {
-                            const Icon = b.icon
+                        {copy.bullets.map((item) => {
+                            const Icon = item.icon
                             return (
                                 <li
-                                    key={b.text}
+                                    key={item.text}
                                     className="flex items-center gap-3 text-sm text-white/90"
                                 >
                                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/15">
                                         <Icon className="h-3.5 w-3.5" />
                                     </span>
-                                    {b.text}
+                                    {item.text}
                                 </li>
                             )
                         })}

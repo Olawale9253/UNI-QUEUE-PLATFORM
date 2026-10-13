@@ -6,7 +6,7 @@ import {
     Mail,
     Phone,
     Building2,
-    X,
+    X as CloseIcon,
     Users,
     Link as LinkIcon,
     Search,
@@ -37,8 +37,8 @@ function SelectCheckbox({ checked, onChange, disabled }) {
     return (
         <button
             type="button"
-            onClick={(e) => {
-                e.stopPropagation()
+            onClick={(event) => {
+                event.stopPropagation()
                 if (disabled) return
                 onChange(!checked)
             }}
@@ -85,7 +85,7 @@ function BulkToolbar({ count, onClear, onRemove, busy }) {
                             className="rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50 dark:hover:bg-slate-800"
                             aria-label="Clear selection"
                         >
-                            <X className="h-4 w-4" />
+                            <CloseIcon className="h-4 w-4" />
                         </button>
                     </div>
                 </motion.div>
@@ -114,12 +114,12 @@ export default function Staff() {
 
     const load = useCallback(async () => {
         try {
-            const [s, q] = await Promise.all([
+            const [stringValue, queue] = await Promise.all([
                 api.get('/api/admin/staff'),
                 api.get('/api/admin/queues'),
             ])
-            setStaff(s.data.data || [])
-            setQueues(q.data.data || [])
+            setStaff(stringValue.data.data || [])
+            setQueues(queue.data.data || [])
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed to load' })
         } finally {
@@ -131,10 +131,10 @@ export default function Staff() {
         load()
     }, [load])
 
-    const setField = (f) => (e) => setForm({ ...form, [f]: e.target.value })
+    const setField = (file) => (event) => setForm({ ...form, [file]: event.target.value })
 
-    const createStaff = async (e) => {
-        e.preventDefault()
+    const createStaff = async (event) => {
+        event.preventDefault()
         setCreating(true)
         try {
             await api.post('/api/admin/staff', form)
@@ -185,33 +185,33 @@ export default function Staff() {
     const clearSelection = () => setSelectedIds(new Set())
 
     const assignmentsByStaff = new Map()
-    queues.forEach((q) => {
-        ;(q.staff || []).forEach((s) => {
-            if (!assignmentsByStaff.has(s.id)) assignmentsByStaff.set(s.id, [])
-            assignmentsByStaff.get(s.id).push({ queueId: q.id, queueName: q.name })
+    queues.forEach((queue) => {
+        ;(queue.staff || []).forEach((stringValue) => {
+            if (!assignmentsByStaff.has(stringValue.id)) assignmentsByStaff.set(stringValue.id, [])
+            assignmentsByStaff.get(stringValue.id).push({ queueId: queue.id, queueName: queue.name })
         })
     })
 
-    const filteredStaff = staff.filter((s) => {
+    const filteredStaff = staff.filter((item) => {
         if (!search.trim()) return true
-        const q = search.toLowerCase()
+        const searchValue = search.toLowerCase()
         return (
-            s.fullName?.toLowerCase().includes(q) ||
-            s.email?.toLowerCase().includes(q) ||
-            s.department?.toLowerCase().includes(q)
+            item.fullName?.toLowerCase().includes(searchValue) ||
+            item.email?.toLowerCase().includes(searchValue) ||
+            item.department?.toLowerCase().includes(searchValue)
         )
     })
 
     const allVisibleSelected =
-        filteredStaff.length > 0 && filteredStaff.every((s) => selectedIds.has(s.id))
+        filteredStaff.length > 0 && filteredStaff.every((itemValue) => selectedIds.has(itemValue.id))
 
     const toggleSelectAllVisible = () => {
         setSelectedIds((prev) => {
             const next = new Set(prev)
             if (allVisibleSelected) {
-                filteredStaff.forEach((s) => next.delete(s.id))
+                filteredStaff.forEach((itemValue2) => next.delete(itemValue2.id))
             } else {
-                filteredStaff.forEach((s) => next.add(s.id))
+                filteredStaff.forEach((itemValue2) => next.add(itemValue2.id))
             }
             return next
         })
@@ -269,7 +269,7 @@ export default function Staff() {
                 action={
                     <Button
                         icon={Plus}
-                        onClick={() => setShowCreate((v) => !v)}
+                        onClick={() => setShowCreate((itemValue2) => !itemValue2)}
                         variant={showCreate ? 'secondary' : 'primary'}
                     >
                         {showCreate ? 'Cancel' : 'Add staff'}
@@ -313,15 +313,15 @@ export default function Staff() {
                         <Input
                             placeholder="Search by name, email, or department…"
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(eventValue) => setSearch(eventValue.target.value)}
                             icon={Search}
                         />
                     </div>
                     <ExportButton
-                        rows={filteredStaff.map((s) => ({
-                            ...s,
-                            assignedQueues: (assignmentsByStaff.get(s.id) || [])
-                                .map((a) => a.queueName)
+                        rows={filteredStaff.map((itemValue2) => ({
+                            ...itemValue2,
+                            assignedQueues: (assignmentsByStaff.get(itemValue2.id) || [])
+                                .map((firstValue) => firstValue.queueName)
                                 .join(', '),
                         }))}
                         columns={[
@@ -384,11 +384,11 @@ export default function Staff() {
                     animate="animate"
                     className="space-y-3"
                 >
-                    {filteredStaff.map((s) => {
-                        const assigned = assignmentsByStaff.get(s.id) || []
-                        const isSelected = selectedIds.has(s.id)
+                    {filteredStaff.map((itemValue3) => {
+                        const assigned = assignmentsByStaff.get(itemValue3.id) || []
+                        const isSelected = selectedIds.has(itemValue3.id)
                         return (
-                            <motion.div key={s.id} variants={staggerItem}>
+                            <motion.div key={itemValue3.id} variants={staggerItem}>
                                 <Card
                                     className={
                                         isSelected
@@ -401,20 +401,20 @@ export default function Staff() {
                                             <div className="pt-1">
                                                 <SelectCheckbox
                                                     checked={isSelected}
-                                                    onChange={() => toggleSelect(s.id)}
+                                                    onChange={() => toggleSelect(itemValue3.id)}
                                                 />
                                             </div>
                                             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
-                                                {s.fullName?.split(' ').map((p) => p[0]).slice(0, 2).join('')}
+                                                {itemValue3.fullName?.split(' ').map((parameter) => parameter[0]).slice(0, 2).join('')}
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                                                    {s.fullName}
+                                                    {itemValue3.fullName}
                                                 </div>
                                                 <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
                                                     <span className="flex items-center gap-1">
                                                         <Mail className="h-3 w-3" />
-                                                        {s.email}
+                                                        {itemValue3.email}
                                                     </span>
                                                 </div>
 
@@ -424,18 +424,18 @@ export default function Staff() {
                                                             Not assigned to any queue
                                                         </span>
                                                     ) : (
-                                                        assigned.map((a) => (
+                                                        assigned.map((itemValue4) => (
                                                             <span
-                                                                key={a.queueId}
+                                                                key={itemValue4.queueId}
                                                                 className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700 dark:bg-brand-950/40 dark:text-brand-300"
                                                             >
-                                                                {a.queueName}
+                                                                {itemValue4.queueName}
                                                                 <button
-                                                                    onClick={() => unassignFromQueue(a.queueId, s.id)}
+                                                                    onClick={() => unassignFromQueue(itemValue4.queueId, itemValue3.id)}
                                                                     className="rounded-full p-0.5 hover:bg-brand-100 dark:hover:bg-brand-950/60"
-                                                                    aria-label={`Remove from ${a.queueName}`}
+                                                                    aria-label={`Remove from ${itemValue4.queueName}`}
                                                                 >
-                                                                    <X className="h-3 w-3" />
+                                                                    <CloseIcon className="h-3 w-3" />
                                                                 </button>
                                                             </span>
                                                         ))
@@ -449,12 +449,12 @@ export default function Staff() {
                                                 size="sm"
                                                 variant="secondary"
                                                 icon={LinkIcon}
-                                                onClick={() => setAssignTarget(s)}
+                                                onClick={() => setAssignTarget(itemValue3)}
                                             >
                                                 Assign
                                             </Button>
                                             <button
-                                                onClick={() => setDeleteTarget(s)}
+                                                onClick={() => setDeleteTarget(itemValue3)}
                                                 className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
                                                 aria-label="Remove staff"
                                             >
@@ -491,7 +491,7 @@ export default function Staff() {
                                 initial={{ opacity: 0, scale: 0.95, y: 8 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: 8 }}
-                                onClick={(e) => e.stopPropagation()}
+                                onClick={(eventValue2) => eventValue2.stopPropagation()}
                                 className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900"
                             >
                                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
@@ -502,15 +502,15 @@ export default function Staff() {
                                 </p>
 
                                 <div className="mt-5 max-h-72 space-y-2 overflow-y-auto">
-                                    {queues.map((q) => {
-                                        const alreadyAssigned = (q.staff || []).some(
-                                            (s) => s.id === assignTarget.id
+                                    {queues.map((queueValue) => {
+                                        const alreadyAssigned = (queueValue.staff || []).some(
+                                            (stringValue) => stringValue.id === assignTarget.id
                                         )
                                         return (
                                             <button
-                                                key={q.id}
+                                                key={queueValue.id}
                                                 disabled={alreadyAssigned || assigning}
-                                                onClick={() => assignToQueue(q.id)}
+                                                onClick={() => assignToQueue(queueValue.id)}
                                                 className={`flex w-full items-center justify-between rounded-lg border px-4 py-2.5 text-left transition-colors ${
                                                     alreadyAssigned
                                                         ? 'cursor-not-allowed border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30'
@@ -518,7 +518,7 @@ export default function Staff() {
                                                 }`}
                                             >
                                                 <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                                    {q.name}
+                                                    {queueValue.name}
                                                 </span>
                                                 {alreadyAssigned ? (
                                                     <Badge variant="success">Assigned</Badge>
@@ -553,8 +553,8 @@ export default function Staff() {
                     setDeleting(true)
                     try {
                         const assignments = assignmentsByStaff.get(deleteTarget.id) || []
-                        for (const a of assignments) {
-                            await api.delete(`/api/admin/queues/${a.queueId}/staff/${deleteTarget.id}`)
+                        for (const firstValue of assignments) {
+                            await api.delete(`/api/admin/queues/${firstValue.queueId}/staff/${deleteTarget.id}`)
                         }
                         push({ type: 'info', message: 'Removed from all queues' })
                         setDeleteTarget(null)

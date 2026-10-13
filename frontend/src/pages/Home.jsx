@@ -115,21 +115,21 @@ function HeroCarousel() {
 
     useEffect(() => {
         if (paused || reduceMotion) return
-        const t = setTimeout(() => goTo(index + 1), AUTO_ADVANCE_MS)
-        return () => clearTimeout(t)
+        const token = setTimeout(() => goTo(index + 1), AUTO_ADVANCE_MS)
+        return () => clearTimeout(token)
     }, [index, paused, reduceMotion, goTo])
 
     useEffect(() => {
-        const onMove = (e) => {
+        const onMove = (entry) => {
             const el = sectionRef.current
             if (!el) return
             const rect = el.getBoundingClientRect()
             const inside =
-                e.clientX >= rect.left &&
-                e.clientX <= rect.right &&
-                e.clientY >= rect.top &&
-                e.clientY <= rect.bottom
-            setPaused((p) => (p === inside ? p : inside))
+                entry.clientX >= rect.left &&
+                entry.clientX <= rect.right &&
+                entry.clientY >= rect.top &&
+                entry.clientY <= rect.bottom
+            setPaused((item) => (item === inside ? item : inside))
         }
         window.addEventListener('mousemove', onMove, { passive: true })
         return () => window.removeEventListener('mousemove', onMove)
@@ -137,17 +137,17 @@ function HeroCarousel() {
 
     // Preload all slide images so slides are instant when they cycle
     useEffect(() => {
-        SLIDES.forEach((s, i) => {
-            if (loaded.has(i)) return
+        SLIDES.forEach((item, indexValue) => {
+            if (loaded.has(indexValue)) return
             const img = new Image()
-            img.srcset = buildSrcSet(s.src)
+            img.srcset = buildSrcSet(item.src)
             img.sizes = '100vw'
-            img.src = FULL_URL(s.src)
+            img.src = FULL_URL(item.src)
             img.onload = () => {
                 setLoaded((prev) => {
-                    if (prev.has(i)) return prev
+                    if (prev.has(indexValue)) return prev
                     const nxt = new Set(prev)
-                    nxt.add(i)
+                    nxt.add(indexValue)
                     return nxt
                 })
             }
@@ -156,9 +156,9 @@ function HeroCarousel() {
     }, [])
 
     useEffect(() => {
-        const onKey = (e) => {
-            if (e.key === 'ArrowRight') next()
-            else if (e.key === 'ArrowLeft') prev()
+        const onKey = (event) => {
+            if (event.key === 'ArrowRight') next()
+            else if (event.key === 'ArrowLeft') prev()
         }
         window.addEventListener('keydown', onKey)
         return () => window.removeEventListener('keydown', onKey)
@@ -179,12 +179,12 @@ function HeroCarousel() {
                     ease: [0.83, 0, 0.17, 1],
                 }}
             >
-                {SLIDES.map((s, i) => {
-                    const isLoaded = imageReady.has(i)
-                    const isActive = i === index
+                {SLIDES.map((item, indexValue) => {
+                    const isLoaded = imageReady.has(indexValue)
+                    const isActive = indexValue === index
                     return (
                         <div
-                            key={s.id}
+                            key={item.id}
                             className="relative h-full w-full shrink-0 overflow-hidden"
                             aria-hidden={!isActive}
                         >
@@ -204,18 +204,18 @@ function HeroCarousel() {
 
                             {/* Background image */}
                             <img
-                                src={FULL_URL(s.src)}
-                                srcSet={buildSrcSet(s.src)}
+                                src={FULL_URL(item.src)}
+                                srcSet={buildSrcSet(item.src)}
                                 sizes="100vw"
-                                alt={s.alt}
-                                loading={i === 0 ? 'eager' : 'lazy'}
-                                fetchPriority={i === 0 ? 'high' : undefined}
+                                alt={item.alt}
+                                loading={indexValue === 0 ? 'eager' : 'lazy'}
+                                fetchPriority={indexValue === 0 ? 'high' : undefined}
                                 decoding="async"
                                 onLoad={() =>
                                     setImageReady((prev) => {
-                                        if (prev.has(i)) return prev
+                                        if (prev.has(indexValue)) return prev
                                         const nxt = new Set(prev)
-                                        nxt.add(i)
+                                        nxt.add(indexValue)
                                         return nxt
                                     })
                                 }
@@ -241,37 +241,37 @@ function HeroCarousel() {
                                     <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/[0.06] py-1.5 pl-1.5 pr-4 shadow-xl shadow-black/25 backdrop-blur-xl">
                                         <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 shadow-md shadow-brand-600/40">
                                             <span className="absolute inset-0 animate-ping rounded-full bg-brand-400/40" />
-                                            <s.eyebrow.icon className="relative h-3.5 w-3.5 text-white" />
+                                            <item.eyebrow.icon className="relative h-3.5 w-3.5 text-white" />
                                         </span>
                                         <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-white">
-                                            {s.eyebrow.label}
+                                            {item.eyebrow.label}
                                         </span>
                                     </div>
 
                                     <h1 className="text-4xl font-bold leading-[1.05] tracking-tight text-white drop-shadow-2xl sm:text-6xl lg:text-7xl">
-                                        {s.headline}
+                                        {item.headline}
                                         <span className="block bg-gradient-to-r from-brand-300 via-brand-400 to-brand-200 bg-clip-text text-transparent">
-                                            {s.headlineAccent}
+                                            {item.headlineAccent}
                                         </span>
                                     </h1>
 
                                     <p className="mt-6 max-w-xl text-base leading-relaxed text-white/90 drop-shadow-lg sm:text-lg">
-                                        {s.sub}
+                                        {item.sub}
                                     </p>
 
                                     <div className="mt-9 flex flex-wrap items-center gap-3">
                                         <Link
-                                            to={dashboardHref || s.cta.to}
+                                            to={dashboardHref || item.cta.to}
                                             className="group inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 shadow-lg shadow-black/25 transition-all hover:bg-slate-100 hover:shadow-xl"
                                         >
-                                            {dashboardHref ? 'Go to dashboard' : s.cta.label}
+                                            {dashboardHref ? 'Go to dashboard' : item.cta.label}
                                             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                                         </Link>
                                         <Link
-                                            to={s.ctaSecondary.to}
+                                            to={item.ctaSecondary.to}
                                             className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur-md transition-colors hover:border-white/50 hover:bg-white/20"
                                         >
-                                            {s.ctaSecondary.label}
+                                            {item.ctaSecondary.label}
                                         </Link>
                                     </div>
                                 </div>
@@ -302,14 +302,14 @@ function HeroCarousel() {
             {/* Dots + progress bar */}
             <div className="absolute inset-x-0 bottom-8 z-20 flex flex-col items-center gap-3">
                 <div className="flex items-center gap-2.5">
-                    {SLIDES.map((s, i) => {
-                        const isActive = i === index
+                    {SLIDES.map((itemValue, indexValue2) => {
+                        const isActive = indexValue2 === index
                         return (
                             <button
-                                key={s.id}
+                                key={itemValue.id}
                                 type="button"
-                                onClick={() => goTo(i)}
-                                aria-label={`Go to slide ${i + 1}`}
+                                onClick={() => goTo(indexValue2)}
+                                aria-label={`Go to slide ${indexValue2 + 1}`}
                                 className="group relative h-1.5 overflow-hidden rounded-full bg-white/30 transition-all"
                                 style={{ width: isActive ? 40 : 12 }}
                             >
@@ -398,25 +398,25 @@ function Features() {
                 </div>
 
                 <div className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {FEATURES.map((f, i) => {
-                        const Icon = f.icon
+                    {FEATURES.map((item, index) => {
+                        const Icon = item.icon
                         return (
                             <motion.div
-                                key={f.title}
+                                key={item.title}
                                 initial={{ opacity: 0, y: 16 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true, margin: '-80px' }}
-                                transition={{ duration: 0.5, delay: i * 0.05 }}
+                                transition={{ duration: 0.5, delay: index * 0.05 }}
                                 className="group relative rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:-translate-y-1 hover:border-brand-300 hover:shadow-xl hover:shadow-brand-500/5 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-brand-800"
                             >
                                 <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-600 group-hover:text-white dark:bg-brand-950/40 dark:text-brand-400 dark:group-hover:bg-brand-600 dark:group-hover:text-white">
                                     <Icon className="h-5 w-5" />
                                 </div>
                                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                                    {f.title}
+                                    {item.title}
                                 </h3>
                                 <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                                    {f.body}
+                                    {item.body}
                                 </p>
                             </motion.div>
                         )
@@ -489,9 +489,9 @@ function HowItWorks() {
                 </motion.div>
 
                 <div className="mt-16 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
-                    {STEPS.map((step, i) => {
+                    {STEPS.map((step, index) => {
                         const Icon = step.icon
-                        const isFirst = i === 0
+                        const isFirst = index === 0
 
                         return (
                             <motion.div
@@ -499,7 +499,7 @@ function HowItWorks() {
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true, margin: '-60px' }}
-                                transition={{ duration: 0.45, delay: i * 0.08 }}
+                                transition={{ duration: 0.45, delay: index * 0.08 }}
                                 className={`group relative flex flex-col items-center rounded-2xl border-2 p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
                                     isFirst
                                         ? 'border-brand-300 bg-brand-50/60 shadow-sm dark:border-brand-700 dark:bg-brand-950/30'
@@ -523,7 +523,7 @@ function HowItWorks() {
                                             : 'text-slate-400 dark:text-slate-500'
                                     }`}
                                 >
-                                    Step {i + 1}
+                                    Step {index + 1}
                                 </div>
 
                                 <h3 className="mt-1.5 text-base font-bold leading-snug text-slate-900 dark:text-slate-100">

@@ -36,13 +36,13 @@ public class AdminHolidaySyncController {
         University uni = universityRepository.findById(principal.getUniversityId())
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
 
-        PublicHolidaySyncService.SyncResult r = syncService.syncOne(uni);
+        PublicHolidaySyncService.SyncResult syncResult = syncService.syncOne(uni);
 
         return ResponseEntity.ok(ApiResponse.success(
                 "Sync complete",
                 Map.of(
-                        "added", r.holidaysAdded(),
-                        "skipped", r.holidaysSkipped(),
+                        "added", syncResult.holidaysAdded(),
+                        "skipped", syncResult.holidaysSkipped(),
                         "countryCode", uni.getCountryCode()
                 )));
     }

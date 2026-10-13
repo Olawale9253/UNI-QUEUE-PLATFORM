@@ -193,7 +193,7 @@ public class DocumentController {
             mediaType = doc.getContentType() != null
                     ? MediaType.parseMediaType(doc.getContentType())
                     : MediaType.APPLICATION_OCTET_STREAM;
-        } catch (Exception e) {
+        } catch (Exception exception) {
             mediaType = MediaType.APPLICATION_OCTET_STREAM;
         }
 

@@ -6,10 +6,10 @@ import { useAuthStore } from '../../store/authStore'
 import HolidayStrip from '../student/HolidayStrip'
 
 function getGreeting() {
-    const h = new Date().getHours()
-    if (h >= 5 && h < 12) return 'Good morning'
-    if (h >= 12 && h < 17) return 'Good afternoon'
-    if (h >= 17 && h < 21) return 'Good evening'
+    const item = new Date().getHours()
+    if (item >= 5 && item < 12) return 'Good morning'
+    if (item >= 12 && item < 17) return 'Good afternoon'
+    if (item >= 17 && item < 21) return 'Good evening'
     return 'Good night'
 }
 
@@ -27,8 +27,8 @@ export default function StaffHeader({ subtitle }) {
     const [closedDates, setClosedDates] = useState(null)
 
     useEffect(() => {
-        const t = setInterval(() => setGreeting(getGreeting()), 60_000)
-        return () => clearInterval(t)
+        const token = setInterval(() => setGreeting(getGreeting()), 60_000)
+        return () => clearInterval(token)
     }, [])
 
     useEffect(() => {

@@ -10,7 +10,7 @@ import {
     PowerOff,
     History,
     UserPlus,
-    X,
+    X as CloseIcon,
     Layers,
     Megaphone,
     Eye,
@@ -67,19 +67,19 @@ function ColorPicker({ value, onChange }) {
                 Primary color
             </label>
             <div className="flex flex-wrap items-center gap-2">
-                {PRESET_COLORS.map((c) => (
+                {PRESET_COLORS.map((item) => (
                     <button
-                        key={c.value}
+                        key={item.value}
                         type="button"
-                        onClick={() => onChange(c.value)}
-                        title={c.label}
-                        aria-label={c.label}
+                        onClick={() => onChange(item.value)}
+                        title={item.label}
+                        aria-label={item.label}
                         className={`h-9 w-9 rounded-lg border-2 transition-transform hover:scale-110 ${
-                            current.toLowerCase() === c.value.toLowerCase()
+                            current.toLowerCase() === item.value.toLowerCase()
                                 ? 'border-slate-900 ring-2 ring-slate-900 ring-offset-1 dark:border-white dark:ring-white'
                                 : 'border-white shadow-sm dark:border-slate-700'
                         }`}
-                        style={{ backgroundColor: c.value }}
+                        style={{ backgroundColor: item.value }}
                     />
                 ))}
 
@@ -87,7 +87,7 @@ function ColorPicker({ value, onChange }) {
                     <input
                         type="color"
                         value={current}
-                        onChange={(e) => onChange(e.target.value)}
+                        onChange={(event) => onChange(event.target.value)}
                         className="h-5 w-5 cursor-pointer rounded border-0 bg-transparent p-0"
                     />
                     <span className="font-mono text-xs uppercase text-slate-600 dark:text-slate-300">
@@ -168,12 +168,12 @@ function UniversitiesTab() {
 
     const load = useCallback(async () => {
         try {
-            const [u, a] = await Promise.all([
+            const [userValue, firstValue] = await Promise.all([
                 api.get('/api/super-admin/universities'),
                 api.get('/api/super-admin/analytics').catch(() => ({ data: { data: null } })),
             ])
-            setUniversities(u.data.data || [])
-            setAnalytics(a.data.data || null)
+            setUniversities(userValue.data.data || [])
+            setAnalytics(firstValue.data.data || null)
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed to load' })
         } finally {
@@ -186,8 +186,8 @@ function UniversitiesTab() {
     }, [load])
 
     // ═══════ CREATE ═══════
-    const createUniversity = async (e) => {
-        e.preventDefault()
+    const createUniversity = async (event) => {
+        event.preventDefault()
         setCreating(true)
         try {
             await api.post('/api/super-admin/universities', form)
@@ -203,22 +203,22 @@ function UniversitiesTab() {
     }
 
     // ═══════ EDIT ═══════
-    const openEdit = (u) => {
-        setEditTarget(u)
+    const openEdit = (userValue) => {
+        setEditTarget(userValue)
         setEditForm({
-            name: u.name || '',
-            code: u.code || '',
-            emailDomain: u.emailDomain || '',
+            name: userValue.name || '',
+            code: userValue.code || '',
+            emailDomain: userValue.emailDomain || '',
             adminFullName: '',
             adminEmail: '',
             adminPassword: '',
-            matricPattern: u.matricPattern || '',
-            matricExample: u.matricExample || '',
-            matricDescription: u.matricDescription || '',
-            logoUrl: u.logoUrl || null,
-            campusImageUrl: u.campusImageUrl || null,
-            tagline: u.tagline || '',
-            primaryColor: u.primaryColor || DEFAULT_BRAND,   // ⬅️ NEW
+            matricPattern: userValue.matricPattern || '',
+            matricExample: userValue.matricExample || '',
+            matricDescription: userValue.matricDescription || '',
+            logoUrl: userValue.logoUrl || null,
+            campusImageUrl: userValue.campusImageUrl || null,
+            tagline: userValue.tagline || '',
+            primaryColor: userValue.primaryColor || DEFAULT_BRAND,   // ⬅️ NEW
         })
     }
 
@@ -227,8 +227,8 @@ function UniversitiesTab() {
         setEditForm(emptyForm)
     }
 
-    const saveEdit = async (e) => {
-        e.preventDefault()
+    const saveEdit = async (eventValue) => {
+        eventValue.preventDefault()
         if (!editTarget) return
         setEditing(true)
         try {
@@ -275,20 +275,20 @@ function UniversitiesTab() {
     }
 
     // ═══════ TOGGLE ═══════
-    const handleToggle = (u) => {
-        if (u.isActive) setConfirmDeactivate(u)
-        else performToggle(u)
+    const handleToggle = (userValue2) => {
+        if (userValue2.isActive) setConfirmDeactivate(userValue2)
+        else performToggle(userValue2)
     }
 
-    const performToggle = async (u) => {
-        setToggling(u.id)
+    const performToggle = async (userValue3) => {
+        setToggling(userValue3.id)
         try {
-            if (u.isActive) {
-                await api.post(`/api/super-admin/universities/${u.id}/deactivate`)
-                push({ type: 'success', message: `${u.name} deactivated` })
+            if (userValue3.isActive) {
+                await api.post(`/api/super-admin/universities/${userValue3.id}/deactivate`)
+                push({ type: 'success', message: `${userValue3.name} deactivated` })
             } else {
-                await api.post(`/api/super-admin/universities/${u.id}/reactivate`)
-                push({ type: 'success', message: `${u.name} reactivated` })
+                await api.post(`/api/super-admin/universities/${userValue3.id}/reactivate`)
+                push({ type: 'success', message: `${userValue3.name} reactivated` })
             }
             setConfirmDeactivate(null)
             await load()
@@ -299,8 +299,8 @@ function UniversitiesTab() {
         }
     }
 
-    const submitNewAdmin = async (e) => {
-        e.preventDefault()
+    const submitNewAdmin = async (eventValue2) => {
+        eventValue2.preventDefault()
         if (!addAdminTarget) return
         setAddingAdmin(true)
         try {
@@ -332,26 +332,26 @@ function UniversitiesTab() {
             }
             const admin = admins[0]
             const res = await api.post(`/api/super-admin/impersonate/${admin.id}`)
-            const d = res.data.data
+            const dateValue = res.data.data
 
             startImpersonation(token, user, {
-                userId: d.userId,
-                email: d.email,
-                fullName: d.fullName,
-                role: d.role,
-                universityId: d.universityId,
+                userId: dateValue.userId,
+                email: dateValue.email,
+                fullName: dateValue.fullName,
+                role: dateValue.role,
+                universityId: dateValue.universityId,
             })
 
-            setAuth(d.accessToken, {
-                userId: d.userId,
-                email: d.email,
-                fullName: d.fullName,
-                role: d.role,
-                universityId: d.universityId,
+            setAuth(dateValue.accessToken, {
+                userId: dateValue.userId,
+                email: dateValue.email,
+                fullName: dateValue.fullName,
+                role: dateValue.role,
+                universityId: dateValue.universityId,
             })
             refreshUniversity()
 
-            push({ type: 'success', message: `Now viewing as ${d.fullName}` })
+            push({ type: 'success', message: `Now viewing as ${dateValue.fullName}` })
 
             const dashboards = {
                 SUPER_ADMIN: '/super-admin',
@@ -359,7 +359,7 @@ function UniversitiesTab() {
                 STAFF: '/staff',
                 USER: '/student',
             }
-            navigate(dashboards[d.role] || '/')
+            navigate(dashboards[dateValue.role] || '/')
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Impersonation failed' })
         } finally {
@@ -374,7 +374,7 @@ function UniversitiesTab() {
             <div className="mb-6 flex justify-end">
                 <Button
                     icon={Plus}
-                    onClick={() => setShowCreate((v) => !v)}
+                    onClick={() => setShowCreate((item) => !item)}
                     variant={showCreate ? 'secondary' : 'primary'}
                 >
                     {showCreate ? 'Cancel' : 'Register university'}
@@ -412,18 +412,18 @@ function UniversitiesTab() {
                             </h3>
                             <form onSubmit={createUniversity} className="space-y-6">
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                    <Input label="University name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="University of Lagos" required />
-                                    <Input label="Code" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="UNILAG" required />
-                                    <Input label="Email domain" value={form.emailDomain} onChange={(e) => setForm({ ...form, emailDomain: e.target.value })} placeholder="@unilag.edu.ng" />
-                                    <Input label="Tagline (optional)" value={form.tagline} onChange={(e) => setForm({ ...form, tagline: e.target.value })} placeholder="Skip the line. Not the service." />
+                                    <Input label="University name" value={form.name} onChange={(eventValue3) => setForm({ ...form, name: eventValue3.target.value })} placeholder="University of Lagos" required />
+                                    <Input label="Code" value={form.code} onChange={(eventValue4) => setForm({ ...form, code: eventValue4.target.value })} placeholder="UNILAG" required />
+                                    <Input label="Email domain" value={form.emailDomain} onChange={(eventValue5) => setForm({ ...form, emailDomain: eventValue5.target.value })} placeholder="@unilag.edu.ng" />
+                                    <Input label="Tagline (optional)" value={form.tagline} onChange={(eventValue6) => setForm({ ...form, tagline: eventValue6.target.value })} placeholder="Skip the line. Not the service." />
                                 </div>
 
                                 <div>
                                     <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Matric number format</h4>
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                        <Input label="Pattern (regex)" value={form.matricPattern} onChange={(e) => setForm({ ...form, matricPattern: e.target.value })} placeholder="^\\d{2}/\\d{5}/\\d{3}$" />
-                                        <Input label="Example" value={form.matricExample} onChange={(e) => setForm({ ...form, matricExample: e.target.value })} placeholder="21/12345/001" />
-                                        <Input label="Description" value={form.matricDescription} onChange={(e) => setForm({ ...form, matricDescription: e.target.value })} placeholder="YY/XXXXX/XXX" />
+                                        <Input label="Pattern (regex)" value={form.matricPattern} onChange={(eventValue7) => setForm({ ...form, matricPattern: eventValue7.target.value })} placeholder="^\\d{2}/\\d{5}/\\d{3}$" />
+                                        <Input label="Example" value={form.matricExample} onChange={(eventValue8) => setForm({ ...form, matricExample: eventValue8.target.value })} placeholder="21/12345/001" />
+                                        <Input label="Description" value={form.matricDescription} onChange={(eventValue9) => setForm({ ...form, matricDescription: eventValue9.target.value })} placeholder="YY/XXXXX/XXX" />
                                     </div>
                                 </div>
 
@@ -460,9 +460,9 @@ function UniversitiesTab() {
                                 <div>
                                     <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">First administrator</h4>
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                        <Input label="Full name" value={form.adminFullName} onChange={(e) => setForm({ ...form, adminFullName: e.target.value })} placeholder="Jane Doe" required />
-                                        <Input label="Email" type="email" value={form.adminEmail} onChange={(e) => setForm({ ...form, adminEmail: e.target.value })} placeholder="admin@unilag.edu.ng" required />
-                                        <Input label="Password" type="password" value={form.adminPassword} onChange={(e) => setForm({ ...form, adminPassword: e.target.value })} placeholder="At least 8 characters" required />
+                                        <Input label="Full name" value={form.adminFullName} onChange={(eventValue10) => setForm({ ...form, adminFullName: eventValue10.target.value })} placeholder="Jane Doe" required />
+                                        <Input label="Email" type="email" value={form.adminEmail} onChange={(eventValue11) => setForm({ ...form, adminEmail: eventValue11.target.value })} placeholder="admin@unilag.edu.ng" required />
+                                        <Input label="Password" type="password" value={form.adminPassword} onChange={(eventValue12) => setForm({ ...form, adminPassword: eventValue12.target.value })} placeholder="At least 8 characters" required />
                                     </div>
                                 </div>
 
@@ -502,62 +502,62 @@ function UniversitiesTab() {
                             animate="animate"
                             className="divide-y divide-slate-100 dark:divide-slate-800"
                         >
-                            {universities.map((u) => (
-                                <motion.tr key={u.id} variants={staggerItem}>
-                                    <td className="px-6 py-3 font-mono text-sm text-slate-700 dark:text-slate-300">{u.code}</td>
+                            {universities.map((university) => (
+                                <motion.tr key={university.id} variants={staggerItem}>
+                                    <td className="px-6 py-3 font-mono text-sm text-slate-700 dark:text-slate-300">{university.code}</td>
                                     <td className="px-6 py-3 text-sm text-slate-900 dark:text-slate-100">
                                         <div className="flex items-center gap-3">
-                                            {u.logoUrl ? (
+                                            {university.logoUrl ? (
                                                 <img
-                                                    src={u.logoUrl}
-                                                    alt={u.name}
+                                                    src={university.logoUrl}
+                                                    alt={university.name}
                                                     className="h-8 w-8 shrink-0 rounded-md object-contain ring-1 ring-slate-200 dark:ring-slate-700"
-                                                    onError={(e) => { e.target.style.display = 'none' }}
+                                                    onError={(eventValue13) => { eventValue13.target.style.display = 'none' }}
                                                 />
                                             ) : (
                                                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                                                    {(u.code || '?').slice(0, 2)}
+                                                    {(university.code || '?').slice(0, 2)}
                                                 </div>
                                             )}
-                                            <span>{u.name}</span>
+                                            <span>{university.name}</span>
                                             {/* ⬅️ NEW — tiny color dot so admin can see the color at a glance */}
                                             <span
                                                 className="h-3 w-3 shrink-0 rounded-full ring-2 ring-white dark:ring-slate-900"
-                                                style={{ backgroundColor: u.primaryColor || DEFAULT_BRAND }}
-                                                title={`Brand color: ${u.primaryColor || DEFAULT_BRAND}`}
+                                                style={{ backgroundColor: university.primaryColor || DEFAULT_BRAND }}
+                                                title={`Brand color: ${university.primaryColor || DEFAULT_BRAND}`}
                                             />
                                         </div>
                                     </td>
-                                    <td className="px-6 py-3 text-sm text-slate-600 dark:text-slate-400">{u.plan}</td>
+                                    <td className="px-6 py-3 text-sm text-slate-600 dark:text-slate-400">{university.plan}</td>
                                     <td className="px-6 py-3">
-                                        <Badge variant={u.isActive ? 'success' : 'default'}>
-                                            {u.isActive ? 'Active' : 'Inactive'}
+                                        <Badge variant={university.isActive ? 'success' : 'default'}>
+                                            {university.isActive ? 'Active' : 'Inactive'}
                                         </Badge>
                                     </td>
                                     <td className="px-6 py-3">
                                         <div className="flex items-center justify-end gap-3">
                                             <button
-                                                onClick={() => openEdit(u)}
+                                                onClick={() => openEdit(university)}
                                                 className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                                             >
                                                 <Pencil className="h-3.5 w-3.5" />
                                                 Edit
                                             </button>
 
-                                            <AdmittedStudentsButton university={u} />
+                                            <AdmittedStudentsButton university={university} />
 
                                             <button
-                                                onClick={() => handleImpersonate(u)}
-                                                disabled={impersonating === u.id}
+                                                onClick={() => handleImpersonate(university)}
+                                                disabled={impersonating === university.id}
                                                 className="inline-flex items-center gap-1.5 text-xs font-medium text-sky-600 transition-colors hover:text-sky-700 disabled:opacity-50"
                                             >
                                                 <Eye className="h-3.5 w-3.5" />
-                                                {impersonating === u.id ? 'Loading…' : 'Login as admin'}
+                                                {impersonating === university.id ? 'Loading…' : 'Login as admin'}
                                             </button>
 
                                             <button
                                                 onClick={() => {
-                                                    setAddAdminTarget(u)
+                                                    setAddAdminTarget(university)
                                                     setAdminForm(emptyAdminForm)
                                                 }}
                                                 className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
@@ -567,15 +567,15 @@ function UniversitiesTab() {
                                             </button>
 
                                             <button
-                                                onClick={() => handleToggle(u)}
-                                                disabled={toggling === u.id}
+                                                onClick={() => handleToggle(university)}
+                                                disabled={toggling === university.id}
                                                 className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
-                                                    u.isActive
+                                                    university.isActive
                                                         ? 'text-amber-600 hover:text-amber-700'
                                                         : 'text-emerald-600 hover:text-emerald-700'
                                                 }`}
                                             >
-                                                {u.isActive ? (
+                                                {university.isActive ? (
                                                     <>
                                                         <PowerOff className="h-3.5 w-3.5" />
                                                         Deactivate
@@ -590,7 +590,7 @@ function UniversitiesTab() {
 
                                             <button
                                                 onClick={() => {
-                                                    setDeleteTarget(u)
+                                                    setDeleteTarget(university)
                                                     setDeleteConfirmCode('')
                                                 }}
                                                 className="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 transition-colors hover:text-rose-700"
@@ -636,7 +636,7 @@ function UniversitiesTab() {
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.96, y: 12 }}
                                 transition={{ duration: 0.2 }}
-                                onClick={(e) => e.stopPropagation()}
+                                onClick={(eventValue13) => eventValue13.stopPropagation()}
                                 className="relative my-8 w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
                             >
                                 <button
@@ -644,7 +644,7 @@ function UniversitiesTab() {
                                     className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                                     aria-label="Close"
                                 >
-                                    <X className="h-4 w-4" />
+                                    <CloseIcon className="h-4 w-4" />
                                 </button>
 
                                 <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -656,7 +656,7 @@ function UniversitiesTab() {
 
                                 <form onSubmit={saveEdit} className="mt-6 space-y-6">
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                        <Input label="University name" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} required />
+                                        <Input label="University name" value={editForm.name} onChange={(eventValue14) => setEditForm({ ...editForm, name: eventValue14.target.value })} required />
                                         <div>
                                             <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Code</label>
                                             <input
@@ -667,16 +667,16 @@ function UniversitiesTab() {
                                             />
                                             <p className="mt-1 text-xs text-slate-500">Code is immutable.</p>
                                         </div>
-                                        <Input label="Email domain" value={editForm.emailDomain} onChange={(e) => setEditForm({ ...editForm, emailDomain: e.target.value })} placeholder="@unilag.edu.ng" />
-                                        <Input label="Tagline" value={editForm.tagline} onChange={(e) => setEditForm({ ...editForm, tagline: e.target.value })} placeholder="Skip the line. Not the service." />
+                                        <Input label="Email domain" value={editForm.emailDomain} onChange={(eventValue15) => setEditForm({ ...editForm, emailDomain: eventValue15.target.value })} placeholder="@unilag.edu.ng" />
+                                        <Input label="Tagline" value={editForm.tagline} onChange={(eventValue16) => setEditForm({ ...editForm, tagline: eventValue16.target.value })} placeholder="Skip the line. Not the service." />
                                     </div>
 
                                     <div>
                                         <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Matric number format</h4>
                                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                            <Input label="Pattern (regex)" value={editForm.matricPattern} onChange={(e) => setEditForm({ ...editForm, matricPattern: e.target.value })} />
-                                            <Input label="Example" value={editForm.matricExample} onChange={(e) => setEditForm({ ...editForm, matricExample: e.target.value })} />
-                                            <Input label="Description" value={editForm.matricDescription} onChange={(e) => setEditForm({ ...editForm, matricDescription: e.target.value })} />
+                                            <Input label="Pattern (regex)" value={editForm.matricPattern} onChange={(eventValue17) => setEditForm({ ...editForm, matricPattern: eventValue17.target.value })} />
+                                            <Input label="Example" value={editForm.matricExample} onChange={(eventValue18) => setEditForm({ ...editForm, matricExample: eventValue18.target.value })} />
+                                            <Input label="Description" value={editForm.matricDescription} onChange={(eventValue19) => setEditForm({ ...editForm, matricDescription: eventValue19.target.value })} />
                                         </div>
                                     </div>
 
@@ -741,7 +741,7 @@ function UniversitiesTab() {
                                 initial={{ opacity: 0, scale: 0.95, y: 8 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: 8 }}
-                                onClick={(e) => e.stopPropagation()}
+                                onClick={(eventValue20) => eventValue20.stopPropagation()}
                                 className="relative w-full max-w-md rounded-xl border border-rose-200 bg-white p-6 shadow-2xl dark:border-rose-900 dark:bg-slate-900"
                             >
                                 <button
@@ -749,7 +749,7 @@ function UniversitiesTab() {
                                     className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                                     aria-label="Close"
                                 >
-                                    <X className="h-4 w-4" />
+                                    <CloseIcon className="h-4 w-4" />
                                 </button>
 
                                 <div className="mb-5 flex items-start gap-4">
@@ -773,7 +773,7 @@ function UniversitiesTab() {
                                     <input
                                         type="text"
                                         value={deleteConfirmCode}
-                                        onChange={(e) => setDeleteConfirmCode(e.target.value)}
+                                        onChange={(eventValue21) => setDeleteConfirmCode(eventValue21.target.value)}
                                         placeholder={deleteTarget.code}
                                         autoFocus
                                         className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-sm text-slate-900 placeholder-slate-400 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
@@ -821,7 +821,7 @@ function UniversitiesTab() {
                                 initial={{ opacity: 0, scale: 0.95, y: 8 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: 8 }}
-                                onClick={(e) => e.stopPropagation()}
+                                onClick={(eventValue22) => eventValue22.stopPropagation()}
                                 className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900"
                             >
                                 <button
@@ -829,7 +829,7 @@ function UniversitiesTab() {
                                     className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                                     aria-label="Close"
                                 >
-                                    <X className="h-4 w-4" />
+                                    <CloseIcon className="h-4 w-4" />
                                 </button>
 
                                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
@@ -840,10 +840,10 @@ function UniversitiesTab() {
                                 </p>
 
                                 <form onSubmit={submitNewAdmin} className="mt-5 space-y-1">
-                                    <Input label="Full name" value={adminForm.fullName} onChange={(e) => setAdminForm({ ...adminForm, fullName: e.target.value })} placeholder="Jane Doe" required />
-                                    <Input label="Email" type="email" value={adminForm.email} onChange={(e) => setAdminForm({ ...adminForm, email: e.target.value })} placeholder="admin2@unilag.edu.ng" required />
-                                    <Input label="Password" type="password" value={adminForm.password} onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })} placeholder="At least 8 characters" required />
-                                    <Input label="Department (optional)" value={adminForm.department} onChange={(e) => setAdminForm({ ...adminForm, department: e.target.value })} placeholder="e.g. Registry" />
+                                    <Input label="Full name" value={adminForm.fullName} onChange={(eventValue23) => setAdminForm({ ...adminForm, fullName: eventValue23.target.value })} placeholder="Jane Doe" required />
+                                    <Input label="Email" type="email" value={adminForm.email} onChange={(eventValue24) => setAdminForm({ ...adminForm, email: eventValue24.target.value })} placeholder="admin2@unilag.edu.ng" required />
+                                    <Input label="Password" type="password" value={adminForm.password} onChange={(eventValue25) => setAdminForm({ ...adminForm, password: eventValue25.target.value })} placeholder="At least 8 characters" required />
+                                    <Input label="Department (optional)" value={adminForm.department} onChange={(eventValue26) => setAdminForm({ ...adminForm, department: eventValue26.target.value })} placeholder="e.g. Registry" />
 
                                     <div className="flex justify-end gap-2 pt-2">
                                         <Button type="button" variant="secondary" onClick={() => setAddAdminTarget(null)} disabled={addingAdmin}>

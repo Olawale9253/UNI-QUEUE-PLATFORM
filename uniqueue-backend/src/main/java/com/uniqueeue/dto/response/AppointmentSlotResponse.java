@@ -43,14 +43,14 @@ public class AppointmentSlotResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static AppointmentSlotResponse from(AppointmentSlot s, long bookedCount) {
+    public static AppointmentSlotResponse from(AppointmentSlot appointmentSlot, long bookedCount) {
         LocalDateTime now = LocalDateTime.now();
-        long remaining = Math.max(0, s.getCapacity() - bookedCount);
+        long remaining = Math.max(0, appointmentSlot.getCapacity() - bookedCount);
 
         String status;
-        if (!Boolean.TRUE.equals(s.getIsActive())) {
+        if (!Boolean.TRUE.equals(appointmentSlot.getIsActive())) {
             status = "CLOSED";
-        } else if (s.getEndTime() != null && s.getEndTime().isBefore(now)) {
+        } else if (appointmentSlot.getEndTime() != null && appointmentSlot.getEndTime().isBefore(now)) {
             status = "PAST";
         } else if (remaining <= 0) {
             status = "FULL";
@@ -59,39 +59,39 @@ public class AppointmentSlotResponse {
         }
 
         return AppointmentSlotResponse.builder()
-                .id(s.getId())
-                .title(s.getTitle())
-                .description(s.getDescription())
-                .category(s.getCategory())
-                .officeName(computeOfficeName(s))
-                .faculty(s.getFaculty())
-                .department(s.getDepartment())
-                .location(s.getLocation())
-                .roomDetail(s.getRoomDetail())
-                .staffRole(s.getStaffRole())
-                .durationMinutes(s.getDurationMinutes())
-                .whatToBring(s.getWhatToBring())
-                .startTime(s.getStartTime())
-                .endTime(s.getEndTime())
-                .capacity(s.getCapacity())
+                .id(appointmentSlot.getId())
+                .title(appointmentSlot.getTitle())
+                .description(appointmentSlot.getDescription())
+                .category(appointmentSlot.getCategory())
+                .officeName(computeOfficeName(appointmentSlot))
+                .faculty(appointmentSlot.getFaculty())
+                .department(appointmentSlot.getDepartment())
+                .location(appointmentSlot.getLocation())
+                .roomDetail(appointmentSlot.getRoomDetail())
+                .staffRole(appointmentSlot.getStaffRole())
+                .durationMinutes(appointmentSlot.getDurationMinutes())
+                .whatToBring(appointmentSlot.getWhatToBring())
+                .startTime(appointmentSlot.getStartTime())
+                .endTime(appointmentSlot.getEndTime())
+                .capacity(appointmentSlot.getCapacity())
                 .bookedCount(bookedCount)
                 .remaining(remaining)
                 .status(status)
-                .isActive(s.getIsActive())
-                .staffId(s.getStaff() != null ? s.getStaff().getId() : null)
-                .staffName(s.getStaff() != null ? s.getStaff().getFullName() : null)
-                .universityId(s.getUniversity() != null ? s.getUniversity().getId() : null)
-                .createdAt(s.getCreatedAt())
-                .updatedAt(s.getUpdatedAt())
+                .isActive(appointmentSlot.getIsActive())
+                .staffId(appointmentSlot.getStaff() != null ? appointmentSlot.getStaff().getId() : null)
+                .staffName(appointmentSlot.getStaff() != null ? appointmentSlot.getStaff().getFullName() : null)
+                .universityId(appointmentSlot.getUniversity() != null ? appointmentSlot.getUniversity().getId() : null)
+                .createdAt(appointmentSlot.getCreatedAt())
+                .updatedAt(appointmentSlot.getUpdatedAt())
                 .build();
     }
 
-    private static String computeOfficeName(AppointmentSlot s) {
-        if (s.getDepartment() != null && !s.getDepartment().isBlank()) {
-            return s.getDepartment().trim();
+    private static String computeOfficeName(AppointmentSlot appointmentSlotValue) {
+        if (appointmentSlotValue.getDepartment() != null && !appointmentSlotValue.getDepartment().isBlank()) {
+            return appointmentSlotValue.getDepartment().trim();
         }
-        if (s.getFaculty() != null && !s.getFaculty().isBlank()) {
-            return s.getFaculty().trim();
+        if (appointmentSlotValue.getFaculty() != null && !appointmentSlotValue.getFaculty().isBlank()) {
+            return appointmentSlotValue.getFaculty().trim();
         }
         return "General Office";
     }

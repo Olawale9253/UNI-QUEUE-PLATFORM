@@ -33,13 +33,13 @@ function doRefresh() {
             { headers: { 'Content-Type': 'application/json' } }
         )
         .then((res) => {
-            const d = res.data?.data
-            if (!d?.accessToken) throw new Error('Refresh failed')
-            localStorage.setItem('uniqueue_token', d.accessToken)
-            if (d.refreshToken) {
-                localStorage.setItem('uniqueue_refresh_token', d.refreshToken)
+            const dateValue = res.data?.data
+            if (!dateValue?.accessToken) throw new Error('Refresh failed')
+            localStorage.setItem('uniqueue_token', dateValue.accessToken)
+            if (dateValue.refreshToken) {
+                localStorage.setItem('uniqueue_refresh_token', dateValue.refreshToken)
             }
-            return d.accessToken
+            return dateValue.accessToken
         })
         .finally(() => {
             refreshPromise = null
@@ -64,12 +64,12 @@ api.interceptors.request.use((config) => {
 })
 
 api.interceptors.response.use(
-    (r) => r,
+    (item) => item,
     async (error) => {
         const status = error.response?.status
         const original = error.config || {}
         const url = original.url || ''
-        const isPublicPath = PUBLIC_AUTH_PATHS.some((p) => url.includes(p))
+        const isPublicPath = PUBLIC_AUTH_PATHS.some((itemValue) => url.includes(itemValue))
 
         if (status !== 401 || isPublicPath) {
             return Promise.reject(error)

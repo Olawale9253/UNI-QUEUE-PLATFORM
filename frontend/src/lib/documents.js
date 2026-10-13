@@ -19,7 +19,7 @@ export const DOCUMENT_TYPES = [
 ]
 
 export const DOCUMENT_TYPE_MAP = Object.fromEntries(
-    DOCUMENT_TYPES.map((t) => [t.value, t])
+    DOCUMENT_TYPES.map((documentType) => [documentType.value, documentType])
 )
 
 export function formatFileSize(bytes) {

@@ -15,7 +15,7 @@ import { generatePalette, normalizeBrandHex, DEFAULT_BRAND } from '../lib/colors
  *   - If no university is loaded (super-admin landing, login page) → use navy
  */
 export function useUniversityTheme() {
-    const university = useUniversityStore((s) => s.university)
+    const university = useUniversityStore((item) => item.university)
 
     useEffect(() => {
         const root = document.documentElement

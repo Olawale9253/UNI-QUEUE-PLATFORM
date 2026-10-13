@@ -71,10 +71,10 @@ public class WorkflowService {
 
         List<Queue> queues = new ArrayList<>();
         for (CreateWorkflowRequest.StepInput input : request.getSteps()) {
-            Queue q = queueRepository.findByIdAndUniversityId(input.getQueueId(), universityId)
+            Queue queueValue8 = queueRepository.findByIdAndUniversityId(input.getQueueId(), universityId)
                     .orElseThrow(() -> new BadRequestException(
                             "Queue " + input.getQueueId() + " not found in your university"));
-            queues.add(q);
+            queues.add(queueValue8);
         }
 
         Workflow workflow = Workflow.builder()
@@ -88,12 +88,12 @@ public class WorkflowService {
         workflow = workflowRepository.save(workflow);
 
         List<WorkflowStep> steps = new ArrayList<>();
-        for (int i = 0; i < request.getSteps().size(); i++) {
-            CreateWorkflowRequest.StepInput input = request.getSteps().get(i);
+        for (int indexValue11 = 0; indexValue11 < request.getSteps().size(); indexValue11++) {
+            CreateWorkflowRequest.StepInput input = request.getSteps().get(indexValue11);
             WorkflowStep step = WorkflowStep.builder()
                     .workflow(workflow)
-                    .queue(queues.get(i))
-                    .stepOrder(i + 1)
+                    .queue(queues.get(indexValue11))
+                    .stepOrder(indexValue11 + 1)
                     .label(input.getLabel())
                     .instructions(input.getInstructions())
                     .isRequired(input.getIsRequired() != null ? input.getIsRequired() : true)
@@ -111,28 +111,28 @@ public class WorkflowService {
     @Transactional(readOnly = true)
     public List<WorkflowResponse> listForUniversity(Long universityId) {
         return workflowRepository.findByUniversityIdOrderByCreatedAtDesc(universityId).stream()
-                .map(w -> {
-                    List<WorkflowStep> steps = stepRepository.findByWorkflowIdOrderByStepOrderAsc(w.getId());
-                    long inProgress = studentWorkflowRepository.countByWorkflowIdAndStatus(w.getId(), WorkflowStatus.IN_PROGRESS);
-                    long completed = studentWorkflowRepository.countByWorkflowIdAndStatus(w.getId(), WorkflowStatus.COMPLETED);
-                    return WorkflowResponse.from(w, steps, inProgress, completed);
+                .map(workflowValue2 -> {
+                    List<WorkflowStep> steps = stepRepository.findByWorkflowIdOrderByStepOrderAsc(workflowValue2.getId());
+                    long inProgress = studentWorkflowRepository.countByWorkflowIdAndStatus(workflowValue2.getId(), WorkflowStatus.IN_PROGRESS);
+                    long completed = studentWorkflowRepository.countByWorkflowIdAndStatus(workflowValue2.getId(), WorkflowStatus.COMPLETED);
+                    return WorkflowResponse.from(workflowValue2, steps, inProgress, completed);
                 })
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public WorkflowResponse getOne(Long workflowId, Long universityId) {
-        Workflow w = workflowRepository.findByIdAndUniversityId(workflowId, universityId)
+        Workflow workflowValue3 = workflowRepository.findByIdAndUniversityId(workflowId, universityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Workflow not found"));
-        List<WorkflowStep> steps = stepRepository.findByWorkflowIdOrderByStepOrderAsc(w.getId());
-        long inProgress = studentWorkflowRepository.countByWorkflowIdAndStatus(w.getId(), WorkflowStatus.IN_PROGRESS);
-        long completed = studentWorkflowRepository.countByWorkflowIdAndStatus(w.getId(), WorkflowStatus.COMPLETED);
-        return WorkflowResponse.from(w, steps, inProgress, completed);
+        List<WorkflowStep> steps = stepRepository.findByWorkflowIdOrderByStepOrderAsc(workflowValue3.getId());
+        long inProgress = studentWorkflowRepository.countByWorkflowIdAndStatus(workflowValue3.getId(), WorkflowStatus.IN_PROGRESS);
+        long completed = studentWorkflowRepository.countByWorkflowIdAndStatus(workflowValue3.getId(), WorkflowStatus.COMPLETED);
+        return WorkflowResponse.from(workflowValue3, steps, inProgress, completed);
     }
 
     @Transactional
     public void delete(Long workflowId, Long universityId) {
-        Workflow w = workflowRepository.findByIdAndUniversityId(workflowId, universityId)
+        Workflow workflowValue4 = workflowRepository.findByIdAndUniversityId(workflowId, universityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Workflow not found"));
 
         long active = studentWorkflowRepository.countByWorkflowIdAndStatus(workflowId, WorkflowStatus.IN_PROGRESS);
@@ -147,11 +147,11 @@ public class WorkflowService {
         studentWorkflowRepository.deleteAll(enrolled);
 
         stepRepository.deleteByWorkflowId(workflowId);
-        workflowRepository.delete(w);
+        workflowRepository.delete(workflowValue4);
 
         auditService.record(null, universityId,
                 AuditAction.WORKFLOW_DELETED, "Workflow", workflowId,
-                "{\"name\":\"" + w.getName() + "\"}");
+                "{\"name\":\"" + workflowValue4.getName() + "\"}");
     }
 
     @Transactional
@@ -176,7 +176,7 @@ public class WorkflowService {
 
     @Transactional(readOnly = true)
     public WorkflowAnalyticsResponse getAnalytics(Long workflowId, Long universityId) {
-        Workflow w = workflowRepository.findByIdAndUniversityId(workflowId, universityId)
+        Workflow workflowValue5 = workflowRepository.findByIdAndUniversityId(workflowId, universityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Workflow not found"));
 
         List<WorkflowStep> steps = stepRepository.findByWorkflowIdOrderByStepOrderAsc(workflowId);
@@ -205,8 +205,8 @@ public class WorkflowService {
         double maxHours = 0;
         int bottleneckIndex = -1;
 
-        for (int i = 0; i < steps.size(); i++) {
-            WorkflowStep step = steps.get(i);
+        for (int indexValue12 = 0; indexValue12 < steps.size(); indexValue12++) {
+            WorkflowStep step = steps.get(indexValue12);
 
             long completed = studentWorkflowStepRepository
                     .countByWorkflowStepIdAndStatus(step.getId(), StepStatus.COMPLETED);
@@ -221,14 +221,14 @@ public class WorkflowService {
                             step.getId(), StepStatus.COMPLETED);
             if (!onThisStep.isEmpty()) {
                 avgHours = onThisStep.stream()
-                        .mapToLong(t -> Duration.between(t.getStartedAt(), t.getCompletedAt()).toHours())
+                        .mapToLong(valueValue5 -> Duration.between(valueValue5.getStartedAt(), valueValue5.getCompletedAt()).toHours())
                         .average()
                         .orElse(0);
             }
 
             if (avgHours > maxHours) {
                 maxHours = avgHours;
-                bottleneckIndex = i;
+                bottleneckIndex = indexValue12;
             }
 
             stepStats.add(WorkflowAnalyticsResponse.StepAnalytics.builder()
@@ -249,9 +249,9 @@ public class WorkflowService {
         }
 
         return WorkflowAnalyticsResponse.builder()
-                .workflowId(w.getId())
-                .workflowName(w.getName())
-                .session(w.getSession())
+                .workflowId(workflowValue5.getId())
+                .workflowName(workflowValue5.getName())
+                .session(workflowValue5.getSession())
                 .totalEnrolled(totalEnrolled)
                 .totalCompleted(totalCompleted)
                 .totalInProgress(totalInProgress)
@@ -273,9 +273,9 @@ public class WorkflowService {
         if (student.getUniversity() == null) return List.of();
         return workflowRepository.findByUniversityIdAndIsActiveTrueOrderByCreatedAtDesc(student.getUniversity().getId())
                 .stream()
-                .map(w -> {
-                    List<WorkflowStep> steps = stepRepository.findByWorkflowIdOrderByStepOrderAsc(w.getId());
-                    return WorkflowResponse.from(w, steps, 0, 0);
+                .map(valueValue6 -> {
+                    List<WorkflowStep> steps = stepRepository.findByWorkflowIdOrderByStepOrderAsc(valueValue6.getId());
+                    return WorkflowResponse.from(valueValue6, steps, 0, 0);
                 })
                 .toList();
     }
@@ -393,18 +393,18 @@ public class WorkflowService {
         List<StudentWorkflowStep> tracking = studentWorkflowStepRepository
                 .findByStudentWorkflowIdOrderByWorkflowStepStepOrderAsc(enrollment.getId());
         Map<Long, StudentWorkflowStep> byStepId = tracking.stream()
-                .collect(Collectors.toMap(t -> t.getWorkflowStep().getId(), t -> t, (a, b) -> a));
+                .collect(Collectors.toMap(studentWorkflowStep -> studentWorkflowStep.getWorkflowStep().getId(), studentWorkflowStepValue -> studentWorkflowStepValue, (studentWorkflowStepValue2, studentWorkflowStepValue3) -> studentWorkflowStepValue2));
 
         List<WorkflowProgressResponse.StepProgress> stepList = new ArrayList<>();
         int completedCount = 0;
         Integer currentOrder = null;
 
         for (WorkflowStep step : steps) {
-            StudentWorkflowStep t = byStepId.get(step.getId());
-            StepStatus s = (t != null) ? t.getStatus() : StepStatus.PENDING;
+            StudentWorkflowStep studentWorkflowStepValue4 = byStepId.get(step.getId());
+            StepStatus stepStatus = (studentWorkflowStepValue4 != null) ? studentWorkflowStepValue4.getStatus() : StepStatus.PENDING;
 
-            if (s == StepStatus.COMPLETED) completedCount++;
-            if (s == StepStatus.IN_PROGRESS && currentOrder == null) {
+            if (stepStatus == StepStatus.COMPLETED) completedCount++;
+            if (stepStatus == StepStatus.IN_PROGRESS && currentOrder == null) {
                 currentOrder = step.getStepOrder();
             }
 
@@ -415,9 +415,9 @@ public class WorkflowService {
                     .officeName(step.getQueue() != null && step.getQueue().getOffice() != null
                             ? step.getQueue().getOffice().getName() : null)
                     .label(step.getLabel())
-                    .status(s)
-                    .startedAt(t != null ? t.getStartedAt() : null)
-                    .completedAt(t != null ? t.getCompletedAt() : null)
+                    .status(stepStatus)
+                    .startedAt(studentWorkflowStepValue4 != null ? studentWorkflowStepValue4.getStartedAt() : null)
+                    .completedAt(studentWorkflowStepValue4 != null ? studentWorkflowStepValue4.getCompletedAt() : null)
                     .isCurrent(false)
                     .build());
         }
@@ -475,11 +475,11 @@ public class WorkflowService {
                 .findByUniversityIdAndIsActiveTrueOrderByCreatedAtDesc(student.getUniversity().getId());
 
         Workflow match = null;
-        for (Workflow w : candidates) {
-            List<WorkflowStep> steps = stepRepository.findByWorkflowIdOrderByStepOrderAsc(w.getId());
+        for (Workflow workflowValue6 : candidates) {
+            List<WorkflowStep> steps = stepRepository.findByWorkflowIdOrderByStepOrderAsc(workflowValue6.getId());
             if (steps.isEmpty()) continue;
             if (steps.get(0).getQueue().getId().equals(queueId)) {
-                match = w;
+                match = workflowValue6;
                 break;
             }
         }
@@ -518,15 +518,15 @@ public class WorkflowService {
                 .findByStudentWorkflowIdOrderByWorkflowStepStepOrderAsc(sw.getId());
 
         Map<Long, StudentWorkflowStep> trackingByStepId = new HashMap<>();
-        for (StudentWorkflowStep t : tracking) {
-            trackingByStepId.put(t.getWorkflowStep().getId(), t);
+        for (StudentWorkflowStep studentWorkflowStepValue5 : tracking) {
+            trackingByStepId.put(studentWorkflowStepValue5.getWorkflowStep().getId(), studentWorkflowStepValue5);
         }
 
         Map<Long, String> staffNames = new HashMap<>();
-        for (StudentWorkflowStep t : tracking) {
-            if (t.getCompletedByUserId() != null && !staffNames.containsKey(t.getCompletedByUserId())) {
-                userRepository.findById(t.getCompletedByUserId())
-                        .ifPresent(u -> staffNames.put(u.getId(), u.getFullName()));
+        for (StudentWorkflowStep studentWorkflowStepValue6 : tracking) {
+            if (studentWorkflowStepValue6.getCompletedByUserId() != null && !staffNames.containsKey(studentWorkflowStepValue6.getCompletedByUserId())) {
+                userRepository.findById(studentWorkflowStepValue6.getCompletedByUserId())
+                        .ifPresent(valueValue7 -> staffNames.put(valueValue7.getId(), valueValue7.getFullName()));
             }
         }
 
@@ -535,15 +535,15 @@ public class WorkflowService {
         WorkflowProgressResponse.ProgressStep current = null;
 
         for (WorkflowStep step : steps) {
-            StudentWorkflowStep t = trackingByStepId.get(step.getId());
+            StudentWorkflowStep studentWorkflowStepValue7 = trackingByStepId.get(step.getId());
             String state;
-            if (t != null && t.getStatus() == StepStatus.COMPLETED) {
+            if (studentWorkflowStepValue7 != null && studentWorkflowStepValue7.getStatus() == StepStatus.COMPLETED) {
                 state = "COMPLETED";
                 completedCount++;
             } else if (step.getStepOrder().equals(sw.getCurrentStepOrder())
                     && sw.getStatus() == WorkflowStatus.IN_PROGRESS) {
                 state = "CURRENT";
-            } else if (t != null && t.getStatus() == StepStatus.IN_PROGRESS) {
+            } else if (studentWorkflowStepValue7 != null && studentWorkflowStepValue7.getStatus() == StepStatus.IN_PROGRESS) {
                 state = "CURRENT";
             } else {
                 state = "LOCKED";
@@ -557,13 +557,13 @@ public class WorkflowService {
                     .instructions(step.getInstructions())
                     .isRequired(step.getIsRequired())
                     .state(state)
-                    .startedAt(t != null ? t.getStartedAt() : null)
-                    .completedAt(t != null ? t.getCompletedAt() : null)
-                    .completedByName(t != null && t.getCompletedByUserId() != null
-                            ? staffNames.get(t.getCompletedByUserId())
+                    .startedAt(studentWorkflowStepValue7 != null ? studentWorkflowStepValue7.getStartedAt() : null)
+                    .completedAt(studentWorkflowStepValue7 != null ? studentWorkflowStepValue7.getCompletedAt() : null)
+                    .completedByName(studentWorkflowStepValue7 != null && studentWorkflowStepValue7.getCompletedByUserId() != null
+                            ? staffNames.get(studentWorkflowStepValue7.getCompletedByUserId())
                             : null)
-                    .ticketId(t != null ? t.getTicketId() : null)
-                    .notes(t != null ? t.getNotes() : null)
+                    .ticketId(studentWorkflowStepValue7 != null ? studentWorkflowStepValue7.getTicketId() : null)
+                    .notes(studentWorkflowStepValue7 != null ? studentWorkflowStepValue7.getNotes() : null)
                     .build();
 
             stepViews.add(view);
@@ -605,14 +605,14 @@ public class WorkflowService {
                     .findByWorkflowIdOrderByStepOrderAsc(sw.getWorkflow().getId());
 
             WorkflowStep thisQueueStep = steps.stream()
-                    .filter(s -> s.getQueue().getId().equals(queueId))
+                    .filter(workflowStepValue3 -> workflowStepValue3.getQueue().getId().equals(queueId))
                     .findFirst().orElse(null);
 
             if (thisQueueStep == null) continue;
 
             if (!thisQueueStep.getStepOrder().equals(sw.getCurrentStepOrder())) {
                 WorkflowStep currentStep = steps.stream()
-                        .filter(s -> s.getStepOrder().equals(sw.getCurrentStepOrder()))
+                        .filter(workflowStepValue4 -> workflowStepValue4.getStepOrder().equals(sw.getCurrentStepOrder()))
                         .findFirst().orElse(null);
                 String currentStepName = currentStep != null ? stepLabel(currentStep) : "unknown";
                 throw new BadRequestException(
@@ -636,7 +636,7 @@ public class WorkflowService {
                     .findByWorkflowIdOrderByStepOrderAsc(sw.getWorkflow().getId());
 
             WorkflowStep step = steps.stream()
-                    .filter(s -> s.getQueue().getId().equals(queueId))
+                    .filter(workflowStepValue5 -> workflowStepValue5.getQueue().getId().equals(queueId))
                     .findFirst().orElse(null);
             if (step == null) continue;
             if (!step.getStepOrder().equals(sw.getCurrentStepOrder())) continue;
@@ -647,7 +647,7 @@ public class WorkflowService {
 
             int nextOrder = step.getStepOrder() + 1;
             WorkflowStep nextStep = steps.stream()
-                    .filter(s -> s.getStepOrder().equals(nextOrder))
+                    .filter(workflowStepValue6 -> workflowStepValue6.getStepOrder().equals(nextOrder))
                     .findFirst().orElse(null);
 
             auditService.record(studentId, sw.getWorkflow().getUniversity().getId(),
@@ -693,13 +693,13 @@ public class WorkflowService {
     // ============================================================
 
     private void createStepTracking(StudentWorkflow sw, List<WorkflowStep> steps) {
-        for (int i = 0; i < steps.size(); i++) {
-            WorkflowStep step = steps.get(i);
+        for (int indexValue13 = 0; indexValue13 < steps.size(); indexValue13++) {
+            WorkflowStep step = steps.get(indexValue13);
             StudentWorkflowStep tracking = StudentWorkflowStep.builder()
                     .studentWorkflow(sw)
                     .workflowStep(step)
-                    .status(i == 0 ? StepStatus.IN_PROGRESS : StepStatus.PENDING)
-                    .startedAt(i == 0 ? LocalDateTime.now() : null)
+                    .status(indexValue13 == 0 ? StepStatus.IN_PROGRESS : StepStatus.PENDING)
+                    .startedAt(indexValue13 == 0 ? LocalDateTime.now() : null)
                     .build();
             studentWorkflowStepRepository.save(tracking);
         }

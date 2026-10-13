@@ -117,16 +117,16 @@ public class PushController {
         List<PushSubscription> subs = subscriptionRepository.findByUserId(principal.getId());
         Map<String, Object> data = new HashMap<>();
         data.put("count", subs.size());
-        data.put("devices", subs.stream().map(s -> Map.of(
-                "id", s.getId(),
-                "userAgent", s.getUserAgent() != null ? s.getUserAgent() : "unknown",
-                "createdAt", s.getCreatedAt()
+        data.put("devices", subs.stream().map(pushSubscription -> Map.of(
+                "id", pushSubscription.getId(),
+                "userAgent", pushSubscription.getUserAgent() != null ? pushSubscription.getUserAgent() : "unknown",
+                "createdAt", pushSubscription.getCreatedAt()
         )).toList());
         return ResponseEntity.ok(ApiResponse.success("Devices", data));
     }
 
-    private String truncate(String s, int max) {
-        if (s == null) return null;
-        return s.length() <= max ? s : s.substring(0, max);
+    private String truncate(String stringValueValue, int max) {
+        if (stringValueValue == null) return null;
+        return stringValueValue.length() <= max ? stringValueValue : stringValueValue.substring(0, max);
     }
 }

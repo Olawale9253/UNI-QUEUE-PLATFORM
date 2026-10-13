@@ -80,12 +80,12 @@ export default function StaffDocuments() {
 
     const filtered = useMemo(() => {
         if (!search.trim()) return docs
-        const s = search.trim().toLowerCase()
+        const stringValue = search.trim().toLowerCase()
         return docs.filter(
-            (d) =>
-                d.originalFilename?.toLowerCase().includes(s) ||
-                d.uploadedByName?.toLowerCase().includes(s) ||
-                d.ticketNumber?.toLowerCase().includes(s)
+            (doc) =>
+                doc.originalFilename?.toLowerCase().includes(stringValue) ||
+                doc.uploadedByName?.toLowerCase().includes(stringValue) ||
+                doc.ticketNumber?.toLowerCase().includes(stringValue)
         )
     }, [docs, search])
 
@@ -95,12 +95,12 @@ export default function StaffDocuments() {
                 responseType: 'blob',
             })
             const blobUrl = URL.createObjectURL(res.data)
-            const a = document.createElement('a')
-            a.href = blobUrl
-            a.download = doc.originalFilename || 'document'
-            document.body.appendChild(a)
-            a.click()
-            a.remove()
+            const documentValue = document.createElement('a')
+            documentValue.href = blobUrl
+            documentValue.download = doc.originalFilename || 'document'
+            document.body.appendChild(documentValue)
+            documentValue.click()
+            documentValue.remove()
             URL.revokeObjectURL(blobUrl)
         } catch {
             push({ type: 'error', message: 'Download failed' })
@@ -116,7 +116,7 @@ export default function StaffDocuments() {
                     </h2>
                 </div>
                 <Card padded={false}>
-                    {Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)}
+                    {Array.from({ length: 4 }).map((unusedValue, index) => <SkeletonRow key={index} />)}
                 </Card>
             </div>
         )
@@ -135,20 +135,20 @@ export default function StaffDocuments() {
 
             {/* Filter chips */}
             <div className="mb-4 flex flex-wrap gap-1.5">
-                {FILTERS.map((f) => {
-                    const isActive = filter === f.value
+                {FILTERS.map((item) => {
+                    const isActive = filter === item.value
                     return (
                         <button
-                            key={f.value}
+                            key={item.value}
                             type="button"
-                            onClick={() => setFilter(f.value)}
+                            onClick={() => setFilter(item.value)}
                             className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                                 isActive
                                     ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
                                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
                             }`}
                         >
-                            {f.label}
+                            {item.label}
                         </button>
                     )
                 })}
@@ -162,7 +162,7 @@ export default function StaffDocuments() {
                         <input
                             type="text"
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(event) => setSearch(event.target.value)}
                             placeholder="Search by filename, student, or ticket"
                             className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                         />
@@ -190,11 +190,11 @@ export default function StaffDocuments() {
                 />
             ) : (
                 <div className="space-y-3">
-                    {filtered.map((d, idx) => {
-                        const isPending = d.status === 'PENDING'
+                    {filtered.map((itemValue, idx) => {
+                        const isPending = itemValue.status === 'PENDING'
                         return (
                             <motion.div
-                                key={d.id}
+                                key={itemValue.id}
                                 initial={{ opacity: 0, y: 4 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.02 }}
@@ -203,15 +203,15 @@ export default function StaffDocuments() {
                                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                         <div className="flex min-w-0 flex-1 items-start gap-4">
                                             <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                                                d.status === 'APPROVED'
+                                                itemValue.status === 'APPROVED'
                                                     ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
-                                                    : d.status === 'REJECTED'
+                                                    : itemValue.status === 'REJECTED'
                                                         ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
                                                         : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
                                             }`}>
-                                                {d.status === 'APPROVED' ? (
+                                                {itemValue.status === 'APPROVED' ? (
                                                     <CheckCircle2 className="h-5 w-5" />
-                                                ) : d.status === 'REJECTED' ? (
+                                                ) : itemValue.status === 'REJECTED' ? (
                                                     <XCircle className="h-5 w-5" />
                                                 ) : (
                                                     <Clock className="h-5 w-5" />
@@ -221,39 +221,39 @@ export default function StaffDocuments() {
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex flex-wrap items-center gap-2">
                                                     <h3 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
-                                                        {d.originalFilename}
+                                                        {itemValue.originalFilename}
                                                     </h3>
-                                                    <Badge variant={STATUS_VARIANTS[d.status] || 'default'}>
-                                                        {STATUS_LABELS[d.status] || d.status}
+                                                    <Badge variant={STATUS_VARIANTS[itemValue.status] || 'default'}>
+                                                        {STATUS_LABELS[itemValue.status] || itemValue.status}
                                                     </Badge>
                                                 </div>
 
                                                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                                                    <span>{d.type}</span>
+                                                    <span>{itemValue.type}</span>
                                                     <span>·</span>
-                                                    <span>{formatSize(d.sizeBytes)}</span>
+                                                    <span>{formatSize(itemValue.sizeBytes)}</span>
                                                 </div>
 
                                                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
                           <span className="flex items-center gap-1">
                             <User className="h-3 w-3 shrink-0" />
-                              {d.uploadedByName || 'Unknown'}
+                              {itemValue.uploadedByName || 'Unknown'}
                           </span>
-                                                    {d.ticketNumber && (
+                                                    {itemValue.ticketNumber && (
                                                         <span className="flex items-center gap-1 font-mono">
                               <Hash className="h-3 w-3 shrink-0" />
-                                                            {d.ticketNumber}
+                                                            {itemValue.ticketNumber}
                             </span>
                                                     )}
-                                                    <span>{formatDateTime(d.createdAt)}</span>
+                                                    <span>{formatDateTime(itemValue.createdAt)}</span>
                                                 </div>
 
-                                                {d.status === 'REJECTED' && d.reviewNotes && (
+                                                {itemValue.status === 'REJECTED' && itemValue.reviewNotes && (
                                                     <div className="mt-3 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
                                                         <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                                                         <div>
                                                             <span className="font-semibold">Reason: </span>
-                                                            {d.reviewNotes}
+                                                            {itemValue.reviewNotes}
                                                         </div>
                                                     </div>
                                                 )}
@@ -262,7 +262,7 @@ export default function StaffDocuments() {
 
                                         <div className="flex shrink-0 items-center gap-1">
                                             <button
-                                                onClick={() => download(d)}
+                                                onClick={() => download(itemValue)}
                                                 className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-300"
                                                 title="Download"
                                             >
@@ -272,7 +272,7 @@ export default function StaffDocuments() {
                                                 <Button
                                                     size="sm"
                                                     icon={Eye}
-                                                    onClick={() => setSelected(d)}
+                                                    onClick={() => setSelected(itemValue)}
                                                 >
                                                     Review
                                                 </Button>

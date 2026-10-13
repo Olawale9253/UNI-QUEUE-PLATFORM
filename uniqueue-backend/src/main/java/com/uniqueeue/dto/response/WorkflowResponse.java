@@ -45,32 +45,32 @@ public class WorkflowResponse {
         private Boolean isRequired;
     }
 
-    public static WorkflowResponse from(Workflow w, List<WorkflowStep> steps,
+    public static WorkflowResponse from(Workflow workflow, List<WorkflowStep> steps,
                                         long inProgress, long completed) {
         return WorkflowResponse.builder()
-                .id(w.getId())
-                .name(w.getName())
-                .description(w.getDescription())
-                .session(w.getSession())
-                .isActive(w.getIsActive())
-                .universityId(w.getUniversity() != null ? w.getUniversity().getId() : null)
-                .universityName(w.getUniversity() != null ? w.getUniversity().getName() : null)
-                .createdById(w.getCreatedBy() != null ? w.getCreatedBy().getId() : null)
-                .createdByName(w.getCreatedBy() != null ? w.getCreatedBy().getFullName() : null)
+                .id(workflow.getId())
+                .name(workflow.getName())
+                .description(workflow.getDescription())
+                .session(workflow.getSession())
+                .isActive(workflow.getIsActive())
+                .universityId(workflow.getUniversity() != null ? workflow.getUniversity().getId() : null)
+                .universityName(workflow.getUniversity() != null ? workflow.getUniversity().getName() : null)
+                .createdById(workflow.getCreatedBy() != null ? workflow.getCreatedBy().getId() : null)
+                .createdByName(workflow.getCreatedBy() != null ? workflow.getCreatedBy().getFullName() : null)
                 .stepCount(steps.size())
                 .inProgressCount(inProgress)
                 .completedCount(completed)
-                .steps(steps.stream().map(s -> StepResponse.builder()
-                        .id(s.getId())
-                        .order(s.getStepOrder())
-                        .queueId(s.getQueue() != null ? s.getQueue().getId() : null)
-                        .queueName(s.getQueue() != null ? s.getQueue().getName() : null)
-                        .label(s.getLabel())
-                        .instructions(s.getInstructions())
-                        .isRequired(s.getIsRequired())
+                .steps(steps.stream().map(workflowStepValue2 -> StepResponse.builder()
+                        .id(workflowStepValue2.getId())
+                        .order(workflowStepValue2.getStepOrder())
+                        .queueId(workflowStepValue2.getQueue() != null ? workflowStepValue2.getQueue().getId() : null)
+                        .queueName(workflowStepValue2.getQueue() != null ? workflowStepValue2.getQueue().getName() : null)
+                        .label(workflowStepValue2.getLabel())
+                        .instructions(workflowStepValue2.getInstructions())
+                        .isRequired(workflowStepValue2.getIsRequired())
                         .build()).toList())
-                .createdAt(w.getCreatedAt())
-                .updatedAt(w.getUpdatedAt())
+                .createdAt(workflow.getCreatedAt())
+                .updatedAt(workflow.getUpdatedAt())
                 .build();
     }
 }

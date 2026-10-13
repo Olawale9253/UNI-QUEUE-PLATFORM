@@ -8,7 +8,7 @@ export const useUIStore = create(
             mobileSidebarOpen: false,
 
             toggleSidebar: () => set({ sidebarCollapsed: !get().sidebarCollapsed }),
-            setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
+            setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),
 
             openMobileSidebar: () => set({ mobileSidebarOpen: true }),
             closeMobileSidebar: () => set({ mobileSidebarOpen: false }),
@@ -16,7 +16,7 @@ export const useUIStore = create(
         {
             name: 'uniqueue-ui',
             // Only persist desktop collapse preference — mobile drawer state is ephemeral
-            partialize: (s) => ({ sidebarCollapsed: s.sidebarCollapsed }),
+            partialize: (state) => ({ sidebarCollapsed: state.sidebarCollapsed }),
         }
     )
 )

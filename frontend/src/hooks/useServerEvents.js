@@ -5,7 +5,7 @@ import { syncBus } from '../lib/syncBus'
 const PUBLISH_DEBOUNCE_MS = 150
 
 export function useServerEvents() {
-    const token = useAuthStore((s) => s.token)
+    const token = useAuthStore((item) => item.token)
     const esRef = useRef(null)
     const debounceRef = useRef({ timer: null, lastAt: 0, pendingPayload: null })
 

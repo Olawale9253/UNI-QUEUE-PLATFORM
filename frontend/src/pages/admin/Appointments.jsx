@@ -60,12 +60,12 @@ export default function Appointments() {
 
     const load = useCallback(async () => {
         try {
-            const [a, s] = await Promise.all([
+            const [firstValue, stringValue] = await Promise.all([
                 api.get('/api/admin/appointments'),
                 api.get('/api/admin/appointments/stats').catch(() => ({ data: { data: null } })),
             ])
-            setAppointments(a.data?.data || [])
-            setStats(s.data?.data || null)
+            setAppointments(firstValue.data?.data || [])
+            setStats(stringValue.data?.data || null)
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed to load appointments' })
         } finally {
@@ -78,15 +78,15 @@ export default function Appointments() {
 
     const filtered = useMemo(() => {
         let list = appointments
-        if (filter !== 'ALL') list = list.filter((a) => a.status === filter)
+        if (filter !== 'ALL') list = list.filter((item) => item.status === filter)
         if (search.trim()) {
-            const s = search.toLowerCase()
+            const searchValue = search.toLowerCase()
             list = list.filter(
-                (a) =>
-                    a.studentName?.toLowerCase().includes(s) ||
-                    a.studentEmail?.toLowerCase().includes(s) ||
-                    a.staffName?.toLowerCase().includes(s) ||
-                    a.slotTitle?.toLowerCase().includes(s)
+                (itemValue) =>
+                    itemValue.studentName?.toLowerCase().includes(searchValue) ||
+                    itemValue.studentEmail?.toLowerCase().includes(searchValue) ||
+                    itemValue.staffName?.toLowerCase().includes(searchValue) ||
+                    itemValue.slotTitle?.toLowerCase().includes(searchValue)
             )
         }
         return list
@@ -97,7 +97,7 @@ export default function Appointments() {
             <>
                 <PageHeader title="Appointments" description="Every appointment across your university." />
                 <Card padded={false}>
-                    {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
+                    {Array.from({ length: 5 }).map((unusedValue, index) => <SkeletonRow key={index} />)}
                 </Card>
             </>
         )
@@ -164,22 +164,22 @@ export default function Appointments() {
             {appointments.length > 0 && (
                 <div className="mb-5 space-y-3">
                     <div className="flex flex-wrap gap-1.5">
-                        {FILTERS.map((t) => {
-                            const count = t === 'ALL'
+                        {FILTERS.map((item) => {
+                            const count = item === 'ALL'
                                 ? appointments.length
-                                : appointments.filter((a) => a.status === t).length
+                                : appointments.filter((appointment) => appointment.status === item).length
                             return (
                                 <button
-                                    key={t}
+                                    key={item}
                                     type="button"
-                                    onClick={() => setFilter(t)}
+                                    onClick={() => setFilter(item)}
                                     className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                                        filter === t
+                                        filter === item
                                             ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
                                             : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
                                     }`}
                                 >
-                                    {t.charAt(0) + t.slice(1).toLowerCase().replace(/_/g, ' ')}
+                                    {item.charAt(0) + item.slice(1).toLowerCase().replace(/_/g, ' ')}
                                     <span className="ml-1.5 opacity-60">{count}</span>
                                 </button>
                             )
@@ -191,7 +191,7 @@ export default function Appointments() {
                         <input
                             type="text"
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(event) => setSearch(event.target.value)}
                             placeholder="Search by student, staff, or slot"
                             className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                         />
@@ -223,46 +223,46 @@ export default function Appointments() {
                     animate="animate"
                     className="space-y-3"
                 >
-                    {filtered.map((a) => (
-                        <motion.div key={a.id} variants={staggerItem}>
+                    {filtered.map((itemValue) => (
+                        <motion.div key={itemValue.id} variants={staggerItem}>
                             <Card>
                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="flex min-w-0 items-start gap-3">
                                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
-                                            {a.studentName?.slice(0, 1).toUpperCase() || '?'}
+                                            {itemValue.studentName?.slice(0, 1).toUpperCase() || '?'}
                                         </div>
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <h3 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                    {a.studentName || 'Unknown student'}
+                                                    {itemValue.studentName || 'Unknown student'}
                                                 </h3>
-                                                <Badge variant={STATUS_VARIANTS[a.status] || 'default'}>
-                                                    {a.status}
+                                                <Badge variant={STATUS_VARIANTS[itemValue.status] || 'default'}>
+                                                    {itemValue.status}
                                                 </Badge>
                                             </div>
-                                            {a.studentEmail && (
+                                            {itemValue.studentEmail && (
                                                 <div className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-slate-500 dark:text-slate-400">
                                                     <Mail className="h-3 w-3 shrink-0" />
-                                                    {a.studentEmail}
+                                                    {itemValue.studentEmail}
                                                 </div>
                                             )}
                                             <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                                                {a.slotTitle && (
+                                                {itemValue.slotTitle && (
                                                     <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                                                        {a.slotTitle}
+                                                        {itemValue.slotTitle}
                           </span>
                                                 )}
-                                                {a.startTime && (
+                                                {itemValue.startTime && (
                                                     <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                                                        {new Date(a.startTime).toLocaleString()}
+                                                        {new Date(itemValue.startTime).toLocaleString()}
                           </span>
                                                 )}
-                                                {a.staffName && (
+                                                {itemValue.staffName && (
                                                     <span className="flex items-center gap-1">
                             <User className="h-3 w-3" />
-                                                        {a.staffName}
+                                                        {itemValue.staffName}
                           </span>
                                                 )}
                                             </div>

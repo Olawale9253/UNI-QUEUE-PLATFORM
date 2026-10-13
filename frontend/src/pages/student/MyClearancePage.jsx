@@ -15,16 +15,16 @@ import { useToastStore } from '../../store/toastStore'
 function formatDate(iso) {
     if (!iso) return null
     try {
-        const d = new Date(iso)
-        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        const dateValue = new Date(iso)
+        return dateValue.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
     } catch { return null }
 }
 
 function formatTime(iso) {
     if (!iso) return null
     try {
-        const d = new Date(iso)
-        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        const dateValue = new Date(iso)
+        return dateValue.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     } catch { return null }
 }
 

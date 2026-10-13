@@ -36,29 +36,29 @@ public class AppointmentResponse {
     private String officeName;
 
 
-    public static AppointmentResponse from(Appointment a) {
+    public static AppointmentResponse from(Appointment appointment) {
         return AppointmentResponse.builder()
-                .id(a.getId())
-                .status(a.getStatus())
-                .slotId(a.getSlot() != null ? a.getSlot().getId() : null)
-                .officeName(a.getSlot() != null ? a.getSlot().getDepartment() : null)
-                .slotTitle(a.getSlot() != null ? a.getSlot().getTitle() : null)
-                .slotLocation(a.getSlot() != null ? a.getSlot().getLocation() : null)
-                .startTime(a.getSlot() != null ? a.getSlot().getStartTime() : null)
-                .endTime(a.getSlot() != null ? a.getSlot().getEndTime() : null)
-                .staffId(a.getSlot() != null && a.getSlot().getStaff() != null
-                        ? a.getSlot().getStaff().getId() : null)
-                .staffName(a.getSlot() != null && a.getSlot().getStaff() != null
-                        ? a.getSlot().getStaff().getFullName() : null)
-                .studentId(a.getStudent() != null ? a.getStudent().getId() : null)
-                .studentName(a.getStudent() != null ? a.getStudent().getFullName() : null)
-                .studentEmail(a.getStudent() != null ? a.getStudent().getEmail() : null)
-                .matricNumber(a.getStudent() != null ? a.getStudent().getMatricNumber() : null)
-                .notes(a.getNotes())
-                .staffNotes(a.getStaffNotes())
-                .bookedAt(a.getBookedAt())
-                .cancelledAt(a.getCancelledAt())
-                .completedAt(a.getCompletedAt())
+                .id(appointment.getId())
+                .status(appointment.getStatus())
+                .slotId(appointment.getSlot() != null ? appointment.getSlot().getId() : null)
+                .officeName(appointment.getSlot() != null ? appointment.getSlot().getDepartment() : null)
+                .slotTitle(appointment.getSlot() != null ? appointment.getSlot().getTitle() : null)
+                .slotLocation(appointment.getSlot() != null ? appointment.getSlot().getLocation() : null)
+                .startTime(appointment.getSlot() != null ? appointment.getSlot().getStartTime() : null)
+                .endTime(appointment.getSlot() != null ? appointment.getSlot().getEndTime() : null)
+                .staffId(appointment.getSlot() != null && appointment.getSlot().getStaff() != null
+                        ? appointment.getSlot().getStaff().getId() : null)
+                .staffName(appointment.getSlot() != null && appointment.getSlot().getStaff() != null
+                        ? appointment.getSlot().getStaff().getFullName() : null)
+                .studentId(appointment.getStudent() != null ? appointment.getStudent().getId() : null)
+                .studentName(appointment.getStudent() != null ? appointment.getStudent().getFullName() : null)
+                .studentEmail(appointment.getStudent() != null ? appointment.getStudent().getEmail() : null)
+                .matricNumber(appointment.getStudent() != null ? appointment.getStudent().getMatricNumber() : null)
+                .notes(appointment.getNotes())
+                .staffNotes(appointment.getStaffNotes())
+                .bookedAt(appointment.getBookedAt())
+                .cancelledAt(appointment.getCancelledAt())
+                .completedAt(appointment.getCompletedAt())
                 .build();
     }
 }

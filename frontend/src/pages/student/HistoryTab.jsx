@@ -49,8 +49,8 @@ const FILTERS = [
 
 function CopyButton({ text }) {
     const [copied, setCopied] = useState(false)
-    const copy = async (e) => {
-        e.stopPropagation()
+    const copy = async (event) => {
+        event.stopPropagation()
         try {
             await navigator.clipboard.writeText(text)
             setCopied(true)
@@ -128,8 +128,8 @@ export default function HistoryTab() {
 
     const handleRated = (ticketId, rating) => {
         setTickets((prev) =>
-            prev.map((t) =>
-                t.id === ticketId ? { ...t, rated: true, rating } : t
+            prev.map((item) =>
+                item.id === ticketId ? { ...item, rated: true, rating } : item
             )
         )
         setRatingTicket(null)
@@ -139,31 +139,31 @@ export default function HistoryTab() {
         let list = tickets
 
         if (filter !== 'ALL') {
-            list = list.filter((t) => t.status === filter)
+            list = list.filter((item) => item.status === filter)
         }
 
         if (search.trim()) {
-            const s = search.trim().toLowerCase()
+            const stringValue = search.trim().toLowerCase()
             list = list.filter(
-                (t) =>
-                    t.ticketNumber?.toLowerCase().includes(s) ||
-                    t.queueName?.toLowerCase().includes(s) ||
-                    t.officeName?.toLowerCase().includes(s)
+                (item) =>
+                    item.ticketNumber?.toLowerCase().includes(stringValue) ||
+                    item.queueName?.toLowerCase().includes(stringValue) ||
+                    item.officeName?.toLowerCase().includes(stringValue)
             )
         }
 
-        return [...list].sort((a, b) => {
-            const at = a.joinedAt ? new Date(a.joinedAt).getTime() : 0
-            const bt = b.joinedAt ? new Date(b.joinedAt).getTime() : 0
+        return [...list].sort((firstValue, secondValue) => {
+            const at = firstValue.joinedAt ? new Date(firstValue.joinedAt).getTime() : 0
+            const bt = secondValue.joinedAt ? new Date(secondValue.joinedAt).getTime() : 0
             return bt - at
         })
     }, [tickets, filter, search])
 
     const statusCounts = useMemo(() => {
         const counts = { ALL: tickets.length }
-        FILTERS.forEach((f) => {
-            if (f.value === 'ALL') return
-            counts[f.value] = tickets.filter((t) => t.status === f.value).length
+        FILTERS.forEach((item) => {
+            if (item.value === 'ALL') return
+            counts[item.value] = tickets.filter((ticket) => ticket.status === item.value).length
         })
         return counts
     }, [tickets])
@@ -207,7 +207,7 @@ export default function HistoryTab() {
                                 <input
                                     type="text"
                                     value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
+                                    onChange={(event) => setSearch(event.target.value)}
                                     placeholder="Search by ticket ID or queue name"
                                     className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                                 />
@@ -215,21 +215,21 @@ export default function HistoryTab() {
                         </div>
 
                         <div className="flex flex-wrap gap-1.5">
-                            {FILTERS.map((f) => {
-                                const count = statusCounts[f.value] ?? 0
-                                const isActive = filter === f.value
+                            {FILTERS.map((item) => {
+                                const count = statusCounts[item.value] ?? 0
+                                const isActive = filter === item.value
                                 return (
                                     <button
-                                        key={f.value}
+                                        key={item.value}
                                         type="button"
-                                        onClick={() => setFilter(f.value)}
+                                        onClick={() => setFilter(item.value)}
                                         className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                                             isActive
                                                 ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
                                                 : 'bg-white text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
                                         }`}
                                     >
-                                        {f.label}
+                                        {item.label}
                                         <span
                                             className={`text-[10px] font-bold ${
                                                 isActive ? 'opacity-80' : 'opacity-60'
@@ -284,13 +284,13 @@ export default function HistoryTab() {
                 />
             ) : (
                 <div className="space-y-3">
-                    {filtered.map((t, idx) => {
-                        const isCompleted = t.status === 'COMPLETED'
-                        const canRate = isCompleted && !t.rated
+                    {filtered.map((itemValue, idx) => {
+                        const isCompleted = itemValue.status === 'COMPLETED'
+                        const canRate = isCompleted && !itemValue.rated
 
                         return (
                             <motion.div
-                                key={t.id}
+                                key={itemValue.id}
                                 initial={{ opacity: 0, y: 4 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.02 }}
@@ -299,50 +299,50 @@ export default function HistoryTab() {
                                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                         <div className="flex min-w-0 flex-1 items-start gap-4">
                                             <InitialBadge
-                                                queueName={t.queueName || t.officeName}
-                                                ticketNumber={t.ticketNumber}
+                                                queueName={itemValue.queueName || itemValue.officeName}
+                                                ticketNumber={itemValue.ticketNumber}
                                             />
 
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex flex-wrap items-center gap-2">
                                                     <span className="font-mono text-sm font-bold text-slate-900 dark:text-slate-100">
-                                                        {t.ticketNumber}
+                                                        {itemValue.ticketNumber}
                                                     </span>
-                                                    <CopyButton text={t.ticketNumber} />
-                                                    <Badge variant={STATUS_VARIANTS[t.status] || 'default'}>
-                                                        {STATUS_LABELS[t.status] || t.status}
+                                                    <CopyButton text={itemValue.ticketNumber} />
+                                                    <Badge variant={STATUS_VARIANTS[itemValue.status] || 'default'}>
+                                                        {STATUS_LABELS[itemValue.status] || itemValue.status}
                                                     </Badge>
                                                 </div>
 
-                                                {(t.queueName || t.officeName) && (
+                                                {(itemValue.queueName || itemValue.officeName) && (
                                                     <div className="mt-1.5 flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
                                                         <Building2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                                                         <span className="truncate">
-                                                            {t.queueName || t.officeName}
+                                                            {itemValue.queueName || itemValue.officeName}
                                                         </span>
                                                     </div>
                                                 )}
 
                                                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                                                    {t.joinedAt && (
+                                                    {itemValue.joinedAt && (
                                                         <span className="flex items-center gap-1">
                                                             <Clock className="h-3 w-3" />
-                                                            Joined {formatDateTime(t.joinedAt)}
+                                                            Joined {formatDateTime(itemValue.joinedAt)}
                                                         </span>
                                                     )}
-                                                    {t.completedAt && (
+                                                    {itemValue.completedAt && (
                                                         <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                                                             <CheckCircle2 className="h-3 w-3" />
-                                                            Completed {formatDateTime(t.completedAt)}
+                                                            Completed {formatDateTime(itemValue.completedAt)}
                                                         </span>
                                                     )}
-                                                    {t.status === 'NO_SHOW' && (
+                                                    {itemValue.status === 'NO_SHOW' && (
                                                         <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
                                                             <AlertCircle className="h-3 w-3" />
                                                             Marked as no-show
                                                         </span>
                                                     )}
-                                                    {t.status === 'CANCELLED' && (
+                                                    {itemValue.status === 'CANCELLED' && (
                                                         <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
                                                             <XCircle className="h-3 w-3" />
                                                             Cancelled
@@ -358,18 +358,18 @@ export default function HistoryTab() {
                                                     variant="secondary"
                                                     size="sm"
                                                     icon={Star}
-                                                    onClick={() => setRatingTicket(t)}
+                                                    onClick={() => setRatingTicket(itemValue)}
                                                 >
                                                     Rate service
                                                 </Button>
                                             </div>
                                         )}
 
-                                        {isCompleted && t.rated && (
+                                        {isCompleted && itemValue.rated && (
                                             <div className="shrink-0 text-xs text-slate-500 sm:pt-2 dark:text-slate-400">
                                                 <span className="inline-flex items-center gap-1">
                                                     <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                                                    Rated {t.rating ?? ''}
+                                                    Rated {itemValue.rating ?? ''}
                                                 </span>
                                             </div>
                                         )}

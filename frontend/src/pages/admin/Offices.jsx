@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-    Building2, MapPin, Users, ListOrdered, Search, X, Ticket, Pencil,
+    Building2, MapPin, Users, ListOrdered, Search, X as CloseIcon, Ticket, Pencil,
     Plus, ArrowRight, Mail, FileText,
 } from 'lucide-react'
 import api from '../../api/axios'
@@ -100,7 +100,7 @@ function OfficeCard({ office, onEdit, onOpen }) {
 
 function OfficeDetail({ office, queues, onClose }) {
     const navigate = useNavigate()
-    const services = queues.filter((q) => q.officeId === office.id)
+    const services = queues.filter((queue) => queue.officeId === office.id)
 
     return (
         <>
@@ -117,7 +117,7 @@ function OfficeDetail({ office, queues, onClose }) {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.96, y: 12 }}
                     transition={{ duration: 0.2 }}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(event) => event.stopPropagation()}
                     className="relative my-8 w-full max-w-3xl rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
                 >
                     <button
@@ -125,7 +125,7 @@ function OfficeDetail({ office, queues, onClose }) {
                         className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                         aria-label="Close"
                     >
-                        <X className="h-4 w-4" />
+                        <CloseIcon className="h-4 w-4" />
                     </button>
 
                     <div className="flex items-start gap-3 pr-8">
@@ -179,59 +179,59 @@ function OfficeDetail({ office, queues, onClose }) {
                             />
                         ) : (
                             <div className="space-y-3">
-                                {services.map((q) => (
+                                {services.map((service) => (
                                     <div
-                                        key={q.id}
+                                        key={service.id}
                                         className="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0">
                                                 <h4 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                    {q.name}
+                                                    {service.name}
                                                 </h4>
-                                                {q.description && (
+                                                {service.description && (
                                                     <p className="mt-0.5 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
-                                                        {q.description}
+                                                        {service.description}
                                                     </p>
                                                 )}
                                             </div>
-                                            <Badge variant={q.isActive ? 'success' : 'default'}>
-                                                {q.isActive ? 'Active' : 'Inactive'}
+                                            <Badge variant={service.isActive ? 'success' : 'default'}>
+                                                {service.isActive ? 'Active' : 'Inactive'}
                                             </Badge>
                                         </div>
 
                                         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
                                             <span className="flex items-center gap-1 font-bold text-brand-600 dark:text-brand-400">
                                                 <Users className="h-3 w-3" />
-                                                {q.waitingCount ?? 0} waiting
+                                                {service.waitingCount ?? 0} waiting
                                             </span>
                                             <span className="flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400">
                                                 <Ticket className="h-3 w-3" />
-                                                ~{q.estimatedMinutes ?? 0} min
+                                                ~{service.estimatedMinutes ?? 0} min
                                             </span>
-                                            {q.staffCount > 0 && (
+                                            {service.staffCount > 0 && (
                                                 <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
                                                     <Users className="h-3 w-3" />
-                                                    {q.staffCount} staff
+                                                    {service.staffCount} staff
                                                 </span>
                                             )}
                                         </div>
 
-                                        {q.staff && q.staff.length > 0 && (
+                                        {service.staff && service.staff.length > 0 && (
                                             <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-800">
                                                 <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">
                                                     Assigned staff
                                                 </div>
                                                 <div className="flex flex-wrap gap-1.5">
-                                                    {q.staff.map((s) => (
+                                                    {service.staff.map((item) => (
                                                         <span
-                                                            key={s.id}
+                                                            key={item.id}
                                                             className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-300"
                                                         >
                                                             <span className="flex h-4 w-4 items-center justify-center rounded-full bg-brand-600 text-[8px] font-bold text-white">
-                                                                {s.fullName?.slice(0, 1).toUpperCase()}
+                                                                {item.fullName?.slice(0, 1).toUpperCase()}
                                                             </span>
-                                                            {s.fullName}
+                                                            {item.fullName}
                                                         </span>
                                                     ))}
                                                 </div>
@@ -266,12 +266,12 @@ export default function Offices() {
 
     const load = async () => {
         try {
-            const [o, q] = await Promise.all([
+            const [office, queue] = await Promise.all([
                 api.get('/api/admin/offices'),
                 api.get('/api/admin/queues'),
             ])
-            setOffices(o.data?.data || [])
-            setQueues(q.data?.data || [])
+            setOffices(office.data?.data || [])
+            setQueues(queue.data?.data || [])
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed to load offices' })
         } finally {
@@ -286,12 +286,12 @@ export default function Offices() {
 
     const filtered = useMemo(() => {
         if (!search.trim()) return offices
-        const s = search.toLowerCase()
+        const searchValue = search.toLowerCase()
         return offices.filter(
-            (o) =>
-                o.name.toLowerCase().includes(s) ||
-                o.location?.toLowerCase().includes(s) ||
-                o.description?.toLowerCase().includes(s)
+            (office) =>
+                office.name.toLowerCase().includes(searchValue) ||
+                office.location?.toLowerCase().includes(searchValue) ||
+                office.description?.toLowerCase().includes(searchValue)
         )
     }, [offices, search])
 
@@ -307,20 +307,20 @@ export default function Offices() {
 
     // Enrich for export — join service + staff info per office
     const enrichedForExport = useMemo(() => {
-        return filtered.map((o) => {
-            const services = queues.filter((q) => q.officeId === o.id)
+        return filtered.map((item) => {
+            const services = queues.filter((queue) => queue.officeId === item.id)
             const staffSet = new Set()
             let waiting = 0
-            services.forEach((q) => {
-                waiting += q.waitingCount ?? 0
-                ;(q.staff || []).forEach((s) => staffSet.add(s.id))
+            services.forEach((service) => {
+                waiting += service.waitingCount ?? 0
+                ;(service.staff || []).forEach((stringValue) => staffSet.add(stringValue.id))
             })
             return {
-                id: o.id,
-                name: o.name,
-                location: o.location || '',
-                description: o.description || '',
-                isActive: o.isActive === false ? 'Inactive' : 'Active',
+                id: item.id,
+                name: item.name,
+                location: item.location || '',
+                description: item.description || '',
+                isActive: item.isActive === false ? 'Inactive' : 'Active',
                 serviceCount: services.length,
                 staffCount: staffSet.size,
                 waitingTotal: waiting,
@@ -356,7 +356,7 @@ export default function Offices() {
                         <input
                             type="text"
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(event) => setSearch(event.target.value)}
                             placeholder="Search offices"
                             className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                         />
@@ -405,12 +405,12 @@ export default function Offices() {
                     animate="animate"
                     className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
                 >
-                    {filtered.map((o) => (
+                    {filtered.map((item) => (
                         <OfficeCard
-                            key={o.id}
-                            office={o}
-                            onEdit={() => openEdit(o)}
-                            onOpen={() => setOpenOffice(o)}
+                            key={item.id}
+                            office={item}
+                            onEdit={() => openEdit(item)}
+                            onOpen={() => setOpenOffice(item)}
                         />
                     ))}
                 </motion.div>

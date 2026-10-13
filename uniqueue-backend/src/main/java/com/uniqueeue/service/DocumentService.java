@@ -85,8 +85,8 @@ public class DocumentService {
         byte[] content;
         try {
             content = file.getBytes();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to read upload", e);
+        } catch (IOException iOExceptionValue) {
+            throw new RuntimeException("Failed to read upload", iOExceptionValue);
         }
 
         String storageKey = storageService.store(content, file.getOriginalFilename(), universityId);
@@ -337,18 +337,18 @@ public class DocumentService {
 
     // ---------- HELPERS ----------
 
-    private DocumentResponse enrich(Document d) {
-        String uploaderName = userRepository.findById(d.getUploadedBy())
+    private DocumentResponse enrich(Document documentValue) {
+        String uploaderName = userRepository.findById(documentValue.getUploadedBy())
                 .map(User::getFullName).orElse(null);
-        String ticketNumber = d.getTicketId() != null
-                ? ticketRepository.findById(d.getTicketId())
+        String ticketNumber = documentValue.getTicketId() != null
+                ? ticketRepository.findById(documentValue.getTicketId())
                 .map(Ticket::getTicketNumber).orElse(null)
                 : null;
-        String reviewerName = d.getReviewedBy() != null
-                ? userRepository.findById(d.getReviewedBy())
+        String reviewerName = documentValue.getReviewedBy() != null
+                ? userRepository.findById(documentValue.getReviewedBy())
                 .map(User::getFullName).orElse(null)
                 : null;
-        return DocumentResponse.from(d, uploaderName, ticketNumber, reviewerName);
+        return DocumentResponse.from(documentValue, uploaderName, ticketNumber, reviewerName);
     }
 
     private String sanitizeFilename(String original) {

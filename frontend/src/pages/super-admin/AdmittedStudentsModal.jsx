@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-    X, Upload, Trash2, FileText, AlertTriangle, CheckCircle2,
+    X as CloseIcon, Upload, Trash2, FileText, AlertTriangle, CheckCircle2,
     Loader2, Search,
 } from 'lucide-react'
 import api from '../../api/axios'
@@ -25,14 +25,14 @@ export default function AdmittedStudentsModal({ university, onClose }) {
     const load = async () => {
         setLoading(true)
         try {
-            const [l, s] = await Promise.all([
+            const [item, stringValue] = await Promise.all([
                 api.get(`/api/super-admin/universities/${university.id}/admitted-students`, {
                     params: { size: 100 },
                 }),
                 api.get(`/api/super-admin/universities/${university.id}/admitted-students/stats`),
             ])
-            setList(l.data?.data?.content || [])
-            setStats(s.data?.data || null)
+            setList(item.data?.data?.content || [])
+            setStats(stringValue.data?.data || null)
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed to load list' })
         } finally {
@@ -42,8 +42,8 @@ export default function AdmittedStudentsModal({ university, onClose }) {
 
     useEffect(() => { load() }, [university.id])
 
-    const onFile = async (e) => {
-        const file = e.target.files?.[0]
+    const onFile = async (event) => {
+        const file = event.target.files?.[0]
         if (!file) return
 
         if (!file.name.toLowerCase().endsWith('.csv')) {
@@ -91,13 +91,13 @@ export default function AdmittedStudentsModal({ university, onClose }) {
     }
 
     const filtered = search.trim()
-        ? list.filter((r) => {
-            const s = search.toLowerCase()
+        ? list.filter((item) => {
+            const searchValue = search.toLowerCase()
             return (
-                r.fullName?.toLowerCase().includes(s) ||
-                r.jambRegNumber?.toLowerCase().includes(s) ||
-                r.admissionRef?.toLowerCase().includes(s) ||
-                r.applicationNumber?.toLowerCase().includes(s)
+                item.fullName?.toLowerCase().includes(searchValue) ||
+                item.jambRegNumber?.toLowerCase().includes(searchValue) ||
+                item.admissionRef?.toLowerCase().includes(searchValue) ||
+                item.applicationNumber?.toLowerCase().includes(searchValue)
             )
         })
         : list
@@ -116,14 +116,14 @@ export default function AdmittedStudentsModal({ university, onClose }) {
                     initial={{ opacity: 0, scale: 0.96, y: 12 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.96, y: 12 }}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(eventValue) => eventValue.stopPropagation()}
                     className="relative my-8 w-full max-w-3xl rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
                 >
                     <button
                         onClick={onClose}
                         className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                     >
-                        <X className="h-4 w-4" />
+                        <CloseIcon className="h-4 w-4" />
                     </button>
 
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -176,7 +176,7 @@ export default function AdmittedStudentsModal({ university, onClose }) {
                                     <input
                                         type="checkbox"
                                         checked={replaceExisting}
-                                        onChange={(e) => setReplaceExisting(e.target.checked)}
+                                        onChange={(eventValue2) => setReplaceExisting(eventValue2.target.checked)}
                                         className="h-3.5 w-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                                     />
                                     Replace existing list (deletes all rows first)
@@ -239,7 +239,7 @@ export default function AdmittedStudentsModal({ university, onClose }) {
                                 <Input
                                     placeholder="Search by name, JAMB, ref, or application number…"
                                     value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
+                                    onChange={(eventValue3) => setSearch(eventValue3.target.value)}
                                     icon={Search}
                                 />
                             </div>
@@ -255,13 +255,13 @@ export default function AdmittedStudentsModal({ university, onClose }) {
                                     </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                    {filtered.map((r) => (
-                                        <tr key={r.id} className="text-sm">
-                                            <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{r.fullName}</td>
-                                            <td className="px-3 py-2 font-mono text-xs text-slate-600 dark:text-slate-400">{r.jambRegNumber || '—'}</td>
-                                            <td className="px-3 py-2 font-mono text-xs text-slate-600 dark:text-slate-400">{r.admissionRef || r.applicationNumber || '—'}</td>
+                                    {filtered.map((itemValue) => (
+                                        <tr key={itemValue.id} className="text-sm">
+                                            <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{itemValue.fullName}</td>
+                                            <td className="px-3 py-2 font-mono text-xs text-slate-600 dark:text-slate-400">{itemValue.jambRegNumber || '—'}</td>
+                                            <td className="px-3 py-2 font-mono text-xs text-slate-600 dark:text-slate-400">{itemValue.admissionRef || itemValue.applicationNumber || '—'}</td>
                                             <td className="px-3 py-2">
-                                                {r.claimed ? (
+                                                {itemValue.claimed ? (
                                                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
                               <CheckCircle2 className="h-3 w-3" />
                               Claimed
@@ -309,7 +309,7 @@ export default function AdmittedStudentsModal({ university, onClose }) {
                                         initial={{ opacity: 0, scale: 0.95 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         exit={{ opacity: 0, scale: 0.95 }}
-                                        onClick={(e) => e.stopPropagation()}
+                                        onClick={(eventValue4) => eventValue4.stopPropagation()}
                                         className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl dark:bg-slate-900"
                                     >
                                         <div className="mb-3 flex items-start gap-3">

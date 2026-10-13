@@ -17,16 +17,16 @@ public class FeedbackResponse {
     private String comment;
     private LocalDateTime createdAt;
 
-    public static FeedbackResponse from(Feedback f) {
+    public static FeedbackResponse from(Feedback feedback) {
         return FeedbackResponse.builder()
-                .id(f.getId())
-                .ticketId(f.getTicket() != null ? f.getTicket().getId() : null)
-                .ticketNumber(f.getTicket() != null ? f.getTicket().getTicketNumber() : null)
-                .userId(f.getUser() != null ? f.getUser().getId() : null)
-                .userFullName(f.getUser() != null ? f.getUser().getFullName() : null)
-                .rating(f.getRating())
-                .comment(f.getComment())
-                .createdAt(f.getCreatedAt())
+                .id(feedback.getId())
+                .ticketId(feedback.getTicket() != null ? feedback.getTicket().getId() : null)
+                .ticketNumber(feedback.getTicket() != null ? feedback.getTicket().getTicketNumber() : null)
+                .userId(feedback.getUser() != null ? feedback.getUser().getId() : null)
+                .userFullName(feedback.getUser() != null ? feedback.getUser().getFullName() : null)
+                .rating(feedback.getRating())
+                .comment(feedback.getComment())
+                .createdAt(feedback.getCreatedAt())
                 .build();
     }
 }

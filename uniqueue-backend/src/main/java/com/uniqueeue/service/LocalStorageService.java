@@ -47,8 +47,8 @@ public class LocalStorageService implements StorageService {
 
             log.debug("Stored {} bytes as {}", content.length, relative);
             return relative;
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to store file: " + e.getMessage(), e);
+        } catch (IOException iOExceptionValue5) {
+            throw new RuntimeException("Failed to store file: " + iOExceptionValue5.getMessage(), iOExceptionValue5);
         }
     }
 
@@ -60,7 +60,7 @@ public class LocalStorageService implements StorageService {
                 throw new ResourceNotFoundException("File not found in storage");
             }
             return Files.readAllBytes(target);
-        } catch (IOException e) {
+        } catch (IOException iOExceptionValue6) {
             throw new ResourceNotFoundException("File not found in storage");
         }
     }
@@ -70,8 +70,8 @@ public class LocalStorageService implements StorageService {
         try {
             Path target = safeResolve(storageKey);
             Files.deleteIfExists(target);
-        } catch (IOException e) {
-            log.warn("Failed to delete storage key {}: {}", storageKey, e.getMessage());
+        } catch (IOException iOExceptionValue7) {
+            log.warn("Failed to delete storage key {}: {}", storageKey, iOExceptionValue7.getMessage());
         }
     }
 
@@ -79,7 +79,7 @@ public class LocalStorageService implements StorageService {
     public boolean exists(String storageKey) {
         try {
             return Files.exists(safeResolve(storageKey));
-        } catch (Exception e) {
+        } catch (Exception exceptionValue9) {
             return false;
         }
     }

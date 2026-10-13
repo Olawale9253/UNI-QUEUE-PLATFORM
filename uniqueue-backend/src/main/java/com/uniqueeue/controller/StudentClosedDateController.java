@@ -59,12 +59,12 @@ public class StudentClosedDateController {
                 .toList();
 
         ClosedDateResponse todayEntry = all.stream()
-                .filter(d -> today.equals(d.getClosedDate()))
+                .filter(closedDateResponse -> today.equals(closedDateResponse.getClosedDate()))
                 .findFirst()
                 .orElse(null);
 
         List<ClosedDateResponse> upcoming = all.stream()
-                .filter(d -> !d.getClosedDate().isBefore(today))
+                .filter(closedDateResponseValue -> !closedDateResponseValue.getClosedDate().isBefore(today))
                 .toList();
 
         return ResponseEntity.ok(ApiResponse.success("Closed dates",

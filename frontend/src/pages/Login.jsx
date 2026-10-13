@@ -93,7 +93,7 @@ function LeftPanel({ brand, imageError, onImageError }) {
                                 src={brand.logoUrl}
                                 alt={brand.name}
                                 className="h-full w-full object-contain p-1"
-                                onError={(e) => { e.target.style.display = 'none' }}
+                                onError={(event) => { event.target.style.display = 'none' }}
                             />
                         ) : (
                             <Building2 className="h-4.5 w-4.5 text-white" />
@@ -202,12 +202,12 @@ export default function Login() {
         const timer = setTimeout(async () => {
             try {
                 const res = await api.get(`/api/auth/universities/lookup?domain=${encodeURIComponent(domain)}`)
-                const d = res.data?.data
-                if (d) {
+                const dateValue = res.data?.data
+                if (dateValue) {
                     setBrand({
-                        name: d.name || DEFAULT_BRAND.name,
-                        logoUrl: resolveImageUrl(d.logoUrl),
-                        campusImageUrl: resolveImageUrl(d.campusImageUrl),
+                        name: dateValue.name || DEFAULT_BRAND.name,
+                        logoUrl: resolveImageUrl(dateValue.logoUrl),
+                        campusImageUrl: resolveImageUrl(dateValue.campusImageUrl),
                     })
                     setImageError(false)
                 } else {
@@ -220,8 +220,8 @@ export default function Login() {
         return () => clearTimeout(timer)
     }, [email])
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
+    const handleSubmit = async (event) => {
+        event.preventDefault()
         setRedirecting(true)
         setUnverified(false)
         const res = await login(email, password)
@@ -280,7 +280,7 @@ export default function Login() {
                                         src={brand.logoUrl}
                                         alt={brand.name}
                                         className="h-full w-full object-contain p-1"
-                                        onError={(e) => { e.target.style.display = 'none' }}
+                                        onError={(eventValue) => { eventValue.target.style.display = 'none' }}
                                     />
                                 ) : (
                                     <Building2 className="h-4.5 w-4.5" />
@@ -353,7 +353,7 @@ export default function Login() {
                                 <input
                                     type="email"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    onChange={(eventValue2) => setEmail(eventValue2.target.value)}
                                     placeholder="Enter your email"
                                     autoComplete="email"
                                     required
@@ -370,7 +370,7 @@ export default function Login() {
                                     <input
                                         type={showPassword ? 'text' : 'password'}
                                         value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
+                                        onChange={(eventValue3) => setPassword(eventValue3.target.value)}
                                         placeholder="Enter your password"
                                         autoComplete="current-password"
                                         required
@@ -379,7 +379,7 @@ export default function Login() {
                                     />
                                     <button
                                         type="button"
-                                        onClick={() => setShowPassword((v) => !v)}
+                                        onClick={() => setShowPassword((item) => !item)}
                                         className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
                                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                                     >

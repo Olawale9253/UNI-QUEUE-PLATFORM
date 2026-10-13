@@ -24,7 +24,7 @@ public final class RequestUtils {
             if (real != null && !real.isBlank()) return real;
 
             return request.getRemoteAddr();
-        } catch (Exception e) {
+        } catch (Exception exceptionValue18) {
             return null;
         }
     }

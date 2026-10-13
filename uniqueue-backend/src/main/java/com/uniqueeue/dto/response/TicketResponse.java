@@ -36,37 +36,37 @@ public class TicketResponse {
 
     private String notes;
 
-    public static TicketResponse from(Ticket t, Integer positionOverride, Integer estimatedMinutes) {
+    public static TicketResponse from(Ticket ticketValue, Integer positionOverride, Integer estimatedMinutes) {
         return TicketResponse.builder()
-                .id(t.getId())
-                .ticketNumber(t.getTicketNumber())
-                .status(t.getStatus())
-                .position(positionOverride != null ? positionOverride : t.getPosition())
-                .priority(t.getPriority())
+                .id(ticketValue.getId())
+                .ticketNumber(ticketValue.getTicketNumber())
+                .status(ticketValue.getStatus())
+                .position(positionOverride != null ? positionOverride : ticketValue.getPosition())
+                .priority(ticketValue.getPriority())
                 .estimatedMinutesRemaining(estimatedMinutes)
-                .onWaitlist(t.getStatus() == TicketStatus.WAITLISTED)
-                .queueId(t.getQueue() != null ? t.getQueue().getId() : null)
-                .queueName(t.getQueue() != null ? t.getQueue().getName() : null)
-                .queueLocation(t.getQueue() != null ? t.getQueue().getLocation() : null)
-                .userId(t.getUser() != null ? t.getUser().getId() : null)
-                .userFullName(t.getUser() != null ? t.getUser().getFullName() : null)
-                .userEmail(t.getUser() != null ? t.getUser().getEmail() : null)
-                .matricNumber(t.getUser() != null ? t.getUser().getMatricNumber() : null)
-                .servedById(t.getServedBy() != null ? t.getServedBy().getId() : null)
-                .servedByName(t.getServedBy() != null ? t.getServedBy().getFullName() : null)
-                .joinedAt(t.getJoinedAt())
-                .calledAt(t.getCalledAt())
-                .servedAt(t.getServedAt())
-                .completedAt(t.getCompletedAt())
-                .notes(t.getNotes())
+                .onWaitlist(ticketValue.getStatus() == TicketStatus.WAITLISTED)
+                .queueId(ticketValue.getQueue() != null ? ticketValue.getQueue().getId() : null)
+                .queueName(ticketValue.getQueue() != null ? ticketValue.getQueue().getName() : null)
+                .queueLocation(ticketValue.getQueue() != null ? ticketValue.getQueue().getLocation() : null)
+                .userId(ticketValue.getUser() != null ? ticketValue.getUser().getId() : null)
+                .userFullName(ticketValue.getUser() != null ? ticketValue.getUser().getFullName() : null)
+                .userEmail(ticketValue.getUser() != null ? ticketValue.getUser().getEmail() : null)
+                .matricNumber(ticketValue.getUser() != null ? ticketValue.getUser().getMatricNumber() : null)
+                .servedById(ticketValue.getServedBy() != null ? ticketValue.getServedBy().getId() : null)
+                .servedByName(ticketValue.getServedBy() != null ? ticketValue.getServedBy().getFullName() : null)
+                .joinedAt(ticketValue.getJoinedAt())
+                .calledAt(ticketValue.getCalledAt())
+                .servedAt(ticketValue.getServedAt())
+                .completedAt(ticketValue.getCompletedAt())
+                .notes(ticketValue.getNotes())
                 .build();
     }
 
-    public static TicketResponse from(Ticket t, Integer positionOverride) {
-        return from(t, positionOverride, null);
+    public static TicketResponse from(Ticket ticketValue2, Integer positionOverride) {
+        return from(ticketValue2, positionOverride, null);
     }
 
-    public static TicketResponse from(Ticket t) {
-        return from(t, null, null);
+    public static TicketResponse from(Ticket ticketValue3) {
+        return from(ticketValue3, null, null);
     }
 }

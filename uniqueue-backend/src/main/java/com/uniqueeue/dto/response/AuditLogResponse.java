@@ -19,17 +19,17 @@ public class AuditLogResponse {
     private String ipAddress;
     private LocalDateTime createdAt;
 
-    public static AuditLogResponse from(AuditLog a) {
+    public static AuditLogResponse from(AuditLog auditLog) {
         return AuditLogResponse.builder()
-                .id(a.getId())
-                .userId(a.getUserId())
-                .universityId(a.getUniversityId())
-                .action(a.getAction())
-                .entityType(a.getEntityType())
-                .entityId(a.getEntityId())
-                .details(a.getDetails())
-                .ipAddress(a.getIpAddress())
-                .createdAt(a.getCreatedAt())
+                .id(auditLog.getId())
+                .userId(auditLog.getUserId())
+                .universityId(auditLog.getUniversityId())
+                .action(auditLog.getAction())
+                .entityType(auditLog.getEntityType())
+                .entityId(auditLog.getEntityId())
+                .details(auditLog.getDetails())
+                .ipAddress(auditLog.getIpAddress())
+                .createdAt(auditLog.getCreatedAt())
                 .build();
     }
 }

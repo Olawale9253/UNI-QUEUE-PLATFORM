@@ -251,10 +251,10 @@ public class QueueService {
     @Transactional(readOnly = true)
     public List<QueueResponse.StaffInfo> listStaff(Long universityId) {
         return userRepository.findByUniversityIdAndRole(universityId, Role.STAFF).stream()
-                .map(u -> QueueResponse.StaffInfo.builder()
-                        .id(u.getId())
-                        .fullName(u.getFullName())
-                        .email(u.getEmail())
+                .map(userValue13 -> QueueResponse.StaffInfo.builder()
+                        .id(userValue13.getId())
+                        .fullName(userValue13.getFullName())
+                        .email(userValue13.getEmail())
                         .build())
                 .toList();
     }

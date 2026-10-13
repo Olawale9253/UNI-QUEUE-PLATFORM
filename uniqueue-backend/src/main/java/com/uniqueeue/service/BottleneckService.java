@@ -51,13 +51,13 @@ public class BottleneckService {
             List<Workflow> workflows = workflowRepository
                     .findByUniversityIdAndIsActiveTrueOrderByCreatedAtDesc(uni.getId());
 
-            for (Workflow w : workflows) {
+            for (Workflow workflowValue : workflows) {
                 workflowsScanned++;
                 WorkflowAnalyticsResponse analytics;
                 try {
-                    analytics = workflowService.getAnalytics(w.getId(), uni.getId());
+                    analytics = workflowService.getAnalytics(workflowValue.getId(), uni.getId());
                 } catch (Exception ex) {
-                    log.warn("Skipping workflow {} — analytics failed: {}", w.getId(), ex.getMessage());
+                    log.warn("Skipping workflow {} — analytics failed: {}", workflowValue.getId(), ex.getMessage());
                     continue;
                 }
 
@@ -65,18 +65,18 @@ public class BottleneckService {
                     if (!isBottleneck(step)) continue;
 
                     bottlenecksFound++;
-                    boolean fresh = tracker.shouldAlert(uni.getId(), w.getId(), step.getOrder());
+                    boolean fresh = tracker.shouldAlert(uni.getId(), workflowValue.getId(), step.getOrder());
 
                     String line = String.format(
                             "uni=%d wf=%d step=%d stuck=%d avg=%.1fh",
-                            uni.getId(), w.getId(), step.getOrder(),
+                            uni.getId(), workflowValue.getId(), step.getOrder(),
                             step.getCurrentlyOnCount(), step.getAvgHoursOnStep());
 
                     if (fresh) {
                         if (!props.isDryRun()) {
                             notifyAdmins(uni, analytics, step);
                         }
-                        tracker.markAlerted(uni.getId(), w.getId(), step.getOrder());
+                        tracker.markAlerted(uni.getId(), workflowValue.getId(), step.getOrder());
                         alertsSent++;
                         details.add("ALERT " + line);
                     } else {

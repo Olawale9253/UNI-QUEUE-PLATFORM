@@ -33,28 +33,28 @@ public class DocumentResponse {
     private String downloadUrl;
 
     public static DocumentResponse from(
-            Document d,
+            Document document,
             String uploadedByName,
             String ticketNumber,
             String reviewedByName) {
         return DocumentResponse.builder()
-                .id(d.getId())
-                .universityId(d.getUniversityId())
-                .uploadedBy(d.getUploadedBy())
+                .id(document.getId())
+                .universityId(document.getUniversityId())
+                .uploadedBy(document.getUploadedBy())
                 .uploadedByName(uploadedByName)
-                .ticketId(d.getTicketId())
+                .ticketId(document.getTicketId())
                 .ticketNumber(ticketNumber)
-                .type(d.getType())
-                .originalFilename(d.getOriginalFilename())
-                .contentType(d.getContentType())
-                .sizeBytes(d.getSizeBytes())
-                .createdAt(d.getCreatedAt())
-                .status(d.getStatus())
-                .reviewedBy(d.getReviewedBy())
+                .type(document.getType())
+                .originalFilename(document.getOriginalFilename())
+                .contentType(document.getContentType())
+                .sizeBytes(document.getSizeBytes())
+                .createdAt(document.getCreatedAt())
+                .status(document.getStatus())
+                .reviewedBy(document.getReviewedBy())
                 .reviewedByName(reviewedByName)
-                .reviewedAt(d.getReviewedAt())
-                .reviewNotes(d.getReviewNotes())
-                .downloadUrl("/api/documents/" + d.getId() + "/download")
+                .reviewedAt(document.getReviewedAt())
+                .reviewNotes(document.getReviewNotes())
+                .downloadUrl("/api/documents/" + document.getId() + "/download")
                 .build();
     }
 }

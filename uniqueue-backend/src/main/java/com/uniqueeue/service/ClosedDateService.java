@@ -55,12 +55,12 @@ public class ClosedDateService {
 
     @Transactional
     public void delete(Long universityId, Long id) {
-        UniversityClosedDate d = closedDateRepository.findById(id)
+        UniversityClosedDate universityClosedDateValue = closedDateRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Closed date not found"));
 
-        if (!d.getUniversity().getId().equals(universityId)) {
+        if (!universityClosedDateValue.getUniversity().getId().equals(universityId)) {
             throw new BadRequestException("Closed date is not in your university");
         }
-        closedDateRepository.delete(d);
+        closedDateRepository.delete(universityClosedDateValue);
     }
 }

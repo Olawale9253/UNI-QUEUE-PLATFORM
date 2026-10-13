@@ -23,14 +23,14 @@ public final class EmailNormalizer {
     }
 
     public static boolean isValid(String raw) {
-        String n = normalize(raw);
-        return n != null && EMAIL_RE.matcher(n).matches();
+        String stringValueValue9 = normalize(raw);
+        return stringValueValue9 != null && EMAIL_RE.matcher(stringValueValue9).matches();
     }
 
     public static String domain(String raw) {
-        String n = normalize(raw);
-        if (n == null) return null;
-        int at = n.indexOf('@');
-        return at < 0 ? null : n.substring(at + 1);
+        String stringValueValue10 = normalize(raw);
+        if (stringValueValue10 == null) return null;
+        int at = stringValueValue10.indexOf('@');
+        return at < 0 ? null : stringValueValue10.substring(at + 1);
     }
 }

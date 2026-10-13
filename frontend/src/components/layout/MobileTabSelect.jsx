@@ -19,14 +19,14 @@ export default function MobileTabSelect({ tabs }) {
     const ref = useRef(null)
 
     const current =
-        tabs.find((t) => {
-            if (t.end) return location.pathname === t.to
-            return location.pathname === t.to || location.pathname.startsWith(t.to + '/')
+        tabs.find((tab) => {
+            if (tab.end) return location.pathname === tab.to
+            return location.pathname === tab.to || location.pathname.startsWith(tab.to + '/')
         }) || tabs[0]
 
     useEffect(() => {
-        const onClick = (e) => {
-            if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+        const onClick = (event) => {
+            if (ref.current && !ref.current.contains(event.target)) setOpen(false)
         }
         document.addEventListener('mousedown', onClick)
         return () => document.removeEventListener('mousedown', onClick)
@@ -51,11 +51,11 @@ export default function MobileTabSelect({ tabs }) {
             {/* Desktop: horizontal tabs */}
             <div className="hidden md:block">
                 <nav className="-mb-px flex gap-1 overflow-x-auto">
-                    {tabs.map((t) => (
+                    {tabs.map((tabValue) => (
                         <NavLink
-                            key={t.to}
-                            to={t.to}
-                            end={t.end}
+                            key={tabValue.to}
+                            to={tabValue.to}
+                            end={tabValue.end}
                             className={({ isActive }) =>
                                 `inline-flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                                     isActive
@@ -64,8 +64,8 @@ export default function MobileTabSelect({ tabs }) {
                                 }`
                             }
                         >
-                            <t.icon className="h-4 w-4" />
-                            {t.label}
+                            <tabValue.icon className="h-4 w-4" />
+                            {tabValue.label}
                         </NavLink>
                     ))}
                 </nav>
@@ -74,7 +74,7 @@ export default function MobileTabSelect({ tabs }) {
             {/* Mobile: dropdown */}
             <div className="relative pb-3 md:hidden" ref={ref}>
                 <button
-                    onClick={() => setOpen((v) => !v)}
+                    onClick={() => setOpen((item) => !item)}
                     className="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-left transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
                 >
                     <div className="flex items-center gap-2.5">
@@ -100,15 +100,15 @@ export default function MobileTabSelect({ tabs }) {
                             className="absolute left-0 right-0 z-40 mt-1.5 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800"
                         >
                             <ul className="py-1">
-                                {tabs.map((t) => {
-                                    const Icon = t.icon
-                                    const isCurrent = current.to === t.to
+                                {tabs.map((tabValue2) => {
+                                    const Icon = tabValue2.icon
+                                    const isCurrent = current.to === tabValue2.to
 
                                     return (
-                                        <li key={t.to}>
+                                        <li key={tabValue2.to}>
                                             <NavLink
-                                                to={t.to}
-                                                end={t.end}
+                                                to={tabValue2.to}
+                                                end={tabValue2.end}
                                                 onClick={() => setOpen(false)}
                                                 className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
                                                     isCurrent
@@ -123,7 +123,7 @@ export default function MobileTabSelect({ tabs }) {
                                                             : 'text-slate-400'
                                                     }`}
                                                 />
-                                                <span className="flex-1">{t.label}</span>
+                                                <span className="flex-1">{tabValue2.label}</span>
                                                 {isCurrent && (
                                                     <Check className="h-4 w-4 text-brand-600 dark:text-brand-400" />
                                                 )}

@@ -85,38 +85,38 @@ public class QueueResponse {
     //  Factory
     // ─────────────────────────────────────────────────────────────
 
-    public static QueueResponse from(Queue q) {
-        String officeName = q.getOffice() != null ? q.getOffice().getName() : q.getDepartment();
-        String officeLocation = q.getOffice() != null ? q.getOffice().getLocation() : null;
-        String officeIcon = q.getOffice() != null ? q.getOffice().getIcon() : null;
+    public static QueueResponse from(Queue queue) {
+        String officeName = queue.getOffice() != null ? queue.getOffice().getName() : queue.getDepartment();
+        String officeLocation = queue.getOffice() != null ? queue.getOffice().getLocation() : null;
+        String officeIcon = queue.getOffice() != null ? queue.getOffice().getIcon() : null;
 
         return QueueResponse.builder()
-                .id(q.getId())
-                .name(q.getName())
-                .description(q.getDescription())
-                .officeId(q.getOffice() != null ? q.getOffice().getId() : null)
+                .id(queue.getId())
+                .name(queue.getName())
+                .description(queue.getDescription())
+                .officeId(queue.getOffice() != null ? queue.getOffice().getId() : null)
                 .officeName(officeName)
                 .officeLocation(officeLocation)
                 .officeIcon(officeIcon)
                 .department(officeName)
-                .subDepartment(q.getSubDepartment())
-                .location(q.getLocation())
-                .isActive(q.getIsActive())
-                .opensAt(q.getOpensAt())
-                .closesAt(q.getClosesAt())
-                .maxCapacity(q.getMaxCapacity())
-                .averageServiceMinutes(q.getAverageServiceMinutes())
-                .allowWaitlist(q.getAllowWaitlist())
-                .autoPromoteWaitlist(q.getAutoPromoteWaitlist())
-                .maxWaitlistSize(q.getMaxWaitlistSize())
-                .matricRequired(q.getMatricRequired() != null ? q.getMatricRequired() : false)
-                .universityId(q.getUniversity() != null ? q.getUniversity().getId() : null)
-                .universityName(q.getUniversity() != null ? q.getUniversity().getName() : null)
-                .createdById(q.getCreatedBy() != null ? q.getCreatedBy().getId() : null)
-                .createdByName(q.getCreatedBy() != null ? q.getCreatedBy().getFullName() : null)
-                .createdAt(q.getCreatedAt())
-                .updatedAt(q.getUpdatedAt())
-                .operatingDays(q.getOperatingDays())          // ⬅ NEW
+                .subDepartment(queue.getSubDepartment())
+                .location(queue.getLocation())
+                .isActive(queue.getIsActive())
+                .opensAt(queue.getOpensAt())
+                .closesAt(queue.getClosesAt())
+                .maxCapacity(queue.getMaxCapacity())
+                .averageServiceMinutes(queue.getAverageServiceMinutes())
+                .allowWaitlist(queue.getAllowWaitlist())
+                .autoPromoteWaitlist(queue.getAutoPromoteWaitlist())
+                .maxWaitlistSize(queue.getMaxWaitlistSize())
+                .matricRequired(queue.getMatricRequired() != null ? queue.getMatricRequired() : false)
+                .universityId(queue.getUniversity() != null ? queue.getUniversity().getId() : null)
+                .universityName(queue.getUniversity() != null ? queue.getUniversity().getName() : null)
+                .createdById(queue.getCreatedBy() != null ? queue.getCreatedBy().getId() : null)
+                .createdByName(queue.getCreatedBy() != null ? queue.getCreatedBy().getFullName() : null)
+                .createdAt(queue.getCreatedAt())
+                .updatedAt(queue.getUpdatedAt())
+                .operatingDays(queue.getOperatingDays())          // ⬅ NEW
                 // isOpen intentionally left null — set by QueueService
                 .build();
     }

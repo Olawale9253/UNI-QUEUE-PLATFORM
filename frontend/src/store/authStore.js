@@ -53,8 +53,8 @@ async function syncExistingPushSubscription() {
 
 // ─── Cross-tab logout sync ───
 if (typeof window !== 'undefined') {
-    window.addEventListener('storage', (e) => {
-        if (e.key === TOKEN_KEY && e.newValue === null) {
+    window.addEventListener('storage', (item) => {
+        if (item.key === TOKEN_KEY && item.newValue === null) {
             useUniversityStore.getState().reset()
             usePrefsStore.getState().reset()
             useAuthStore.setState({ user: null, token: null })
@@ -77,21 +77,21 @@ export const useAuthStore = create((set, get) => ({
         set({ loading: true, error: null })
         try {
             const res = await api.post('/api/auth/login', { email, password })
-            const d = res.data.data
+            const dateValue = res.data.data
             const user = {
-                userId: d.userId,
-                email: d.email,
-                fullName: d.fullName,
-                role: d.role,
-                universityId: d.universityId,
+                userId: dateValue.userId,
+                email: dateValue.email,
+                fullName: dateValue.fullName,
+                role: dateValue.role,
+                universityId: dateValue.universityId,
             }
-            persistSession(d.accessToken, d.refreshToken, user)
+            persistSession(dateValue.accessToken, dateValue.refreshToken, user)
 
             useUniversityStore.getState().reset()
             usePrefsStore.getState().reset()
-            set({ token: d.accessToken, user, loading: false })
+            set({ token: dateValue.accessToken, user, loading: false })
 
-            if (d.role !== 'SUPER_ADMIN') {
+            if (dateValue.role !== 'SUPER_ADMIN') {
                 useUniversityStore.getState().load()
             }
 
@@ -100,7 +100,7 @@ export const useAuthStore = create((set, get) => ({
 
             syncExistingPushSubscription()
 
-            return { success: true, role: d.role }
+            return { success: true, role: dateValue.role }
         } catch (err) {
             const message = err.response?.data?.message || 'Login failed'
             set({ loading: false, error: message })
@@ -112,21 +112,21 @@ export const useAuthStore = create((set, get) => ({
         set({ loading: true, error: null })
         try {
             const res = await api.post('/api/auth/register', payload)
-            const d = res.data.data
+            const dateValue = res.data.data
             const user = {
-                userId: d.userId,
-                email: d.email,
-                fullName: d.fullName,
-                role: d.role,
-                universityId: d.universityId,
+                userId: dateValue.userId,
+                email: dateValue.email,
+                fullName: dateValue.fullName,
+                role: dateValue.role,
+                universityId: dateValue.universityId,
             }
-            persistSession(d.accessToken, d.refreshToken, user)
+            persistSession(dateValue.accessToken, dateValue.refreshToken, user)
 
             useUniversityStore.getState().reset()
             usePrefsStore.getState().reset()
-            set({ token: d.accessToken, user, loading: false })
+            set({ token: dateValue.accessToken, user, loading: false })
 
-            if (d.role !== 'SUPER_ADMIN') {
+            if (dateValue.role !== 'SUPER_ADMIN') {
                 useUniversityStore.getState().load()
             }
 
@@ -136,9 +136,9 @@ export const useAuthStore = create((set, get) => ({
 
             return {
                 success: true,
-                role: d.role,
-                devVerificationCode: d.devVerificationCode,
-                isVerified: d.isVerified,
+                role: dateValue.role,
+                devVerificationCode: dateValue.devVerificationCode,
+                isVerified: dateValue.isVerified,
             }
         } catch (err) {
             const message = err.response?.data?.message || 'Registration failed'
@@ -178,22 +178,22 @@ export const useAuthStore = create((set, get) => ({
     refreshProfile: async () => {
         try {
             const res = await api.get('/api/profile')
-            const p = res.data?.data
-            if (!p) return { success: false }
+            const parameter = res.data?.data
+            if (!parameter) return { success: false }
 
             const current = get().user || {}
             const next = {
                 ...current,
-                userId: p.id ?? current.userId,
-                email: p.email ?? current.email,
-                fullName: p.fullName ?? current.fullName,
-                role: p.role ?? current.role,
-                universityId: p.universityId ?? current.universityId,
+                userId: parameter.id ?? current.userId,
+                email: parameter.email ?? current.email,
+                fullName: parameter.fullName ?? current.fullName,
+                role: parameter.role ?? current.role,
+                universityId: parameter.universityId ?? current.universityId,
             }
 
             localStorage.setItem(USER_KEY, JSON.stringify(next))
             set({ user: next })
-            return { success: true, profile: p }
+            return { success: true, profile: parameter }
         } catch (err) {
             return {
                 success: false,

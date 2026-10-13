@@ -20,14 +20,14 @@ public final class TenantGuard {
 
     public static Long currentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !(auth.getPrincipal() instanceof UserPrincipal p)) return null;
-        return p.getId();
+        if (auth == null || !(auth.getPrincipal() instanceof UserPrincipal userPrincipal)) return null;
+        return userPrincipal.getId();
     }
 
     public static Long currentUniversityId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !(auth.getPrincipal() instanceof UserPrincipal p)) return null;
-        return p.getUniversityId();
+        if (auth == null || !(auth.getPrincipal() instanceof UserPrincipal userPrincipalValue)) return null;
+        return userPrincipalValue.getUniversityId();
     }
 
     public static void requireOwner(Long ownerId, Long requestingUserId) {

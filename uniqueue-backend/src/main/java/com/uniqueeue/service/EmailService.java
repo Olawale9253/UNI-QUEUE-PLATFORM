@@ -64,8 +64,8 @@ public class EmailService {
 
             mailSender.send(message);
             log.info("📧 Sent email to {} · {}", to, subject);
-        } catch (Exception e) {
-            log.error("📧 Failed to send email to {} — {}", to, e.getMessage());
+        } catch (Exception exceptionValue7) {
+            log.error("📧 Failed to send email to {} — {}", to, exceptionValue7.getMessage());
         }
     }
 
@@ -434,9 +434,9 @@ public class EmailService {
         return parts.length > 0 ? parts[0] : "there";
     }
 
-    private String escape(String s) {
-        if (s == null) return "";
-        return s.replace("&", "&amp;")
+    private String escape(String stringValueValue7) {
+        if (stringValueValue7 == null) return "";
+        return stringValueValue7.replace("&", "&amp;")
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;")

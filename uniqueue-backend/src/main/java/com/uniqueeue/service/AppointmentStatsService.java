@@ -26,22 +26,22 @@ public class AppointmentStatsService {
         LocalDateTime now = LocalDateTime.now();
 
         long todayCount = all.stream()
-                .filter(a -> a.getStatus() == AppointmentStatus.BOOKED)
-                .filter(a -> a.getSlot() != null && a.getSlot().getStartTime() != null)
-                .filter(a -> a.getSlot().getStartTime().toLocalDate().equals(today))
+                .filter(appointmentValue -> appointmentValue.getStatus() == AppointmentStatus.BOOKED)
+                .filter(appointmentValue2 -> appointmentValue2.getSlot() != null && appointmentValue2.getSlot().getStartTime() != null)
+                .filter(appointmentValue3 -> appointmentValue3.getSlot().getStartTime().toLocalDate().equals(today))
                 .count();
 
         long upcoming = all.stream()
-                .filter(a -> a.getStatus() == AppointmentStatus.BOOKED)
-                .filter(a -> a.getSlot() != null && a.getSlot().getStartTime() != null)
-                .filter(a -> a.getSlot().getStartTime().isAfter(now))
+                .filter(appointmentValue4 -> appointmentValue4.getStatus() == AppointmentStatus.BOOKED)
+                .filter(appointmentValue5 -> appointmentValue5.getSlot() != null && appointmentValue5.getSlot().getStartTime() != null)
+                .filter(appointmentValue6 -> appointmentValue6.getSlot().getStartTime().isAfter(now))
                 .count();
 
         Appointment next = all.stream()
-                .filter(a -> a.getStatus() == AppointmentStatus.BOOKED)
-                .filter(a -> a.getSlot() != null && a.getSlot().getStartTime() != null)
-                .filter(a -> a.getSlot().getStartTime().isAfter(now))
-                .min(Comparator.comparing(a -> a.getSlot().getStartTime()))
+                .filter(appointmentValue7 -> appointmentValue7.getStatus() == AppointmentStatus.BOOKED)
+                .filter(appointmentValue8 -> appointmentValue8.getSlot() != null && appointmentValue8.getSlot().getStartTime() != null)
+                .filter(appointmentValue9 -> appointmentValue9.getSlot().getStartTime().isAfter(now))
+                .min(Comparator.comparing(appointmentValue10 -> appointmentValue10.getSlot().getStartTime()))
                 .orElse(null);
 
         return AppointmentStatsResponse.builder()
@@ -49,10 +49,10 @@ public class AppointmentStatsService {
                 .today(todayCount)
                 .upcoming(upcoming)
                 .completed(all.stream()
-                        .filter(a -> a.getStatus() == AppointmentStatus.COMPLETED)
+                        .filter(appointmentValue11 -> appointmentValue11.getStatus() == AppointmentStatus.COMPLETED)
                         .count())
                 .cancelled(all.stream()
-                        .filter(a -> a.getStatus() == AppointmentStatus.CANCELLED)
+                        .filter(appointmentValue12 -> appointmentValue12.getStatus() == AppointmentStatus.CANCELLED)
                         .count())
                 .nextStartTime(next != null ? next.getSlot().getStartTime().toString() : null)
                 .nextStudentName(next != null && next.getStudent() != null
@@ -67,14 +67,14 @@ public class AppointmentStatsService {
         LocalDateTime now = LocalDateTime.now();
 
         long todayCount = all.stream()
-                .filter(a -> a.getSlot() != null && a.getSlot().getStartTime() != null)
-                .filter(a -> a.getSlot().getStartTime().toLocalDate().equals(today))
+                .filter(appointmentValue13 -> appointmentValue13.getSlot() != null && appointmentValue13.getSlot().getStartTime() != null)
+                .filter(appointmentValue14 -> appointmentValue14.getSlot().getStartTime().toLocalDate().equals(today))
                 .count();
 
         long upcoming = all.stream()
-                .filter(a -> a.getStatus() == AppointmentStatus.BOOKED)
-                .filter(a -> a.getSlot() != null && a.getSlot().getStartTime() != null)
-                .filter(a -> a.getSlot().getStartTime().isAfter(now))
+                .filter(appointmentValue15 -> appointmentValue15.getStatus() == AppointmentStatus.BOOKED)
+                .filter(appointmentValue16 -> appointmentValue16.getSlot() != null && appointmentValue16.getSlot().getStartTime() != null)
+                .filter(appointmentValue17 -> appointmentValue17.getSlot().getStartTime().isAfter(now))
                 .count();
 
         return AppointmentStatsResponse.builder()
@@ -82,10 +82,10 @@ public class AppointmentStatsService {
                 .today(todayCount)
                 .upcoming(upcoming)
                 .completed(all.stream()
-                        .filter(a -> a.getStatus() == AppointmentStatus.COMPLETED)
+                        .filter(appointmentValue18 -> appointmentValue18.getStatus() == AppointmentStatus.COMPLETED)
                         .count())
                 .cancelled(all.stream()
-                        .filter(a -> a.getStatus() == AppointmentStatus.CANCELLED)
+                        .filter(appointmentValue19 -> appointmentValue19.getStatus() == AppointmentStatus.CANCELLED)
                         .count())
                 .build();
     }

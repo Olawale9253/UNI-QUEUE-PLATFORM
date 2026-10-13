@@ -73,14 +73,14 @@ export default function Broadcast() {
                 setCountLoading(false)
             }
         }
-        const t = setTimeout(fetchCount, 300)
-        return () => clearTimeout(t)
+        const token = setTimeout(fetchCount, 300)
+        return () => clearTimeout(token)
     }, [form.universityId, form.role])
 
-    const setField = (f) => (e) => setForm({ ...form, [f]: e.target.value })
+    const setField = (file) => (event) => setForm({ ...form, [file]: event.target.value })
 
-    const handleSendClick = (e) => {
-        e.preventDefault()
+    const handleSendClick = (event) => {
+        event.preventDefault()
         if (!form.title.trim() || !form.message.trim()) {
             push({ type: 'error', message: 'Title and message are required' })
             return
@@ -108,14 +108,14 @@ export default function Broadcast() {
         }
     }
 
-    const universityOptions = universities.map((u) => ({
-        value: u.id,
-        label: `${u.code} · ${u.name}`,
+    const universityOptions = universities.map((university) => ({
+        value: university.id,
+        label: `${university.code} · ${university.name}`,
     }))
 
     const audienceLabel = [
         form.universityId
-            ? universities.find((u) => String(u.id) === String(form.universityId))?.name
+            ? universities.find((universityValue) => String(universityValue.id) === String(form.universityId))?.name
             : 'All universities',
         form.role ? `(${form.role.toLowerCase()}s only)` : '(all roles)',
     ].join(' ')

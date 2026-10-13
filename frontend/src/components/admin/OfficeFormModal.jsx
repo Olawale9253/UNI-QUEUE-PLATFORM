@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-    X, Building2, MapPin, AlertCircle, Trash2, Clock,
+    X as CloseIcon, Building2, MapPin, AlertCircle, Trash2, Clock,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Button from '../ui/Button'
@@ -54,10 +54,10 @@ export default function OfficeFormModal({ office, onClose, onSaved, onDeleted })
         }
     }, [office])
 
-    const setField = (k) => (e) => setForm({ ...form, [k]: e.target.value })
+    const setField = (key) => (event) => setForm({ ...form, [key]: event.target.value })
 
-    const save = async (e) => {
-        e.preventDefault()
+    const save = async (event) => {
+        event.preventDefault()
         if (!form.name.trim()) {
             setError('Office name is required')
             return
@@ -128,7 +128,7 @@ export default function OfficeFormModal({ office, onClose, onSaved, onDeleted })
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.96, y: 12 }}
                     transition={{ duration: 0.2 }}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(eventValue) => eventValue.stopPropagation()}
                     className="relative my-8 w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
                 >
                     <button
@@ -136,7 +136,7 @@ export default function OfficeFormModal({ office, onClose, onSaved, onDeleted })
                         className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                         aria-label="Close"
                     >
-                        <X className="h-4 w-4" />
+                        <CloseIcon className="h-4 w-4" />
                     </button>
 
                     <div className="mb-5 flex items-center gap-3">
@@ -249,9 +249,9 @@ export default function OfficeFormModal({ office, onClose, onSaved, onDeleted })
                                 onChange={setField('icon')}
                                 className={inputClass}
                             >
-                                {ICON_OPTIONS.map((o) => (
-                                    <option key={o.value} value={o.value}>
-                                        {o.label}
+                                {ICON_OPTIONS.map((item) => (
+                                    <option key={item.value} value={item.value}>
+                                        {item.label}
                                     </option>
                                 ))}
                             </select>
@@ -269,7 +269,7 @@ export default function OfficeFormModal({ office, onClose, onSaved, onDeleted })
                             <input
                                 type="checkbox"
                                 checked={form.isActive}
-                                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                                onChange={(eventValue2) => setForm({ ...form, isActive: eventValue2.target.checked })}
                                 className="h-5 w-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                             />
                         </label>

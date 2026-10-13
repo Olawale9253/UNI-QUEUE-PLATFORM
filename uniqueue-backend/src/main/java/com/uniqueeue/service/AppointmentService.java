@@ -94,7 +94,7 @@ public class AppointmentService {
     @Transactional(readOnly = true)
     public List<AppointmentSlotResponse> listSlotsForStaff(Long staffId) {
         return slotRepository.findByStaffIdOrderByStartTimeAsc(staffId).stream()
-                .map(s -> AppointmentSlotResponse.from(s, bookedCount(s.getId())))
+                .map(appointmentSlotValue2 -> AppointmentSlotResponse.from(appointmentSlotValue2, bookedCount(appointmentSlotValue2.getId())))
                 .toList();
     }
 
@@ -173,8 +173,8 @@ public class AppointmentService {
 
         return slotRepository.findAvailableByUniversity(student.getUniversity().getId(), LocalDateTime.now())
                 .stream()
-                .map(s -> AppointmentSlotResponse.from(s, bookedCount(s.getId())))
-                .filter(r -> !"FULL".equals(r.getStatus()))
+                .map(valueValue3 -> AppointmentSlotResponse.from(valueValue3, bookedCount(valueValue3.getId())))
+                .filter(valueValue4 -> !"FULL".equals(valueValue4.getStatus()))
                 .toList();
     }
 
@@ -358,7 +358,7 @@ public class AppointmentService {
     @Transactional(readOnly = true)
     public List<AppointmentSlotResponse> listSlotsForUniversity(Long universityId) {
         return slotRepository.findByUniversityIdOrderByStartTimeAsc(universityId).stream()
-                .map(s -> AppointmentSlotResponse.from(s, bookedCount(s.getId())))
+                .map(appointmentSlotValue3 -> AppointmentSlotResponse.from(appointmentSlotValue3, bookedCount(appointmentSlotValue3.getId())))
                 .toList();
     }
 

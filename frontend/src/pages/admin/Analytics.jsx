@@ -182,16 +182,16 @@ export default function Analytics() {
     const completedDelta = percentChange(analytics.completedThisWeek, analytics.completedLastWeek)
     const newUsersDelta = percentChange(analytics.newUsersThisWeek, analytics.newUsersLastWeek)
 
-    const trendData = (analytics.dailyTrend || []).map((d) => ({
-        date: d.date,
-        Joined: d.joined,
-        Completed: d.completed,
-        'New users': d.newUsers,
+    const trendData = (analytics.dailyTrend || []).map((dateValue) => ({
+        date: dateValue.date,
+        Joined: dateValue.joined,
+        Completed: dateValue.completed,
+        'New users': dateValue.newUsers,
     }))
 
     const roleData = Object.entries(analytics.roleDistribution || {})
         .map(([name, value]) => ({ name, value }))
-        .filter((d) => d.value > 0)
+        .filter((dateValueValue) => dateValueValue.value > 0)
 
     const statusData = Object.entries(analytics.statusBreakdown || {})
         .map(([key, value]) => ({
@@ -199,14 +199,14 @@ export default function Analytics() {
             value,
             color: STATUS_COLORS[key] || '#94a3b8',
         }))
-        .filter((d) => d.value > 0)
+        .filter((dateValueValue2) => dateValueValue2.value > 0)
 
     const departmentGroups =
         analytics.queues && analytics.queues.length > 0
             ? groupQueuesByDepartment(
-                analytics.queues.map((q) => ({
-                    ...q,
-                    waitingCount: q.waitingNow,
+                analytics.queues.map((analytic) => ({
+                    ...analytic,
+                    waitingCount: analytic.waitingNow,
                 }))
             )
             : []
@@ -319,8 +319,8 @@ export default function Analytics() {
                                 tick={{ fontSize: 11, fill: '#64748b' }}
                                 tickLine={false}
                                 axisLine={{ stroke: '#e2e8f0' }}
-                                tickFormatter={(d) =>
-                                    new Date(d).toLocaleDateString('en-GB', {
+                                tickFormatter={(dateValueValue3) =>
+                                    new Date(dateValueValue3).toLocaleDateString('en-GB', {
                                         day: '2-digit',
                                         month: 'short',
                                     })
@@ -378,7 +378,7 @@ export default function Analytics() {
 
                             <ul className="space-y-2">
                                 {roleData.map((item) => {
-                                    const total = roleData.reduce((s, d) => s + d.value, 0)
+                                    const total = roleData.reduce((accumulator, itemValue) => accumulator + itemValue.value, 0)
                                     const pct = total > 0 ? Math.round((item.value / total) * 100) : 0
                                     return (
                                         <li key={item.name} className="flex items-center gap-2 text-sm">
@@ -432,7 +432,7 @@ export default function Analytics() {
 
                             <ul className="space-y-2">
                                 {statusData.map((item) => {
-                                    const total = statusData.reduce((s, d) => s + d.value, 0)
+                                    const total = statusData.reduce((accumulator, itemValue) => accumulator + itemValue.value, 0)
                                     const pct = total > 0 ? Math.round((item.value / total) * 100) : 0
                                     return (
                                         <li key={item.name} className="flex items-center gap-2 text-sm">
@@ -552,29 +552,29 @@ export default function Analytics() {
                             >
                                 {departmentGroups.map((group) => {
                                     const totalToday = group.queues.reduce(
-                                        (sum, q) => sum + (q.ticketsToday || 0),
+                                        (sum, item) => sum + (item.ticketsToday || 0),
                                         0
                                     )
                                     const totalServed = group.queues.reduce(
-                                        (sum, q) => sum + (q.servedToday || 0),
+                                        (sum, itemValue) => sum + (itemValue.servedToday || 0),
                                         0
                                     )
                                     const totalWaiting = group.queues.reduce(
-                                        (sum, q) => sum + (q.waitingNow || 0),
+                                        (sum, itemValue2) => sum + (itemValue2.waitingNow || 0),
                                         0
                                     )
-                                    const withWait = group.queues.filter((q) => q.avgWaitMinutes > 0)
+                                    const withWait = group.queues.filter((itemValue3) => itemValue3.avgWaitMinutes > 0)
                                     const avgWait = withWait.length
                                         ? Math.round(
-                                        (withWait.reduce((sum, q) => sum + q.avgWaitMinutes, 0) /
+                                        (withWait.reduce((sum, itemValue4) => sum + itemValue4.avgWaitMinutes, 0) /
                                             withWait.length) *
                                         10
                                     ) / 10
                                         : 0
-                                    const withRating = group.queues.filter((q) => q.avgRating > 0)
+                                    const withRating = group.queues.filter((itemValue5) => itemValue5.avgRating > 0)
                                     const avgRating = withRating.length
                                         ? Math.round(
-                                        (withRating.reduce((sum, q) => sum + q.avgRating, 0) /
+                                        (withRating.reduce((sum, itemValue6) => sum + itemValue6.avgRating, 0) /
                                             withRating.length) *
                                         10
                                     ) / 10
@@ -670,31 +670,31 @@ export default function Analytics() {
                                 animate="animate"
                                 className="divide-y divide-slate-100"
                             >
-                                {analytics.queues.map((q) => (
-                                    <motion.tr key={q.queueId} variants={staggerItem}>
+                                {analytics.queues.map((analyticValue) => (
+                                    <motion.tr key={analyticValue.queueId} variants={staggerItem}>
                                         <td className="px-6 py-3 text-sm font-medium text-slate-900">
-                                            {q.queueName}
+                                            {analyticValue.queueName}
                                         </td>
                                         <td className="px-6 py-3 text-sm text-slate-500">
-                                            {q.department || '—'}
+                                            {analyticValue.department || '—'}
                                         </td>
                                         <td className="px-6 py-3 text-right text-sm text-slate-600">
-                                            {q.ticketsToday}
+                                            {analyticValue.ticketsToday}
                                         </td>
                                         <td className="px-6 py-3 text-right text-sm text-slate-600">
-                                            {q.servedToday}
+                                            {analyticValue.servedToday}
                                         </td>
                                         <td className="px-6 py-3 text-right text-sm text-slate-600">
-                                            {q.waitingNow}
+                                            {analyticValue.waitingNow}
                                         </td>
                                         <td className="px-6 py-3 text-right text-sm text-slate-600">
-                                            {q.avgWaitMinutes} min
+                                            {analyticValue.avgWaitMinutes} min
                                         </td>
                                         <td className="px-6 py-3 text-right">
-                                            {q.avgRating > 0 ? (
+                                            {analyticValue.avgRating > 0 ? (
                                                 <span className="inline-flex items-center gap-1">
                           <span className="text-sm font-medium text-slate-900">
-                            {q.avgRating}
+                            {analyticValue.avgRating}
                           </span>
                           <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                         </span>
@@ -758,22 +758,22 @@ export default function Analytics() {
                                 animate="animate"
                                 className="divide-y divide-slate-100"
                             >
-                                {analytics.staff.map((s) => (
-                                    <motion.tr key={s.staffId} variants={staggerItem}>
+                                {analytics.staff.map((analyticValue2) => (
+                                    <motion.tr key={analyticValue2.staffId} variants={staggerItem}>
                                         <td className="px-6 py-3 text-sm font-medium text-slate-900">
-                                            {s.fullName}
+                                            {analyticValue2.fullName}
                                         </td>
                                         <td className="px-6 py-3 text-right text-sm text-slate-600">
-                                            {s.ticketsServed}
+                                            {analyticValue2.ticketsServed}
                                         </td>
                                         <td className="px-6 py-3 text-right text-sm text-slate-600">
-                                            {s.avgServiceMinutes} min
+                                            {analyticValue2.avgServiceMinutes} min
                                         </td>
                                         <td className="px-6 py-3 text-right">
-                                            {s.avgRating > 0 ? (
+                                            {analyticValue2.avgRating > 0 ? (
                                                 <span className="inline-flex items-center gap-1">
                           <span className="text-sm font-medium text-slate-900">
-                            {s.avgRating}
+                            {analyticValue2.avgRating}
                           </span>
                           <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                         </span>

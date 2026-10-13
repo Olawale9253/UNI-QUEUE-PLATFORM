@@ -56,12 +56,12 @@ public class PublicHolidaySyncService {
 
             for (int year : new int[]{ currentYear, currentYear + 1 }) {
                 try {
-                    SyncCounters c = syncForUniversity(uni, year);
-                    holidaysAdded += c.added;
-                    holidaysSkipped += c.skipped;
-                } catch (Exception e) {
+                    SyncCounters syncCounters = syncForUniversity(uni, year);
+                    holidaysAdded += syncCounters.added;
+                    holidaysSkipped += syncCounters.skipped;
+                } catch (Exception exceptionValue11) {
                     log.warn("Holiday sync failed for {} ({}) — {}",
-                            uni.getName(), uni.getCountryCode(), e.getMessage());
+                            uni.getName(), uni.getCountryCode(), exceptionValue11.getMessage());
                 }
             }
             universitiesSynced++;
@@ -79,9 +79,9 @@ public class PublicHolidaySyncService {
         int skipped = 0;
         int currentYear = LocalDate.now().getYear();
         for (int year : new int[]{ currentYear, currentYear + 1 }) {
-            SyncCounters c = syncForUniversity(uni, year);
-            added += c.added;
-            skipped += c.skipped;
+            SyncCounters syncCountersValue = syncForUniversity(uni, year);
+            added += syncCountersValue.added;
+            skipped += syncCountersValue.skipped;
         }
         return new SyncResult(1, added, skipped);
     }
@@ -93,8 +93,8 @@ public class PublicHolidaySyncService {
         HolidayDto[] holidays;
         try {
             holidays = restTemplate.getForObject(url, HolidayDto[].class);
-        } catch (Exception e) {
-            log.debug("No holiday data for {}/{} — {}", code, year, e.getMessage());
+        } catch (Exception exceptionValue12) {
+            log.debug("No holiday data for {}/{} — {}", code, year, exceptionValue12.getMessage());
             return new SyncCounters(0, 0);
         }
         if (holidays == null) return new SyncCounters(0, 0);
@@ -102,15 +102,15 @@ public class PublicHolidaySyncService {
         int added = 0;
         int skipped = 0;
 
-        for (HolidayDto h : holidays) {
+        for (HolidayDto holidayDto : holidays) {
             // Only national (global=true) holidays. Skip regional observances.
-            if (h.global == null || !h.global) continue;
+            if (holidayDto.global == null || !holidayDto.global) continue;
 
             // Only Public type — skip Bank/School/Authorities.
-            if (h.types == null || !Arrays.asList(h.types).contains("Public")) continue;
+            if (holidayDto.types == null || !Arrays.asList(holidayDto.types).contains("Public")) continue;
 
-            LocalDate holidayDate = LocalDate.parse(h.date);
-            String externalId = code + ":" + h.date;
+            LocalDate holidayDate = LocalDate.parse(holidayDto.date);
+            String externalId = code + ":" + holidayDto.date;
 
             // ── Check by (university, date) — catches manually-added entries too ──
             var existing = closedDateRepository.findByUniversityIdAndClosedDate(
@@ -124,7 +124,7 @@ public class PublicHolidaySyncService {
                     row.setExternalId(externalId);
                     closedDateRepository.save(row);
                     log.info("Adopted manual holiday {} ({}) as AUTO for university {}",
-                            h.date, h.localName, uni.getId());
+                            holidayDto.date, holidayDto.localName, uni.getId());
                 }
                 skipped++;
                 continue;
@@ -133,7 +133,7 @@ public class PublicHolidaySyncService {
             UniversityClosedDate entity = UniversityClosedDate.builder()
                     .university(uni)
                     .closedDate(holidayDate)
-                    .reason(h.localName != null ? h.localName : h.name)
+                    .reason(holidayDto.localName != null ? holidayDto.localName : holidayDto.name)
                     .source("AUTO")
                     .externalId(externalId)
                     .build();

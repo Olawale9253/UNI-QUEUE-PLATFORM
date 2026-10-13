@@ -85,8 +85,8 @@ public class RateLimitAspect {
             if (emailNode == null || emailNode.isNull()) return "unknown";
             String normalized = EmailNormalizer.normalize(emailNode.asText());
             return normalized != null ? normalized : "unknown";
-        } catch (Exception e) {
-            log.debug("Failed to extract {} from request body: {}", field, e.getMessage());
+        } catch (Exception exceptionValue2) {
+            log.debug("Failed to extract {} from request body: {}", field, exceptionValue2.getMessage());
             return "unknown";
         }
     }

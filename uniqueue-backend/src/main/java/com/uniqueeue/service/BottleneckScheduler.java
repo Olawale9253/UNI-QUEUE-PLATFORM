@@ -22,9 +22,9 @@ public class BottleneckScheduler {
         }
         log.info("Running scheduled bottleneck scan…");
         try {
-            BottleneckService.ScanResult r = bottleneckService.scan();
+            BottleneckService.ScanResult scanResult = bottleneckService.scan();
             log.info("Bottleneck scan: {} workflows, {} bottlenecks, {} alerts sent ({} ms)",
-                    r.workflowsScanned(), r.bottlenecksFound(), r.alertsSent(), r.tookMs());
+                    scanResult.workflowsScanned(), scanResult.bottlenecksFound(), scanResult.alertsSent(), scanResult.tookMs());
         } catch (Exception ex) {
             log.error("Bottleneck scan failed", ex);
         }

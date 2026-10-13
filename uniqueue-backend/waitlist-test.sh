@@ -2,10 +2,10 @@
 # UniQueue — Waitlist Flow Test
 set -e
 BASE="http://localhost:8080"
-G="\033[0;32m"; R="\033[0;31m"; Y="\033[0;33m"; N="\033[0m"
-ok()   { echo -e "${G}✅ $1${N}"; }
-fail() { echo -e "${R}❌ $1${N}"; exit 1; }
-step() { echo -e "\n${Y}━━━ $1 ━━━${N}"; }
+GREEN="\033[0;32m"; RED="\033[0;31m"; YELLOW="\033[0;33m"; RESET="\033[0m"
+ok()   { echo -e "${GREEN}✅ $1${RESET}"; }
+fail() { echo -e "${RED}❌ $1${RESET}"; exit 1; }
+step() { echo -e "\n${YELLOW}━━━ $1 ━━━${RESET}"; }
 
 # ---------- TOKENS ----------
 step "1. Login all roles"
@@ -36,8 +36,8 @@ RESP=$(curl -s -X POST $BASE/api/auth/register -H "Content-Type: application/jso
   }')
 echo "$RESP" | python3 -c "
 import sys,json
-d=json.load(sys.stdin)
-print('  Registered' if d.get('success') else f\"  Already exists: {d.get('message')}\")
+response_data=json.load(sys.stdin)
+print('  Registered' if response_data.get('success') else f\"  Already exists: {response_data.get('message')}\")
 "
 
 STUDENT2_TOKEN=$(curl -s -X POST $BASE/api/auth/login -H "Content-Type: application/json" \
@@ -49,7 +49,7 @@ ok "Student2 logged in"
 step "3. Clear any existing active tickets"
 for TK in "$STUDENT_TOKEN" "$STUDENT2_TOKEN"; do
   TID=$(curl -s $BASE/api/user/tickets/active -H "Authorization: Bearer $TK" \
-    | python3 -c "import sys,json; d=json.load(sys.stdin)['data']; print(d['id'] if d else '')")
+    | python3 -c "import sys,json; response_data=json.load(sys.stdin)['data']; print(response_data['id'] if response_data else '')")
   [ -n "$TID" ] && curl -s -X DELETE $BASE/api/user/tickets/$TID -H "Authorization: Bearer $TK" > /dev/null
 done
 ok "Cleared"
@@ -60,7 +60,7 @@ curl -s -X PUT $BASE/api/admin/queues/1 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -d '{"maxCapacity": 1, "allowWaitlist": true, "autoPromoteWaitlist": true, "maxWaitlistSize": 5}' \
-  | python3 -c "import sys,json; d=json.load(sys.stdin)['data']; print(f\"  capacity={d['maxCapacity']} allowWaitlist={d['allowWaitlist']} autoPromote={d['autoPromoteWaitlist']}\")"
+  | python3 -c "import sys,json; response_data=json.load(sys.stdin)['data']; print(f\"  capacity={response_data['maxCapacity']} allowWaitlist={response_data['allowWaitlist']} autoPromote={response_data['autoPromoteWaitlist']}\")"
 ok "Waitlist enabled"
 
 # ---------- S1 JOINS ----------
@@ -69,8 +69,8 @@ S1_RESP=$(curl -s -X POST $BASE/api/user/tickets/join -H "Content-Type: applicat
   -H "Authorization: Bearer $STUDENT_TOKEN" -d '{"queueId": 1}')
 echo "$S1_RESP" | python3 -c "
 import sys,json
-d=json.load(sys.stdin)['data']
-print(f\"  S1 → {d['ticketNumber']} status={d['status']} pos={d['position']} onWaitlist={d['onWaitlist']}\")
+response_data=json.load(sys.stdin)['data']
+print(f\"  S1 → {response_data['ticketNumber']} status={response_data['status']} pos={response_data['position']} onWaitlist={response_data['onWaitlist']}\")
 "
 S1_TID=$(echo "$S1_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['id'])")
 ok "S1 joined (ticket id=$S1_TID)"
@@ -81,8 +81,8 @@ S2_RESP=$(curl -s -X POST $BASE/api/user/tickets/join -H "Content-Type: applicat
   -H "Authorization: Bearer $STUDENT2_TOKEN" -d '{"queueId": 1}')
 echo "$S2_RESP" | python3 -c "
 import sys,json
-d=json.load(sys.stdin)['data']
-print(f\"  S2 → {d['ticketNumber']} status={d['status']} pos={d['position']} onWaitlist={d['onWaitlist']} est={d['estimatedMinutesRemaining']}min\")
+response_data=json.load(sys.stdin)['data']
+print(f\"  S2 → {response_data['ticketNumber']} status={response_data['status']} pos={response_data['position']} onWaitlist={response_data['onWaitlist']} est={response_data['estimatedMinutesRemaining']}min\")
 "
 STATUS2=$(echo "$S2_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['status'])")
 [ "$STATUS2" = "WAITLISTED" ] && ok "S2 waitlisted ✓" || fail "Expected WAITLISTED, got $STATUS2"
@@ -92,8 +92,8 @@ step "7. Estimate endpoint"
 curl -s $BASE/api/queues/1/estimate -H "Authorization: Bearer $STUDENT_TOKEN" \
   | python3 -c "
 import sys,json
-d=json.load(sys.stdin)['data']
-print(f\"  waiting={d['waitingCount']}  waitlist={d['waitlistCount']}  isFull={d['isFull']}  allowWaitlist={d['allowWaitlist']}\")
+response_data=json.load(sys.stdin)['data']
+print(f\"  waiting={response_data['waitingCount']}  waitlist={response_data['waitlistCount']}  isFull={response_data['isFull']}  allowWaitlist={response_data['allowWaitlist']}\")
 "
 ok "Estimate returned"
 
@@ -108,8 +108,8 @@ step "9. Check S2 status"
 S2_ACTIVE=$(curl -s $BASE/api/user/tickets/active -H "Authorization: Bearer $STUDENT2_TOKEN")
 echo "$S2_ACTIVE" | python3 -c "
 import sys,json
-d=json.load(sys.stdin)['data']
-print(f\"  S2 → status={d['status']} pos={d['position']} onWaitlist={d['onWaitlist']} est={d['estimatedMinutesRemaining']}min\")
+response_data=json.load(sys.stdin)['data']
+print(f\"  S2 → status={response_data['status']} pos={response_data['position']} onWaitlist={response_data['onWaitlist']} est={response_data['estimatedMinutesRemaining']}min\")
 "
 S2_STATUS=$(echo "$S2_ACTIVE" | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['status'])")
 [ "$S2_STATUS" = "WAITING" ] && ok "S2 auto-promoted ✓" || fail "Expected WAITING, got $S2_STATUS"
@@ -121,8 +121,8 @@ curl -s $BASE/api/notifications -H "Authorization: Bearer $STUDENT2_TOKEN" \
 import sys,json
 ns=json.load(sys.stdin)['data']
 print(f'  Total: {len(ns)}')
-for n in ns[:3]:
-    print(f\"    · [{n['type']}] {n['title']}\")
+for notification in ns[:3]:
+    print(f\"    · [{notification['type']}] {notification['title']}\")
 "
 ok "Notifications checked"
 
@@ -136,10 +136,10 @@ curl -s "$BASE/api/super-admin/audit-logs?action=TICKET_WAITLIST_PROMOTED&size=5
   -H "Authorization: Bearer $SUPER_TOKEN" \
   | python3 -c "
 import sys,json
-d=json.load(sys.stdin)['data']
-print(f\"  Promotions logged: {d['totalElements']}\")
-for a in d['content'][:3]:
-    print(f\"    · {a['createdAt'][:19]}  {a['details']}\")
+response_data=json.load(sys.stdin)['data']
+print(f\"  Promotions logged: {response_data['totalElements']}\")
+for audit_entry in response_data['content'][:3]:
+    print(f\"    · {audit_entry['createdAt'][:19]}  {audit_entry['details']}\")
 "
 ok "Audit checked"
 
@@ -152,9 +152,9 @@ curl -s -X PUT $BASE/api/admin/queues/1 \
 
 for TK in "$STUDENT_TOKEN" "$STUDENT2_TOKEN"; do
   TID=$(curl -s $BASE/api/user/tickets/active -H "Authorization: Bearer $TK" \
-    | python3 -c "import sys,json; d=json.load(sys.stdin)['data']; print(d['id'] if d else '')")
+    | python3 -c "import sys,json; response_data=json.load(sys.stdin)['data']; print(response_data['id'] if response_data else '')")
   [ -n "$TID" ] && curl -s -X DELETE $BASE/api/user/tickets/$TID -H "Authorization: Bearer $TK" > /dev/null
 done
 ok "Cleanup done"
 
-echo -e "\n${G}━━━ WAITLIST FLOW TEST PASSED 🎉 ━━━${N}\n"
+echo -e "\n${GREEN}━━━ WAITLIST FLOW TEST PASSED 🎉 ━━━${RESET}\n"

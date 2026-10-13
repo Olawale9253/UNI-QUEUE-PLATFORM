@@ -56,30 +56,30 @@ export default function TiersAndFeatures() {
 
     const updateLocal = (id, field, value) => {
         setUniversities((prev) =>
-            prev.map((u) => (u.id === id ? { ...u, [field]: value } : u))
+            prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
         )
     }
 
     const savePlan = async (uni) => {
-        setSaving((s) => ({ ...s, [uni.id]: { ...s[uni.id], plan: true } }))
+        setSaving((item) => ({ ...item, [uni.id]: { ...item[uni.id], plan: true } }))
         try {
             const res = await api.put(`/api/super-admin/universities/${uni.id}/plan`, {
                 plan: uni.plan,
             })
             setUniversities((prev) =>
-                prev.map((u) => (u.id === uni.id ? { ...u, ...res.data.data } : u))
+                prev.map((itemValue) => (itemValue.id === uni.id ? { ...itemValue, ...res.data.data } : itemValue))
             )
             push({ type: 'success', message: `${uni.name} → ${uni.plan}` })
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed to update plan' })
             await load()
         } finally {
-            setSaving((s) => ({ ...s, [uni.id]: { ...s[uni.id], plan: false } }))
+            setSaving((itemValue) => ({ ...itemValue, [uni.id]: { ...itemValue[uni.id], plan: false } }))
         }
     }
 
     const saveFeatures = async (uni) => {
-        setSaving((s) => ({ ...s, [uni.id]: { ...s[uni.id], features: true } }))
+        setSaving((item) => ({ ...item, [uni.id]: { ...item[uni.id], features: true } }))
         try {
             await api.put(`/api/super-admin/universities/${uni.id}/features`, {
                 featureWaitlist: uni.featureWaitlist,
@@ -92,7 +92,7 @@ export default function TiersAndFeatures() {
             push({ type: 'error', message: err.response?.data?.message || 'Failed to update features' })
             await load()
         } finally {
-            setSaving((s) => ({ ...s, [uni.id]: { ...s[uni.id], features: false } }))
+            setSaving((itemValue) => ({ ...itemValue, [uni.id]: { ...itemValue[uni.id], features: false } }))
         }
     }
 
@@ -195,12 +195,12 @@ export default function TiersAndFeatures() {
                                             <div className="flex items-center gap-2">
                                                 <select
                                                     value={uni.plan || 'FREE'}
-                                                    onChange={(e) => updateLocal(uni.id, 'plan', e.target.value)}
+                                                    onChange={(event) => updateLocal(uni.id, 'plan', event.target.value)}
                                                     className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20"
                                                 >
-                                                    {Object.entries(PLANS).map(([key, p]) => (
+                                                    {Object.entries(PLANS).map(([key, parameter]) => (
                                                         <option key={key} value={key}>
-                                                            {p.label} {p.price > 0 && `— $${p.price}/mo`}
+                                                            {parameter.label} {parameter.price > 0 && `— $${parameter.price}/mo`}
                                                         </option>
                                                     ))}
                                                 </select>
@@ -245,13 +245,13 @@ export default function TiersAndFeatures() {
                                             </h4>
 
                                             <div className="space-y-2">
-                                                {FEATURES.map((f) => {
-                                                    const enabled = uni[f.key] !== false
+                                                {FEATURES.map((item) => {
+                                                    const enabled = uni[item.key] !== false
                                                     return (
                                                         <button
-                                                            key={f.key}
+                                                            key={item.key}
                                                             type="button"
-                                                            onClick={() => updateLocal(uni.id, f.key, !enabled)}
+                                                            onClick={() => updateLocal(uni.id, item.key, !enabled)}
                                                             className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition-colors ${
                                                                 enabled
                                                                     ? 'border-emerald-200 bg-emerald-50'
@@ -270,7 +270,7 @@ export default function TiersAndFeatures() {
                                                                             enabled ? 'text-emerald-900' : 'text-slate-600'
                                                                         }`}
                                                                     >
-                                    {f.label}
+                                    {item.label}
                                   </span>
                                                                 </div>
                                                                 <div
@@ -278,7 +278,7 @@ export default function TiersAndFeatures() {
                                                                         enabled ? 'text-emerald-700' : 'text-slate-500'
                                                                     }`}
                                                                 >
-                                                                    {f.description}
+                                                                    {item.description}
                                                                 </div>
                                                             </div>
 

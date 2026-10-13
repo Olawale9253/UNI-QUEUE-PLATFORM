@@ -44,29 +44,29 @@ public class StudentWorkflowResponse {
         int total = steps.size();
         int current = sw.getCurrentStepOrder();
 
-        List<StepStatus> stepStates = steps.stream().map(s -> {
+        List<StepStatus> stepStates = steps.stream().map(workflowStep -> {
             String state;
             if (sw.getStatus() == WorkflowStatus.COMPLETED) {
                 state = "COMPLETED";
-            } else if (s.getStepOrder() < current) {
+            } else if (workflowStep.getStepOrder() < current) {
                 state = "COMPLETED";
-            } else if (s.getStepOrder().equals(current)) {
+            } else if (workflowStep.getStepOrder().equals(current)) {
                 state = "CURRENT";
             } else {
                 state = "LOCKED";
             }
             return StepStatus.builder()
-                    .order(s.getStepOrder())
-                    .queueId(s.getQueue() != null ? s.getQueue().getId() : null)
-                    .queueName(s.getQueue() != null ? s.getQueue().getName() : null)
-                    .label(s.getLabel())
+                    .order(workflowStep.getStepOrder())
+                    .queueId(workflowStep.getQueue() != null ? workflowStep.getQueue().getId() : null)
+                    .queueName(workflowStep.getQueue() != null ? workflowStep.getQueue().getName() : null)
+                    .label(workflowStep.getLabel())
                     .state(state)
-                    .isRequired(s.getIsRequired())
+                    .isRequired(workflowStep.getIsRequired())
                     .build();
         }).toList();
 
         WorkflowStep currentStep = steps.stream()
-                .filter(s -> s.getStepOrder().equals(current))
+                .filter(workflowStepValue -> workflowStepValue.getStepOrder().equals(current))
                 .findFirst().orElse(null);
 
         return StudentWorkflowResponse.builder()

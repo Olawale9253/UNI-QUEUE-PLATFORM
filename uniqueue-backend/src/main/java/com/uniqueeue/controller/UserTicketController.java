@@ -40,7 +40,7 @@ public class UserTicketController {
     public ResponseEntity<ApiResponse<TicketResponse>> active(
             @AuthenticationPrincipal UserPrincipal principal) {
         return ticketService.getActiveTicket(principal.getId())
-                .map(t -> ResponseEntity.ok(ApiResponse.success("Active ticket", t)))
+                .map(valueValue -> ResponseEntity.ok(ApiResponse.success("Active ticket", valueValue)))
                 .orElseGet(() -> ResponseEntity.ok(ApiResponse.success("No active ticket", null)));
     }
 

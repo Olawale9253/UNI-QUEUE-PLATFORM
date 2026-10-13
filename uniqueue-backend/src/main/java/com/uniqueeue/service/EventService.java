@@ -24,7 +24,7 @@ public class EventService {
         SseEmitter emitter = new SseEmitter(EMITTER_TIMEOUT_MS);
         ClientConnection connection = new ClientConnection(emitter, userId, universityId);
 
-        byUser.computeIfAbsent(userId, k -> new CopyOnWriteArrayList<>()).add(connection);
+        byUser.computeIfAbsent(userId, itemIndexValue -> new CopyOnWriteArrayList<>()).add(connection);
 
         emitter.onCompletion(() -> remove(connection));
         emitter.onTimeout(() -> {
@@ -41,8 +41,8 @@ public class EventService {
             emitter.send(SseEmitter.event()
                     .name("connected")
                     .data(Map.of("userId", userId)));
-        } catch (IOException e) {
-            log.debug("Could not send initial SSE event to user {}: {}", userId, e.getMessage());
+        } catch (IOException iOExceptionValue2) {
+            log.debug("Could not send initial SSE event to user {}: {}", userId, iOExceptionValue2.getMessage());
             remove(connection);
         }
 
@@ -115,7 +115,7 @@ public class EventService {
         Map<String, Object> message = Map.of(
                 "topic", topic,
                 "payload", payload == null ? Map.of() : payload);
-        for (ClientConnection c : list) send(c, message);
+        for (ClientConnection clientConnection : list) send(clientConnection, message);
     }
 
     private void doBroadcastToUniversity(Long universityId, String topic, Object payload) {
@@ -123,15 +123,15 @@ public class EventService {
                 "topic", topic,
                 "payload", payload == null ? Map.of() : payload);
         byUser.values().forEach(list -> list.stream()
-                .filter(c -> universityId.equals(c.universityId()))
-                .forEach(c -> send(c, message)));
+                .filter(clientConnectionValue -> universityId.equals(clientConnectionValue.universityId()))
+                .forEach(clientConnectionValue2 -> send(clientConnectionValue2, message)));
     }
 
     private void doBroadcastToAll(String topic, Object payload) {
         Map<String, Object> message = Map.of(
                 "topic", topic,
                 "payload", payload == null ? Map.of() : payload);
-        byUser.values().forEach(list -> list.forEach(c -> send(c, message)));
+        byUser.values().forEach(list -> list.forEach(clientConnectionValue3 -> send(clientConnectionValue3, message)));
     }
 
     private void send(ClientConnection connection, Map<String, Object> message) {

@@ -20,11 +20,11 @@ public class PublicHolidayScheduler {
     public void dailySync() {
         log.info("Starting daily public holiday sync…");
         try {
-            PublicHolidaySyncService.SyncResult r = syncService.syncAll();
+            PublicHolidaySyncService.SyncResult syncResultValue = syncService.syncAll();
             log.info("Holiday sync done — universities={}, added={}, skipped={}",
-                    r.universitiesSynced(), r.holidaysAdded(), r.holidaysSkipped());
-        } catch (Exception e) {
-            log.error("Holiday sync failed", e);
+                    syncResultValue.universitiesSynced(), syncResultValue.holidaysAdded(), syncResultValue.holidaysSkipped());
+        } catch (Exception exceptionValue10) {
+            log.error("Holiday sync failed", exceptionValue10);
         }
     }
 }

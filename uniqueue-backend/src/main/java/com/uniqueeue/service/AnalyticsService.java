@@ -46,13 +46,13 @@ public class AnalyticsService {
         // ───────── overview ─────────
         List<Queue> queues = queueRepository.findByUniversityId(universityId);
         long activeQueues = queues.stream()
-                .filter(q -> Boolean.TRUE.equals(q.getIsActive()))
+                .filter(queueValue -> Boolean.TRUE.equals(queueValue.getIsActive()))
                 .count();
 
         List<User> allUsersOfUniversity = userRepository.findByUniversityId(universityId);
-        long totalStaff = allUsersOfUniversity.stream().filter(u -> u.getRole() == Role.STAFF).count();
-        long totalStudents = allUsersOfUniversity.stream().filter(u -> u.getRole() == Role.USER).count();
-        long totalAdmins = allUsersOfUniversity.stream().filter(u -> u.getRole() == Role.ADMIN).count();
+        long totalStaff = allUsersOfUniversity.stream().filter(userValue5 -> userValue5.getRole() == Role.STAFF).count();
+        long totalStudents = allUsersOfUniversity.stream().filter(userValue6 -> userValue6.getRole() == Role.USER).count();
+        long totalAdmins = allUsersOfUniversity.stream().filter(userValue7 -> userValue7.getRole() == Role.ADMIN).count();
 
         long ticketsToday = ticketRepository.countByUniversitySince(universityId, startOfDay);
         long ticketsAllTime = ticketRepository.countByUniversity(universityId);
@@ -60,14 +60,14 @@ public class AnalyticsService {
 
         List<Ticket> recent = ticketRepository.findRecentByUniversity(universityId, fourteenDaysAgo);
         List<Ticket> completed = recent.stream()
-                .filter(t -> t.getStatus() == TicketStatus.COMPLETED)
+                .filter(ticketValue4 -> ticketValue4.getStatus() == TicketStatus.COMPLETED)
                 .toList();
 
         double avgWait = avgMinutes(completed, Ticket::getJoinedAt, Ticket::getCalledAt);
         double avgService = avgMinutes(completed, Ticket::getServedAt, Ticket::getCompletedAt);
 
         long noShowCount = recent.stream()
-                .filter(t -> t.getStatus() == TicketStatus.NO_SHOW)
+                .filter(ticketValue5 -> ticketValue5.getStatus() == TicketStatus.NO_SHOW)
                 .count();
         long totalResolved = noShowCount + completed.size();
         double noShowRate = totalResolved > 0 ? (noShowCount * 100.0 / totalResolved) : 0;
@@ -78,73 +78,73 @@ public class AnalyticsService {
         // ───────── week-over-week ─────────
         long ticketsThisWeek = 0, ticketsLastWeek = 0;
         long completedThisWeek = 0, completedLastWeek = 0;
-        for (Ticket t : recent) {
-            if (t.getJoinedAt() != null) {
-                if (!t.getJoinedAt().isBefore(sevenDaysAgo)) ticketsThisWeek++;
-                else if (!t.getJoinedAt().isBefore(fourteenDaysAgoStart)) ticketsLastWeek++;
+        for (Ticket ticketValue6 : recent) {
+            if (ticketValue6.getJoinedAt() != null) {
+                if (!ticketValue6.getJoinedAt().isBefore(sevenDaysAgo)) ticketsThisWeek++;
+                else if (!ticketValue6.getJoinedAt().isBefore(fourteenDaysAgoStart)) ticketsLastWeek++;
             }
-            if (t.getStatus() == TicketStatus.COMPLETED && t.getCompletedAt() != null) {
-                if (!t.getCompletedAt().isBefore(sevenDaysAgo)) completedThisWeek++;
-                else if (!t.getCompletedAt().isBefore(fourteenDaysAgoStart)) completedLastWeek++;
+            if (ticketValue6.getStatus() == TicketStatus.COMPLETED && ticketValue6.getCompletedAt() != null) {
+                if (!ticketValue6.getCompletedAt().isBefore(sevenDaysAgo)) completedThisWeek++;
+                else if (!ticketValue6.getCompletedAt().isBefore(fourteenDaysAgoStart)) completedLastWeek++;
             }
         }
 
         long newUsersThisWeek = 0, newUsersLastWeek = 0;
         Map<LocalDate, long[]> daily = new HashMap<>();
-        for (int i = 13; i >= 0; i--) daily.put(today.minusDays(i), new long[3]);
+        for (int indexValue3 = 13; indexValue3 >= 0; indexValue3--) daily.put(today.minusDays(indexValue3), new long[3]);
 
-        for (User u : allUsersOfUniversity) {
-            if (u.getCreatedAt() == null) continue;
-            LocalDate d = u.getCreatedAt().toLocalDate();
-            long[] bucket = daily.get(d);
+        for (User userValue8 : allUsersOfUniversity) {
+            if (userValue8.getCreatedAt() == null) continue;
+            LocalDate localDate = userValue8.getCreatedAt().toLocalDate();
+            long[] bucket = daily.get(localDate);
             if (bucket != null) bucket[2]++;
 
-            if (!u.getCreatedAt().isBefore(sevenDaysAgo)) newUsersThisWeek++;
-            else if (!u.getCreatedAt().isBefore(fourteenDaysAgoStart)) newUsersLastWeek++;
+            if (!userValue8.getCreatedAt().isBefore(sevenDaysAgo)) newUsersThisWeek++;
+            else if (!userValue8.getCreatedAt().isBefore(fourteenDaysAgoStart)) newUsersLastWeek++;
         }
 
-        for (Ticket t : recent) {
-            if (t.getJoinedAt() != null) {
-                long[] bucket = daily.get(t.getJoinedAt().toLocalDate());
+        for (Ticket ticketValue7 : recent) {
+            if (ticketValue7.getJoinedAt() != null) {
+                long[] bucket = daily.get(ticketValue7.getJoinedAt().toLocalDate());
                 if (bucket != null) bucket[0]++;
             }
-            if (t.getCompletedAt() != null) {
-                long[] bucket = daily.get(t.getCompletedAt().toLocalDate());
+            if (ticketValue7.getCompletedAt() != null) {
+                long[] bucket = daily.get(ticketValue7.getCompletedAt().toLocalDate());
                 if (bucket != null) bucket[1]++;
             }
         }
 
         // ───────── per-queue ─────────
         List<QueueStats> queueStats = new ArrayList<>();
-        for (Queue q : queues) {
-            List<Ticket> qRecent = ticketRepository.findRecentByQueue(q.getId(), fourteenDaysAgo);
+        for (Queue queueValue2 : queues) {
+            List<Ticket> qRecent = ticketRepository.findRecentByQueue(queueValue2.getId(), fourteenDaysAgo);
 
             long qToday = qRecent.stream()
-                    .filter(t -> t.getJoinedAt() != null && t.getJoinedAt().toLocalDate().equals(today))
+                    .filter(ticketValue8 -> ticketValue8.getJoinedAt() != null && ticketValue8.getJoinedAt().toLocalDate().equals(today))
                     .count();
 
             List<Ticket> qCompleted = qRecent.stream()
-                    .filter(t -> t.getStatus() == TicketStatus.COMPLETED)
+                    .filter(ticketValue9 -> ticketValue9.getStatus() == TicketStatus.COMPLETED)
                     .toList();
 
             long qServedToday = qCompleted.stream()
-                    .filter(t -> t.getCompletedAt() != null && t.getCompletedAt().toLocalDate().equals(today))
+                    .filter(ticketValue10 -> ticketValue10.getCompletedAt() != null && ticketValue10.getCompletedAt().toLocalDate().equals(today))
                     .count();
 
-            long qWaiting = ticketRepository.countByQueueAndStatus(q.getId(), TicketStatus.WAITING);
+            long qWaiting = ticketRepository.countByQueueAndStatus(queueValue2.getId(), TicketStatus.WAITING);
 
             double qAvgWait = avgMinutes(qCompleted, Ticket::getJoinedAt, Ticket::getCalledAt);
             double qAvgService = avgMinutes(qCompleted, Ticket::getServedAt, Ticket::getCompletedAt);
 
-            long qNoShows = qRecent.stream().filter(t -> t.getStatus() == TicketStatus.NO_SHOW).count();
+            long qNoShows = qRecent.stream().filter(ticketValue11 -> ticketValue11.getStatus() == TicketStatus.NO_SHOW).count();
             long qResolved = qNoShows + qCompleted.size();
             double qNoShowRate = qResolved > 0 ? (qNoShows * 100.0 / qResolved) : 0;
 
-            Double qRatingRaw = feedbackRepository.avgRatingByQueueId(q.getId());
+            Double qRatingRaw = feedbackRepository.avgRatingByQueueId(queueValue2.getId());
 
             queueStats.add(QueueStats.builder()
-                    .queueId(q.getId())
-                    .queueName(q.getName())
+                    .queueId(queueValue2.getId())
+                    .queueName(queueValue2.getName())
                     .ticketsToday(qToday)
                     .servedToday(qServedToday)
                     .waitingNow(qWaiting)
@@ -158,17 +158,17 @@ public class AnalyticsService {
         // ───────── per-staff ─────────
         List<User> staff = userRepository.findByUniversityIdAndRole(universityId, Role.STAFF);
         List<StaffPerformance> staffStats = new ArrayList<>();
-        for (User s : staff) {
-            List<Ticket> sTickets = ticketRepository.findRecentByStaff(s.getId(), fourteenDaysAgo);
+        for (User userValue9 : staff) {
+            List<Ticket> sTickets = ticketRepository.findRecentByStaff(userValue9.getId(), fourteenDaysAgo);
             List<Ticket> sCompleted = sTickets.stream()
-                    .filter(t -> t.getStatus() == TicketStatus.COMPLETED)
+                    .filter(ticketValue12 -> ticketValue12.getStatus() == TicketStatus.COMPLETED)
                     .toList();
             double sAvgService = avgMinutes(sCompleted, Ticket::getServedAt, Ticket::getCompletedAt);
-            Double sRatingRaw = feedbackRepository.avgRatingByStaffId(s.getId());
+            Double sRatingRaw = feedbackRepository.avgRatingByStaffId(userValue9.getId());
 
             staffStats.add(StaffPerformance.builder()
-                    .staffId(s.getId())
-                    .fullName(s.getFullName())
+                    .staffId(userValue9.getId())
+                    .fullName(userValue9.getFullName())
                     .ticketsServed(sCompleted.size())
                     .avgServiceMinutes(round1(sAvgService))
                     .avgRating(round1(sRatingRaw != null ? sRatingRaw : 0))
@@ -177,14 +177,14 @@ public class AnalyticsService {
 
         // ───────── daily trend (14 days) ─────────
         List<DailyPoint> trend = new ArrayList<>();
-        for (int i = 13; i >= 0; i--) {
-            LocalDate d = today.minusDays(i);
-            long[] c = daily.getOrDefault(d, new long[3]);
+        for (int indexValue4 = 13; indexValue4 >= 0; indexValue4--) {
+            LocalDate localDateValue = today.minusDays(indexValue4);
+            long[] numberValue = daily.getOrDefault(localDateValue, new long[3]);
             trend.add(DailyPoint.builder()
-                    .date(d)
-                    .joined(c[0])
-                    .completed(c[1])
-                    .newUsers(c[2])
+                    .date(localDateValue)
+                    .joined(numberValue[0])
+                    .completed(numberValue[1])
+                    .newUsers(numberValue[2])
                     .build());
         }
 
@@ -197,7 +197,7 @@ public class AnalyticsService {
         // ───────── ticket status breakdown (last 14 days) ─────────
         Map<String, Long> statusBreakdown = new LinkedHashMap<>();
         for (TicketStatus status : TicketStatus.values()) {
-            long count = recent.stream().filter(t -> t.getStatus() == status).count();
+            long count = recent.stream().filter(ticketValue13 -> ticketValue13.getStatus() == status).count();
             statusBreakdown.put(status.name(), count);
         }
 
@@ -231,13 +231,13 @@ public class AnalyticsService {
                               java.util.function.Function<Ticket, LocalDateTime> start,
                               java.util.function.Function<Ticket, LocalDateTime> end) {
         return tickets.stream()
-                .filter(t -> start.apply(t) != null && end.apply(t) != null)
-                .mapToLong(t -> Duration.between(start.apply(t), end.apply(t)).toMinutes())
+                .filter(ticketValue14 -> start.apply(ticketValue14) != null && end.apply(ticketValue14) != null)
+                .mapToLong(ticketValue15 -> Duration.between(start.apply(ticketValue15), end.apply(ticketValue15)).toMinutes())
                 .average()
                 .orElse(0);
     }
 
-    private double round1(double v) {
-        return Math.round(v * 10.0) / 10.0;
+    private double round1(double numericValue) {
+        return Math.round(numericValue * 10.0) / 10.0;
     }
 }

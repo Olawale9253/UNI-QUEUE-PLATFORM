@@ -134,33 +134,33 @@ public class AuthController {
     @GetMapping("/universities")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> universities() {
         List<Map<String, Object>> list = universityRepository.findAll().stream()
-                .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
-                .map(u -> {
-                    Map<String, Object> m = new HashMap<>();
-                    m.put("id", u.getId());
-                    m.put("name", u.getName());
-                    m.put("code", u.getCode());
-                    m.put("emailDomain", u.getEmailDomain());
-                    m.put("matricExample", u.getMatricExample());
-                    m.put("matricDescription", u.getMatricDescription());
+                .filter(universityValue2 -> Boolean.TRUE.equals(universityValue2.getIsActive()))
+                .map(universityValue3 -> {
+                    Map<String, Object> object = new HashMap<>();
+                    object.put("id", universityValue3.getId());
+                    object.put("name", universityValue3.getName());
+                    object.put("code", universityValue3.getCode());
+                    object.put("emailDomain", universityValue3.getEmailDomain());
+                    object.put("matricExample", universityValue3.getMatricExample());
+                    object.put("matricDescription", universityValue3.getMatricDescription());
 
                     // ─── Fresher config ───
-                    m.put("fresherRegistrationEnabled", u.getFresherRegistrationEnabled());
-                    m.put("fresherVerificationMode", u.getFresherVerificationMode());
+                    object.put("fresherRegistrationEnabled", universityValue3.getFresherRegistrationEnabled());
+                    object.put("fresherVerificationMode", universityValue3.getFresherVerificationMode());
 
-                    m.put("requireJambReg", u.getRequireJambReg());
-                    m.put("jambRegExample", u.getJambRegExample());
-                    m.put("jambRegDescription", u.getJambRegDescription());
+                    object.put("requireJambReg", universityValue3.getRequireJambReg());
+                    object.put("jambRegExample", universityValue3.getJambRegExample());
+                    object.put("jambRegDescription", universityValue3.getJambRegDescription());
 
-                    m.put("requireAdmissionRef", u.getRequireAdmissionRef());
-                    m.put("admissionRefExample", u.getAdmissionRefExample());
-                    m.put("admissionRefDescription", u.getAdmissionRefDescription());
+                    object.put("requireAdmissionRef", universityValue3.getRequireAdmissionRef());
+                    object.put("admissionRefExample", universityValue3.getAdmissionRefExample());
+                    object.put("admissionRefDescription", universityValue3.getAdmissionRefDescription());
 
-                    m.put("requireApplicationNumber", u.getRequireApplicationNumber());
-                    m.put("applicationNumberExample", u.getApplicationNumberExample());
-                    m.put("applicationNumberDescription", u.getApplicationNumberDescription());
+                    object.put("requireApplicationNumber", universityValue3.getRequireApplicationNumber());
+                    object.put("applicationNumberExample", universityValue3.getApplicationNumberExample());
+                    object.put("applicationNumberDescription", universityValue3.getApplicationNumberDescription());
 
-                    return m;
+                    return object;
                 })
                 .toList();
         return ResponseEntity.ok(ApiResponse.success("Universities", list));
@@ -201,13 +201,13 @@ public class AuthController {
         final String lookupDomain = normalized;
 
         var uni = universityRepository.findAll().stream()
-                .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
-                .filter(u -> {
-                    String d = u.getEmailDomain();
-                    if (d == null) return false;
-                    d = d.toLowerCase();
-                    if (d.startsWith("@")) d = d.substring(1);
-                    return d.equals(lookupDomain);
+                .filter(universityValue4 -> Boolean.TRUE.equals(universityValue4.getIsActive()))
+                .filter(universityValue5 -> {
+                    String stringValue = universityValue5.getEmailDomain();
+                    if (stringValue == null) return false;
+                    stringValue = stringValue.toLowerCase();
+                    if (stringValue.startsWith("@")) stringValue = stringValue.substring(1);
+                    return stringValue.equals(lookupDomain);
                 })
                 .findFirst()
                 .orElse(null);

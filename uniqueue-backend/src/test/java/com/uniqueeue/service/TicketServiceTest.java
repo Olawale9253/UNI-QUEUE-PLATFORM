@@ -41,11 +41,11 @@ class TicketServiceTest {
 
     @BeforeEach
     void setup() {
-        TestFixtures.Fixture f = fixtures.build();
-        student = f.student();
-        staff = f.staff();
-        pay = f.payQueue();
-        reg = f.regQueue();
+        TestFixtures.Fixture fixture = fixtures.build();
+        student = fixture.student();
+        staff = fixture.staff();
+        pay = fixture.payQueue();
+        reg = fixture.regQueue();
     }
 
     // ─── JOIN ─────────────────────────────────────────────────

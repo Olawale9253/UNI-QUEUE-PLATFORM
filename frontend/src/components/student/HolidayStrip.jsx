@@ -6,11 +6,11 @@ function parseDate(iso) {
 }
 
 function formatMonthDay(iso) {
-    const d = parseDate(iso)
-    if (!d) return { month: '', day: '' }
+    const date = parseDate(iso)
+    if (!date) return { month: '', day: '' }
     return {
-        month: d.toLocaleDateString('en-GB', { month: 'short' }).toUpperCase(),
-        day: String(d.getDate()).padStart(2, '0'),
+        month: date.toLocaleDateString('en-GB', { month: 'short' }).toUpperCase(),
+        day: String(date.getDate()).padStart(2, '0'),
     }
 }
 
@@ -69,17 +69,17 @@ export default function HolidayStrip({ closedDates, className = 'mb-6' }) {
 
                 {/* Pills */}
                 <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto py-0.5 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-                    {preview.map((d, i) => {
-                        const { month, day } = formatMonthDay(d.closedDate)
+                    {preview.map((item, index) => {
+                        const { month, day } = formatMonthDay(item.closedDate)
                         return (
                             <div
-                                key={d.id}
+                                key={item.id}
                                 className="inline-flex shrink-0 items-center overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm transition-transform hover:scale-[1.03] dark:border-slate-700 dark:bg-slate-800"
-                                title={d.reason || 'Holiday'}
+                                title={item.reason || 'Holiday'}
                             >
                                 <span
                                     className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${
-                                        i === 0
+                                        index === 0
                                             ? 'bg-brand-600 text-white'
                                             : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
                                     }`}
@@ -87,7 +87,7 @@ export default function HolidayStrip({ closedDates, className = 'mb-6' }) {
                                     {month} {day}
                                 </span>
                                 <span className="max-w-[110px] truncate px-2 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-300">
-                                    {d.reason || 'Holiday'}
+                                    {item.reason || 'Holiday'}
                                 </span>
                             </div>
                         )

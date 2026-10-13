@@ -29,11 +29,11 @@ export default function Logo({
             height={size}
             draggable={false}
             className={`select-none object-contain ${className}`}
-            onError={(e) => {
+            onError={(event) => {
                 // Graceful fallback — if /uniqueue-icon.png is missing, use the full
-                if (variant === 'icon' && !e.target.dataset.fallback) {
-                    e.target.dataset.fallback = '1'
-                    e.target.src = '/uniqueue-logo.png'
+                if (variant === 'icon' && !event.target.dataset.fallback) {
+                    event.target.dataset.fallback = '1'
+                    event.target.src = '/uniqueue-logo.png'
                 }
             }}
             {...rest}

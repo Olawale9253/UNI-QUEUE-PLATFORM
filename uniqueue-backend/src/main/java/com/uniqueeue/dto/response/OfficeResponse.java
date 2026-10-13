@@ -28,19 +28,19 @@ public class OfficeResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static OfficeResponse from(Office o) {
+    public static OfficeResponse from(Office office) {
         return OfficeResponse.builder()
-                .id(o.getId())
-                .name(o.getName())
-                .description(o.getDescription())
-                .location(o.getLocation())
-                .icon(o.getIcon())
-                .openingTime(o.getOpeningTime())
-                .closingTime(o.getClosingTime())
-                .slotDurationMinutes(o.getSlotDurationMinutes())
-                .isActive(o.getIsActive())
-                .createdAt(o.getCreatedAt())
-                .updatedAt(o.getUpdatedAt())
+                .id(office.getId())
+                .name(office.getName())
+                .description(office.getDescription())
+                .location(office.getLocation())
+                .icon(office.getIcon())
+                .openingTime(office.getOpeningTime())
+                .closingTime(office.getClosingTime())
+                .slotDurationMinutes(office.getSlotDurationMinutes())
+                .isActive(office.getIsActive())
+                .createdAt(office.getCreatedAt())
+                .updatedAt(office.getUpdatedAt())
                 .build();
     }
 }

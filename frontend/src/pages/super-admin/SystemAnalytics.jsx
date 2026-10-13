@@ -159,15 +159,15 @@ export default function SystemAnalytics() {
     const completedDelta = percentChange(analytics.completedThisWeek, analytics.completedLastWeek)
     const newUsersDelta = percentChange(analytics.newUsersThisWeek, analytics.newUsersLastWeek)
 
-    const trendData = (analytics.dailyTrend || []).map((d) => ({
-        date: d.date,
-        Joined: d.joined,
-        Completed: d.completed,
-        'New users': d.newUsers,
+    const trendData = (analytics.dailyTrend || []).map((dateValue) => ({
+        date: dateValue.date,
+        Joined: dateValue.joined,
+        Completed: dateValue.completed,
+        'New users': dateValue.newUsers,
     }))
 
     const sortedUniversities = [...(analytics.universities || [])].sort(
-        (a, b) => (b.ticketsAllTime || 0) - (a.ticketsAllTime || 0)
+        (firstValue, secondValue) => (secondValue.ticketsAllTime || 0) - (firstValue.ticketsAllTime || 0)
     )
     const topUniversities = sortedUniversities.slice(0, 5)
 
@@ -279,8 +279,8 @@ export default function SystemAnalytics() {
                                 tick={{ fontSize: 11, fill: '#64748b' }}
                                 tickLine={false}
                                 axisLine={{ stroke: '#e2e8f0' }}
-                                tickFormatter={(d) =>
-                                    new Date(d).toLocaleDateString('en-GB', {
+                                tickFormatter={(dateValueValue) =>
+                                    new Date(dateValueValue).toLocaleDateString('en-GB', {
                                         day: '2-digit',
                                         month: 'short',
                                     })
@@ -390,8 +390,8 @@ export default function SystemAnalytics() {
                                 tick={{ fontSize: 11, fill: '#64748b' }}
                                 tickLine={false}
                                 axisLine={{ stroke: '#e2e8f0' }}
-                                tickFormatter={(d) =>
-                                    new Date(d).toLocaleDateString('en-GB', {
+                                tickFormatter={(dateValueValue2) =>
+                                    new Date(dateValueValue2).toLocaleDateString('en-GB', {
                                         day: '2-digit',
                                         month: 'short',
                                     })
@@ -433,9 +433,9 @@ export default function SystemAnalytics() {
                         animate="animate"
                         className="space-y-2"
                     >
-                        {topUniversities.map((u, idx) => (
+                        {topUniversities.map((topUniversity, idx) => (
                             <motion.li
-                                key={u.universityId}
+                                key={topUniversity.universityId}
                                 variants={staggerItem}
                                 className="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-3"
                             >
@@ -455,19 +455,19 @@ export default function SystemAnalytics() {
                                 <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-semibold text-slate-900">
-                      {u.name}
+                      {topUniversity.name}
                     </span>
-                                        <Badge variant="default">{u.code}</Badge>
+                                        <Badge variant="default">{topUniversity.code}</Badge>
                                     </div>
                                     <div className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-slate-500">
-                                        <span>{u.users} users</span>
-                                        <span>{u.queues} queues</span>
-                                        <span>{u.ticketsAllTime} tickets all-time</span>
+                                        <span>{topUniversity.users} users</span>
+                                        <span>{topUniversity.queues} queues</span>
+                                        <span>{topUniversity.ticketsAllTime} tickets all-time</span>
                                     </div>
                                 </div>
                                 <div className="shrink-0 text-right">
                                     <div className="text-lg font-semibold text-slate-900">
-                                        {u.ticketsToday}
+                                        {topUniversity.ticketsToday}
                                     </div>
                                     <div className="text-[10px] uppercase tracking-wide text-slate-500">
                                         today
@@ -523,30 +523,30 @@ export default function SystemAnalytics() {
                                 animate="animate"
                                 className="divide-y divide-slate-100"
                             >
-                                {analytics.universities.map((u) => (
-                                    <motion.tr key={u.universityId} variants={staggerItem}>
+                                {analytics.universities.map((analytic) => (
+                                    <motion.tr key={analytic.universityId} variants={staggerItem}>
                                         <td className="px-6 py-3 font-mono text-sm text-slate-700">
-                                            {u.code}
+                                            {analytic.code}
                                         </td>
-                                        <td className="px-6 py-3 text-sm text-slate-900">{u.name}</td>
+                                        <td className="px-6 py-3 text-sm text-slate-900">{analytic.name}</td>
                                         <td className="px-6 py-3 text-right text-sm text-slate-600">
-                                            {u.users}
-                                        </td>
-                                        <td className="px-6 py-3 text-right text-sm text-slate-600">
-                                            {u.staff}
+                                            {analytic.users}
                                         </td>
                                         <td className="px-6 py-3 text-right text-sm text-slate-600">
-                                            {u.queues}
+                                            {analytic.staff}
+                                        </td>
+                                        <td className="px-6 py-3 text-right text-sm text-slate-600">
+                                            {analytic.queues}
                                         </td>
                                         <td className="px-6 py-3 text-right text-sm font-medium text-slate-900">
-                                            {u.ticketsToday}
+                                            {analytic.ticketsToday}
                                         </td>
                                         <td className="px-6 py-3 text-right text-sm text-slate-600">
-                                            {u.ticketsAllTime}
+                                            {analytic.ticketsAllTime}
                                         </td>
                                         <td className="px-6 py-3">
-                                            <Badge variant={u.isActive ? 'success' : 'default'}>
-                                                {u.isActive ? 'Active' : 'Inactive'}
+                                            <Badge variant={analytic.isActive ? 'success' : 'default'}>
+                                                {analytic.isActive ? 'Active' : 'Inactive'}
                                             </Badge>
                                         </td>
                                     </motion.tr>

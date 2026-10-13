@@ -42,7 +42,7 @@ public class BottleneckAlertTracker {
         lastAlertAt.clear();
     }
 
-    private String key(Long u, Long w, Integer s) {
-        return u + ":" + w + ":" + s;
+    private String key(Long longValue, Long longValue2, Integer integer) {
+        return longValue + ":" + longValue2 + ":" + integer;
     }
 }

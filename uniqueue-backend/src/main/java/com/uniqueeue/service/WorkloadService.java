@@ -35,22 +35,22 @@ public class WorkloadService {
         long totalWaiting = 0;
         long totalStaffAssignments = 0;
 
-        for (Queue q : queues) {
-            long waiting = countWaiting(q.getId());
-            long staff = queueStaffRepository.countByQueueId(q.getId());
-            int avg = q.getAverageServiceMinutes() != null ? q.getAverageServiceMinutes() : DEFAULT_AVG_MIN;
+        for (Queue queueValue9 : queues) {
+            long waiting = countWaiting(queueValue9.getId());
+            long staff = queueStaffRepository.countByQueueId(queueValue9.getId());
+            int avg = queueValue9.getAverageServiceMinutes() != null ? queueValue9.getAverageServiceMinutes() : DEFAULT_AVG_MIN;
             int est = (int) Math.min(Integer.MAX_VALUE, waiting * (long) avg);
             double ratio = round1((double) waiting / Math.max(1, staff));
 
             allLoads.add(WorkloadResponse.QueueLoad.builder()
-                    .queueId(q.getId())
-                    .queueName(q.getName())
+                    .queueId(queueValue9.getId())
+                    .queueName(queueValue9.getName())
                     .waitingCount(waiting)
                     .staffCount(staff)
                     .ratio(ratio)
                     .avgServiceMinutes(avg)
                     .estWaitMinutes(est)
-                    .isOpen(Boolean.TRUE.equals(q.getIsActive()))
+                    .isOpen(Boolean.TRUE.equals(queueValue9.getIsActive()))
                     .level(classify(waiting, staff, ratio))
                     .build());
 
@@ -62,52 +62,52 @@ public class WorkloadService {
         Map<Long, String> officeNames = new LinkedHashMap<>();
         Map<Long, List<WorkloadResponse.QueueLoad>> byOffice = new LinkedHashMap<>();
 
-        for (int i = 0; i < queues.size(); i++) {
-            Queue q = queues.get(i);
-            WorkloadResponse.QueueLoad load = allLoads.get(i);
+        for (int indexValue14 = 0; indexValue14 < queues.size(); indexValue14++) {
+            Queue queueValue10 = queues.get(indexValue14);
+            WorkloadResponse.QueueLoad load = allLoads.get(indexValue14);
 
-            Long officeId = q.getOffice() != null ? q.getOffice().getId() : 0L;
-            String officeName = q.getOffice() != null && q.getOffice().getName() != null
-                    ? q.getOffice().getName()
+            Long officeId = queueValue10.getOffice() != null ? queueValue10.getOffice().getId() : 0L;
+            String officeName = queueValue10.getOffice() != null && queueValue10.getOffice().getName() != null
+                    ? queueValue10.getOffice().getName()
                     : "General";
 
             officeNames.putIfAbsent(officeId, officeName);
-            byOffice.computeIfAbsent(officeId, k -> new ArrayList<>()).add(load);
+            byOffice.computeIfAbsent(officeId, itemIndexValue2 -> new ArrayList<>()).add(load);
         }
 
         List<WorkloadResponse.OfficeLoad> offices = new ArrayList<>();
         String worstOfficeName = null;
         long worstOfficeWaiting = -1;
 
-        for (Map.Entry<Long, List<WorkloadResponse.QueueLoad>> e : byOffice.entrySet()) {
-            List<WorkloadResponse.QueueLoad> qls = e.getValue();
+        for (Map.Entry<Long, List<WorkloadResponse.QueueLoad>> queueLoad : byOffice.entrySet()) {
+            List<WorkloadResponse.QueueLoad> qls = queueLoad.getValue();
 
-            long w = qls.stream().mapToLong(WorkloadResponse.QueueLoad::getWaitingCount).sum();
-            long s = qls.stream().mapToLong(WorkloadResponse.QueueLoad::getStaffCount).sum();
+            long numberValueValue2 = qls.stream().mapToLong(WorkloadResponse.QueueLoad::getWaitingCount).sum();
+            long numberValueValue3 = qls.stream().mapToLong(WorkloadResponse.QueueLoad::getStaffCount).sum();
             int maxEst = qls.stream().mapToInt(WorkloadResponse.QueueLoad::getEstWaitMinutes).max().orElse(0);
-            double ratio = round1((double) w / Math.max(1, s));
+            double ratio = round1((double) numberValueValue2 / Math.max(1, numberValueValue3));
 
             List<WorkloadResponse.QueueLoad> sortedQueues = qls.stream()
                     .sorted(Comparator.comparing(WorkloadResponse.QueueLoad::getRatio).reversed())
                     .collect(Collectors.toList());
 
             offices.add(WorkloadResponse.OfficeLoad.builder()
-                    .officeId(e.getKey())
-                    .officeName(officeNames.get(e.getKey()))
+                    .officeId(queueLoad.getKey())
+                    .officeName(officeNames.get(queueLoad.getKey()))
                     .queueCount(qls.size())
-                    .waitingCount(w)
-                    .staffCount(s)
+                    .waitingCount(numberValueValue2)
+                    .staffCount(numberValueValue3)
                     .ratio(ratio)
                     .estWaitMinutes(maxEst)
-                    .level(classify(w, s, ratio))
+                    .level(classify(numberValueValue2, numberValueValue3, ratio))
                     .queues(sortedQueues)
                     .build());
 
             // Only track a "worst office" when someone is actually waiting.
             // Otherwise the first alphabetical office wins on a 0-0 tie, which is misleading.
-            if (w > worstOfficeWaiting && w > 0) {
-                worstOfficeWaiting = w;
-                worstOfficeName = officeNames.get(e.getKey());
+            if (numberValueValue2 > worstOfficeWaiting && numberValueValue2 > 0) {
+                worstOfficeWaiting = numberValueValue2;
+                worstOfficeName = officeNames.get(queueLoad.getKey());
             }
         }
 
@@ -137,8 +137,8 @@ public class WorkloadService {
         return ticketRepository.findWaitingByQueueId(queueId).size();
     }
 
-    private double round1(double v) {
-        return Math.round(v * 10.0) / 10.0;
+    private double round1(double doubleValue2) {
+        return Math.round(doubleValue2 * 10.0) / 10.0;
     }
 
     private String classify(long waiting, long staff, double ratio) {

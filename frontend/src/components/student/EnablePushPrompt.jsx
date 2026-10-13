@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, X, CheckCircle2, Loader2 } from 'lucide-react'
+import { Bell, X as CloseIcon, CheckCircle2, Loader2 } from 'lucide-react'
 import { useWebPush } from '../../hooks/useWebPush'
 import { useToastStore } from '../../store/toastStore'
 
@@ -120,7 +120,7 @@ export default function EnablePushPrompt({ className = '' }) {
                         aria-label="Dismiss"
                         className="shrink-0 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/60 hover:text-slate-600 disabled:opacity-50 dark:hover:bg-slate-800/60"
                     >
-                        <X className="h-4 w-4" />
+                        <CloseIcon className="h-4 w-4" />
                     </button>
                 </div>
             </motion.div>

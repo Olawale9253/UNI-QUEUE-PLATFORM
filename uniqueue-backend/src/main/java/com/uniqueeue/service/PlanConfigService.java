@@ -30,27 +30,27 @@ public class PlanConfigService {
 
     @Transactional(readOnly = true)
     public PlanConfigResponse getByCode(String code) {
-        PlanConfig p = planConfigRepository.findByCode(code.toUpperCase())
+        PlanConfig planConfigValue = planConfigRepository.findByCode(code.toUpperCase())
                 .orElseThrow(() -> new ResourceNotFoundException("Plan not found: " + code));
-        return PlanConfigResponse.from(p);
+        return PlanConfigResponse.from(planConfigValue);
     }
 
     @Transactional
     public PlanConfigResponse update(Long id, UpdatePlanConfigRequest request) {
-        PlanConfig p = planConfigRepository.findById(id)
+        PlanConfig planConfigValue2 = planConfigRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Plan not found"));
 
         if (request.getLabel() != null && !request.getLabel().isBlank()) {
-            p.setLabel(request.getLabel().trim());
+            planConfigValue2.setLabel(request.getLabel().trim());
         }
-        if (request.getPriceUsd() != null) p.setPriceUsd(request.getPriceUsd());
-        if (request.getMaxQueues() != null) p.setMaxQueues(request.getMaxQueues());
-        if (request.getMaxStaff() != null) p.setMaxStaff(request.getMaxStaff());
-        if (request.getMaxTicketsPerDay() != null) p.setMaxTicketsPerDay(request.getMaxTicketsPerDay());
-        if (request.getIsActive() != null) p.setIsActive(request.getIsActive());
-        if (request.getDisplayOrder() != null) p.setDisplayOrder(request.getDisplayOrder());
+        if (request.getPriceUsd() != null) planConfigValue2.setPriceUsd(request.getPriceUsd());
+        if (request.getMaxQueues() != null) planConfigValue2.setMaxQueues(request.getMaxQueues());
+        if (request.getMaxStaff() != null) planConfigValue2.setMaxStaff(request.getMaxStaff());
+        if (request.getMaxTicketsPerDay() != null) planConfigValue2.setMaxTicketsPerDay(request.getMaxTicketsPerDay());
+        if (request.getIsActive() != null) planConfigValue2.setIsActive(request.getIsActive());
+        if (request.getDisplayOrder() != null) planConfigValue2.setDisplayOrder(request.getDisplayOrder());
 
-        PlanConfig saved = planConfigRepository.save(p);
+        PlanConfig saved = planConfigRepository.save(planConfigValue2);
 
         auditService.record(null, null,
                 AuditAction.UNIVERSITY_UPDATED,

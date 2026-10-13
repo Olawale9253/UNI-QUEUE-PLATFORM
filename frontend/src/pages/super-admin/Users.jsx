@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import {
     Search,
     Filter,
-    X,
+    X as CloseIcon,
     ChevronLeft,
     ChevronRight,
     User as UserIcon,
@@ -117,7 +117,7 @@ export default function Users() {
         setFilters({ universityId: '', role: '', isActive: '', search: '' })
     }
 
-    const setFilter = (field) => (e) => setFilters({ ...filters, [field]: e.target.value })
+    const setFilter = (field) => (event) => setFilters({ ...filters, [field]: event.target.value })
 
     const handleToggle = async () => {
         if (!toggleTarget) return
@@ -135,11 +135,11 @@ export default function Users() {
     }
 
     const activeFilterCount = Object.values(filters).filter(Boolean).length
-    const universityOptions = universities.map((u) => ({
-        value: u.id,
-        label: `${u.code} · ${u.name}`,
+    const universityOptions = universities.map((university) => ({
+        value: university.id,
+        label: `${university.code} · ${university.name}`,
     }))
-    const universityById = new Map(universities.map((u) => [u.id, u]))
+    const universityById = new Map(universities.map((universityValue) => [universityValue.id, universityValue]))
 
     return (
         <>
@@ -167,7 +167,7 @@ export default function Users() {
                         <Button
                             variant={showFilters ? 'secondary' : 'primary'}
                             icon={Filter}
-                            onClick={() => setShowFilters((v) => !v)}
+                            onClick={() => setShowFilters((setShowFilter) => !setShowFilter)}
                         >
                             Filters
                             {activeFilterCount > 0 && (
@@ -205,7 +205,7 @@ export default function Users() {
                                     onClick={clearFilters}
                                     className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700"
                                 >
-                                    <X className="h-3.5 w-3.5" />
+                                    <CloseIcon className="h-3.5 w-3.5" />
                                     Clear all
                                 </button>
                             )}
@@ -262,9 +262,9 @@ export default function Users() {
             {/* Users list */}
             {loading ? (
                 <Card padded={false}>
-                    {Array.from({ length: 8 }).map((_, i) => (
+                    {Array.from({ length: 8 }).map((unusedValue, index) => (
                         <div
-                            key={i}
+                            key={index}
                             className="flex items-center gap-4 border-b border-slate-100 px-6 py-4"
                         >
                             <div className="h-10 w-10 animate-pulse rounded-full bg-slate-100" />
@@ -300,27 +300,27 @@ export default function Users() {
                         animate="animate"
                         className="divide-y divide-slate-100"
                     >
-                        {users.map((u) => {
-                            const uni = u.universityId ? universityById.get(u.universityId) : null
+                        {users.map((user) => {
+                            const uni = user.universityId ? universityById.get(user.universityId) : null
                             return (
                                 <motion.li
-                                    key={u.id}
+                                    key={user.id}
                                     variants={staggerItem}
                                     className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6"
                                 >
                                     <div className="flex min-w-0 flex-1 items-start gap-3">
                                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
-                                            {u.fullName?.split(' ').map((p) => p[0]).slice(0, 2).join('')}
+                                            {user.fullName?.split(' ').map((parameter) => parameter[0]).slice(0, 2).join('')}
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="flex flex-wrap items-center gap-2">
                         <span className="text-sm font-semibold text-slate-900">
-                          {u.fullName}
+                          {user.fullName}
                         </span>
-                                                <Badge variant={roleVariant[u.role] || 'default'}>
-                                                    {String(u.role).replace('_', ' ')}
+                                                <Badge variant={roleVariant[user.role] || 'default'}>
+                                                    {String(user.role).replace('_', ' ')}
                                                 </Badge>
-                                                {!u.isActive && (
+                                                {!user.isActive && (
                                                     <Badge variant="danger">Disabled</Badge>
                                                 )}
                                             </div>
@@ -328,7 +328,7 @@ export default function Users() {
                                             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
                         <span className="flex items-center gap-1">
                           <Mail className="h-3 w-3" />
-                            {u.email}
+                            {user.email}
                         </span>
                                                 {uni && (
                                                     <span className="flex items-center gap-1">
@@ -336,27 +336,27 @@ export default function Users() {
                                                         {uni.code}
                           </span>
                                                 )}
-                                                {u.matricNumber && (
-                                                    <span className="font-mono">{u.matricNumber}</span>
+                                                {user.matricNumber && (
+                                                    <span className="font-mono">{user.matricNumber}</span>
                                                 )}
-                                                {u.createdAt && (
-                                                    <span>Joined {formatDate(u.createdAt)}</span>
+                                                {user.createdAt && (
+                                                    <span>Joined {formatDate(user.createdAt)}</span>
                                                 )}
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="shrink-0">
-                                        {u.role !== 'SUPER_ADMIN' && (
+                                        {user.role !== 'SUPER_ADMIN' && (
                                             <button
-                                                onClick={() => setToggleTarget(u)}
+                                                onClick={() => setToggleTarget(user)}
                                                 className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
-                                                    u.isActive
+                                                    user.isActive
                                                         ? 'text-rose-600 hover:bg-rose-50'
                                                         : 'text-emerald-600 hover:bg-emerald-50'
                                                 }`}
                                             >
-                                                {u.isActive ? (
+                                                {user.isActive ? (
                                                     <>
                                                         <PowerOff className="h-3.5 w-3.5" />
                                                         Disable

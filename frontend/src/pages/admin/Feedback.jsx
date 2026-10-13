@@ -44,29 +44,29 @@ export default function Feedback() {
         load()
     }, [load])
 
-    const filtered = feedback.filter((f) => {
-        if (ratingFilter && String(f.rating) !== ratingFilter) return false
+    const filtered = feedback.filter((item) => {
+        if (ratingFilter && String(item.rating) !== ratingFilter) return false
         if (!search.trim()) return true
-        const q = search.toLowerCase()
+        const searchValue = search.toLowerCase()
         return (
-            f.ticketNumber?.toLowerCase().includes(q) ||
-            f.userFullName?.toLowerCase().includes(q) ||
-            f.comment?.toLowerCase().includes(q)
+            item.ticketNumber?.toLowerCase().includes(searchValue) ||
+            item.userFullName?.toLowerCase().includes(searchValue) ||
+            item.comment?.toLowerCase().includes(searchValue)
         )
     })
 
     // Compute average
     const avgRating =
         feedback.length > 0
-            ? (feedback.reduce((sum, f) => sum + (f.rating || 0), 0) / feedback.length).toFixed(1)
+            ? (feedback.reduce((sum, itemValue) => sum + (itemValue.rating || 0), 0) / feedback.length).toFixed(1)
             : '—'
 
     // Rating distribution
-    const distribution = [5, 4, 3, 2, 1].map((r) => ({
-        rating: r,
-        count: feedback.filter((f) => f.rating === r).length,
+    const distribution = [5, 4, 3, 2, 1].map((result) => ({
+        rating: result,
+        count: feedback.filter((itemValue2) => itemValue2.rating === result).length,
     }))
-    const maxCount = Math.max(1, ...distribution.map((d) => d.count))
+    const maxCount = Math.max(1, ...distribution.map((itemValue2) => itemValue2.count))
 
     return (
         <>
@@ -103,11 +103,11 @@ export default function Feedback() {
                                     Average rating
                                 </div>
                                 <div className="mt-1 flex items-center gap-1">
-                                    {[1, 2, 3, 4, 5].map((n) => (
+                                    {[1, 2, 3, 4, 5].map((count) => (
                                         <Star
-                                            key={n}
+                                            key={count}
                                             className={`h-4 w-4 ${
-                                                n <= Math.round(parseFloat(avgRating))
+                                                count <= Math.round(parseFloat(avgRating))
                                                     ? 'fill-amber-400 text-amber-400'
                                                     : 'text-slate-300'
                                             }`}
@@ -127,19 +127,19 @@ export default function Feedback() {
                             Rating distribution
                         </div>
                         <div className="space-y-1.5">
-                            {distribution.map((d) => (
-                                <div key={d.rating} className="flex items-center gap-2 text-xs">
-                                    <span className="w-3 text-slate-600">{d.rating}</span>
+                            {distribution.map((itemValue3) => (
+                                <div key={itemValue3.rating} className="flex items-center gap-2 text-xs">
+                                    <span className="w-3 text-slate-600">{itemValue3.rating}</span>
                                     <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                                     <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
                                         <motion.div
                                             initial={{ width: 0 }}
-                                            animate={{ width: `${(d.count / maxCount) * 100}%` }}
+                                            animate={{ width: `${(itemValue3.count / maxCount) * 100}%` }}
                                             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                                             className="h-full rounded-full bg-amber-400"
                                         />
                                     </div>
-                                    <span className="w-6 text-right text-slate-600">{d.count}</span>
+                                    <span className="w-6 text-right text-slate-600">{itemValue3.count}</span>
                                 </div>
                             ))}
                         </div>
@@ -153,22 +153,22 @@ export default function Feedback() {
                     <Input
                         placeholder="Search by ticket, student, or comment…"
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(event) => setSearch(event.target.value)}
                         icon={Search}
                     />
 
                     <div className="flex flex-wrap gap-1.5">
-                        {RATING_FILTERS.map((f) => (
+                        {RATING_FILTERS.map((itemValue4) => (
                             <button
-                                key={f.value}
-                                onClick={() => setRatingFilter(f.value)}
+                                key={itemValue4.value}
+                                onClick={() => setRatingFilter(itemValue4.value)}
                                 className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                                    ratingFilter === f.value
+                                    ratingFilter === itemValue4.value
                                         ? 'bg-brand-600 text-white'
                                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                 }`}
                             >
-                                {f.label}
+                                {itemValue4.label}
                             </button>
                         ))}
                     </div>
@@ -178,8 +178,8 @@ export default function Feedback() {
             {/* List */}
             {loading ? (
                 <Card padded={false}>
-                    {Array.from({ length: 5 }).map((_, i) => (
-                        <SkeletonRow key={i} />
+                    {Array.from({ length: 5 }).map((unusedValue, index) => (
+                        <SkeletonRow key={index} />
                     ))}
                 </Card>
             ) : feedback.length === 0 ? (
@@ -202,45 +202,45 @@ export default function Feedback() {
                         animate="animate"
                         className="divide-y divide-slate-100"
                     >
-                        {filtered.map((f) => (
+                        {filtered.map((itemValue5) => (
                             <motion.li
-                                key={f.id}
+                                key={itemValue5.id}
                                 variants={staggerItem}
                                 className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:gap-4 sm:px-6"
                             >
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
-                                    {f.userFullName?.split(' ').map((p) => p[0]).slice(0, 2).join('')}
+                                    {itemValue5.userFullName?.split(' ').map((parameter) => parameter[0]).slice(0, 2).join('')}
                                 </div>
 
                                 <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-semibold text-slate-900">
-                      {f.userFullName}
+                      {itemValue5.userFullName}
                     </span>
                                         <Badge variant="default">
-                                            Ticket {f.ticketNumber}
+                                            Ticket {itemValue5.ticketNumber}
                                         </Badge>
                                     </div>
 
                                     <div className="mt-1 flex items-center gap-1">
-                                        {[1, 2, 3, 4, 5].map((n) => (
+                                        {[1, 2, 3, 4, 5].map((countValue) => (
                                             <Star
-                                                key={n}
+                                                key={countValue}
                                                 className={`h-4 w-4 ${
-                                                    n <= f.rating
+                                                    countValue <= itemValue5.rating
                                                         ? 'fill-amber-400 text-amber-400'
                                                         : 'text-slate-300'
                                                 }`}
                                             />
                                         ))}
                                         <span className="ml-2 text-xs text-slate-500">
-                      {formatDateTime(f.createdAt)}
+                      {formatDateTime(itemValue5.createdAt)}
                     </span>
                                     </div>
 
-                                    {f.comment && (
+                                    {itemValue5.comment && (
                                         <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                                            {f.comment}
+                                            {itemValue5.comment}
                                         </p>
                                     )}
                                 </div>

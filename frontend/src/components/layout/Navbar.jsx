@@ -36,8 +36,8 @@ export default function Navbar() {
     const hasLogo = !isSuperAdmin && !!university?.logoUrl && !logoFailed
     const initials = university?.code || university?.name?.slice(0, 2).toUpperCase() || 'UQ'
 
-    const isDashboardRoute = DASHBOARD_PREFIXES.some((p) =>
-        location.pathname.startsWith(p)
+    const isDashboardRoute = DASHBOARD_PREFIXES.some((item) =>
+        location.pathname.startsWith(item)
     )
     const showHamburger = !!user && isDashboardRoute
 
@@ -53,8 +53,8 @@ export default function Navbar() {
 
     // Close dropdown on outside click
     useEffect(() => {
-        const handler = (e) => {
-            if (menuRef.current && !menuRef.current.contains(e.target)) {
+        const handler = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
                 setMenuOpen(false)
             }
         }
@@ -180,7 +180,7 @@ export default function Navbar() {
                     {user ? (
                         <div ref={menuRef} className="relative">
                             <button
-                                onClick={() => setMenuOpen((v) => !v)}
+                                onClick={() => setMenuOpen((itemValue) => !itemValue)}
                                 className="flex items-center gap-2 rounded-lg px-1.5 py-1.5 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 sm:px-2"
                                 aria-label="User menu"
                             >

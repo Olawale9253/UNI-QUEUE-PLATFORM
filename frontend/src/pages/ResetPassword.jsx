@@ -17,12 +17,12 @@ export default function ResetPassword() {
     const [error, setError] = useState('')
 
     useEffect(() => {
-        const t = params.get('token')
-        if (t) setToken(t)
+        const tokenValue = params.get('token')
+        if (tokenValue) setToken(tokenValue)
     }, [params])
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
+    const handleSubmit = async (event) => {
+        event.preventDefault()
         setError('')
 
         if (!token) {
@@ -102,7 +102,7 @@ export default function ResetPassword() {
                                     <input
                                         type="text"
                                         value={token}
-                                        onChange={(e) => setToken(e.target.value)}
+                                        onChange={(eventValue) => setToken(eventValue.target.value)}
                                         placeholder="Paste your reset token"
                                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                                         required
@@ -119,7 +119,7 @@ export default function ResetPassword() {
                                     <input
                                         type="password"
                                         value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        onChange={(eventValue2) => setNewPassword(eventValue2.target.value)}
                                         placeholder="At least 8 characters"
                                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                                         required
@@ -133,7 +133,7 @@ export default function ResetPassword() {
                                     <input
                                         type="password"
                                         value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        onChange={(eventValue3) => setConfirmPassword(eventValue3.target.value)}
                                         placeholder="Re-enter password"
                                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                                         required

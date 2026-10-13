@@ -6,8 +6,8 @@ const listeners = new Map()
 let channel = null
 if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
     channel = new BroadcastChannel(CHANNEL_NAME)
-    channel.onmessage = (e) => {
-        const { topic, payload } = e.data || {}
+    channel.onmessage = (entry) => {
+        const { topic, payload } = entry.data || {}
         if (!topic) return
         dispatch(topic, payload)
     }

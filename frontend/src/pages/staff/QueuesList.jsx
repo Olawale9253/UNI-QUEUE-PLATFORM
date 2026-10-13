@@ -15,26 +15,26 @@ import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 
 function groupByOffice(services) {
     const map = new Map()
-    for (const q of services) {
-        const label = (q.officeName || q.department || 'General').trim() || 'General'
+    for (const queue of services) {
+        const label = (queue.officeName || queue.department || 'General').trim() || 'General'
         const key = label.toLowerCase()
         if (!map.has(key)) {
             map.set(key, {
                 key,
                 label,
-                location: q.officeLocation || q.location || '',
+                location: queue.officeLocation || queue.location || '',
                 services: [],
                 waitingTotal: 0,
             })
         }
-        const g = map.get(key)
-        g.services.push(q)
-        g.waitingTotal += q.waitingCount ?? 0
-        if (!g.location && (q.officeLocation || q.location)) {
-            g.location = q.officeLocation || q.location
+        const mapValue = map.get(key)
+        mapValue.services.push(queue)
+        mapValue.waitingTotal += queue.waitingCount ?? 0
+        if (!mapValue.location && (queue.officeLocation || queue.location)) {
+            mapValue.location = queue.officeLocation || queue.location
         }
     }
-    return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label))
+    return Array.from(map.values()).sort((firstValue, secondValue) => firstValue.label.localeCompare(secondValue.label))
 }
 
 function gridClassForCount(count) {
@@ -182,23 +182,23 @@ export default function QueuesList() {
 
     const visibleGroups = useMemo(() => {
         if (!search.trim()) return allGroups
-        const s = search.trim().toLowerCase()
+        const stringValue = search.trim().toLowerCase()
         return allGroups
-            .map((g) => {
+            .map((allGroup) => {
                 const officeMatches =
-                    g.label.toLowerCase().includes(s) ||
-                    g.location?.toLowerCase().includes(s)
+                    allGroup.label.toLowerCase().includes(stringValue) ||
+                    allGroup.location?.toLowerCase().includes(stringValue)
 
-                const matchingServices = g.services.filter(
+                const matchingServices = allGroup.services.filter(
                     (svc) =>
-                        svc.name?.toLowerCase().includes(s) ||
-                        svc.location?.toLowerCase().includes(s)
+                        svc.name?.toLowerCase().includes(stringValue) ||
+                        svc.location?.toLowerCase().includes(stringValue)
                 )
 
-                if (officeMatches) return g
+                if (officeMatches) return allGroup
                 if (matchingServices.length > 0) {
                     return {
-                        ...g,
+                        ...allGroup,
                         services: matchingServices,
                         waitingTotal: matchingServices.reduce(
                             (sum, svc) => sum + (svc.waitingCount ?? 0),
@@ -220,17 +220,17 @@ export default function QueuesList() {
     useEffect(() => {
         if (
             selectedOfficeKey &&
-            !visibleGroups.some((g) => g.key === selectedOfficeKey) &&
+            !visibleGroups.some((visibleGroup) => visibleGroup.key === selectedOfficeKey) &&
             visibleGroups.length > 0
         ) {
             setSelectedOfficeKey(visibleGroups[0].key)
         }
     }, [visibleGroups, selectedOfficeKey])
 
-    const selectedGroup = visibleGroups.find((g) => g.key === selectedOfficeKey)
+    const selectedGroup = visibleGroups.find((visibleGroup) => visibleGroup.key === selectedOfficeKey)
 
     const totalWaiting = useMemo(
-        () => services.reduce((sum, s) => sum + (s.waitingCount ?? 0), 0),
+        () => services.reduce((sum, item) => sum + (item.waitingCount ?? 0), 0),
         [services]
     )
 
@@ -272,7 +272,7 @@ export default function QueuesList() {
                         <input
                             type="text"
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(event) => setSearch(event.target.value)}
                             placeholder="Search by service name, office, or location"
                             className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                         />
@@ -316,22 +316,22 @@ export default function QueuesList() {
                             </div>
 
                             <ul className="space-y-1">
-                                {visibleGroups.map((g) => {
-                                    const isSelected = g.key === selectedOfficeKey
+                                {visibleGroups.map((visibleGroupValue) => {
+                                    const isSelected = visibleGroupValue.key === selectedOfficeKey
                                     return (
-                                        <li key={g.key}>
+                                        <li key={visibleGroupValue.key}>
                                             <button
                                                 type="button"
-                                                onClick={() => setSelectedOfficeKey(g.key)}
+                                                onClick={() => setSelectedOfficeKey(visibleGroupValue.key)}
                                                 className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
                                                     isSelected
                                                         ? 'bg-brand-50 font-medium text-brand-700 dark:bg-brand-950/40 dark:text-brand-300'
                                                         : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
                                                 }`}
                                             >
-                                                <span className="truncate">{g.label}</span>
+                                                <span className="truncate">{visibleGroupValue.label}</span>
                                                 <div className="flex shrink-0 items-center gap-1.5">
-                                                    {g.waitingTotal > 0 && (
+                                                    {visibleGroupValue.waitingTotal > 0 && (
                                                         <span
                                                             className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
                                                                 isSelected
@@ -339,7 +339,7 @@ export default function QueuesList() {
                                                                     : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
                                                             }`}
                                                         >
-                              {g.waitingTotal}
+                              {visibleGroupValue.waitingTotal}
                             </span>
                                                     )}
                                                     <span
@@ -349,7 +349,7 @@ export default function QueuesList() {
                                                                 : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                                                         }`}
                                                     >
-                            {g.services.length}
+                            {visibleGroupValue.services.length}
                           </span>
                                                 </div>
                                             </button>
@@ -426,8 +426,8 @@ export default function QueuesList() {
                                 </div>
 
                                 <div className={`grid gap-4 ${gridClassForCount(selectedGroup.services.length)}`}>
-                                    {selectedGroup.services.map((s) => (
-                                        <ServiceCard key={s.id} service={s} />
+                                    {selectedGroup.services.map((item) => (
+                                        <ServiceCard key={item.id} service={item} />
                                     ))}
                                 </div>
                             </>

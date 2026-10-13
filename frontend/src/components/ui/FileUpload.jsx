@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import {
     UploadCloud,
     Link as LinkIcon,
-    X,
+    X as CloseIcon,
     Loader2,
     AlertCircle,
 } from 'lucide-react'
@@ -62,15 +62,15 @@ export default function FileUpload({
         [onChange, push]
     )
 
-    const handleDrop = (e) => {
-        e.preventDefault()
+    const handleDrop = (event) => {
+        event.preventDefault()
         setDragging(false)
-        const file = e.dataTransfer.files?.[0]
+        const file = event.dataTransfer.files?.[0]
         if (file) uploadFile(file)
     }
 
-    const handleFilePick = (e) => {
-        const file = e.target.files?.[0]
+    const handleFilePick = (eventValue) => {
+        const file = eventValue.target.files?.[0]
         if (file) uploadFile(file)
     }
 
@@ -129,8 +129,8 @@ export default function FileUpload({
             {/* Upload mode — drop zone */}
             {mode === 'upload' && !hasValue && (
                 <div
-                    onDragOver={(e) => {
-                        e.preventDefault()
+                    onDragOver={(eventValue2) => {
+                        eventValue2.preventDefault()
                         setDragging(true)
                     }}
                     onDragLeave={() => setDragging(false)}
@@ -178,7 +178,7 @@ export default function FileUpload({
                         <input
                             type="url"
                             value={urlInput}
-                            onChange={(e) => setUrlInput(e.target.value)}
+                            onChange={(eventValue3) => setUrlInput(eventValue3.target.value)}
                             placeholder="https://example.com/image.jpg"
                             className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                         />
@@ -222,7 +222,7 @@ export default function FileUpload({
                         className="absolute right-2 top-2 rounded-md bg-slate-900/80 p-1.5 text-white backdrop-blur-sm transition-colors hover:bg-rose-600"
                         aria-label="Remove image"
                     >
-                        <X className="h-3.5 w-3.5" />
+                        <CloseIcon className="h-3.5 w-3.5" />
                     </button>
                 </motion.div>
             )}

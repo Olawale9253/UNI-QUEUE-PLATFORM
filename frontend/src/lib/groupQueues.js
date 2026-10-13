@@ -7,8 +7,8 @@
 export function groupQueuesByOffice(queues = []) {
     const map = new Map()
 
-    for (const q of queues) {
-        const raw = (q.officeName || q.department || '').trim()
+    for (const queue of queues) {
+        const raw = (queue.officeName || queue.department || '').trim()
         const label = raw.length > 0 ? raw : 'General'
         const key = label.toLowerCase()
         if (!map.has(key)) {
@@ -20,16 +20,16 @@ export function groupQueuesByOffice(queues = []) {
             })
         }
         const group = map.get(key)
-        group.queues.push(q)
-        group.waitingTotal += q.waitingCount ?? 0
+        group.queues.push(queue)
+        group.waitingTotal += queue.waitingCount ?? 0
     }
 
     const groups = Array.from(map.values())
-    for (const g of groups) {
-        g.totalQueues = g.queues.length
+    for (const group of groups) {
+        group.totalQueues = group.queues.length
     }
 
-    return groups.sort((a, b) => a.label.localeCompare(b.label))
+    return groups.sort((leftValue, rightValue) => leftValue.label.localeCompare(rightValue.label))
 }
 
 /** Backward-compat alias. */

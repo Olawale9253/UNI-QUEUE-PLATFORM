@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Star, X, MessageSquare } from 'lucide-react'
+import { Star, X as CloseIcon, MessageSquare } from 'lucide-react'
 import api from '../../api/axios'
 import Button from '../ui/Button'
 import { useToastStore } from '../../store/toastStore'
@@ -67,7 +67,7 @@ export default function FeedbackModal({ ticket, open, onClose, onSubmitted }) {
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 8 }}
                             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(event) => event.stopPropagation()}
                             className="relative w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl"
                         >
                             <button
@@ -75,7 +75,7 @@ export default function FeedbackModal({ ticket, open, onClose, onSubmitted }) {
                                 className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
                                 aria-label="Close"
                             >
-                                <X className="h-4 w-4" />
+                                <CloseIcon className="h-4 w-4" />
                             </button>
 
                             <h2 className="text-lg font-semibold text-slate-900">
@@ -92,18 +92,18 @@ export default function FeedbackModal({ ticket, open, onClose, onSubmitted }) {
                                     className="flex gap-1"
                                     onMouseLeave={() => setHover(0)}
                                 >
-                                    {[1, 2, 3, 4, 5].map((n) => (
+                                    {[1, 2, 3, 4, 5].map((count) => (
                                         <button
-                                            key={n}
+                                            key={count}
                                             type="button"
-                                            onClick={() => setRating(n)}
-                                            onMouseEnter={() => setHover(n)}
+                                            onClick={() => setRating(count)}
+                                            onMouseEnter={() => setHover(count)}
                                             className="rounded-lg p-1 transition-transform hover:scale-110"
-                                            aria-label={`${n} star${n > 1 ? 's' : ''}`}
+                                            aria-label={`${count} star${count > 1 ? 's' : ''}`}
                                         >
                                             <Star
                                                 className={`h-9 w-9 transition-colors ${
-                                                    n <= active
+                                                    count <= active
                                                         ? 'fill-amber-400 text-amber-400'
                                                         : 'text-slate-300'
                                                 }`}
@@ -126,7 +126,7 @@ export default function FeedbackModal({ ticket, open, onClose, onSubmitted }) {
                                 <textarea
                                     rows={3}
                                     value={comment}
-                                    onChange={(e) => setComment(e.target.value)}
+                                    onChange={(eventValue) => setComment(eventValue.target.value)}
                                     placeholder="Tell us what went well or what could be improved…"
                                     maxLength={2000}
                                     className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20"

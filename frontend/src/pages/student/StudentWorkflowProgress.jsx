@@ -349,11 +349,11 @@ export default function StudentWorkflowProgress() {
                 </div>
 
                 <div className="space-y-0">
-                    {data.steps.map((step, i) => (
+                    {data.steps.map((step, index) => (
                         <StepRow
                             key={step.order}
                             step={step}
-                            isLast={i === data.steps.length - 1}
+                            isLast={index === data.steps.length - 1}
                         />
                     ))}
                 </div>

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import {
-    X, Loader2, CheckCircle2, ShieldCheck, AlertCircle, Mail,
+    X as CloseIcon, Loader2, CheckCircle2, ShieldCheck, AlertCircle, Mail,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Button from '../ui/Button'
@@ -23,16 +23,16 @@ export default function ChangeEmailModal({ currentEmail, onClose, onSuccess }) {
 
     useEffect(() => {
         if (resendIn <= 0) return
-        const t = setTimeout(() => setResendIn((s) => s - 1), 1000)
-        return () => clearTimeout(t)
+        const token = setTimeout(() => setResendIn((item) => item - 1), 1000)
+        return () => clearTimeout(token)
     }, [resendIn])
 
     useEffect(() => {
         if (step === 'verify') codeInputRef.current?.focus()
     }, [step])
 
-    const requestCode = async (e) => {
-        if (e) e.preventDefault()
+    const requestCode = async (event) => {
+        if (event) event.preventDefault()
         setError(null)
         if (!newEmail.trim() || !password) {
             setError('Enter your new email and current password')
@@ -57,8 +57,8 @@ export default function ChangeEmailModal({ currentEmail, onClose, onSuccess }) {
         }
     }
 
-    const verifyCode = async (e) => {
-        e.preventDefault()
+    const verifyCode = async (eventValue) => {
+        eventValue.preventDefault()
         setError(null)
         if (!code.trim() || code.length < 4) {
             setError('Enter the code we sent to your new email')
@@ -97,7 +97,7 @@ export default function ChangeEmailModal({ currentEmail, onClose, onSuccess }) {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 8 }}
                     transition={{ duration: 0.2 }}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(eventValue2) => eventValue2.stopPropagation()}
                     className="relative w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
                 >
                     <button
@@ -105,7 +105,7 @@ export default function ChangeEmailModal({ currentEmail, onClose, onSuccess }) {
                         className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                         aria-label="Close"
                     >
-                        <X className="h-4 w-4" />
+                        <CloseIcon className="h-4 w-4" />
                     </button>
 
                     {step === 'request' && (
@@ -137,7 +137,7 @@ export default function ChangeEmailModal({ currentEmail, onClose, onSuccess }) {
                             <input
                                 type="email"
                                 value={newEmail}
-                                onChange={(e) => setNewEmail(e.target.value)}
+                                onChange={(eventValue3) => setNewEmail(eventValue3.target.value)}
                                 placeholder="Enter new email"
                                 autoFocus
                                 required
@@ -148,7 +148,7 @@ export default function ChangeEmailModal({ currentEmail, onClose, onSuccess }) {
                             <input
                                 type="password"
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={(eventValue4) => setPassword(eventValue4.target.value)}
                                 placeholder="Enter your password"
                                 autoComplete="current-password"
                                 required
@@ -215,7 +215,7 @@ export default function ChangeEmailModal({ currentEmail, onClose, onSuccess }) {
                                 type="text"
                                 inputMode="numeric"
                                 value={code}
-                                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                onChange={(eventValue5) => setCode(eventValue5.target.value.replace(/\D/g, '').slice(0, 6))}
                                 placeholder="Enter verification code"
                                 required
                                 className="mb-2 w-full rounded-lg border border-slate-200 bg-white py-3 text-center font-mono text-2xl tracking-[0.4em] text-slate-900 placeholder-slate-300 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-600"

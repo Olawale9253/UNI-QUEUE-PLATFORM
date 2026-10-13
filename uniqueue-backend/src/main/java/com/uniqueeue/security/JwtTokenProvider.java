@@ -83,8 +83,8 @@ public class JwtTokenProvider {
     }
 
     public String getTokenType(String token) {
-        Object t = parseClaims(token).get("type");
-        return t != null ? t.toString() : TYPE_ACCESS;
+        Object objectValue = parseClaims(token).get("type");
+        return objectValue != null ? objectValue.toString() : TYPE_ACCESS;
     }
 
     public boolean validateToken(String token) {

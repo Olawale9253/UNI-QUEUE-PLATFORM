@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-    Ticket, MapPin, Clock, ListOrdered, X, Users,
+    Ticket, MapPin, Clock, ListOrdered, Users,
     CheckCircle2, Lock, ArrowRight, Route as RouteIcon, Building2,
     GraduationCap, Search, Copy, Check,
 } from 'lucide-react'
@@ -58,8 +58,8 @@ const STATUS_FILTERS = [
 
 function CopyButton({ text }) {
     const [copied, setCopied] = useState(false)
-    const copy = async (e) => {
-        e.stopPropagation()
+    const copy = async (event) => {
+        event.stopPropagation()
         try {
             await navigator.clipboard.writeText(text)
             setCopied(true)
@@ -114,7 +114,7 @@ export default function QueuesTab() {
 
     const load = useCallback(async () => {
         try {
-            const [q, t, w, aw, h, cd] = await Promise.all([
+            const [queue, token, item, aw, itemValue, cd] = await Promise.all([
                 api.get('/api/queues'),
                 api.get('/api/user/tickets/active'),
                 api.get('/api/user/workflows').catch(() => ({ data: { data: [] } })),
@@ -122,11 +122,11 @@ export default function QueuesTab() {
                 api.get('/api/user/tickets/history').catch(() => ({ data: { data: [] } })),
                 api.get('/api/closed-dates').catch(() => ({ data: { data: null } })),
             ])
-            setQueues(q.data.data || [])
-            setActiveTicket(t.data.data || null)
-            setWorkflows(w.data.data || [])
+            setQueues(queue.data.data || [])
+            setActiveTicket(token.data.data || null)
+            setWorkflows(item.data.data || [])
             setAvailableWorkflows(aw.data.data || [])
-            setHistory(h.data.data || [])
+            setHistory(itemValue.data.data || [])
             setClosedDates(cd.data?.data || { todayClosed: false, todayReason: null, upcoming: [] })
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed to load' })
@@ -147,21 +147,21 @@ export default function QueuesTab() {
         return unsub
     }, [load])
 
-    const activeWorkflow = workflows.find((w) => w.status === 'IN_PROGRESS')
+    const activeWorkflow = workflows.find((workflow) => workflow.status === 'IN_PROGRESS')
 
     const workflowByQueueId = useMemo(() => {
         const map = new Map()
 
-        const ingest = (w) => {
-            const steps = w.steps || []
-            const total = w.totalSteps || steps.length || 0
-            steps.forEach((s) => {
-                if (!s.queueId) return
-                if (map.has(s.queueId)) return
-                map.set(s.queueId, {
-                    workflowId: w.workflowId ?? w.id,
-                    workflowName: w.workflowName ?? w.name ?? 'Clearance',
-                    stepOrder: s.order ?? s.stepOrder,
+        const ingest = (item) => {
+            const steps = item.steps || []
+            const total = item.totalSteps || steps.length || 0
+            steps.forEach((step) => {
+                if (!step.queueId) return
+                if (map.has(step.queueId)) return
+                map.set(step.queueId, {
+                    workflowId: item.workflowId ?? item.id,
+                    workflowName: item.workflowName ?? item.name ?? 'Clearance',
+                    stepOrder: step.order ?? step.stepOrder,
                     totalSteps: total,
                 })
             })
@@ -173,20 +173,20 @@ export default function QueuesTab() {
     }, [workflows, availableWorkflows])
 
     const lockedQueueIds = useMemo(() => {
-        const m = new Set()
+        const set = new Set()
         if (activeWorkflow) {
-            activeWorkflow.steps.forEach((s) => {
-                if (s.state === 'LOCKED') m.add(s.queueId)
+            activeWorkflow.steps.forEach((item) => {
+                if (item.state === 'LOCKED') set.add(item.queueId)
             })
         }
-        return m
+        return set
     }, [activeWorkflow])
 
     const officeGroups = useMemo(() => {
         const groups = groupQueuesByOffice(queues)
-        return groups.map((g) => ({
-            ...g,
-            officeId: g.queues[0]?.officeId ?? null,
+        return groups.map((group) => ({
+            ...group,
+            officeId: group.queues[0]?.officeId ?? null,
         }))
     }, [queues])
 
@@ -197,12 +197,12 @@ export default function QueuesTab() {
     }, [officeGroups, selectedOfficeId])
 
     const activeOfficeGroup = officeGroups.find(
-        (g) => String(g.officeId ?? g.key) === String(selectedOfficeId)
+        (officeGroup) => String(officeGroup.officeId ?? officeGroup.key) === String(selectedOfficeId)
     )
     const servicesInOffice = activeOfficeGroup?.queues ?? []
 
     const selectedService = servicesInOffice.find(
-        (q) => String(q.id) === String(selectedServiceId)
+        (item) => String(item.id) === String(selectedServiceId)
     )
 
     useEffect(() => { setSelectedServiceId('') }, [selectedOfficeId])
@@ -225,7 +225,7 @@ export default function QueuesTab() {
         const prev = lastActiveTicketRef.current
         if (!prev) return
 
-        const finished = (history || []).find((h) => h.id === prev.id)
+        const finished = (history || []).find((itemValue) => itemValue.id === prev.id)
 
         if (finished && finished.status !== prev.status) {
             const event = checkTicket(finished)
@@ -316,23 +316,23 @@ export default function QueuesTab() {
         const list = []
         if (activeTicket) list.push({ ...activeTicket, _isActive: true })
         const recent = (history || []).filter(
-            (t) => !activeTicket || t.id !== activeTicket.id
+            (token) => !activeTicket || token.id !== activeTicket.id
         )
         list.push(...recent)
 
-        let sorted = list.sort((a, b) => {
-            const at = a.joinedAt ? new Date(a.joinedAt).getTime() : 0
-            const bt = b.joinedAt ? new Date(b.joinedAt).getTime() : 0
+        let sorted = list.sort((leftValue, rightValue) => {
+            const at = leftValue.joinedAt ? new Date(leftValue.joinedAt).getTime() : 0
+            const bt = rightValue.joinedAt ? new Date(rightValue.joinedAt).getTime() : 0
             return bt - at
         })
 
         if (statusFilter !== 'ALL') {
-            sorted = sorted.filter((t) => t.status === statusFilter)
+            sorted = sorted.filter((itemValue) => itemValue.status === statusFilter)
         }
 
         if (ticketSearch.trim()) {
-            const s = ticketSearch.trim().toLowerCase()
-            sorted = sorted.filter((t) => (t.ticketNumber || '').toLowerCase().includes(s))
+            const stringValue = ticketSearch.trim().toLowerCase()
+            sorted = sorted.filter((itemValue) => (itemValue.ticketNumber || '').toLowerCase().includes(stringValue))
         }
 
         return sorted
@@ -498,12 +498,12 @@ export default function QueuesTab() {
                                     </label>
                                     <select
                                         value={selectedOfficeId}
-                                        onChange={(e) => setSelectedOfficeId(e.target.value)}
+                                        onChange={(event) => setSelectedOfficeId(event.target.value)}
                                         className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                     >
-                                        {officeGroups.map((g) => (
-                                            <option key={g.key} value={String(g.officeId ?? g.key)}>
-                                                {g.label} ({g.queues.length})
+                                        {officeGroups.map((officeGroupValue) => (
+                                            <option key={officeGroupValue.key} value={String(officeGroupValue.officeId ?? officeGroupValue.key)}>
+                                                {officeGroupValue.label} ({officeGroupValue.queues.length})
                                             </option>
                                         ))}
                                     </select>
@@ -515,14 +515,14 @@ export default function QueuesTab() {
                                     </label>
                                     <select
                                         value={selectedServiceId}
-                                        onChange={(e) => setSelectedServiceId(e.target.value)}
+                                        onChange={(eventValue) => setSelectedServiceId(eventValue.target.value)}
                                         className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                     >
                                         <option value="">Select Service</option>
-                                        {servicesInOffice.map((q) => {
-                                            const isLocked = lockedQueueIds.has(q.id)
-                                            const matricLocked = isFresher && q.matricRequired
-                                            const closed = q.isOpen === false
+                                        {servicesInOffice.map((itemValue) => {
+                                            const isLocked = lockedQueueIds.has(itemValue.id)
+                                            const matricLocked = isFresher && itemValue.matricRequired
+                                            const closed = itemValue.isOpen === false
                                             const suffix = isLocked
                                                 ? ' (locked)'
                                                 : matricLocked
@@ -531,8 +531,8 @@ export default function QueuesTab() {
                                                         ? ' (closed)'
                                                         : ''
                                             return (
-                                                <option key={q.id} value={q.id} disabled={isLocked || matricLocked}>
-                                                    {q.name}{suffix}
+                                                <option key={itemValue.id} value={itemValue.id} disabled={isLocked || matricLocked}>
+                                                    {itemValue.name}{suffix}
                                                 </option>
                                             )
                                         })}
@@ -687,19 +687,19 @@ export default function QueuesTab() {
                                 <input
                                     type="text"
                                     value={ticketSearch}
-                                    onChange={(e) => setTicketSearch(e.target.value)}
+                                    onChange={(eventValue2) => setTicketSearch(eventValue2.target.value)}
                                     placeholder="Search ticket ID"
                                     className="w-40 rounded-lg border border-slate-200 bg-white py-1.5 pl-8 pr-2 text-xs text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                                 />
                             </div>
                             <select
                                 value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
+                                onChange={(eventValue3) => setStatusFilter(eventValue3.target.value)}
                                 className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                             >
-                                {STATUS_FILTERS.map((s) => (
-                                    <option key={s.value} value={s.value}>
-                                        {s.label}
+                                {STATUS_FILTERS.map((itemValue2) => (
+                                    <option key={itemValue2.value} value={itemValue2.value}>
+                                        {itemValue2.label}
                                     </option>
                                 ))}
                             </select>
@@ -729,12 +729,12 @@ export default function QueuesTab() {
                     ) : (
                         <div className="max-h-[600px] overflow-y-auto pr-1">
                             <ul className="space-y-3">
-                                {ticketList.slice(0, 20).map((t) => {
-                                    const isActive = t._isActive
-                                    const isActionable = t.status === 'WAITING' || t.status === 'CALLED'
+                                {ticketList.slice(0, 20).map((token) => {
+                                    const isActive = token._isActive
+                                    const isActionable = token.status === 'WAITING' || token.status === 'CALLED'
                                     return (
                                         <motion.li
-                                            key={t.id}
+                                            key={token.id}
                                             initial={{ opacity: 0, y: 4 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             className={`rounded-lg border p-4 transition-colors ${
@@ -754,36 +754,36 @@ export default function QueuesTab() {
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="min-w-0 flex-1">
                                                     <h4 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
-                                                        {t.queueName || t.officeName || 'Service'}
+                                                        {token.queueName || token.officeName || 'Service'}
                                                     </h4>
                                                 </div>
-                                                <Badge variant={STATUS_VARIANTS[t.status] || 'default'}>
-                                                    {STATUS_LABELS[t.status] || t.status}
+                                                <Badge variant={STATUS_VARIANTS[token.status] || 'default'}>
+                                                    {STATUS_LABELS[token.status] || token.status}
                                                 </Badge>
                                             </div>
 
                                             <div className="mt-2 flex items-center gap-1.5 text-sm">
                                                 <span className="text-slate-500 dark:text-slate-400">Ticket:</span>
                                                 <span className="font-mono font-semibold text-slate-900 dark:text-slate-100">
-                                                    {t.ticketNumber}
+                                                    {token.ticketNumber}
                                                 </span>
-                                                <CopyButton text={t.ticketNumber} />
+                                                <CopyButton text={token.ticketNumber} />
                                             </div>
 
-                                            {t.position != null && (
+                                            {token.position != null && (
                                                 <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                                                     <span className="text-slate-500">Position:</span>{' '}
                                                     <span className="font-medium text-slate-900 dark:text-slate-100">
-                                                        {t.position}
+                                                        {token.position}
                                                     </span>
                                                 </div>
                                             )}
 
-                                            {t.estimatedMinutesRemaining != null && (
+                                            {token.estimatedMinutesRemaining != null && (
                                                 <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                                                     <span className="text-slate-500">Est. Wait:</span>{' '}
                                                     <span className="font-medium text-slate-900 dark:text-slate-100">
-                                                        {t.estimatedMinutesRemaining} min
+                                                        {token.estimatedMinutesRemaining} min
                                                     </span>
                                                 </div>
                                             )}
@@ -791,19 +791,19 @@ export default function QueuesTab() {
                                             {isActive && isActionable && (
                                                 <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-200 pt-3 text-xs dark:border-slate-700">
                                                     <button
-                                                        onClick={() => rescheduleTurn(t)}
-                                                        disabled={acting === `reschedule-${t.id}`}
+                                                        onClick={() => rescheduleTurn(token)}
+                                                        disabled={acting === `reschedule-${token.id}`}
                                                         className="font-medium transition-colors disabled:opacity-50"
                                                         style={{ color: primaryColor }}
                                                     >
-                                                        {acting === `reschedule-${t.id}` ? 'Rescheduling…' : 'Reschedule turn'}
+                                                        {acting === `reschedule-${token.id}` ? 'Rescheduling…' : 'Reschedule turn'}
                                                     </button>
                                                     <button
-                                                        onClick={() => skipTurn(t)}
-                                                        disabled={acting === `skip-${t.id}`}
+                                                        onClick={() => skipTurn(token)}
+                                                        disabled={acting === `skip-${token.id}`}
                                                         className="font-medium text-rose-600 transition-colors hover:text-rose-700 disabled:opacity-50 dark:text-rose-400"
                                                     >
-                                                        {acting === `skip-${t.id}` ? 'Skipping…' : 'Skip'}
+                                                        {acting === `skip-${token.id}` ? 'Skipping…' : 'Skip'}
                                                     </button>
                                                     <button
                                                         onClick={() => setConfirmLeave(true)}
@@ -816,7 +816,7 @@ export default function QueuesTab() {
 
                                             {isActive && !isActionable && (
                                                 <div className="mt-3 border-t border-slate-200 pt-3 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                                                    {t.status === 'SERVING'
+                                                    {token.status === 'SERVING'
                                                         ? 'You are being served.'
                                                         : 'No actions available for this ticket.'}
                                                 </div>

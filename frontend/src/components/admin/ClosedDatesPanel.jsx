@@ -18,32 +18,32 @@ function parseDate(iso) {
 }
 
 function formatFull(iso) {
-    const d = parseDate(iso)
-    if (!d) return '—'
-    return d.toLocaleDateString('en-GB', {
+    const date = parseDate(iso)
+    if (!date) return '—'
+    return date.toLocaleDateString('en-GB', {
         weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
     })
 }
 
 function isToday(iso) {
-    const d = parseDate(iso)
-    if (!d) return false
+    const dateValue = parseDate(iso)
+    if (!dateValue) return false
     const today = new Date()
-    return d.getFullYear() === today.getFullYear()
-        && d.getMonth() === today.getMonth()
-        && d.getDate() === today.getDate()
+    return dateValue.getFullYear() === today.getFullYear()
+        && dateValue.getMonth() === today.getMonth()
+        && dateValue.getDate() === today.getDate()
 }
 
 function isPast(iso) {
-    const d = parseDate(iso)
-    if (!d) return false
+    const dateValue2 = parseDate(iso)
+    if (!dateValue2) return false
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    return d < today
+    return dateValue2 < today
 }
 
 function HolidayCard({ holiday, onDelete }) {
-    const d = parseDate(holiday.closedDate)
+    const dateValue3 = parseDate(holiday.closedDate)
     const today = isToday(holiday.closedDate)
     const past = isPast(holiday.closedDate)
     const isAuto = holiday.source === 'AUTO'
@@ -72,13 +72,13 @@ function HolidayCard({ holiday, onDelete }) {
                 }`}
             >
                 <span className="text-[10px] font-bold uppercase tracking-wider">
-                    {MONTHS_SHORT[d.getMonth()]}
+                    {MONTHS_SHORT[dateValue3.getMonth()]}
                 </span>
                 <span className="text-xl font-bold leading-none">
-                    {String(d.getDate()).padStart(2, '0')}
+                    {String(dateValue3.getDate()).padStart(2, '0')}
                 </span>
                 <span className={`mt-0.5 text-[9px] font-medium uppercase ${today ? 'text-white/80' : 'opacity-70'}`}>
-                    {WEEKDAYS_SHORT[d.getDay()]}
+                    {WEEKDAYS_SHORT[dateValue3.getDay()]}
                 </span>
             </div>
 
@@ -206,29 +206,29 @@ export default function ClosedDatesPanel() {
     // ─── Derived data ───
     const filtered = useMemo(() => {
         if (filter === 'ALL') return list
-        if (filter === 'AUTO') return list.filter((d) => d.source === 'AUTO')
-        return list.filter((d) => d.source !== 'AUTO')
+        if (filter === 'AUTO') return list.filter((item) => item.source === 'AUTO')
+        return list.filter((itemValue) => itemValue.source !== 'AUTO')
     }, [list, filter])
 
     const grouped = useMemo(() => {
         const map = new Map()
-        for (const d of filtered) {
-            const year = d.closedDate.slice(0, 4)
+        for (const dateValueValue of filtered) {
+            const year = dateValueValue.closedDate.slice(0, 4)
             if (!map.has(year)) map.set(year, [])
-            map.get(year).push(d)
+            map.get(year).push(dateValueValue)
         }
         return Array.from(map.entries())
-            .sort(([a], [b]) => a.localeCompare(b))
+            .sort(([firstValue], [secondValue]) => firstValue.localeCompare(secondValue))
             .map(([year, holidays]) => ({
                 year,
-                holidays: holidays.sort((a, b) => a.closedDate.localeCompare(b.closedDate)),
+                holidays: holidays.sort((leftValue, rightValue) => leftValue.closedDate.localeCompare(rightValue.closedDate)),
             }))
     }, [filtered])
 
     const counts = useMemo(() => ({
         all: list.length,
-        auto: list.filter((d) => d.source === 'AUTO').length,
-        manual: list.filter((d) => d.source !== 'AUTO').length,
+        auto: list.filter((item) => item.source === 'AUTO').length,
+        manual: list.filter((itemValue) => itemValue.source !== 'AUTO').length,
     }), [list])
 
     const today = new Date().toISOString().slice(0, 10)
@@ -260,13 +260,13 @@ export default function ClosedDatesPanel() {
                         type="date"
                         value={date}
                         min={today}
-                        onChange={(e) => setDate(e.target.value)}
+                        onChange={(event) => setDate(event.target.value)}
                         className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                     />
                     <input
                         type="text"
                         value={reason}
-                        onChange={(e) => setReason(e.target.value)}
+                        onChange={(eventValue) => setReason(eventValue.target.value)}
                         maxLength={255}
                         placeholder="Reason (optional) — e.g. Eid al-Fitr"
                         className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
@@ -291,24 +291,24 @@ export default function ClosedDatesPanel() {
                             { key: 'ALL', label: 'All', count: counts.all },
                             { key: 'AUTO', label: 'Auto', count: counts.auto },
                             { key: 'MANUAL', label: 'Manual', count: counts.manual },
-                        ].map((t) => (
+                        ].map((token) => (
                             <button
-                                key={t.key}
+                                key={token.key}
                                 type="button"
-                                onClick={() => setFilter(t.key)}
+                                onClick={() => setFilter(token.key)}
                                 className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                                    filter === t.key
+                                    filter === token.key
                                         ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100'
                                         : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
                                 }`}
                             >
-                                {t.label}
+                                {token.label}
                                 <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                                    filter === t.key
+                                    filter === token.key
                                         ? 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
                                         : 'bg-slate-200/60 text-slate-500 dark:bg-slate-800 dark:text-slate-500'
                                 }`}>
-                                    {t.count}
+                                    {token.count}
                                 </span>
                             </button>
                         ))}
@@ -328,8 +328,8 @@ export default function ClosedDatesPanel() {
             <div className="mt-5">
                 {loading ? (
                     <div className="space-y-2">
-                        {Array.from({ length: 4 }).map((_, i) => (
-                            <div key={i} className="h-16 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
+                        {Array.from({ length: 4 }).map((unusedValue, index) => (
+                            <div key={index} className="h-16 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
                         ))}
                     </div>
                 ) : list.length === 0 ? (
@@ -369,10 +369,10 @@ export default function ClosedDatesPanel() {
                                 {/* Grid of holiday cards */}
                                 <motion.div layout className="grid grid-cols-1 gap-2 lg:grid-cols-2">
                                     <AnimatePresence mode="popLayout">
-                                        {holidays.map((d) => (
+                                        {holidays.map((holiday) => (
                                             <HolidayCard
-                                                key={d.id}
-                                                holiday={d}
+                                                key={holiday.id}
+                                                holiday={holiday}
                                                 onDelete={setDeleteTarget}
                                             />
                                         ))}
@@ -400,7 +400,7 @@ export default function ClosedDatesPanel() {
                                 initial={{ opacity: 0, scale: 0.95, y: 8 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: 8 }}
-                                onClick={(e) => e.stopPropagation()}
+                                onClick={(eventValue2) => eventValue2.stopPropagation()}
                                 className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-700 dark:bg-slate-900"
                             >
                                 <div className="flex items-start gap-3">

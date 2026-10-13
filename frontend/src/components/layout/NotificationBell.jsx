@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, Check, CheckCheck, X } from 'lucide-react'
+import { Bell, Check, CheckCheck, X as CloseIcon } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../../api/axios'
 import { useAuthStore } from '../../store/authStore'
@@ -113,8 +113,8 @@ export default function NotificationBell() {
 
     // Close on outside click
     useEffect(() => {
-        const onClick = (e) => {
-            if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+        const onClick = (event) => {
+            if (ref.current && !ref.current.contains(event.target)) setOpen(false)
         }
         document.addEventListener('mousedown', onClick)
         return () => document.removeEventListener('mousedown', onClick)
@@ -122,8 +122,8 @@ export default function NotificationBell() {
 
     // Close on Escape
     useEffect(() => {
-        const onKey = (e) => {
-            if (e.key === 'Escape') setOpen(false)
+        const onKey = (event) => {
+            if (event.key === 'Escape') setOpen(false)
         }
         document.addEventListener('keydown', onKey)
         return () => document.removeEventListener('keydown', onKey)
@@ -149,9 +149,9 @@ export default function NotificationBell() {
     const markOneRead = async (notification) => {
         if (!notification.isRead) {
             setNotifications((prev) =>
-                prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n))
+                prev.map((item) => (item.id === notification.id ? { ...item, isRead: true } : item))
             )
-            setUnread((v) => Math.max(0, v - 1))
+            setUnread((item) => Math.max(0, item - 1))
             setProcessing(notification.id)
             try {
                 await api.post(`/api/notifications/${notification.id}/read`)
@@ -171,19 +171,19 @@ export default function NotificationBell() {
     const markAllRead = async () => {
         try {
             await api.post('/api/notifications/read-all')
-            setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+            setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })))
             setUnread(0)
         } catch {
             // ignore
         }
     }
 
-    const unreadCount = notifications.filter((n) => !n.isRead).length
+    const unreadCount = notifications.filter((notification) => !notification.isRead).length
 
     return (
         <div className="relative" ref={ref}>
             <button
-                onClick={() => setOpen((v) => !v)}
+                onClick={() => setOpen((item) => !item)}
                 className="relative rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
                 aria-label="Notifications"
             >
@@ -251,7 +251,7 @@ export default function NotificationBell() {
                                         className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 sm:hidden dark:hover:bg-slate-800"
                                         aria-label="Close"
                                     >
-                                        <X className="h-4 w-4" />
+                                        <CloseIcon className="h-4 w-4" />
                                     </button>
                                 </div>
                             </div>
@@ -259,9 +259,9 @@ export default function NotificationBell() {
                             <div className="max-h-[calc(100vh-8rem)] overflow-y-auto sm:max-h-[500px]">
                                 {loading ? (
                                     <div className="space-y-3 p-4">
-                                        {[1, 2, 3].map((i) => (
+                                        {[1, 2, 3].map((index) => (
                                             <div
-                                                key={i}
+                                                key={index}
                                                 className="animate-pulse space-y-2 rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50"
                                             >
                                                 <div className="h-3 w-1/3 rounded bg-slate-200 dark:bg-slate-700" />
@@ -284,14 +284,14 @@ export default function NotificationBell() {
                                     </div>
                                 ) : (
                                     <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {notifications.slice(0, 30).map((n) => {
-                                            const isUnread = !n.isRead
-                                            const isProcessing = processing === n.id
+                                        {notifications.slice(0, 30).map((count) => {
+                                            const isUnread = !count.isRead
+                                            const isProcessing = processing === count.id
 
                                             return (
                                                 <li
-                                                    key={n.id}
-                                                    onClick={() => markOneRead(n)}
+                                                    key={count.id}
+                                                    onClick={() => markOneRead(count)}
                                                     className={`relative cursor-pointer px-4 py-3 transition-colors ${
                                                         isUnread
                                                             ? 'bg-brand-50/40 hover:bg-brand-50/70 dark:bg-brand-950/20 dark:hover:bg-brand-950/30'
@@ -300,7 +300,7 @@ export default function NotificationBell() {
                                                 >
                                                     {isUnread && (
                                                         <motion.div
-                                                            layoutId={`unread-bar-${n.id}`}
+                                                            layoutId={`unread-bar-${count.id}`}
                                                             className="absolute left-0 top-0 h-full w-1 bg-brand-600"
                                                         />
                                                     )}
@@ -319,7 +319,7 @@ export default function NotificationBell() {
                                                                                 : 'text-sm font-medium text-slate-700 dark:text-slate-300'
                                                                         }`}
                                                                     >
-                                                                        {n.title}
+                                                                        {count.title}
                                                                     </p>
                                                                 </div>
 
@@ -341,16 +341,16 @@ export default function NotificationBell() {
                                                                         : 'text-slate-500 dark:text-slate-400'
                                                                 }`}
                                                             >
-                                                                {n.message}
+                                                                {count.message}
                                                             </p>
 
                                                             <div className="mt-2 flex items-center justify-between gap-2">
                                                                 <p className="text-[10px] uppercase tracking-wide text-slate-400">
-                                                                    {formatTimeAgo(n.createdAt)}
+                                                                    {formatTimeAgo(count.createdAt)}
                                                                 </p>
-                                                                {n.type && (
+                                                                {count.type && (
                                                                     <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                                                                        {String(n.type).replace(/_/g, ' ')}
+                                                                        {String(count.type).replace(/_/g, ' ')}
                                                                     </span>
                                                                 )}
                                                             </div>

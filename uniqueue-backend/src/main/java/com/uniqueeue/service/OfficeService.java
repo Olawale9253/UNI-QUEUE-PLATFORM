@@ -33,9 +33,9 @@ public class OfficeService {
 
     @Transactional(readOnly = true)
     public OfficeResponse getById(Long id, Long universityId) {
-        Office o = officeRepository.findByIdAndUniversityId(id, universityId)
+        Office officeValue = officeRepository.findByIdAndUniversityId(id, universityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Office not found"));
-        return enrich(o);
+        return enrich(officeValue);
     }
 
     @Transactional
@@ -122,12 +122,12 @@ public class OfficeService {
                 });
     }
 
-    private OfficeResponse enrich(Office o) {
-        OfficeResponse r = OfficeResponse.from(o);
-        long serviceCount = queueRepository.countByOfficeId(o.getId());
-        r.setServiceCount(serviceCount);
-        r.setStaffCount(queueRepository.countDistinctStaffByOfficeId(o.getId()));
-        r.setWaitingCount(queueRepository.countWaitingByOfficeId(o.getId()));
-        return r;
+    private OfficeResponse enrich(Office officeValue2) {
+        OfficeResponse officeResponse = OfficeResponse.from(officeValue2);
+        long serviceCount = queueRepository.countByOfficeId(officeValue2.getId());
+        officeResponse.setServiceCount(serviceCount);
+        officeResponse.setStaffCount(queueRepository.countDistinctStaffByOfficeId(officeValue2.getId()));
+        officeResponse.setWaitingCount(queueRepository.countWaitingByOfficeId(officeValue2.getId()));
+        return officeResponse;
     }
 }

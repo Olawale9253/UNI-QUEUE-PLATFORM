@@ -22,21 +22,21 @@ public class AdmittedStudentResponse {
     private LocalDateTime claimedAt;
     private LocalDateTime createdAt;
 
-    public static AdmittedStudentResponse from(AdmittedStudent a) {
+    public static AdmittedStudentResponse from(AdmittedStudent admittedStudent) {
         return AdmittedStudentResponse.builder()
-                .id(a.getId())
-                .fullName(a.getFullName())
-                .jambRegNumber(a.getJambRegNumber())
-                .admissionRef(a.getAdmissionRef())
-                .applicationNumber(a.getApplicationNumber())
-                .department(a.getDepartment())
-                .faculty(a.getFaculty())
-                .admissionYear(a.getAdmissionYear())
-                .claimed(a.getClaimedBy() != null)
-                .claimedByUserId(a.getClaimedBy() != null ? a.getClaimedBy().getId() : null)
-                .claimedByName(a.getClaimedBy() != null ? a.getClaimedBy().getFullName() : null)
-                .claimedAt(a.getClaimedAt())
-                .createdAt(a.getCreatedAt())
+                .id(admittedStudent.getId())
+                .fullName(admittedStudent.getFullName())
+                .jambRegNumber(admittedStudent.getJambRegNumber())
+                .admissionRef(admittedStudent.getAdmissionRef())
+                .applicationNumber(admittedStudent.getApplicationNumber())
+                .department(admittedStudent.getDepartment())
+                .faculty(admittedStudent.getFaculty())
+                .admissionYear(admittedStudent.getAdmissionYear())
+                .claimed(admittedStudent.getClaimedBy() != null)
+                .claimedByUserId(admittedStudent.getClaimedBy() != null ? admittedStudent.getClaimedBy().getId() : null)
+                .claimedByName(admittedStudent.getClaimedBy() != null ? admittedStudent.getClaimedBy().getFullName() : null)
+                .claimedAt(admittedStudent.getClaimedAt())
+                .createdAt(admittedStudent.getCreatedAt())
                 .build();
     }
 }

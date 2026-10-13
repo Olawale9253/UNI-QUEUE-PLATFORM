@@ -16,9 +16,9 @@ import { useUniversityStore } from '../../store/universityStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { withAlpha } from '../../lib/colors'
 
-function formatTime(t) {
-    if (!t) return null
-    return String(t).slice(0, 5)
+function formatTime(token) {
+    if (!token) return null
+    return String(token).slice(0, 5)
 }
 
 function OfficesSkeleton() {
@@ -28,9 +28,9 @@ function OfficesSkeleton() {
                 <SkeletonBox className="h-4 w-24" />
                 <SkeletonBox className="mt-4 h-9 w-full" />
                 <div className="mt-4 space-y-2">
-                    {Array.from({ length: 6 }).map((_, i) => (
+                    {Array.from({ length: 6 }).map((unusedValue, index) => (
                         <div
-                            key={i}
+                            key={index}
                             className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5"
                         >
                             <SkeletonBox className="h-3.5 w-32" />
@@ -74,13 +74,13 @@ export default function OfficesTab() {
 
             if (os.length === 0) {
                 const map = new Map()
-                qs.forEach((q) => {
-                    const key = q.officeId ? String(q.officeId) : (q.officeName || '__other__')
+                qs.forEach((queue) => {
+                    const key = queue.officeId ? String(queue.officeId) : (queue.officeName || '__other__')
                     if (!map.has(key)) {
                         map.set(key, {
-                            id: q.officeId || key,
-                            name: q.officeName || 'Other services',
-                            location: q.officeLocation || '',
+                            id: queue.officeId || key,
+                            name: queue.officeName || 'Other services',
+                            location: queue.officeLocation || '',
                             description: null,
                             isActive: true,
                             openingTime: null,
@@ -89,7 +89,7 @@ export default function OfficesTab() {
                         })
                     }
                 })
-                setOffices(Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name)))
+                setOffices(Array.from(map.values()).sort((firstValue, secondValue) => firstValue.name.localeCompare(secondValue.name)))
             } else {
                 setOffices(os)
             }
@@ -105,36 +105,36 @@ export default function OfficesTab() {
     useAdaptivePoll(load, { fastMs: 5000, slowMs: 15000 })
 
     const enriched = useMemo(() => {
-        return offices.map((o) => {
-            const services = queues.filter((q) => {
-                if (q.officeId && o.id) return String(q.officeId) === String(o.id)
-                return q.officeName === o.name
+        return offices.map((office) => {
+            const services = queues.filter((queue) => {
+                if (queue.officeId && office.id) return String(queue.officeId) === String(office.id)
+                return queue.officeName === office.name
             })
             const staffMap = new Map()
             let waitingTotal = 0
-            services.forEach((q) => {
-                waitingTotal += q.waitingCount ?? 0
-                ;(q.staff || []).forEach((s) => {
-                    if (!staffMap.has(s.id)) staffMap.set(s.id, s)
+            services.forEach((service) => {
+                waitingTotal += service.waitingCount ?? 0
+                ;(service.staff || []).forEach((stringValue) => {
+                    if (!staffMap.has(stringValue.id)) staffMap.set(stringValue.id, stringValue)
                 })
             })
-            return { office: o, services, staff: Array.from(staffMap.values()), waitingTotal }
+            return { office: office, services, staff: Array.from(staffMap.values()), waitingTotal }
         })
     }, [offices, queues])
 
     const filtered = useMemo(() => {
         if (!search.trim()) return enriched
-        const s = search.toLowerCase()
+        const searchValue = search.toLowerCase()
         return enriched.filter(
-            (e) =>
-                e.office.name.toLowerCase().includes(s) ||
-                e.office.location?.toLowerCase().includes(s) ||
-                e.services.some((q) => q.name.toLowerCase().includes(s))
+            (item) =>
+                item.office.name.toLowerCase().includes(searchValue) ||
+                item.office.location?.toLowerCase().includes(searchValue) ||
+                item.services.some((itemValue) => itemValue.name.toLowerCase().includes(searchValue))
         )
     }, [enriched, search])
 
     const selected = filtered.find(
-        (e) => String(e.office.id ?? e.office.name) === String(selectedOfficeId)
+        (item) => String(item.office.id ?? item.office.name) === String(selectedOfficeId)
     )
 
     if (loading) {
@@ -230,7 +230,7 @@ export default function OfficesTab() {
                                 <input
                                     type="text"
                                     value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
+                                    onChange={(event) => setSearch(event.target.value)}
                                     placeholder="Search offices"
                                     className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                                 />
@@ -248,8 +248,8 @@ export default function OfficesTab() {
                                 </div>
                             ) : (
                                 <ul className="space-y-1">
-                                    {filtered.map((e) => {
-                                        const id = e.office.id ?? e.office.name
+                                    {filtered.map((itemValue) => {
+                                        const id = itemValue.office.id ?? itemValue.office.name
                                         const isSelected = String(id) === String(selectedOfficeId)
                                         return (
                                             <li key={String(id)}>
@@ -270,7 +270,7 @@ export default function OfficesTab() {
                                                             : undefined
                                                     }
                                                 >
-                                                    <span className="truncate">{e.office.name}</span>
+                                                    <span className="truncate">{itemValue.office.name}</span>
                                                     <span
                                                         className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
                                                             isSelected
@@ -283,7 +283,7 @@ export default function OfficesTab() {
                                                                 : undefined
                                                         }
                                                     >
-                                                        {e.services.length}
+                                                        {itemValue.services.length}
                                                     </span>
                                                 </button>
                                             </li>
@@ -414,9 +414,9 @@ export default function OfficesTab() {
                                 ) : (
                                     <div className="max-h-[420px] overflow-y-auto pr-1">
                                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                            {selected.services.map((q) => (
+                                            {selected.services.map((itemValue2) => (
                                                 <div
-                                                    key={q.id}
+                                                    key={itemValue2.id}
                                                     className="rounded-lg border border-slate-200 p-4 transition-colors dark:border-slate-700"
                                                     style={{
                                                         borderColor: withAlpha(primaryColor, 0.2),
@@ -424,9 +424,9 @@ export default function OfficesTab() {
                                                 >
                                                     <div className="flex items-start justify-between gap-2">
                                                         <h5 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                            {q.name}
+                                                            {itemValue2.name}
                                                         </h5>
-                                                        {q.matricRequired && (
+                                                        {itemValue2.matricRequired && (
                                                             <GraduationCap
                                                                 className="h-3.5 w-3.5 shrink-0 text-amber-500"
                                                                 title="Matric number required"
@@ -434,9 +434,9 @@ export default function OfficesTab() {
                                                         )}
                                                     </div>
 
-                                                    {q.description ? (
+                                                    {itemValue2.description ? (
                                                         <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
-                                                            {q.description}
+                                                            {itemValue2.description}
                                                         </p>
                                                     ) : (
                                                         <p className="mt-1 text-xs italic text-slate-400 dark:text-slate-500">
@@ -450,11 +450,11 @@ export default function OfficesTab() {
                                                             style={{ color: primaryColor }}
                                                         >
                                                             <Users className="h-3 w-3" />
-                                                            {q.waitingCount ?? 0} waiting
+                                                            {itemValue2.waitingCount ?? 0} waiting
                                                         </span>
                                                         <span className="flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400">
                                                             <Clock className="h-3 w-3" />
-                                                            ~{q.estimatedMinutes ?? 0} min
+                                                            ~{itemValue2.estimatedMinutes ?? 0} min
                                                         </span>
                                                     </div>
 
@@ -480,27 +480,27 @@ export default function OfficesTab() {
                                     </h4>
                                     <div className="max-h-[280px] overflow-y-auto pr-1">
                                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                            {selected.staff.map((s) => (
+                                            {selected.staff.map((itemValue3) => (
                                                 <div
-                                                    key={s.id}
+                                                    key={itemValue3.id}
                                                     className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700"
                                                 >
                                                     <div
                                                         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
                                                         style={{ backgroundColor: primaryColor }}
                                                     >
-                                                        {s.fullName?.slice(0, 1).toUpperCase() || (
+                                                        {itemValue3.fullName?.slice(0, 1).toUpperCase() || (
                                                             <UserCircle2 className="h-5 w-5" />
                                                         )}
                                                     </div>
                                                     <div className="min-w-0">
                                                         <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                            {s.fullName}
+                                                            {itemValue3.fullName}
                                                         </div>
-                                                        {s.email && (
+                                                        {itemValue3.email && (
                                                             <div className="flex items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400">
                                                                 <Mail className="h-3 w-3 shrink-0" />
-                                                                {s.email}
+                                                                {itemValue3.email}
                                                             </div>
                                                         )}
                                                     </div>

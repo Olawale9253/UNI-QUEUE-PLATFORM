@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Home as HomeIcon } from 'lucide-react'
+import { X as CloseIcon, Home as HomeIcon } from 'lucide-react'
 import PageHeader from './PageHeader'
 import { useUIStore } from '../../store/uiStore'
 import { useAuthStore } from '../../store/authStore'
@@ -136,7 +136,7 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                                     className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                                     aria-label="Close menu"
                                 >
-                                    <X className="h-4 w-4" />
+                                    <CloseIcon className="h-4 w-4" />
                                 </button>
                             </div>
 

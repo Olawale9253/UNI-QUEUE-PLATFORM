@@ -61,8 +61,8 @@ public class CleanupScheduler {
             if (deleted > 0) {
                 log.info("Cleanup: purged {} expired password reset token(s)", deleted);
             }
-        } catch (Exception e) {
-            log.error("Cleanup: failed to purge password reset tokens", e);
+        } catch (Exception exceptionValue4) {
+            log.error("Cleanup: failed to purge password reset tokens", exceptionValue4);
         }
     }
 
@@ -86,8 +86,8 @@ public class CleanupScheduler {
             if (cleared > 0) {
                 log.info("Cleanup: cleared {} expired verification code(s)", cleared);
             }
-        } catch (Exception e) {
-            log.error("Cleanup: failed to clear expired verification codes", e);
+        } catch (Exception exceptionValue5) {
+            log.error("Cleanup: failed to clear expired verification codes", exceptionValue5);
         }
     }
 
@@ -128,8 +128,8 @@ public class CleanupScheduler {
             // Safety: skip anyone whose email is not empty but who has been
             // touched within the last week (defensive against clock skew).
             List<User> toDelete = stale.stream()
-                    .filter(u -> u.getUpdatedAt() == null
-                            || u.getUpdatedAt().isBefore(LocalDateTime.now().minusDays(7)))
+                    .filter(userValue12 -> userValue12.getUpdatedAt() == null
+                            || userValue12.getUpdatedAt().isBefore(LocalDateTime.now().minusDays(7)))
                     .toList();
 
             userRepository.deleteAll(toDelete);
@@ -137,8 +137,8 @@ public class CleanupScheduler {
             log.info("Cleanup: pruned {} stale unverified account(s) older than {}d",
                     toDelete.size(), unverifiedAccountAgeDays);
 
-        } catch (Exception e) {
-            log.error("Cleanup: failed to prune stale unverified accounts", e);
+        } catch (Exception exceptionValue6) {
+            log.error("Cleanup: failed to prune stale unverified accounts", exceptionValue6);
         }
     }
 }

@@ -44,18 +44,18 @@ function levelStyle(level) {
 function formatHours(minutes) {
     if (!minutes || minutes <= 0) return '—'
     if (minutes < 60) return `${minutes} min`
-    const h = Math.floor(minutes / 60)
-    const m = minutes % 60
-    return m > 0 ? `${h}h ${m}m` : `${h}h`
+    const MathValue = Math.floor(minutes / 60)
+    const message = minutes % 60
+    return message > 0 ? `${MathValue}h ${message}m` : `${MathValue}h`
 }
 
 function WorkloadSkeleton() {
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                {Array.from({ length: 4 }).map((_, i) => (
+                {Array.from({ length: 4 }).map((unusedValue, index) => (
                     <div
-                        key={i}
+                        key={index}
                         className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
                     >
                         <SkeletonBox className="h-3 w-20" />
@@ -105,15 +105,15 @@ function SummaryTile({ label, value, hint, icon: Icon, accent, valueColor }) {
     )
 }
 
-function QueueRow({ q, showRatioBar }) {
-    const s = levelStyle(q.level)
+function QueueRow({ q: queue, showRatioBar }) {
+    const stringValue = levelStyle(queue.level)
     return (
         <div className="grid grid-cols-12 items-center gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0 dark:border-slate-800">
             <div className="col-span-4 min-w-0">
                 <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-                    {q.queueName}
+                    {queue.queueName}
                 </div>
-                {!q.isOpen && (
+                {!queue.isOpen && (
                     <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                         Closed
                     </div>
@@ -121,24 +121,24 @@ function QueueRow({ q, showRatioBar }) {
             </div>
 
             <div className="col-span-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                {q.waitingCount}
+                {queue.waitingCount}
             </div>
 
             <div className="col-span-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                {q.staffCount}
+                {queue.staffCount}
             </div>
 
             <div className="col-span-2">
                 <div className="flex items-center gap-2">
                     <span className="text-sm font-bold tabular-nums text-slate-900 dark:text-slate-100">
-                        {q.ratio.toFixed(1)}
+                        {queue.ratio.toFixed(1)}
                     </span>
                     {showRatioBar && (
                         <div className="h-1.5 w-10 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                             <div
-                                className={`h-full ${s.bar}`}
+                                className={`h-full ${stringValue.bar}`}
                                 style={{
-                                    width: `${Math.min(100, (q.ratio / 20) * 100)}%`,
+                                    width: `${Math.min(100, (queue.ratio / 20) * 100)}%`,
                                 }}
                             />
                         </div>
@@ -147,16 +147,16 @@ function QueueRow({ q, showRatioBar }) {
             </div>
 
             <div className="col-span-2 text-right text-xs font-medium text-slate-500 dark:text-slate-400">
-                {formatHours(q.estWaitMinutes)}
+                {formatHours(queue.estWaitMinutes)}
             </div>
         </div>
     )
 }
 
 function OfficeCard({ office }) {
-    const s = levelStyle(office.level)
+    const stringValueValue = levelStyle(office.level)
     const criticalQueues = office.queues.filter(
-        (q) => q.level === 'CRITICAL' || q.level === 'HIGH'
+        (item) => item.level === 'CRITICAL' || item.level === 'HIGH'
     ).length
 
     return (
@@ -169,7 +169,7 @@ function OfficeCard({ office }) {
                 <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
                     <div className="flex min-w-0 items-start gap-3">
                         <div
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border ${s.chip}`}
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border ${stringValueValue.chip}`}
                         >
                             <Building2 className="h-5 w-5" />
                         </div>
@@ -202,12 +202,12 @@ function OfficeCard({ office }) {
 
                     <div className="flex shrink-0 flex-col items-end gap-1">
                         <span
-                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${s.chip}`}
+                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${stringValueValue.chip}`}
                         >
                             {office.level === 'CRITICAL' && (
                                 <AlertTriangle className="h-2.5 w-2.5" />
                             )}
-                            {s.label}
+                            {stringValueValue.label}
                         </span>
                         {criticalQueues > 0 && (
                             <span className="text-[11px] font-medium text-rose-600 dark:text-rose-400">
@@ -227,8 +227,8 @@ function OfficeCard({ office }) {
                 </div>
 
                 <div>
-                    {office.queues.map((q) => (
-                        <QueueRow key={q.queueId} q={q} showRatioBar />
+                    {office.queues.map((itemValue) => (
+                        <QueueRow key={itemValue.queueId} q={itemValue} showRatioBar />
                     ))}
                 </div>
             </Card>
@@ -275,19 +275,19 @@ export default function Workload() {
         if (!data?.offices) return []
         let list = data.offices
         if (levelFilter !== 'ALL') {
-            list = list.filter((o) => o.level === levelFilter)
+            list = list.filter((item) => item.level === levelFilter)
         }
         if (search.trim()) {
-            const s = search.toLowerCase()
+            const searchValue = search.toLowerCase()
             list = list
-                .map((o) => {
-                    const nameMatch = o.officeName.toLowerCase().includes(s)
-                    const matchingQueues = o.queues.filter((q) =>
-                        q.queueName.toLowerCase().includes(s)
+                .map((item) => {
+                    const nameMatch = item.officeName.toLowerCase().includes(searchValue)
+                    const matchingQueues = item.queues.filter((itemValue) =>
+                        itemValue.queueName.toLowerCase().includes(searchValue)
                     )
-                    if (nameMatch) return o
+                    if (nameMatch) return item
                     if (matchingQueues.length > 0) {
-                        return { ...o, queues: matchingQueues }
+                        return { ...item, queues: matchingQueues }
                     }
                     return null
                 })
@@ -334,7 +334,7 @@ export default function Workload() {
         )
     }
 
-    const s = data.summary
+    const stringValueValue2 = data.summary
 
     return (
         <>
@@ -352,15 +352,15 @@ export default function Workload() {
                             Refresh
                         </button>
                         <ExportButton
-                            rows={(data?.offices || []).map((o) => ({
-                                officeId: o.officeId,
-                                officeName: o.officeName,
-                                queueCount: o.queueCount,
-                                waitingCount: o.waitingCount,
-                                staffCount: o.staffCount,
-                                ratio: o.ratio,
-                                estWaitMinutes: o.estWaitMinutes,
-                                level: o.level,
+                            rows={(data?.offices || []).map((office) => ({
+                                officeId: office.officeId,
+                                officeName: office.officeName,
+                                queueCount: office.queueCount,
+                                waitingCount: office.waitingCount,
+                                staffCount: office.staffCount,
+                                ratio: office.ratio,
+                                estWaitMinutes: office.estWaitMinutes,
+                                level: office.level,
                             }))}
                             columns={[
                                 { key: 'officeId', label: 'Office ID' },
@@ -382,15 +382,15 @@ export default function Workload() {
             <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
                 <SummaryTile
                     label="Students waiting"
-                    value={s.totalWaiting}
-                    hint={`Across ${s.totalQueues} ${s.totalQueues === 1 ? 'service' : 'services'}`}
+                    value={stringValueValue2.totalWaiting}
+                    hint={`Across ${stringValueValue2.totalQueues} ${stringValueValue2.totalQueues === 1 ? 'service' : 'services'}`}
                     icon={Users}
                     accent="bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400"
                     valueColor="text-brand-600 dark:text-brand-400"
                 />
                 <SummaryTile
                     label="Staff assignments"
-                    value={s.totalStaff}
+                    value={stringValueValue2.totalStaff}
                     hint="Staff-to-queue assignments"
                     icon={Activity}
                     accent="bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400"
@@ -398,28 +398,28 @@ export default function Workload() {
                 />
                 <SummaryTile
                     label="Worst office"
-                    value={s.worstOfficeName || '—'}
-                    hint={`${s.worstOfficeWaiting} waiting`}
+                    value={stringValueValue2.worstOfficeName || '—'}
+                    hint={`${stringValueValue2.worstOfficeWaiting} waiting`}
                     icon={TrendingUp}
                     accent="bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
                     valueColor="text-amber-600 dark:text-amber-400"
                 />
                 <SummaryTile
                     label="Overall load"
-                    value={levelStyle(s.overallLevel).label}
+                    value={levelStyle(stringValueValue2.overallLevel).label}
                     hint={`${data.offices.length} offices`}
                     icon={AlertTriangle}
                     accent={
-                        s.overallLevel === 'CRITICAL'
+                        stringValueValue2.overallLevel === 'CRITICAL'
                             ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
-                            : s.overallLevel === 'HIGH'
+                            : stringValueValue2.overallLevel === 'HIGH'
                                 ? 'bg-orange-50 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400'
                                 : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
                     }
                     valueColor={
-                        s.overallLevel === 'CRITICAL'
+                        stringValueValue2.overallLevel === 'CRITICAL'
                             ? 'text-rose-600 dark:text-rose-400'
-                            : s.overallLevel === 'HIGH'
+                            : stringValueValue2.overallLevel === 'HIGH'
                                 ? 'text-orange-600 dark:text-orange-400'
                                 : 'text-emerald-600 dark:text-emerald-400'
                     }
@@ -433,7 +433,7 @@ export default function Workload() {
                         <input
                             type="text"
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(event) => setSearch(event.target.value)}
                             placeholder="Search offices or services"
                             className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                         />
@@ -485,8 +485,8 @@ export default function Workload() {
                 />
             ) : (
                 <div className="space-y-4">
-                    {filteredOffices.map((o) => (
-                        <OfficeCard key={o.officeId} office={o} />
+                    {filteredOffices.map((filteredOffice) => (
+                        <OfficeCard key={filteredOffice.officeId} office={filteredOffice} />
                     ))}
                 </div>
             )}

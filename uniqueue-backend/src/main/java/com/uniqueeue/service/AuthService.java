@@ -247,30 +247,30 @@ public class AuthService {
         return buildAuthResponse(saved, code);
     }
 
-    private void validateFresherPatterns(RegisterRequest req, University u) {
-        if (Boolean.TRUE.equals(u.getRequireJambReg())) {
+    private void validateFresherPatterns(RegisterRequest req, University universityValue8) {
+        if (Boolean.TRUE.equals(universityValue8.getRequireJambReg())) {
             requireNonBlank(req.getJambRegNumber(), "JAMB registration number is required");
-            validatePattern(req.getJambRegNumber(), u.getJambRegPattern(), "JAMB registration number", u);
+            validatePattern(req.getJambRegNumber(), universityValue8.getJambRegPattern(), "JAMB registration number", universityValue8);
         }
-        if (Boolean.TRUE.equals(u.getRequireAdmissionRef())) {
+        if (Boolean.TRUE.equals(universityValue8.getRequireAdmissionRef())) {
             requireNonBlank(req.getAdmissionRef(), "Admission reference is required");
-            validatePattern(req.getAdmissionRef(), u.getAdmissionRefPattern(), "Admission reference", u);
+            validatePattern(req.getAdmissionRef(), universityValue8.getAdmissionRefPattern(), "Admission reference", universityValue8);
         }
-        if (Boolean.TRUE.equals(u.getRequireApplicationNumber())) {
+        if (Boolean.TRUE.equals(universityValue8.getRequireApplicationNumber())) {
             requireNonBlank(req.getApplicationNumber(), "Application number is required");
-            validatePattern(req.getApplicationNumber(), u.getApplicationNumberPattern(), "Application number", u);
+            validatePattern(req.getApplicationNumber(), universityValue8.getApplicationNumberPattern(), "Application number", universityValue8);
         }
     }
 
-    private void requireNonBlank(String v, String message) {
-        if (v == null || v.isBlank()) throw new BadRequestException(message);
+    private void requireNonBlank(String stringValueValue4, String message) {
+        if (stringValueValue4 == null || stringValueValue4.isBlank()) throw new BadRequestException(message);
     }
 
-    private void validatePattern(String value, String pattern, String label, University u) {
+    private void validatePattern(String value, String pattern, String label, University universityValue9) {
         if (pattern == null || pattern.isBlank()) return;
         try {
             if (!Pattern.compile(pattern).matcher(value.trim()).matches()) {
-                String hint = u.getJambRegExample() != null ? " Expected format: " + u.getJambRegExample() : "";
+                String hint = universityValue9.getJambRegExample() != null ? " Expected format: " + universityValue9.getJambRegExample() : "";
                 throw new BadRequestException(label + " format is invalid." + hint);
             }
         } catch (BadRequestException ex) {
@@ -280,8 +280,8 @@ public class AuthService {
         }
     }
 
-    private String trimOrNull(String v) {
-        return v == null ? null : (v.isBlank() ? null : v.trim());
+    private String trimOrNull(String stringValueValue5) {
+        return stringValueValue5 == null ? null : (stringValueValue5.isBlank() ? null : stringValueValue5.trim());
     }
 
     // ============================================================

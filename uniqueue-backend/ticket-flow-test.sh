@@ -6,17 +6,17 @@ set -e
 BASE="http://localhost:8080"
 
 # Colors
-G="\033[0;32m"; R="\033[0;31m"; Y="\033[0;33m"; N="\033[0m"
-ok() { echo -e "${G}✅ $1${N}"; }
-fail() { echo -e "${R}❌ $1${N}"; exit 1; }
-step() { echo -e "\n${Y}━━━ $1 ━━━${N}"; }
+GREEN="\033[0;32m"; RED="\033[0;31m"; YELLOW="\033[0;33m"; RESET="\033[0m"
+ok() { echo -e "${GREEN}✅ $1${RESET}"; }
+fail() { echo -e "${RED}❌ $1${RESET}"; exit 1; }
+step() { echo -e "\n${YELLOW}━━━ $1 ━━━${RESET}"; }
 
 # ---------- SETUP ----------
 step "1. Login as ADMIN"
 ADMIN_TOKEN=$(curl -s -X POST $BASE/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@unilag.edu.ng","password":"admin1234"}' \
-  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('accessToken',''))")
+  | python3 -c "import sys,json; response_data=json.load(sys.stdin); print(response_data.get('data',{}).get('accessToken',''))")
 [ -z "$ADMIN_TOKEN" ] && fail "Admin login failed"
 ok "Admin token acquired"
 
@@ -24,7 +24,7 @@ step "2. Login as STUDENT"
 STUDENT_TOKEN=$(curl -s -X POST $BASE/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@unilag.edu.ng","password":"password123"}' \
-  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('accessToken',''))")
+  | python3 -c "import sys,json; response_data=json.load(sys.stdin); print(response_data.get('data',{}).get('accessToken',''))")
 [ -z "$STUDENT_TOKEN" ] && fail "Student login failed (did you register the student?)"
 ok "Student token acquired"
 
@@ -73,13 +73,13 @@ STAFF_RESP=$(curl -s -X POST $BASE/api/admin/staff \
 echo "$STAFF_RESP" | python3 -m json.tool
 
 # If already exists, fetch existing staff id
-STAFF_ID=$(echo "$STAFF_RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('id','') if d.get('success') else '')")
+STAFF_ID=$(echo "$STAFF_RESP" | python3 -c "import sys,json; response_data=json.load(sys.stdin); print(response_data.get('data',{}).get('id','') if response_data.get('success') else '')")
 
 if [ -z "$STAFF_ID" ]; then
   echo "Staff likely already exists — fetching from staff list..."
   STAFF_ID=$(curl -s $BASE/api/admin/staff \
     -H "Authorization: Bearer $ADMIN_TOKEN" \
-    | python3 -c "import sys,json; staff=[s for s in json.load(sys.stdin)['data'] if s['email']=='jane.staff@unilag.edu.ng']; print(staff[0]['id'] if staff else '')")
+    | python3 -c "import sys,json; staff=[staff_member for staff_member in json.load(sys.stdin)['data'] if staff_member['email']=='jane.staff@unilag.edu.ng']; print(staff[0]['id'] if staff else '')")
 fi
 
 [ -z "$STAFF_ID" ] && fail "Could not resolve staff id"
@@ -151,4 +151,4 @@ step "18. Unauthenticated cannot access /me"
 CODE=$(curl -s -o /dev/null -w "%{http_code}" $BASE/api/auth/me)
 [ "$CODE" = "401" ] && ok "No token → /api/auth/me = 401" || fail "Expected 401, got $CODE"
 
-echo -e "\n${G}━━━ ALL TESTS PASSED 🎉 ━━━${N}\n"
+echo -e "\n${GREEN}━━━ ALL TESTS PASSED 🎉 ━━━${RESET}\n"

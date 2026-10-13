@@ -29,7 +29,7 @@ public class RateLimitService {
      *         false if the limit is exceeded.
      */
     public boolean tryConsume(String key, int limit, int windowSeconds) {
-        Bucket bucket = buckets.computeIfAbsent(key, k ->
+        Bucket bucket = buckets.computeIfAbsent(key, itemIndex ->
                 Bucket.builder()
                         .addLimit(Bandwidth.classic(
                                 limit,
@@ -53,9 +53,9 @@ public class RateLimitService {
     @Scheduled(fixedDelay = 1_800_000L, initialDelay = 1_800_000L)
     public void cleanup() {
         int before = buckets.size();
-        buckets.entrySet().removeIf(e -> {
+        buckets.entrySet().removeIf(bucketValue -> {
             try {
-                long available = e.getValue().getAvailableTokens();
+                long available = bucketValue.getValue().getAvailableTokens();
                 // Heuristic: if the bucket reports more tokens than any sane limit
                 // it means it's fully refilled and idle. Removing is safe.
                 return available > 1_000_000L;

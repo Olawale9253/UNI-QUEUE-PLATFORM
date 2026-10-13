@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-    X, Users, CheckCircle2, Clock, TrendingUp, AlertTriangle, Loader2, Award,
+    X as CloseIcon, Users, CheckCircle2, Clock, TrendingUp, AlertTriangle, Loader2, Award,
 } from 'lucide-react'
 import api from '../../api/axios'
 
@@ -129,7 +129,7 @@ export default function WorkflowAnalyticsModal({ workflowId, onClose }) {
     }, [workflowId])
 
     const maxCompleted = data?.steps
-        ? Math.max(...data.steps.map((s) => s.completedCount), 1)
+        ? Math.max(...data.steps.map((item) => item.completedCount), 1)
         : 1
 
     return (
@@ -146,7 +146,7 @@ export default function WorkflowAnalyticsModal({ workflowId, onClose }) {
                     initial={{ opacity: 0, scale: 0.96, y: 12 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.96, y: 12 }}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(event) => event.stopPropagation()}
                     className="relative my-8 w-full max-w-4xl rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
                 >
                     <button
@@ -154,7 +154,7 @@ export default function WorkflowAnalyticsModal({ workflowId, onClose }) {
                         className="absolute right-4 top-4 z-10 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                         aria-label="Close"
                     >
-                        <X className="h-4 w-4" />
+                        <CloseIcon className="h-4 w-4" />
                     </button>
 
                     <div className="p-6">
@@ -226,7 +226,7 @@ export default function WorkflowAnalyticsModal({ workflowId, onClose }) {
                                 </div>
 
                                 {/* Bottleneck summary */}
-                                {data.steps.some((s) => s.isBottleneck) && (
+                                {data.steps.some((itemValue) => itemValue.isBottleneck) && (
                                     <div className="mt-5 flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
                                         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
                                         <div className="text-xs">
@@ -236,8 +236,8 @@ export default function WorkflowAnalyticsModal({ workflowId, onClose }) {
                                             <div className="mt-0.5 text-amber-800 dark:text-amber-300">
                                                 Students are spending the most time at{' '}
                                                 <strong>
-                                                    {data.steps.find((s) => s.isBottleneck)?.label
-                                                        || data.steps.find((s) => s.isBottleneck)?.queueName}
+                                                    {data.steps.find((itemValue2) => itemValue2.isBottleneck)?.label
+                                                        || data.steps.find((itemValue3) => itemValue3.isBottleneck)?.queueName}
                                                 </strong>. Consider assigning more staff or extending its operating hours.
                                             </div>
                                         </div>

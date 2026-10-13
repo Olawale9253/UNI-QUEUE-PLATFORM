@@ -20,11 +20,11 @@ export function SkeletonText({ lines = 3, className = '' }) {
     const widths = ['100%', '92%', '78%', '85%', '88%', '70%']
     return (
         <div className={`space-y-2 ${className}`}>
-            {Array.from({ length: lines }).map((_, i) => (
+            {Array.from({ length: lines }).map((unusedValue, index) => (
                 <SkeletonBox
-                    key={i}
+                    key={index}
                     className="h-3"
-                    style={{ width: widths[i % widths.length] }}
+                    style={{ width: widths[index % widths.length] }}
                 />
             ))}
         </div>
@@ -48,8 +48,8 @@ export function SkeletonCard() {
 export function SkeletonQueueGrid({ count = 6 }) {
     return (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: count }).map((_, i) => (
-                <SkeletonCard key={i} />
+            {Array.from({ length: count }).map((unusedValue, index) => (
+                <SkeletonCard key={index} />
             ))}
         </div>
     )
@@ -58,8 +58,8 @@ export function SkeletonQueueGrid({ count = 6 }) {
 export function SkeletonStats({ count = 4 }) {
     return (
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: count }).map((_, i) => (
-                <SkeletonCard key={i} />
+            {Array.from({ length: count }).map((unusedValue, index) => (
+                <SkeletonCard key={index} />
             ))}
         </div>
     )
@@ -87,8 +87,8 @@ export function SkeletonRow() {
 export function SkeletonList({ count = 5, className = '' }) {
     return (
         <div className={`divide-y divide-slate-100 dark:divide-slate-800 ${className}`}>
-            {Array.from({ length: count }).map((_, i) => (
-                <SkeletonRow key={i} />
+            {Array.from({ length: count }).map((unusedValue, index) => (
+                <SkeletonRow key={index} />
             ))}
         </div>
     )
@@ -98,9 +98,9 @@ export function SkeletonList({ count = 5, className = '' }) {
 export function SkeletonListCard({ count = 3, className = '' }) {
     return (
         <div className={`space-y-3 ${className}`}>
-            {Array.from({ length: count }).map((_, i) => (
+            {Array.from({ length: count }).map((unusedValue, index) => (
                 <div
-                    key={i}
+                    key={index}
                     className="rounded-lg border border-slate-200 p-4 dark:border-slate-800"
                 >
                     <div className="flex items-start justify-between gap-3">
@@ -157,11 +157,11 @@ export function SkeletonSettingsCard() {
 export function SkeletonStepTimeline({ count = 4 }) {
     return (
         <div className="space-y-0">
-            {Array.from({ length: count }).map((_, i) => (
-                <div key={i} className="flex gap-3">
+            {Array.from({ length: count }).map((unusedValue, index) => (
+                <div key={index} className="flex gap-3">
                     <div className="flex flex-col items-center">
                         <SkeletonBox className="h-8 w-8 shrink-0 rounded-full" />
-                        {i < count - 1 && <SkeletonBox className="mt-1 h-full w-0.5" />}
+                        {index < count - 1 && <SkeletonBox className="mt-1 h-full w-0.5" />}
                     </div>
                     <div className="min-w-0 flex-1 pb-5">
                         <SkeletonBox className="h-2.5 w-16" />

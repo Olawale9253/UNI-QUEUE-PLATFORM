@@ -58,8 +58,8 @@ public class WebPushService {
                 );
                 log.info("Bouncy Castle provider registered");
             }
-        } catch (Exception e) {
-            log.error("Failed to register Bouncy Castle: {}", e.getMessage());
+        } catch (Exception exceptionValue14) {
+            log.error("Failed to register Bouncy Castle: {}", exceptionValue14.getMessage());
         }
 
         if (vapidPublicKey == null || vapidPublicKey.isBlank()
@@ -70,8 +70,8 @@ public class WebPushService {
         try {
             pushService = new PushService(vapidPublicKey, vapidPrivateKey, vapidSubject);
             log.info("Web Push initialized");
-        } catch (Exception e) {
-            log.error("Failed to initialize Web Push: {}", e.getMessage(), e);
+        } catch (Exception exceptionValue15) {
+            log.error("Failed to initialize Web Push: {}", exceptionValue15.getMessage(), exceptionValue15);
             pushService = null;
         }
     }
@@ -118,8 +118,8 @@ public class WebPushService {
                         subscriptionRepository.save(sub);
                     }
                 }
-            } catch (Exception e) {
-                log.debug("Push send failed for sub {}: {}", sub.getId(), e.getMessage());
+            } catch (Exception exceptionValue16) {
+                log.debug("Push send failed for sub {}: {}", sub.getId(), exceptionValue16.getMessage());
                 // Don't delete on network errors — could be transient
             }
         }
@@ -133,8 +133,8 @@ public class WebPushService {
             payload.put("data", data != null ? data : new HashMap<>());
             payload.put("timestamp", System.currentTimeMillis());
             return json.writeValueAsString(payload);
-        } catch (Exception e) {
-            log.error("Failed to build push payload", e);
+        } catch (Exception exceptionValue17) {
+            log.error("Failed to build push payload", exceptionValue17);
             return "{\"title\":\"UniQueue\",\"body\":\"You have a new notification\"}";
         }
     }

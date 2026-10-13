@@ -5,12 +5,12 @@ export default function StarDisplay({ rating, size = 14, showValue = false }) {
     return (
         <div className="inline-flex items-center gap-1">
             <div className="flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((n) => (
+                {[1, 2, 3, 4, 5].map((count) => (
                     <Star
-                        key={n}
+                        key={count}
                         style={{ width: size, height: size }}
                         className={
-                            n <= rounded
+                            count <= rounded
                                 ? 'fill-amber-400 text-amber-400'
                                 : 'text-slate-300'
                         }

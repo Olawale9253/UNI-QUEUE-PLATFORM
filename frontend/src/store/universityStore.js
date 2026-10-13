@@ -11,15 +11,15 @@ export const useUniversityStore = create((set, get) => ({
         set({ loading: true })
         try {
             const res = await api.get('/api/profile')
-            const p = res.data.data
+            const parameter = res.data.data
             set({
-                university: p.universityId
+                university: parameter.universityId
                     ? {
-                        id: p.universityId,
-                        name: p.universityName,
-                        code: p.universityCode,
-                        logoUrl: p.universityLogoUrl,
-                        primaryColor: p.universityPrimaryColor,
+                        id: parameter.universityId,
+                        name: parameter.universityName,
+                        code: parameter.universityCode,
+                        logoUrl: parameter.universityLogoUrl,
+                        primaryColor: parameter.universityPrimaryColor,
                     }
                     : null,
                 loading: false,

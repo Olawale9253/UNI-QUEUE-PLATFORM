@@ -16,14 +16,14 @@ public class ClosedDateResponse {
     private String externalId;
     private LocalDateTime createdAt;
 
-    public static ClosedDateResponse from(UniversityClosedDate d) {
+    public static ClosedDateResponse from(UniversityClosedDate universityClosedDate) {
         return ClosedDateResponse.builder()
-                .id(d.getId())
-                .closedDate(d.getClosedDate())
-                .reason(d.getReason())
-                .source(d.getSource())
-                .externalId(d.getExternalId())
-                .createdAt(d.getCreatedAt())
+                .id(universityClosedDate.getId())
+                .closedDate(universityClosedDate.getClosedDate())
+                .reason(universityClosedDate.getReason())
+                .source(universityClosedDate.getSource())
+                .externalId(universityClosedDate.getExternalId())
+                .createdAt(universityClosedDate.getCreatedAt())
                 .build();
     }
 }

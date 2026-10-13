@@ -45,17 +45,17 @@ export default function StaffStatsCards() {
 
     const load = useCallback(async () => {
         try {
-            const [s, a, d, q] = await Promise.all([
+            const [stringValue, firstValue, dateValue, queue] = await Promise.all([
                 api.get('/api/staff/stats').catch(() => ({ data: { data: null } })),
                 api.get('/api/staff/appointments/stats').catch(() => ({ data: { data: null } })),
                 api.get('/api/staff/documents/stats').catch(() => ({ data: { data: null } })),
                 api.get('/api/staff/queues').catch(() => ({ data: { data: [] } })),
             ])
-            setStats(s.data?.data || null)
-            setApptStats(a.data?.data || null)
-            setDocStats(d.data?.data || null)
+            setStats(stringValue.data?.data || null)
+            setApptStats(firstValue.data?.data || null)
+            setDocStats(dateValue.data?.data || null)
 
-            const queues = q.data?.data || []
+            const queues = queue.data?.data || []
             setPendingQueues(queues.reduce((sum, qu) => sum + (qu.waitingCount ?? 0), 0))
         } catch {
             // silent

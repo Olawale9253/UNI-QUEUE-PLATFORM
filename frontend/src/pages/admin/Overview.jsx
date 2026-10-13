@@ -44,14 +44,14 @@ export default function Overview() {
 
     const load = useCallback(async () => {
         try {
-            const [q, a, s] = await Promise.all([
+            const [queue, firstValue, stringValue] = await Promise.all([
                 api.get('/api/admin/queues'),
                 api.get('/api/admin/analytics').catch(() => ({ data: { data: null } })),
                 api.get('/api/admin/staff').catch(() => ({ data: { data: [] } })),
             ])
-            setQueues(q.data.data || [])
-            setAnalytics(a.data.data || null)
-            setStaff(s.data.data || [])
+            setQueues(queue.data.data || [])
+            setAnalytics(firstValue.data.data || null)
+            setStaff(stringValue.data.data || [])
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed to load' })
         } finally {
@@ -63,8 +63,8 @@ export default function Overview() {
         load()
     }, [load])
 
-    const createQueue = async (e) => {
-        e.preventDefault()
+    const createQueue = async (event) => {
+        event.preventDefault()
         setCreating(true)
         try {
             await api.post('/api/admin/queues', {
@@ -106,38 +106,38 @@ export default function Overview() {
 
     const groups = groupQueuesByOffice(queues)
 
-    const QueueCard = ({ q }) => (
+    const QueueCard = ({ q: queue }) => (
         <motion.div variants={staggerItem}>
             <Card className="h-full">
                 <div className="mb-3 flex items-start justify-between gap-3">
-                    <h3 className="text-base font-semibold text-slate-900">{q.name}</h3>
-                    <Badge variant={q.isActive ? 'success' : 'default'}>
-                        {q.isActive ? 'Active' : 'Inactive'}
+                    <h3 className="text-base font-semibold text-slate-900">{queue.name}</h3>
+                    <Badge variant={queue.isActive ? 'success' : 'default'}>
+                        {queue.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                 </div>
-                {q.location && (
+                {queue.location && (
                     <p className="flex items-center gap-1.5 text-sm text-slate-500">
                         <MapPin className="h-3.5 w-3.5" />
-                        {q.location}
+                        {queue.location}
                     </p>
                 )}
                 <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-xs">
                     <div>
                         <div className="text-slate-500">Capacity</div>
                         <div className="mt-0.5 text-sm font-medium text-slate-900">
-                            {q.maxCapacity}
+                            {queue.maxCapacity}
                         </div>
                     </div>
                     <div>
                         <div className="text-slate-500">Avg. min</div>
                         <div className="mt-0.5 text-sm font-medium text-slate-900">
-                            {q.averageServiceMinutes}
+                            {queue.averageServiceMinutes}
                         </div>
                     </div>
                     <div>
                         <div className="text-slate-500">Staff</div>
                         <div className="mt-0.5 text-sm font-medium text-slate-900">
-                            {q.staffCount ?? 0}
+                            {queue.staffCount ?? 0}
                         </div>
                     </div>
                 </div>
@@ -153,7 +153,7 @@ export default function Overview() {
                 action={
                     <Button
                         icon={Plus}
-                        onClick={() => setShowCreate((v) => !v)}
+                        onClick={() => setShowCreate((item) => !item)}
                         variant={showCreate ? 'secondary' : 'primary'}
                     >
                         {showCreate ? 'Cancel' : 'New queue'}
@@ -179,20 +179,20 @@ export default function Overview() {
                                 <Input
                                     label="Queue name"
                                     value={form.name}
-                                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                                    onChange={(eventValue) => setForm({ ...form, name: eventValue.target.value })}
                                     placeholder="e.g. Fee Payments"
                                     required
                                 />
                                 <Input
                                     label="Location"
                                     value={form.location}
-                                    onChange={(e) => setForm({ ...form, location: e.target.value })}
+                                    onChange={(eventValue2) => setForm({ ...form, location: eventValue2.target.value })}
                                     placeholder="e.g. Block A, Room 12"
                                 />
                                 <Input
                                     label="Department"
                                     value={form.department}
-                                    onChange={(e) => setForm({ ...form, department: e.target.value })}
+                                    onChange={(eventValue3) => setForm({ ...form, department: eventValue3.target.value })}
                                     placeholder="e.g. Bursary"
                                     icon={Building2}
                                 />
@@ -200,14 +200,14 @@ export default function Overview() {
                                     label="Capacity per day"
                                     type="number"
                                     value={form.maxCapacity}
-                                    onChange={(e) => setForm({ ...form, maxCapacity: e.target.value })}
+                                    onChange={(eventValue4) => setForm({ ...form, maxCapacity: eventValue4.target.value })}
                                 />
                                 <Input
                                     label="Average service time (min)"
                                     type="number"
                                     value={form.averageServiceMinutes}
-                                    onChange={(e) =>
-                                        setForm({ ...form, averageServiceMinutes: e.target.value })
+                                    onChange={(eventValue5) =>
+                                        setForm({ ...form, averageServiceMinutes: eventValue5.target.value })
                                     }
                                 />
                                 <div className="md:col-span-2">
@@ -215,8 +215,8 @@ export default function Overview() {
                                         <input
                                             type="checkbox"
                                             checked={form.allowWaitlist}
-                                            onChange={(e) =>
-                                                setForm({ ...form, allowWaitlist: e.target.checked })
+                                            onChange={(eventValue6) =>
+                                                setForm({ ...form, allowWaitlist: eventValue6.target.checked })
                                             }
                                             className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                                         />
@@ -284,8 +284,8 @@ export default function Overview() {
                                 animate="animate"
                                 className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
                             >
-                                {group.queues.map((q) => (
-                                    <QueueCard key={q.id} q={q} />
+                                {group.queues.map((item) => (
+                                    <QueueCard key={item.id} q={item} />
                                 ))}
                             </motion.div>
                         </motion.section>
@@ -310,21 +310,21 @@ export default function Overview() {
                             animate="animate"
                             className="divide-y divide-slate-100"
                         >
-                            {staff.map((s) => (
+                            {staff.map((item) => (
                                 <motion.li
-                                    key={s.id}
+                                    key={item.id}
                                     variants={staggerItem}
                                     className="flex items-center justify-between px-6 py-4"
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
-                                            {s.fullName?.split(' ').map((p) => p[0]).slice(0, 2).join('')}
+                                            {item.fullName?.split(' ').map((parameter) => parameter[0]).slice(0, 2).join('')}
                                         </div>
                                         <div>
                                             <div className="text-sm font-medium text-slate-900">
-                                                {s.fullName}
+                                                {item.fullName}
                                             </div>
-                                            <div className="text-xs text-slate-500">{s.email}</div>
+                                            <div className="text-xs text-slate-500">{item.email}</div>
                                         </div>
                                     </div>
                                 </motion.li>

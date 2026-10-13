@@ -54,17 +54,17 @@ public class QueueCloseSweeper {
 
             if (stale.isEmpty()) continue;
 
-            for (Ticket t : stale) {
-                t.setStatus(TicketStatus.CANCELLED);
-                t.setNotes(appendNote(t.getNotes(), "Auto-cancelled at queue close"));
-                ticketRepository.save(t);
+            for (Ticket ticketValue16 : stale) {
+                ticketValue16.setStatus(TicketStatus.CANCELLED);
+                ticketValue16.setNotes(appendNote(ticketValue16.getNotes(), "Auto-cancelled at queue close"));
+                ticketRepository.save(ticketValue16);
 
-                notificationService.notify(t.getUser(), NotificationType.SYSTEM,
+                notificationService.notify(ticketValue16.getUser(), NotificationType.SYSTEM,
                         "Queue closed for the day",
-                        "Ticket " + t.getTicketNumber() + " was cancelled because "
+                        "Ticket " + ticketValue16.getTicketNumber() + " was cancelled because "
                                 + queue.getName() + " closed. You can rejoin when it reopens.");
 
-                emailService.sendQueueClosed(t.getUser(), t, queue);
+                emailService.sendQueueClosed(ticketValue16.getUser(), ticketValue16, queue);
             }
 
             log.info("Sweeper cancelled {} stale tickets for queue '{}' (id={})",

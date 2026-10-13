@@ -217,17 +217,17 @@ export default function StudentHome() {
 
     const load = useCallback(async () => {
         try {
-            const [q, s, a, d, mp] = await Promise.all([
+            const [queue, stringValue, firstValue, dateValue, mp] = await Promise.all([
                 api.get('/api/queues').catch(() => ({ data: { data: [] } })),
                 api.get('/api/user/stats').catch(() => ({ data: { data: null } })),
                 api.get('/api/user/appointments').catch(() => ({ data: { data: [] } })),
                 api.get('/api/user/documents').catch(() => ({ data: { data: [] } })),
                 api.get('/api/student/workflows/my-progress').catch(() => ({ data: { data: null } })),
             ])
-            setQueues(q.data?.data || [])
-            setStats(s.data?.data || null)
-            setAppointments(a.data?.data || [])
-            setDocuments(d.data?.data || [])
+            setQueues(queue.data?.data || [])
+            setStats(stringValue.data?.data || null)
+            setAppointments(firstValue.data?.data || [])
+            setDocuments(dateValue.data?.data || [])
 
             const mpData = mp.data?.data || null
             if (mpData && mpData.status === 'IN_PROGRESS') {
@@ -253,23 +253,23 @@ export default function StudentHome() {
     useAdaptivePoll(load, { fastMs: 5000, slowMs: 15000 })
 
     const liveQueues = useMemo(() => {
-        const groups = groupQueuesByOffice(queues.filter((q) => q.isActive !== false))
+        const groups = groupQueuesByOffice(queues.filter((queue) => queue.isActive !== false))
         return groups
-            .map((g) => {
-                const sorted = [...g.queues].sort(
-                    (a, b) => (b.waitingCount ?? 0) - (a.waitingCount ?? 0)
+            .map((group) => {
+                const sorted = [...group.queues].sort(
+                    (firstValue, secondValue) => (secondValue.waitingCount ?? 0) - (firstValue.waitingCount ?? 0)
                 )
                 return {
-                    key: g.key,
-                    name: g.label,
+                    key: group.key,
+                    name: group.label,
                     queue: sorted[0] || null,
                 }
             })
-            .sort((a, b) => a.name.localeCompare(b.name))
+            .sort((firstValue, secondValue) => firstValue.name.localeCompare(secondValue.name))
     }, [queues])
 
     const myAppointments = appointments.filter(
-        (a) => a.status === 'BOOKED' || a.status === 'CONFIRMED'
+        (appointment) => appointment.status === 'BOOKED' || appointment.status === 'CONFIRMED'
     ).length
     const myQueueTickets = stats?.hasActiveTicket ? 1 : stats?.todayJoined ?? 0
     const myDocuments = documents.length
@@ -359,9 +359,9 @@ export default function StudentHome() {
 
                 {loading ? (
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {Array.from({ length: 6 }).map((_, i) => (
+                        {Array.from({ length: 6 }).map((unusedValue, index) => (
                             <div
-                                key={i}
+                                key={index}
                                 className="h-44 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"
                             />
                         ))}
@@ -387,12 +387,12 @@ export default function StudentHome() {
                         variants={{ initial: {}, animate: { transition: { staggerChildren: 0.04 } } }}
                         className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
                     >
-                        {liveQueues.map((o) => (
+                        {liveQueues.map((liveQueue) => (
                             <motion.div
-                                key={o.key}
+                                key={liveQueue.key}
                                 variants={{ initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 } }}
                             >
-                                <LiveQueueCard office={o} />
+                                <LiveQueueCard office={liveQueue} />
                             </motion.div>
                         ))}
                     </motion.div>

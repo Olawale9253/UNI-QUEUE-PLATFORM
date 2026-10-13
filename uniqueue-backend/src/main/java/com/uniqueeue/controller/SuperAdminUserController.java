@@ -59,30 +59,30 @@ public class SuperAdminUserController {
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<GlobalUserResponse>> get(@PathVariable Long id) {
-        User u = userRepository.findById(id)
+        User userValue = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         // Force-load university within the transaction
-        if (u.getUniversity() != null) {
-            u.getUniversity().getName();
+        if (userValue.getUniversity() != null) {
+            userValue.getUniversity().getName();
         }
-        return ResponseEntity.ok(ApiResponse.success("User", GlobalUserResponse.from(u)));
+        return ResponseEntity.ok(ApiResponse.success("User", GlobalUserResponse.from(userValue)));
     }
 
     @PostMapping("/{id}/toggle-active")
     @Transactional
     public ResponseEntity<ApiResponse<GlobalUserResponse>> toggleActive(@PathVariable Long id) {
-        User u = userRepository.findById(id)
+        User userValue2 = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (u.getRole() == Role.SUPER_ADMIN) {
+        if (userValue2.getRole() == Role.SUPER_ADMIN) {
             throw new BadRequestException("Cannot disable a super admin");
         }
 
-        u.setIsActive(!Boolean.TRUE.equals(u.getIsActive()));
-        User saved = userRepository.save(u);
+        userValue2.setIsActive(!Boolean.TRUE.equals(userValue2.getIsActive()));
+        User saved = userRepository.save(userValue2);
 
         auditService.record(null,
-                u.getUniversity() != null ? u.getUniversity().getId() : null,
+                userValue2.getUniversity() != null ? userValue2.getUniversity().getId() : null,
                 AuditAction.USER_REGISTERED,
                 "User", saved.getId(),
                 "{\"action\":\"toggle-active\",\"isActive\":" + saved.getIsActive() + "}");

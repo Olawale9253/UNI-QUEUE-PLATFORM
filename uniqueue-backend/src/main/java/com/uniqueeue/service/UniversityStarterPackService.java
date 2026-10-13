@@ -67,7 +67,7 @@ public class UniversityStarterPackService {
         Map<String, Office> officesByName = new HashMap<>();
         // Always load existing offices first so services can attach to them
         officeRepository.findByUniversityIdOrderByNameAsc(universityId)
-                .forEach(o -> officesByName.put(o.getName().toLowerCase(), o));
+                .forEach(officeValue3 -> officesByName.put(officeValue3.getName().toLowerCase(), officeValue3));
 
         if (includeOffices) {
             for (OfficeTemplate tmpl : OFFICE_TEMPLATES) {
@@ -93,7 +93,7 @@ public class UniversityStarterPackService {
         // ─── 2. Services (queues) ───
         Map<String, Queue> queuesByName = new HashMap<>();
         queueRepository.findByUniversityId(universityId)
-                .forEach(q -> queuesByName.put(q.getName().toLowerCase(), q));
+                .forEach(queueValue6 -> queuesByName.put(queueValue6.getName().toLowerCase(), queueValue6));
 
         if (includeServices) {
             for (ServiceTemplate tmpl : SERVICE_TEMPLATES) {
@@ -144,14 +144,14 @@ public class UniversityStarterPackService {
                 List<Queue> resolvedSteps = new ArrayList<>();
                 boolean allFound = true;
                 for (String qName : tmpl.stepQueueNames) {
-                    Queue q = queuesByName.get(qName.toLowerCase());
-                    if (q == null) {
+                    Queue queueValue7 = queuesByName.get(qName.toLowerCase());
+                    if (queueValue7 == null) {
                         log.warn("Skipping workflow '{}' — required queue '{}' not found",
                                 tmpl.name, qName);
                         allFound = false;
                         break;
                     }
-                    resolvedSteps.add(q);
+                    resolvedSteps.add(queueValue7);
                 }
                 if (!allFound) continue;
 
@@ -165,12 +165,12 @@ public class UniversityStarterPackService {
                         .build();
                 workflow = workflowRepository.save(workflow);
 
-                for (int i = 0; i < resolvedSteps.size(); i++) {
+                for (int indexValue10 = 0; indexValue10 < resolvedSteps.size(); indexValue10++) {
                     WorkflowStep step = WorkflowStep.builder()
                             .workflow(workflow)
-                            .queue(resolvedSteps.get(i))
-                            .stepOrder(i + 1)
-                            .label(tmpl.stepLabels.get(i))
+                            .queue(resolvedSteps.get(indexValue10))
+                            .stepOrder(indexValue10 + 1)
+                            .label(tmpl.stepLabels.get(indexValue10))
                             .isRequired(true)
                             .build();
                     workflowStepRepository.save(step);

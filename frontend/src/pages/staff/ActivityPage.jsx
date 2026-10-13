@@ -94,15 +94,15 @@ export default function ActivityPage() {
 
     const load = useCallback(async () => {
         try {
-            const [s, a, q] = await Promise.all([
+            const [stringValue, firstValue, queue] = await Promise.all([
                 api.get('/api/staff/stats').catch(() => ({ data: { data: null } })),
                 api.get('/api/staff/appointments/stats').catch(() => ({ data: { data: null } })),
                 api.get('/api/staff/queues').catch(() => ({ data: { data: [] } })),
             ])
-            setStats(s.data?.data || null)
-            setApptStats(a.data?.data || null)
+            setStats(stringValue.data?.data || null)
+            setApptStats(firstValue.data?.data || null)
 
-            const staffQueues = q.data?.data || []
+            const staffQueues = queue.data?.data || []
             setQueues(staffQueues)
 
             if (staffQueues.length > 0) {
@@ -111,7 +111,7 @@ export default function ActivityPage() {
                         api
                             .get(`/api/staff/queues/${qu.id}/tickets`)
                             .then((res) =>
-                                (res.data?.data || []).map((t) => ({ ...t, queueName: qu.name }))
+                                (res.data?.data || []).map((token) => ({ ...token, queueName: qu.name }))
                             )
                             .catch(() => [])
                     )
@@ -119,11 +119,11 @@ export default function ActivityPage() {
                 const all = ticketsByQueue.flat()
 
                 // Sort by most recent activity — no slice, we page in the UI
-                const sorted = all.sort((a, b) => {
-                    const at = a.completedAt || a.calledAt || a.joinedAt
-                        ? new Date(a.completedAt || a.calledAt || a.joinedAt).getTime() : 0
-                    const bt = b.completedAt || b.calledAt || b.joinedAt
-                        ? new Date(b.completedAt || b.calledAt || b.joinedAt).getTime() : 0
+                const sorted = all.sort((leftValue, rightValue) => {
+                    const at = leftValue.completedAt || leftValue.calledAt || leftValue.joinedAt
+                        ? new Date(leftValue.completedAt || leftValue.calledAt || leftValue.joinedAt).getTime() : 0
+                    const bt = rightValue.completedAt || rightValue.calledAt || rightValue.joinedAt
+                        ? new Date(rightValue.completedAt || rightValue.calledAt || rightValue.joinedAt).getTime() : 0
                     return bt - at
                 })
 
@@ -155,8 +155,8 @@ export default function ActivityPage() {
         const weeklyPace =
             servedThisWeek > 0 ? Math.round((servedThisWeek / 7) * 10) / 10 : 0
 
-        const completed = recentTickets.filter((t) => t.status === 'COMPLETED').length
-        const noShows = recentTickets.filter((t) => t.status === 'NO_SHOW').length
+        const completed = recentTickets.filter((recentTicket) => recentTicket.status === 'COMPLETED').length
+        const noShows = recentTickets.filter((recentTicketValue) => recentTicketValue.status === 'NO_SHOW').length
         const total = recentTickets.length
         const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
         const noShowRate = total > 0 ? Math.round((noShows / total) * 100) : 0
@@ -169,15 +169,15 @@ export default function ActivityPage() {
 
     const queueBreakdown = useMemo(() => {
         return queues
-            .map((q) => ({
-                id: q.id,
-                name: q.name,
-                office: q.officeName || q.department || 'General',
-                waiting: q.waitingCount ?? 0,
-                currentlyServing: q.currentlyServing,
-                estimatedMinutes: q.estimatedMinutes ?? 0,
+            .map((queue) => ({
+                id: queue.id,
+                name: queue.name,
+                office: queue.officeName || queue.department || 'General',
+                waiting: queue.waitingCount ?? 0,
+                currentlyServing: queue.currentlyServing,
+                estimatedMinutes: queue.estimatedMinutes ?? 0,
             }))
-            .sort((a, b) => b.waiting - a.waiting)
+            .sort((firstValue, secondValue) => secondValue.waiting - firstValue.waiting)
     }, [queues])
 
     const visibleTickets = recentTickets.slice(0, visibleCount)
@@ -191,7 +191,7 @@ export default function ActivityPage() {
                 <SkeletonStats count={5} />
                 <SkeletonStats count={3} />
                 <Card padded={false}>
-                    {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
+                    {Array.from({ length: 5 }).map((unusedValue, index) => <SkeletonRow key={index} />)}
                 </Card>
             </div>
         )
@@ -335,7 +335,7 @@ export default function ActivityPage() {
 
                     {activityLoading ? (
                         <div>
-                            {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
+                            {Array.from({ length: 5 }).map((unusedValue, index) => <SkeletonRow key={index} />)}
                         </div>
                     ) : recentTickets.length === 0 ? (
                         <div className="px-6 py-12 text-center">
@@ -352,14 +352,14 @@ export default function ActivityPage() {
                     ) : (
                         <>
                             <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {visibleTickets.map((t) => {
-                                    const ts = t.completedAt || t.calledAt || t.joinedAt
-                                    const isCompleted = t.status === 'COMPLETED'
-                                    const isNoShow = t.status === 'NO_SHOW'
-                                    const isCancelled = t.status === 'CANCELLED'
+                                {visibleTickets.map((visibleTicket) => {
+                                    const ts = visibleTicket.completedAt || visibleTicket.calledAt || visibleTicket.joinedAt
+                                    const isCompleted = visibleTicket.status === 'COMPLETED'
+                                    const isNoShow = visibleTicket.status === 'NO_SHOW'
+                                    const isCancelled = visibleTicket.status === 'CANCELLED'
                                     return (
                                         <li
-                                            key={t.id}
+                                            key={visibleTicket.id}
                                             className="flex items-center justify-between gap-3 px-6 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40"
                                         >
                                             <div className="flex min-w-0 flex-1 items-start gap-3">
@@ -386,15 +386,15 @@ export default function ActivityPage() {
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex flex-wrap items-center gap-2">
                                                         <span className="font-mono text-xs font-bold text-slate-900 dark:text-slate-100">
-                                                            {t.ticketNumber}
+                                                            {visibleTicket.ticketNumber}
                                                         </span>
-                                                        <Badge variant={STATUS_VARIANTS[t.status] || 'default'}>
-                                                            {STATUS_LABELS[t.status] || t.status}
+                                                        <Badge variant={STATUS_VARIANTS[visibleTicket.status] || 'default'}>
+                                                            {STATUS_LABELS[visibleTicket.status] || visibleTicket.status}
                                                         </Badge>
                                                     </div>
                                                     <div className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
-                                                        {t.queueName}
-                                                        {t.userFullName ? ` · ${t.userFullName}` : ''}
+                                                        {visibleTicket.queueName}
+                                                        {visibleTicket.userFullName ? ` · ${visibleTicket.userFullName}` : ''}
                                                     </div>
                                                 </div>
                                             </div>
@@ -415,7 +415,7 @@ export default function ActivityPage() {
                                     <Button
                                         variant="secondary"
                                         fullWidth
-                                        onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                                        onClick={() => setVisibleCount((item) => item + PAGE_SIZE)}
                                     >
                                         <ChevronDown className="mr-1.5 h-4 w-4" />
                                         Load {Math.min(PAGE_SIZE, remainingCount)} more
@@ -459,23 +459,23 @@ export default function ActivityPage() {
                         </div>
                     ) : (
                         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                            {queueBreakdown.map((q) => (
-                                <li key={q.id} className="px-5 py-3.5">
+                            {queueBreakdown.map((item) => (
+                                <li key={item.id} className="px-5 py-3.5">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0 flex-1">
                                             <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                {q.name}
+                                                {item.name}
                                             </div>
                                             <div className="mt-0.5 truncate text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                                {q.office}
+                                                {item.office}
                                             </div>
-                                            {q.currentlyServing && (
+                                            {item.currentlyServing && (
                                                 <div className="mt-1.5 text-xs">
                                                     <span className="text-slate-500 dark:text-slate-400">
                                                         Now serving:{' '}
                                                     </span>
                                                     <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                                                        {q.currentlyServing}
+                                                        {item.currentlyServing}
                                                     </span>
                                                 </div>
                                             )}
@@ -487,7 +487,7 @@ export default function ActivityPage() {
                                                     Waiting
                                                 </div>
                                                 <div className="text-base font-bold text-brand-600 dark:text-brand-400">
-                                                    {q.waiting}
+                                                    {item.waiting}
                                                 </div>
                                             </div>
                                             <div className="text-right">
@@ -495,7 +495,7 @@ export default function ActivityPage() {
                                                     ~Wait
                                                 </div>
                                                 <div className="text-base font-bold text-amber-600 dark:text-amber-400">
-                                                    {q.estimatedMinutes}m
+                                                    {item.estimatedMinutes}m
                                                 </div>
                                             </div>
                                         </div>

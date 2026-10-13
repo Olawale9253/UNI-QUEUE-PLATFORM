@@ -58,10 +58,10 @@ export default function SettingsPage() {
         } catch {}
     }, [])
 
-    const set = (k, v) => setPrefs((p) => ({ ...p, [k]: v }))
+    const set = (key, value) => setPrefs((setPref) => ({ ...setPref, [key]: value }))
 
-    const togglePush = async (e) => {
-        const wantsOn = e.target.checked
+    const togglePush = async (event) => {
+        const wantsOn = event.target.checked
         if (wantsOn) {
             const result = await webPush.subscribe()
             if (result === 'granted') {
@@ -135,7 +135,7 @@ export default function SettingsPage() {
                                 label="In-app toasts"
                                 description="Show a message in the corner of the screen when something happens."
                                 checked={prefs.notifyNewTicket}
-                                onChange={(e) => set('notifyNewTicket', e.target.checked)}
+                                onChange={(eventValue) => set('notifyNewTicket', eventValue.target.checked)}
                             />
 
                             {/* Sound — wrapped in <label> so the whole row is clickable */}
@@ -153,8 +153,8 @@ export default function SettingsPage() {
                                         <input
                                             type="checkbox"
                                             checked={prefs.notifySound}
-                                            onChange={(e) => {
-                                                const on = e.target.checked
+                                            onChange={(eventValue2) => {
+                                                const on = eventValue2.target.checked
                                                 set('notifySound', on)
                                                 if (on) setTimeout(() => previewSound(prefs.soundVolume), 100)
                                             }}
@@ -178,7 +178,7 @@ export default function SettingsPage() {
                                             max="1"
                                             step="0.05"
                                             value={prefs.soundVolume}
-                                            onChange={(e) => set('soundVolume', parseFloat(e.target.value))}
+                                            onChange={(eventValue3) => set('soundVolume', parseFloat(eventValue3.target.value))}
                                             onMouseUp={testSound}
                                             onTouchEnd={testSound}
                                             className="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-slate-200 accent-brand-600 dark:bg-slate-700"
@@ -223,9 +223,9 @@ export default function SettingsPage() {
                                                 </span>
                                                 <button
                                                     type="button"
-                                                    onClick={(e) => {
-                                                        e.preventDefault()
-                                                        e.stopPropagation()
+                                                    onClick={(eventValue4) => {
+                                                        eventValue4.preventDefault()
+                                                        eventValue4.stopPropagation()
                                                         webPush.sendTest()
                                                             .then(() => push({ type: 'success', message: 'Test push sent — check your device' }))
                                                             .catch(() => push({ type: 'error', message: 'Failed to send test push' }))
@@ -259,7 +259,7 @@ export default function SettingsPage() {
                                 label="Auto-refresh queue list"
                                 description="Keep the waiting list up to date without manual refresh."
                                 checked={prefs.autoRefresh}
-                                onChange={(e) => set('autoRefresh', e.target.checked)}
+                                onChange={(eventValue5) => set('autoRefresh', eventValue5.target.checked)}
                             />
                         </div>
                     </Card>
@@ -287,7 +287,7 @@ export default function SettingsPage() {
                                 label="Compact mode"
                                 description="Reduce spacing so more items fit on screen."
                                 checked={prefs.compactMode}
-                                onChange={(e) => set('compactMode', e.target.checked)}
+                                onChange={(eventValue6) => set('compactMode', eventValue6.target.checked)}
                             />
                         </div>
 

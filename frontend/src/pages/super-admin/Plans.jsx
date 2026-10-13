@@ -40,11 +40,11 @@ export default function Plans() {
     }, [load])
 
     const updateLocal = (id, field, value) => {
-        setPlans((prev) => prev.map((p) => (p.id === id ? { ...p, [field]: value } : p)))
+        setPlans((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)))
     }
 
     const save = async (plan) => {
-        setSaving((s) => ({ ...s, [plan.id]: true }))
+        setSaving((item) => ({ ...item, [plan.id]: true }))
         try {
             const res = await api.put(`/api/super-admin/plans/${plan.id}`, {
                 label: plan.label,
@@ -54,13 +54,13 @@ export default function Plans() {
                 maxTicketsPerDay: Number(plan.maxTicketsPerDay),
                 isActive: plan.isActive,
             })
-            setPlans((prev) => prev.map((p) => (p.id === plan.id ? res.data.data : p)))
+            setPlans((prev) => prev.map((itemValue) => (itemValue.id === plan.id ? res.data.data : itemValue)))
             push({ type: 'success', message: `${plan.label} plan updated` })
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed to save plan' })
             await load()
         } finally {
-            setSaving((s) => ({ ...s, [plan.id]: false }))
+            setSaving((itemValue) => ({ ...itemValue, [plan.id]: false }))
         }
     }
 
@@ -150,7 +150,7 @@ export default function Plans() {
                                                 min="0"
                                                 step="1"
                                                 value={plan.priceUsd}
-                                                onChange={(e) => updateLocal(plan.id, 'priceUsd', e.target.value)}
+                                                onChange={(event) => updateLocal(plan.id, 'priceUsd', event.target.value)}
                                                 className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-7 pr-3 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                                             />
                                         </div>
@@ -167,7 +167,7 @@ export default function Plans() {
                                                 type="number"
                                                 min="1"
                                                 value={plan.maxQueues}
-                                                onChange={(e) => updateLocal(plan.id, 'maxQueues', e.target.value)}
+                                                onChange={(eventValue) => updateLocal(plan.id, 'maxQueues', eventValue.target.value)}
                                                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                                             />
                                         </div>
@@ -181,7 +181,7 @@ export default function Plans() {
                                                 type="number"
                                                 min="1"
                                                 value={plan.maxStaff}
-                                                onChange={(e) => updateLocal(plan.id, 'maxStaff', e.target.value)}
+                                                onChange={(eventValue2) => updateLocal(plan.id, 'maxStaff', eventValue2.target.value)}
                                                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                                             />
                                         </div>
@@ -195,7 +195,7 @@ export default function Plans() {
                                                 type="number"
                                                 min="1"
                                                 value={plan.maxTicketsPerDay}
-                                                onChange={(e) => updateLocal(plan.id, 'maxTicketsPerDay', e.target.value)}
+                                                onChange={(eventValue3) => updateLocal(plan.id, 'maxTicketsPerDay', eventValue3.target.value)}
                                                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                                             />
                                         </div>
@@ -204,7 +204,7 @@ export default function Plans() {
                                             <input
                                                 type="checkbox"
                                                 checked={plan.isActive}
-                                                onChange={(e) => updateLocal(plan.id, 'isActive', e.target.checked)}
+                                                onChange={(eventValue4) => updateLocal(plan.id, 'isActive', eventValue4.target.checked)}
                                                 className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                                             />
                                             Available for new assignments

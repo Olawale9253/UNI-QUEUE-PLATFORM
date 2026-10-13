@@ -38,15 +38,15 @@ public class FileController {
             data.put("contentType", file.getContentType());
 
             return ResponseEntity.ok(ApiResponse.success("File uploaded", data));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
-                    "message", e.getMessage()
+                    "message", illegalArgumentException.getMessage()
             ));
-        } catch (Exception e) {
+        } catch (Exception exceptionValue) {
             return ResponseEntity.internalServerError().body(Map.of(
                     "success", false,
-                    "message", "Upload failed: " + e.getMessage()
+                    "message", "Upload failed: " + exceptionValue.getMessage()
             ));
         }
     }
@@ -73,9 +73,9 @@ public class FileController {
                     .header(HttpHeaders.CACHE_CONTROL,
                             "public, max-age=31536000, immutable")
                     .body(resource);
-        } catch (MalformedURLException e) {
+        } catch (MalformedURLException malformedURLException) {
             return ResponseEntity.badRequest().build();
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException illegalArgumentExceptionValue) {
             return ResponseEntity.notFound().build();
         }
     }

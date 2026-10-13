@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertTriangle, X } from 'lucide-react'
+import { AlertTriangle, X as CloseIcon } from 'lucide-react'
 import { useEffect } from 'react'
 import Button from './Button'
 
@@ -16,8 +16,8 @@ export default function ConfirmDialog({
                                       }) {
     // Close on Escape
     useEffect(() => {
-        const handler = (e) => {
-            if (e.key === 'Escape' && open && !loading) onClose()
+        const handler = (event) => {
+            if (event.key === 'Escape' && open && !loading) onClose()
         }
         window.addEventListener('keydown', handler)
         return () => window.removeEventListener('keydown', handler)
@@ -57,7 +57,7 @@ export default function ConfirmDialog({
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 8 }}
                             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(event) => event.stopPropagation()}
                             className="relative w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl"
                         >
                             <button
@@ -66,7 +66,7 @@ export default function ConfirmDialog({
                                 className="absolute right-4 top-4 rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50"
                                 aria-label="Close"
                             >
-                                <X className="h-4 w-4" />
+                                <CloseIcon className="h-4 w-4" />
                             </button>
 
                             <div className="flex items-start gap-4">

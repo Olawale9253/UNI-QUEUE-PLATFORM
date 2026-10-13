@@ -99,8 +99,8 @@ export default function DocumentsTab() {
     useEffect(() => { load() }, [load])
     useAdaptivePoll(load, { fastMs: 10000, slowMs: 30000 })
 
-    const upload = async (e) => {
-        e.preventDefault()
+    const upload = async (event) => {
+        event.preventDefault()
         if (!file) {
             push({ type: 'error', message: 'Select a file first' })
             return
@@ -147,12 +147,12 @@ export default function DocumentsTab() {
                 responseType: 'blob',
             })
             const blobUrl = URL.createObjectURL(res.data)
-            const a = document.createElement('a')
-            a.href = blobUrl
-            a.download = doc.originalFilename || 'document'
-            document.body.appendChild(a)
-            a.click()
-            a.remove()
+            const documentValue = document.createElement('a')
+            documentValue.href = blobUrl
+            documentValue.download = doc.originalFilename || 'document'
+            document.body.appendChild(documentValue)
+            documentValue.click()
+            documentValue.remove()
             URL.revokeObjectURL(blobUrl)
         } catch {
             push({ type: 'error', message: 'Download failed' })
@@ -161,14 +161,14 @@ export default function DocumentsTab() {
 
     const filtered = useMemo(() => {
         if (filter === 'ALL') return docs
-        return docs.filter((d) => d.status === filter)
+        return docs.filter((doc) => doc.status === filter)
     }, [docs, filter])
 
     const counts = useMemo(() => ({
         ALL: docs.length,
-        PENDING: docs.filter((d) => d.status === 'PENDING').length,
-        APPROVED: docs.filter((d) => d.status === 'APPROVED').length,
-        REJECTED: docs.filter((d) => d.status === 'REJECTED').length,
+        PENDING: docs.filter((doc) => doc.status === 'PENDING').length,
+        APPROVED: docs.filter((docValue) => docValue.status === 'APPROVED').length,
+        REJECTED: docs.filter((docValue2) => docValue2.status === 'REJECTED').length,
     }), [docs])
 
     if (loading) {
@@ -178,7 +178,7 @@ export default function DocumentsTab() {
                     <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Documents</h2>
                 </div>
                 <Card padded={false}>
-                    {Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)}
+                    {Array.from({ length: 4 }).map((unusedValue, index) => <SkeletonRow key={index} />)}
                 </Card>
             </div>
         )
@@ -197,7 +197,7 @@ export default function DocumentsTab() {
                 </div>
                 <Button
                     icon={Upload}
-                    onClick={() => setUploadOpen((v) => !v)}
+                    onClick={() => setUploadOpen((item) => !item)}
                     variant={uploadOpen ? 'secondary' : 'primary'}
                 >
                     {uploadOpen ? 'Cancel' : 'Upload document'}
@@ -221,11 +221,11 @@ export default function DocumentsTab() {
                                         </label>
                                         <select
                                             value={type}
-                                            onChange={(e) => setType(e.target.value)}
+                                            onChange={(eventValue) => setType(eventValue.target.value)}
                                             className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                         >
-                                            {DOC_TYPES.map((t) => (
-                                                <option key={t.value} value={t.value}>{t.label}</option>
+                                            {DOC_TYPES.map((item) => (
+                                                <option key={item.value} value={item.value}>{item.label}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -237,7 +237,7 @@ export default function DocumentsTab() {
                                             ref={fileInputRef}
                                             type="file"
                                             accept=".pdf,.jpg,.jpeg,.png,.webp"
-                                            onChange={(e) => setFile(e.target.files?.[0] || null)}
+                                            onChange={(eventValue2) => setFile(eventValue2.target.files?.[0] || null)}
                                             className="w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-brand-700 hover:file:bg-brand-100 dark:text-slate-400 dark:file:bg-brand-950/40 dark:file:text-brand-300"
                                         />
                                     </div>
@@ -259,22 +259,22 @@ export default function DocumentsTab() {
 
             {docs.length > 0 && (
                 <div className="mb-5 flex flex-wrap gap-1.5">
-                    {FILTERS.map((f) => {
-                        const isActive = filter === f.value
+                    {FILTERS.map((itemValue) => {
+                        const isActive = filter === itemValue.value
                         return (
                             <button
-                                key={f.value}
+                                key={itemValue.value}
                                 type="button"
-                                onClick={() => setFilter(f.value)}
+                                onClick={() => setFilter(itemValue.value)}
                                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                                     isActive
                                         ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
                                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
                                 }`}
                             >
-                                {f.label}
+                                {itemValue.label}
                                 <span className={`text-[10px] font-bold ${isActive ? 'opacity-80' : 'opacity-60'}`}>
-                  {counts[f.value] ?? 0}
+                  {counts[itemValue.value] ?? 0}
                 </span>
                             </button>
                         )
@@ -298,11 +298,11 @@ export default function DocumentsTab() {
                 />
             ) : (
                 <div className="space-y-3">
-                    {filtered.map((d, idx) => {
-                        const StatusIcon = STATUS_ICONS[d.status] || Clock
+                    {filtered.map((itemValue2, idx) => {
+                        const StatusIcon = STATUS_ICONS[itemValue2.status] || Clock
                         return (
                             <motion.div
-                                key={d.id}
+                                key={itemValue2.id}
                                 initial={{ opacity: 0, y: 4 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.02 }}
@@ -311,9 +311,9 @@ export default function DocumentsTab() {
                                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                         <div className="flex min-w-0 flex-1 items-start gap-4">
                                             <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                                                d.status === 'APPROVED'
+                                                itemValue2.status === 'APPROVED'
                                                     ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
-                                                    : d.status === 'REJECTED'
+                                                    : itemValue2.status === 'REJECTED'
                                                         ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
                                                         : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
                                             }`}>
@@ -323,39 +323,39 @@ export default function DocumentsTab() {
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex flex-wrap items-center gap-2">
                                                     <h3 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
-                                                        {d.originalFilename}
+                                                        {itemValue2.originalFilename}
                                                     </h3>
-                                                    <Badge variant={STATUS_VARIANTS[d.status] || 'default'}>
-                                                        {STATUS_LABELS[d.status] || d.status}
+                                                    <Badge variant={STATUS_VARIANTS[itemValue2.status] || 'default'}>
+                                                        {STATUS_LABELS[itemValue2.status] || itemValue2.status}
                                                     </Badge>
                                                 </div>
 
                                                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                                                    <span>{DOC_TYPES.find((t) => t.value === d.type)?.label || d.type}</span>
+                                                    <span>{DOC_TYPES.find((itemValue3) => itemValue3.value === itemValue2.type)?.label || itemValue2.type}</span>
                                                     <span>·</span>
-                                                    <span>{formatSize(d.sizeBytes)}</span>
+                                                    <span>{formatSize(itemValue2.sizeBytes)}</span>
                                                     <span>·</span>
-                                                    <span>Uploaded {formatDateTime(d.createdAt)}</span>
+                                                    <span>Uploaded {formatDateTime(itemValue2.createdAt)}</span>
                                                 </div>
 
-                                                {d.status === 'REJECTED' && d.reviewNotes && (
+                                                {itemValue2.status === 'REJECTED' && itemValue2.reviewNotes && (
                                                     <div className="mt-3 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
                                                         <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                                                         <div>
                                                             <span className="font-semibold">Reason: </span>
-                                                            {d.reviewNotes}
-                                                            {d.reviewedByName && (
+                                                            {itemValue2.reviewNotes}
+                                                            {itemValue2.reviewedByName && (
                                                                 <div className="mt-0.5 text-[10px] opacity-70">
-                                                                    — {d.reviewedByName}, {formatDateTime(d.reviewedAt)}
+                                                                    — {itemValue2.reviewedByName}, {formatDateTime(itemValue2.reviewedAt)}
                                                                 </div>
                                                             )}
                                                         </div>
                                                     </div>
                                                 )}
 
-                                                {d.status === 'APPROVED' && d.reviewedByName && (
+                                                {itemValue2.status === 'APPROVED' && itemValue2.reviewedByName && (
                                                     <div className="mt-3 text-xs text-emerald-600 dark:text-emerald-400">
-                                                        Approved by {d.reviewedByName} · {formatDateTime(d.reviewedAt)}
+                                                        Approved by {itemValue2.reviewedByName} · {formatDateTime(itemValue2.reviewedAt)}
                                                     </div>
                                                 )}
                                             </div>
@@ -363,15 +363,15 @@ export default function DocumentsTab() {
 
                                         <div className="flex shrink-0 items-center gap-1 sm:flex-col sm:items-end">
                                             <button
-                                                onClick={() => download(d)}
+                                                onClick={() => download(itemValue2)}
                                                 className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-300"
                                                 title="Download"
                                             >
                                                 <Download className="h-4 w-4" />
                                             </button>
-                                            {d.status !== 'APPROVED' && (
+                                            {itemValue2.status !== 'APPROVED' && (
                                                 <button
-                                                    onClick={() => setDeleteTarget(d)}
+                                                    onClick={() => setDeleteTarget(itemValue2)}
                                                     className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
                                                     title="Delete"
                                                 >

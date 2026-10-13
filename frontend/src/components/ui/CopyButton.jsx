@@ -11,8 +11,8 @@ import { Copy, Check } from 'lucide-react'
 export default function CopyButton({ text, title = 'Copy', className = '' }) {
     const [copied, setCopied] = useState(false)
 
-    const copy = async (e) => {
-        e?.stopPropagation?.()
+    const copy = async (event) => {
+        event?.stopPropagation?.()
         try {
             await navigator.clipboard.writeText(text)
             setCopied(true)

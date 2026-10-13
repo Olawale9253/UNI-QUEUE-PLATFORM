@@ -33,7 +33,7 @@ public class NotificationService {
     public void notify(User user, NotificationType type, String title, String message, String link) {
         if (user == null) return;
         try {
-            Notification n = Notification.builder()
+            Notification notificationValue = Notification.builder()
                     .user(user)
                     .type(type)
                     .title(title)
@@ -41,7 +41,7 @@ public class NotificationService {
                     .link(link)
                     .isRead(false)
                     .build();
-            notificationRepository.save(n);
+            notificationRepository.save(notificationValue);
 
             eventService.broadcastToUser(user.getId(), "notification:new",
                     Map.of("title", title, "message", message));
@@ -83,21 +83,21 @@ public class NotificationService {
 
     @Transactional
     public NotificationResponse markAsRead(Long userId, Long notificationId) {
-        Notification n = notificationRepository.findById(notificationId)
+        Notification notificationValue2 = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
 
-        if (!n.getUser().getId().equals(userId)) {
+        if (!notificationValue2.getUser().getId().equals(userId)) {
             throw new ResourceNotFoundException("Notification not found");
         }
-        n.setIsRead(true);
-        return NotificationResponse.from(notificationRepository.save(n));
+        notificationValue2.setIsRead(true);
+        return NotificationResponse.from(notificationRepository.save(notificationValue2));
     }
 
     @Transactional
     public void markAllAsRead(Long userId) {
         List<Notification> unread = notificationRepository
                 .findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId);
-        unread.forEach(n -> n.setIsRead(true));
+        unread.forEach(notificationValue3 -> notificationValue3.setIsRead(true));
         notificationRepository.saveAll(unread);
     }
 }

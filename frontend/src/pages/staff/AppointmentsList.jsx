@@ -55,20 +55,20 @@ function formatDateTime(dt) {
     }
 }
 
-function isSameDay(a, b) {
+function isSameDay(firstValue, secondValue) {
     return (
-        a.getFullYear() === b.getFullYear() &&
-        a.getMonth() === b.getMonth() &&
-        a.getDate() === b.getDate()
+        firstValue.getFullYear() === secondValue.getFullYear() &&
+        firstValue.getMonth() === secondValue.getMonth() &&
+        firstValue.getDate() === secondValue.getDate()
     )
 }
 
 function generateReference(appt) {
     if (!appt) return '—'
-    const d = appt.bookedAt ? new Date(appt.bookedAt) : new Date()
-    const yyyy = d.getFullYear()
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const dd = String(d.getDate()).padStart(2, '0')
+    const dateValue = appt.bookedAt ? new Date(appt.bookedAt) : new Date()
+    const yyyy = dateValue.getFullYear()
+    const mm = String(dateValue.getMonth() + 1).padStart(2, '0')
+    const dd = String(dateValue.getDate()).padStart(2, '0')
     const idPart = String(appt.id || 0).padStart(4, '0')
     return `APP${yyyy}${mm}${dd}${idPart}`
 }
@@ -110,22 +110,22 @@ export default function AppointmentsList() {
         const upcoming = []
         const past = []
 
-        for (const a of appointments) {
-            const start = a.startTime ? new Date(a.startTime) : null
+        for (const firstValueValue of appointments) {
+            const start = firstValueValue.startTime ? new Date(firstValueValue.startTime) : null
             if (!start) continue
             if (start >= todayStart && start <= todayEnd) {
-                today.push(a)
+                today.push(firstValueValue)
             } else if (start > todayEnd) {
-                upcoming.push(a)
+                upcoming.push(firstValueValue)
             } else {
-                past.push(a)
+                past.push(firstValueValue)
             }
         }
 
         // Sort
-        today.sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
-        upcoming.sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
-        past.sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
+        today.sort((leftValue, rightValue) => new Date(leftValue.startTime) - new Date(rightValue.startTime))
+        upcoming.sort((leftValueValue, rightValueValue) => new Date(leftValueValue.startTime) - new Date(rightValueValue.startTime))
+        past.sort((leftValueValue2, rightValueValue2) => new Date(rightValueValue2.startTime) - new Date(leftValueValue2.startTime))
 
         return { today, upcoming, past, all: appointments }
     }, [appointments])
@@ -134,14 +134,14 @@ export default function AppointmentsList() {
     const currentList = useMemo(() => {
         let list = categorized[tab.toLowerCase()] || []
         if (search.trim()) {
-            const s = search.trim().toLowerCase()
+            const stringValue = search.trim().toLowerCase()
             list = list.filter(
-                (a) =>
-                    a.studentName?.toLowerCase().includes(s) ||
-                    a.studentEmail?.toLowerCase().includes(s) ||
-                    a.slotTitle?.toLowerCase().includes(s) ||
-                    a.matricNumber?.toLowerCase().includes(s) ||
-                    generateReference(a).toLowerCase().includes(s)
+                (item) =>
+                    item.studentName?.toLowerCase().includes(stringValue) ||
+                    item.studentEmail?.toLowerCase().includes(stringValue) ||
+                    item.slotTitle?.toLowerCase().includes(stringValue) ||
+                    item.matricNumber?.toLowerCase().includes(stringValue) ||
+                    generateReference(item).toLowerCase().includes(stringValue)
             )
         }
         return list
@@ -166,7 +166,7 @@ export default function AppointmentsList() {
                     </h2>
                 </div>
                 <Card padded={false}>
-                    {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
+                    {Array.from({ length: 5 }).map((unusedValue, index) => <SkeletonRow key={index} />)}
                 </Card>
             </div>
         )
@@ -185,26 +185,26 @@ export default function AppointmentsList() {
 
             {/* Tabs */}
             <div className="mb-4 flex flex-wrap gap-1.5">
-                {TABS.map((t) => {
-                    const isActive = tab === t.value
+                {TABS.map((item) => {
+                    const isActive = tab === item.value
                     return (
                         <button
-                            key={t.value}
+                            key={item.value}
                             type="button"
-                            onClick={() => setTab(t.value)}
+                            onClick={() => setTab(item.value)}
                             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                                 isActive
                                     ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
                                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
                             }`}
                         >
-                            {t.label}
+                            {item.label}
                             <span
                                 className={`text-[10px] font-bold ${
                                     isActive ? 'opacity-80' : 'opacity-60'
                                 }`}
                             >
-                {tabCounts[t.value] ?? 0}
+                {tabCounts[item.value] ?? 0}
               </span>
                         </button>
                     )
@@ -219,7 +219,7 @@ export default function AppointmentsList() {
                         <input
                             type="text"
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(event) => setSearch(event.target.value)}
                             placeholder="Search by student, email, matric, or reference"
                             className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                         />
@@ -258,21 +258,21 @@ export default function AppointmentsList() {
                     variants={{ initial: {}, animate: { transition: { staggerChildren: 0.03 } } }}
                     className="space-y-3"
                 >
-                    {currentList.map((a) => {
+                    {currentList.map((itemValue) => {
                         const isActionable =
-                            a.status === 'BOOKED' || a.status === 'CONFIRMED'
-                        const isCompleted = a.status === 'COMPLETED'
-                        const isNoShow = a.status === 'NO_SHOW'
-                        const reference = generateReference(a)
+                            itemValue.status === 'BOOKED' || itemValue.status === 'CONFIRMED'
+                        const isCompleted = itemValue.status === 'COMPLETED'
+                        const isNoShow = itemValue.status === 'NO_SHOW'
+                        const reference = generateReference(itemValue)
 
                         return (
                             <motion.div
-                                key={a.id}
+                                key={itemValue.id}
                                 variants={{ initial: { opacity: 0, y: 4 }, animate: { opacity: 1, y: 0 } }}
                             >
                                 <button
                                     type="button"
-                                    onClick={() => setSelected(a)}
+                                    onClick={() => setSelected(itemValue)}
                                     className="group block w-full text-left"
                                 >
                                     <Card
@@ -294,31 +294,31 @@ export default function AppointmentsList() {
                                                                 : 'bg-brand-100 text-brand-700 dark:bg-brand-950/40 dark:text-brand-300'
                                                     }`}
                                                 >
-                                                    {a.studentName?.slice(0, 1).toUpperCase() || '?'}
+                                                    {itemValue.studentName?.slice(0, 1).toUpperCase() || '?'}
                                                 </div>
 
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex flex-wrap items-center gap-2">
                                                         <h3 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
-                                                            {a.studentName || 'Unknown student'}
+                                                            {itemValue.studentName || 'Unknown student'}
                                                         </h3>
-                                                        <Badge variant={STATUS_VARIANTS[a.status] || 'default'}>
-                                                            {STATUS_LABELS[a.status] || a.status}
+                                                        <Badge variant={STATUS_VARIANTS[itemValue.status] || 'default'}>
+                                                            {STATUS_LABELS[itemValue.status] || itemValue.status}
                                                         </Badge>
                                                     </div>
 
                                                     {/* Contact */}
                                                     <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                                                        {a.studentEmail && (
+                                                        {itemValue.studentEmail && (
                                                             <span className="flex items-center gap-1">
                                 <Mail className="h-3 w-3 shrink-0" />
-                                <span className="truncate">{a.studentEmail}</span>
+                                <span className="truncate">{itemValue.studentEmail}</span>
                               </span>
                                                         )}
-                                                        {a.matricNumber && (
+                                                        {itemValue.matricNumber && (
                                                             <span className="flex items-center gap-1 font-mono">
                                 <Hash className="h-3 w-3 shrink-0" />
-                                                                {a.matricNumber}
+                                                                {itemValue.matricNumber}
                               </span>
                                                         )}
                                                     </div>
@@ -327,11 +327,11 @@ export default function AppointmentsList() {
                                                     <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3 shrink-0 text-slate-400" />
-                                {formatDateTime(a.startTime)}
+                                {formatDateTime(itemValue.startTime)}
                             </span>
-                                                        {a.slotTitle && (
+                                                        {itemValue.slotTitle && (
                                                             <span className="truncate text-slate-500 dark:text-slate-400">
-                                {a.slotTitle}
+                                {itemValue.slotTitle}
                               </span>
                                                         )}
                                                     </div>

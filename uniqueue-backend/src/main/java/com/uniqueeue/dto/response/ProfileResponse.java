@@ -41,18 +41,18 @@ public class ProfileResponse {
     private String matricPatternHint;
     private String matricExample;
 
-    public static ProfileResponse from(User u) {
-        var uni = u.getUniversity();
-        boolean isFresher = u.getRole() != null
-                && "FRESHER".equalsIgnoreCase(u.getRole().name());
+    public static ProfileResponse from(User userValue4) {
+        var uni = userValue4.getUniversity();
+        boolean isFresher = userValue4.getRole() != null
+                && "FRESHER".equalsIgnoreCase(userValue4.getRole().name());
         boolean canUpgrade = isFresher && uni != null;
 
         return ProfileResponse.builder()
-                .id(u.getId())
-                .email(u.getEmail())
-                .recoveryEmail(u.getRecoveryEmail())
-                .fullName(u.getFullName())
-                .role(u.getRole() != null ? u.getRole().name() : null)
+                .id(userValue4.getId())
+                .email(userValue4.getEmail())
+                .recoveryEmail(userValue4.getRecoveryEmail())
+                .fullName(userValue4.getFullName())
+                .role(userValue4.getRole() != null ? userValue4.getRole().name() : null)
                 .universityId(uni != null ? uni.getId() : null)
                 .universityName(uni != null ? uni.getName() : null)
                 .universityCode(uni != null ? uni.getCode() : null)
@@ -62,15 +62,15 @@ public class ProfileResponse {
                 .featureAppointments(uni != null ? uni.getFeatureAppointments() : null)
                 .featureWorkflows(uni != null ? uni.getFeatureWorkflows() : null)
                 .featureDocuments(uni != null ? uni.getFeatureDocuments() : null)
-                .matricNumber(u.getMatricNumber())
-                .department(u.getDepartment())
-                .phone(u.getPhone())
-                .isActive(u.getIsActive())
-                .isVerified(u.getIsVerified())
-                .createdAt(u.getCreatedAt())
-                .jambRegNumber(u.getJambRegNumber())
-                .admissionRef(u.getAdmissionRef())
-                .applicationNumber(u.getApplicationNumber())
+                .matricNumber(userValue4.getMatricNumber())
+                .department(userValue4.getDepartment())
+                .phone(userValue4.getPhone())
+                .isActive(userValue4.getIsActive())
+                .isVerified(userValue4.getIsVerified())
+                .createdAt(userValue4.getCreatedAt())
+                .jambRegNumber(userValue4.getJambRegNumber())
+                .admissionRef(userValue4.getAdmissionRef())
+                .applicationNumber(userValue4.getApplicationNumber())
                 .isFresher(isFresher)
                 .canUpgrade(canUpgrade)
                 .matricPatternHint(uni != null ? uni.getMatricDescription() : null)

@@ -44,17 +44,17 @@ public class BroadcastService {
         //
         // The EventService defers the SSE send until after this transaction
         // commits, so clients don't refetch stale data.
-        for (User u : recipients) {
+        for (User userValue10 : recipients) {
             try {
                 notificationService.notify(
-                        u,
+                        userValue10,
                         NotificationType.BROADCAST,
                         title,
                         message
                 );
             } catch (Exception ex) {
                 // A single bad recipient shouldn't take down the whole broadcast.
-                log.warn("Broadcast notify failed for user {}: {}", u.getId(), ex.getMessage());
+                log.warn("Broadcast notify failed for user {}: {}", userValue10.getId(), ex.getMessage());
             }
         }
 
@@ -87,31 +87,31 @@ public class BroadcastService {
         List<User> all = userRepository.findAll();
         List<User> recipients = new ArrayList<>();
 
-        for (User u : all) {
-            if (!Boolean.TRUE.equals(u.getIsActive())) continue;
+        for (User userValue11 : all) {
+            if (!Boolean.TRUE.equals(userValue11.getIsActive())) continue;
 
             // Never send to the sender
-            if (u.getId().equals(senderId)) continue;
+            if (userValue11.getId().equals(senderId)) continue;
 
             // Never auto-send to super admins unless explicitly targeted
-            if (roleFilter == null && u.getRole() == Role.SUPER_ADMIN) continue;
+            if (roleFilter == null && userValue11.getRole() == Role.SUPER_ADMIN) continue;
 
             // If a role was explicitly chosen, only that role matches
-            if (roleFilter != null && u.getRole() != roleFilter) continue;
+            if (roleFilter != null && userValue11.getRole() != roleFilter) continue;
 
             if (request.getUniversityId() != null) {
-                if (u.getUniversity() == null) continue;
-                if (!u.getUniversity().getId().equals(request.getUniversityId())) continue;
+                if (userValue11.getUniversity() == null) continue;
+                if (!userValue11.getUniversity().getId().equals(request.getUniversityId())) continue;
             }
 
-            recipients.add(u);
+            recipients.add(userValue11);
         }
 
         return recipients;
     }
 
-    private String escape(String s) {
-        if (s == null) return "";
-        return s.replace("\\", "\\\\").replace("\"", "\\\"");
+    private String escape(String stringValueValue6) {
+        if (stringValueValue6 == null) return "";
+        return stringValueValue6.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

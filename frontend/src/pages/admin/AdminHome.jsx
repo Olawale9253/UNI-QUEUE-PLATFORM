@@ -30,29 +30,29 @@ export default function AdminHome() {
                     Quick actions
                 </h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {QUICK_ACTIONS.map((a, i) => {
-                        const Icon = a.icon
+                    {QUICK_ACTIONS.map((item, index) => {
+                        const Icon = item.icon
                         return (
                             <motion.div
-                                key={a.to}
+                                key={item.to}
                                 initial={{ opacity: 0, y: 8 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.15 + i * 0.05 }}
+                                transition={{ delay: 0.15 + index * 0.05 }}
                             >
-                                <Link to={a.to} className="group block">
+                                <Link to={item.to} className="group block">
                                     <Card className="flex h-full items-start gap-4 transition-transform hover:-translate-y-0.5">
-                                        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${a.accent}`}>
+                                        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${item.accent}`}>
                                             <Icon className="h-6 w-6" />
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-1.5">
                                                 <h3 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                    {a.label}
+                                                    {item.label}
                                                 </h3>
                                                 <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-600" />
                                             </div>
                                             <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                                                {a.description}
+                                                {item.description}
                                             </p>
                                         </div>
                                     </Card>

@@ -208,8 +208,8 @@ function ProfileSection({ profile, onSaved, onEmailChange }) {
         })
     }, [profile])
 
-    const onChange = (key) => (e) =>
-        setForm((f) => ({ ...f, [key]: e.target.value }))
+    const onChange = (key) => (event) =>
+        setForm((item) => ({ ...item, [key]: event.target.value }))
 
     const save = async () => {
         setSaving(true)
@@ -363,8 +363,8 @@ function PasswordSection() {
                 currentPassword: current,
                 newPassword: next,
             })
-            const d = res.data?.data
-            if (d?.accessToken) updateTokens(d.accessToken, d.refreshToken)
+            const dateValue = res.data?.data
+            if (dateValue?.accessToken) updateTokens(dateValue.accessToken, dateValue.refreshToken)
             push({ type: 'success', message: 'Password changed' })
             setCurrent('')
             setNext('')
@@ -390,7 +390,7 @@ function PasswordSection() {
                     <TextInput
                         type="password"
                         value={current}
-                        onChange={(e) => setCurrent(e.target.value)}
+                        onChange={(event) => setCurrent(event.target.value)}
                         placeholder="Enter your current password"
                     />
                 </Field>
@@ -404,7 +404,7 @@ function PasswordSection() {
                         <TextInput
                             type="password"
                             value={next}
-                            onChange={(e) => setNext(e.target.value)}
+                            onChange={(eventValue) => setNext(eventValue.target.value)}
                             placeholder="Enter new password"
                         />
                     </Field>
@@ -415,7 +415,7 @@ function PasswordSection() {
                         <TextInput
                             type="password"
                             value={confirm}
-                            onChange={(e) => setConfirm(e.target.value)}
+                            onChange={(eventValue2) => setConfirm(eventValue2.target.value)}
                             placeholder="Re-enter new password"
                         />
                     </Field>
@@ -443,8 +443,8 @@ function PasswordSection() {
 function NotificationsSection() {
     const { push } = useToastStore()
     const webPush = useWebPush()
-    const prefs = usePrefsStore((s) => s.prefs)
-    const updatePrefs = usePrefsStore((s) => s.update)
+    const prefs = usePrefsStore((item) => item.prefs)
+    const updatePrefs = usePrefsStore((itemValue) => itemValue.update)
     const [busy, setBusy] = useState(false)
 
     const toggleSound = async (on) => {
