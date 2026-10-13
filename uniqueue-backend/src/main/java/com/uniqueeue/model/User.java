@@ -1,5 +1,6 @@
 package com.uniqueeue.model;
 
+import com.uniqueeue.enums.RegistrationStatus;
 import com.uniqueeue.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -53,7 +54,7 @@ public class User {
     @Column(length = 20)
     private String phone;
 
-    // ───────── Notification preferences (server-side) ─────────
+    // ───────── Notification preferences ─────────
 
     @Column(name = "sound_enabled", nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
     @Builder.Default
@@ -77,6 +78,22 @@ public class User {
     @Builder.Default
     private Boolean isVerified = false;
 
+    // ───────── Registration verification (NEW) ─────────
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "registration_status", length = 20)
+    @Builder.Default
+    private RegistrationStatus registrationStatus = RegistrationStatus.VERIFIED;
+
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
+
+    @Column(name = "verified_at")
+    private LocalDateTime verifiedAt;
+
+    @Column(name = "verified_by_user_id")
+    private Long verifiedByUserId;
+
     // ───────── Verification code state ─────────
 
     @Column(name = "verification_token")
@@ -92,11 +109,6 @@ public class User {
     @Column(name = "last_verification_sent_at")
     private LocalDateTime lastVerificationSentAt;
 
-    /**
-     * Incremented whenever we want to invalidate all existing JWTs for this
-     * user (password change, admin deactivation, role change, etc).
-     * Included in every JWT as the "tv" claim. Filter rejects on mismatch.
-     */
     @Column(name = "token_version", nullable = false)
     @Builder.Default
     private Integer tokenVersion = 0;
