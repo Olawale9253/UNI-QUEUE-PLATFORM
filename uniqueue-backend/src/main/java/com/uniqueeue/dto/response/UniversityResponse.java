@@ -1,10 +1,7 @@
 package com.uniqueeue.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.uniqueeue.model.University;
 import lombok.*;
-
-import java.time.LocalDateTime;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class UniversityResponse {
@@ -13,25 +10,31 @@ public class UniversityResponse {
     private String name;
     private String code;
     private String emailDomain;
+
+    // Matric config
     private String matricPattern;
     private String matricExample;
     private String matricDescription;
+    private String matricVerificationMode;   // NEW
+
+    // Branding
     private String logoUrl;
     private String campusImageUrl;
     private String tagline;
     private String primaryColor;
 
-    // ⬇ NEW
+    // Schedule
     private String timezone;
     private String countryCode;
 
-    @JsonProperty("isActive")
-    private Boolean isActive;
-
-    private String plan;
+    // Limits
     private Integer maxStaff;
     private Integer maxQueues;
     private Integer maxTicketsPerDay;
+
+    // Status
+    private Boolean isActive;
+    private String plan;
 
     // Feature flags
     private Boolean featureWaitlist;
@@ -39,71 +42,65 @@ public class UniversityResponse {
     private Boolean featureWorkflows;
     private Boolean featureDocuments;
 
-    // Fresher registration config
+    // Fresher config
     private Boolean fresherRegistrationEnabled;
     private String fresherVerificationMode;
+
     private Boolean requireJambReg;
     private String jambRegPattern;
     private String jambRegExample;
     private String jambRegDescription;
+
     private Boolean requireAdmissionRef;
     private String admissionRefPattern;
     private String admissionRefExample;
     private String admissionRefDescription;
+
     private Boolean requireApplicationNumber;
     private String applicationNumberPattern;
     private String applicationNumberExample;
     private String applicationNumberDescription;
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-
-    // Live counters
-    private Long queueCount;
-    private Long staffCount;
-    private Long userCount;
-    private Long ticketCount;
-
-    public static UniversityResponse from(University universityValue6) {
+    public static UniversityResponse from(University u) {
+        if (u == null) return null;
         return UniversityResponse.builder()
-                .id(universityValue6.getId())
-                .name(universityValue6.getName())
-                .code(universityValue6.getCode())
-                .emailDomain(universityValue6.getEmailDomain())
-                .matricPattern(universityValue6.getMatricPattern())
-                .matricExample(universityValue6.getMatricExample())
-                .matricDescription(universityValue6.getMatricDescription())
-                .logoUrl(universityValue6.getLogoUrl())
-                .campusImageUrl(universityValue6.getCampusImageUrl())
-                .tagline(universityValue6.getTagline())
-                .primaryColor(universityValue6.getPrimaryColor())
-                // ⬇ NEW — fallback so old rows never serialize null
-                .timezone(universityValue6.getTimezone() != null ? universityValue6.getTimezone() : "Africa/Lagos")
-                .isActive(universityValue6.getIsActive())
-                .plan(universityValue6.getPlan())
-                .maxStaff(universityValue6.getMaxStaff())
-                .maxQueues(universityValue6.getMaxQueues())
-                .maxTicketsPerDay(universityValue6.getMaxTicketsPerDay())
-                .featureWaitlist(universityValue6.getFeatureWaitlist())
-                .featureAppointments(universityValue6.getFeatureAppointments())
-                .featureWorkflows(universityValue6.getFeatureWorkflows())
-                .featureDocuments(universityValue6.getFeatureDocuments())
-                .fresherRegistrationEnabled(universityValue6.getFresherRegistrationEnabled())
-                .fresherVerificationMode(universityValue6.getFresherVerificationMode())
-                .requireJambReg(universityValue6.getRequireJambReg())
-                .jambRegPattern(universityValue6.getJambRegPattern())
-                .jambRegExample(universityValue6.getJambRegExample())
-                .jambRegDescription(universityValue6.getJambRegDescription())
-                .requireAdmissionRef(universityValue6.getRequireAdmissionRef())
-                .admissionRefPattern(universityValue6.getAdmissionRefPattern())
-                .admissionRefExample(universityValue6.getAdmissionRefExample())
-                .admissionRefDescription(universityValue6.getAdmissionRefDescription())
-                .requireApplicationNumber(universityValue6.getRequireApplicationNumber())
-                .applicationNumberPattern(universityValue6.getApplicationNumberPattern())
-                .applicationNumberExample(universityValue6.getApplicationNumberExample())
-                .applicationNumberDescription(universityValue6.getApplicationNumberDescription())
-                .createdAt(universityValue6.getCreatedAt())
-                .updatedAt(universityValue6.getUpdatedAt())
+                .id(u.getId())
+                .name(u.getName())
+                .code(u.getCode())
+                .emailDomain(u.getEmailDomain())
+                .matricPattern(u.getMatricPattern())
+                .matricExample(u.getMatricExample())
+                .matricDescription(u.getMatricDescription())
+                .matricVerificationMode(u.getMatricVerificationMode())
+                .logoUrl(u.getLogoUrl())
+                .campusImageUrl(u.getCampusImageUrl())
+                .tagline(u.getTagline())
+                .primaryColor(u.getPrimaryColor())
+                .timezone(u.getTimezone())
+                .countryCode(u.getCountryCode())
+                .maxStaff(u.getMaxStaff())
+                .maxQueues(u.getMaxQueues())
+                .maxTicketsPerDay(u.getMaxTicketsPerDay())
+                .isActive(u.getIsActive())
+                .plan(u.getPlan())
+                .featureWaitlist(u.getFeatureWaitlist())
+                .featureAppointments(u.getFeatureAppointments())
+                .featureWorkflows(u.getFeatureWorkflows())
+                .featureDocuments(u.getFeatureDocuments())
+                .fresherRegistrationEnabled(u.getFresherRegistrationEnabled())
+                .fresherVerificationMode(u.getFresherVerificationMode())
+                .requireJambReg(u.getRequireJambReg())
+                .jambRegPattern(u.getJambRegPattern())
+                .jambRegExample(u.getJambRegExample())
+                .jambRegDescription(u.getJambRegDescription())
+                .requireAdmissionRef(u.getRequireAdmissionRef())
+                .admissionRefPattern(u.getAdmissionRefPattern())
+                .admissionRefExample(u.getAdmissionRefExample())
+                .admissionRefDescription(u.getAdmissionRefDescription())
+                .requireApplicationNumber(u.getRequireApplicationNumber())
+                .applicationNumberPattern(u.getApplicationNumberPattern())
+                .applicationNumberExample(u.getApplicationNumberExample())
+                .applicationNumberDescription(u.getApplicationNumberDescription())
                 .build();
     }
 }
