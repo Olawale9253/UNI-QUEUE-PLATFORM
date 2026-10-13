@@ -22,6 +22,7 @@ import { initSoundUnlock } from './lib/soundService'
 import { usePrefsStore } from './store/prefsStore'
 import { useServerEvents } from './hooks/useServerEvents'
 import { useUniversityTheme } from './hooks/useUniversityTheme'
+import PendingVerification from './pages/PendingVerification'
 
 const AUTH_ROUTES = [
     '/login',
@@ -71,6 +72,7 @@ export default function App() {
                             <Route path="/" element={<Home />} />
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />
+                            <Route path="/pending-verification" element={<ProtectedRoute><PendingVerification /></ProtectedRoute>} />
                             <Route path="/forgot-password" element={<ForgotPassword />} />
                             <Route path="/reset-password" element={<ResetPassword />} />
                             <Route path="/verify-email" element={<VerifyEmail />} />

@@ -233,6 +233,51 @@ export default function Register() {
 
         const res = await register(payload)
         if (res.success) {
+            const status = res.registrationStatus || res.data?.registrationStatus
+            push({
+                type: 'success',
+                message: status === 'PENDING'
+                    ? 'Account created. An admin will verify your details shortly.'
+                    : 'Account created. Check your email for the code.',
+            })
+            navigate('/verify-email', {
+                state: {
+                    email: form.email.trim(),
+                    devCode: res.devVerificationCode,
+                    registrationStatus: status,
+                },
+            })
+        } else {
+            push({ type: 'error', message: res.error })
+        }
+    }
+
+        const payload = {
+            email: form.email.trim(),
+            password: form.password,
+            fullName: form.fullName.trim(),
+            universityId: Number(form.universityId),
+            department: form.department.trim() || null,
+            phone: form.phone.trim() || null,
+            accountType: mode === 'fresher' ? 'FRESHER' : 'STUDENT',
+        }
+
+        if (mode === 'student') {
+            payload.matricNumber = form.matricNumber.trim()
+        } else {
+            if (selectedUni?.requireJambReg !== false) {
+                payload.jambRegNumber = form.jambRegNumber.trim() || null
+            }
+            if (selectedUni?.requireAdmissionRef) {
+                payload.admissionRef = form.admissionRef.trim() || null
+            }
+            if (selectedUni?.requireApplicationNumber) {
+                payload.applicationNumber = form.applicationNumber.trim() || null
+            }
+        }
+
+        const res = await register(payload)
+        if (res.success) {
             push({
                 type: 'success',
                 message: mode === 'fresher'
