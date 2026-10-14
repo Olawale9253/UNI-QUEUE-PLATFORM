@@ -9,6 +9,7 @@ import com.uniqueeue.repository.UniversityRepository;
 import com.uniqueeue.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,20 @@ public class DataInitializer implements CommandLineRunner {
     private final PlanConfigRepository planConfigRepository;
     private final PasswordEncoder passwordEncoder;
 
+    // ─── Super admin seed (from env) ───
+    @Value("${app.super-admin.email:}")
+    private String superAdminEmail;
+
+    @Value("${app.super-admin.password:}")
+    private String superAdminPassword;
+
+    // ─── Initial university admin seed (from env) ───
+    @Value("${app.seed.admin.email:}")
+    private String seedAdminEmail;
+
+    @Value("${app.seed.admin.password:}")
+    private String seedAdminPassword;
+
     @Override
     public void run(String... args) {
         seedPlanConfigs();
@@ -30,6 +45,10 @@ public class DataInitializer implements CommandLineRunner {
         seedAdmin();
         seedSuperAdmin();
     }
+
+    // ═══════════════════════════════════════════════════════════
+    //  PLAN CONFIGS
+    // ═══════════════════════════════════════════════════════════
 
     private void seedPlanConfigs() {
         if (planConfigRepository.count() > 0) {
@@ -59,6 +78,10 @@ public class DataInitializer implements CommandLineRunner {
 
         log.info("✅ Seeded {} plan configs", planConfigRepository.count());
     }
+
+    // ═══════════════════════════════════════════════════════════
+    //  UNIVERSITIES
+    // ═══════════════════════════════════════════════════════════
 
     private void seedUniversities() {
         if (universityRepository.count() > 0) {
@@ -97,31 +120,39 @@ public class DataInitializer implements CommandLineRunner {
         log.info("✅ Seeded {} universities", universityRepository.count());
     }
 
+    // ═══════════════════════════════════════════════════════════
+    //  ADMIN (env-driven — no more hardcoded password)
+    // ═══════════════════════════════════════════════════════════
+
     private void seedAdmin() {
-        String email = "admin@unilag.edu.ng";
-        if (userRepository.findByEmail(email).isPresent()) {
+        if (seedAdminEmail == null || seedAdminEmail.isBlank()) {
+            log.info("Admin seed skipped — app.seed.admin.email not set.");
+            return;
+        }
+
+        if (userRepository.findByEmail(seedAdminEmail).isPresent()) {
             log.info("Admin user already exists. Skipping.");
             return;
         }
+
         University unilag = universityRepository.findByCode("UNILAG")
                 .orElseThrow(() -> new IllegalStateException("UNILAG missing"));
 
         userRepository.save(User.builder()
-                .email(email)
-                .password(passwordEncoder.encode("admin1234"))
+                .email(seedAdminEmail)
+                .password(passwordEncoder.encode(seedAdminPassword))
                 .fullName("UNILAG Admin")
                 .role(Role.ADMIN)
                 .university(unilag)
                 .isActive(true).isVerified(true).build());
 
-        log.info("✅ Seeded admin user: {} / admin1234", email);
+        log.info("✅ Seeded admin user: {}", seedAdminEmail);
+        // Deliberately NOT logging the password
     }
 
-    @org.springframework.beans.factory.annotation.Value("${app.super-admin.email:}")
-    private String superAdminEmail;
-
-    @org.springframework.beans.factory.annotation.Value("${app.super-admin.password:}")
-    private String superAdminPassword;
+    // ═══════════════════════════════════════════════════════════
+    //  SUPER ADMIN (env-driven)
+    // ═══════════════════════════════════════════════════════════
 
     private void seedSuperAdmin() {
         if (superAdminEmail == null || superAdminEmail.isBlank()) {
