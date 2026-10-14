@@ -29,6 +29,32 @@ function clearSession() {
     localStorage.removeItem('uniqueue_impersonation')
 }
 
+/** Turn an axios error into a structured result. */
+function describeError(err, fallback) {
+    const status = err?.response?.status
+    const body = err?.response?.data
+    const message = body?.message || fallback
+
+    if (status === 429) {
+        // Prefer body.data.retryAfterSeconds; fall back to Retry-After header.
+        const fromBody = body?.data?.retryAfterSeconds
+        const fromHeader = parseInt(err?.response?.headers?.['retry-after'], 10)
+        const retryAfter =
+            Number.isFinite(fromBody) ? fromBody :
+                Number.isFinite(fromHeader) ? fromHeader :
+                    null
+
+        return {
+            success: false,
+            error: message,
+            rateLimited: true,
+            retryAfter,
+        }
+    }
+
+    return { success: false, error: message }
+}
+
 async function syncExistingPushSubscription() {
     if (typeof window === 'undefined') return
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
@@ -51,7 +77,6 @@ async function syncExistingPushSubscription() {
     }
 }
 
-// ─── Cross-tab logout sync ───
 if (typeof window !== 'undefined') {
     window.addEventListener('storage', (item) => {
         if (item.key === TOKEN_KEY && item.newValue === null) {
@@ -77,34 +102,32 @@ export const useAuthStore = create((set, get) => ({
         set({ loading: true, error: null })
         try {
             const res = await api.post('/api/auth/login', { email, password })
-            const dateValue = res.data.data
+            const d = res.data.data
             const user = {
-                userId: dateValue.userId,
-                email: dateValue.email,
-                fullName: dateValue.fullName,
-                role: dateValue.role,
-                universityId: dateValue.universityId,
+                userId: d.userId,
+                email: d.email,
+                fullName: d.fullName,
+                role: d.role,
+                universityId: d.universityId,
             }
-            persistSession(dateValue.accessToken, dateValue.refreshToken, user)
+            persistSession(d.accessToken, d.refreshToken, user)
 
             useUniversityStore.getState().reset()
             usePrefsStore.getState().reset()
-            set({ token: dateValue.accessToken, user, loading: false })
+            set({ token: d.accessToken, user, loading: false })
 
-            if (dateValue.role !== 'SUPER_ADMIN') {
+            if (d.role !== 'SUPER_ADMIN') {
                 useUniversityStore.getState().load()
             }
 
-            // Fresh prefs for the logged-in user
             usePrefsStore.getState().load()
-
             syncExistingPushSubscription()
 
-            return { success: true, role: dateValue.role }
+            return { success: true, role: d.role }
         } catch (err) {
-            const message = err.response?.data?.message || 'Login failed'
-            set({ loading: false, error: message })
-            return { success: false, error: message }
+            const result = describeError(err, 'Login failed')
+            set({ loading: false, error: result.error })
+            return result
         }
     },
 
@@ -112,38 +135,38 @@ export const useAuthStore = create((set, get) => ({
         set({ loading: true, error: null })
         try {
             const res = await api.post('/api/auth/register', payload)
-            const dateValue = res.data.data
+            const d = res.data.data
             const user = {
-                userId: dateValue.userId,
-                email: dateValue.email,
-                fullName: dateValue.fullName,
-                role: dateValue.role,
-                universityId: dateValue.universityId,
+                userId: d.userId,
+                email: d.email,
+                fullName: d.fullName,
+                role: d.role,
+                universityId: d.universityId,
             }
-            persistSession(dateValue.accessToken, dateValue.refreshToken, user)
+            persistSession(d.accessToken, d.refreshToken, user)
 
             useUniversityStore.getState().reset()
             usePrefsStore.getState().reset()
-            set({ token: dateValue.accessToken, user, loading: false })
+            set({ token: d.accessToken, user, loading: false })
 
-            if (dateValue.role !== 'SUPER_ADMIN') {
+            if (d.role !== 'SUPER_ADMIN') {
                 useUniversityStore.getState().load()
             }
 
             usePrefsStore.getState().load()
-
             syncExistingPushSubscription()
 
             return {
                 success: true,
-                role: dateValue.role,
-                devVerificationCode: dateValue.devVerificationCode,
-                isVerified: dateValue.isVerified,
+                role: d.role,
+                devVerificationCode: d.devVerificationCode,
+                isVerified: d.isVerified,
+                registrationStatus: d.registrationStatus,
             }
         } catch (err) {
-            const message = err.response?.data?.message || 'Registration failed'
-            set({ loading: false, error: message })
-            return { success: false, error: message }
+            const result = describeError(err, 'Registration failed')
+            set({ loading: false, error: result.error })
+            return result
         }
     },
 
@@ -178,22 +201,22 @@ export const useAuthStore = create((set, get) => ({
     refreshProfile: async () => {
         try {
             const res = await api.get('/api/profile')
-            const parameter = res.data?.data
-            if (!parameter) return { success: false }
+            const p = res.data?.data
+            if (!p) return { success: false }
 
             const current = get().user || {}
             const next = {
                 ...current,
-                userId: parameter.id ?? current.userId,
-                email: parameter.email ?? current.email,
-                fullName: parameter.fullName ?? current.fullName,
-                role: parameter.role ?? current.role,
-                universityId: parameter.universityId ?? current.universityId,
+                userId: p.id ?? current.userId,
+                email: p.email ?? current.email,
+                fullName: p.fullName ?? current.fullName,
+                role: p.role ?? current.role,
+                universityId: p.universityId ?? current.universityId,
             }
 
             localStorage.setItem(USER_KEY, JSON.stringify(next))
             set({ user: next })
-            return { success: true, profile: parameter }
+            return { success: true, profile: p }
         } catch (err) {
             return {
                 success: false,
