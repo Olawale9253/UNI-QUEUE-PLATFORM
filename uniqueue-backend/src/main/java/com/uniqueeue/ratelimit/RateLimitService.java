@@ -12,6 +12,13 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * In-memory bucket cache for rate limiting.
+ *
+ * NOTE: buckets are stored per JVM. If you run multiple backend instances,
+ * swap this out for a Redis-backed Bucket4j implementation — the public
+ * API here will stay the same.
+ */
 @Service
 @Slf4j
 public class RateLimitService {
@@ -21,12 +28,12 @@ public class RateLimitService {
     /**
      * Attempts to consume one token from the bucket.
      *
-     * @return 0 if the request is allowed. Otherwise, the approximate
-     *         number of seconds the client should wait before retrying
-     *         (i.e. until at least one token is refilled).
+     * @return 0 if the request is allowed. Otherwise, the number of
+     *         seconds the client should wait before at least one token
+     *         is refilled (rounded up, minimum 1).
      */
     public long tryConsume(String key, int limit, int windowSeconds) {
-        Bucket bucket = buckets.computeIfAbsent(key, itemIndex ->
+        Bucket bucket = buckets.computeIfAbsent(key, k ->
                 Bucket.builder()
                         .addLimit(Bandwidth.classic(
                                 limit,
@@ -35,14 +42,16 @@ public class RateLimitService {
                         .build()
         );
 
-        if (bucket.tryConsume(1)) {
+        // tryConsumeAndReturnRemaining gives us a ConsumptionProbe with
+        // both "was it consumed?" and "how long until refill?"
+        ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
+
+        if (probe.isConsumed()) {
             return 0L;
         }
 
-        // Blocked — how long until the next token arrives?
-        ConsumptionProbe probe = bucket.estimateAbilityToConsume(1);
         long nanos = probe.getNanosToWaitForRefill();
-        // Round up to the nearest second, minimum 1
+        // Round up to nearest second, minimum 1
         return Math.max(1L, (nanos + 999_999_999L) / 1_000_000_000L);
     }
 

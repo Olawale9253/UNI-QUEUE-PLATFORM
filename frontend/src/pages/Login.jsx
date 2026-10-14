@@ -228,8 +228,6 @@ export default function Login() {
     const remainingSeconds = useCountdown(rateLimitedUntil)
     const isRateLimited = remainingSeconds > 0
 
-    // If the user changes the email, clear the cooldown — different account,
-    // fresh rate-limit bucket on the backend.
     const handleEmailChange = (event) => {
         const next = event.target.value
         if (next.trim().toLowerCase() !== email.trim().toLowerCase()) {
@@ -283,13 +281,11 @@ export default function Login() {
         }
         setRedirecting(false)
 
-        // Rate limited — the banner carries the message; no toast needed.
         if (res.rateLimited && res.retryAfter) {
             setRateLimitedUntil(Date.now() + res.retryAfter * 1000)
             return
         }
 
-        // Email not verified — redirect to verification page.
         const msg = (res.error || '').toLowerCase()
         if (msg.includes('not verified') || msg.includes('verification')) {
             setUnverified(true)
@@ -383,30 +379,8 @@ export default function Login() {
                             </div>
                         )}
 
-                        {/* ── Rate limit banner ── */}
-                        {isRateLimited && (
-                            <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/40">
-                                <div className="flex items-start gap-2.5">
-                                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/50">
-                                        <Lock className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-xs font-semibold text-amber-900 dark:text-amber-100">
-                                            Too many sign-in attempts
-                                        </p>
-                                        <p className="mt-0.5 text-[11px] leading-relaxed text-amber-800 dark:text-amber-300">
-                                            For security, sign-in is paused for this email.
-                                            You can try again in{' '}
-                                            <strong className="font-mono tabular-nums">
-                                                {formatWait(remainingSeconds)}
-                                            </strong>
-                                            .
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
+                        {/* Only shows if a login attempt fails because the account
+                            isn't verified — acts as an automatic redirect cue. */}
                         {unverified && (
                             <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
                                 <p className="font-medium">Your email isn't verified</p>
@@ -501,23 +475,20 @@ export default function Login() {
                                     </>
                                 )}
                             </button>
+
+                            {isRateLimited && (
+                                <p className="text-center text-[11px] text-amber-700 dark:text-amber-400">
+                                    Too many attempts on this email. Sign-in is paused for security.
+                                </p>
+                            )}
                         </form>
 
-                        <div className="mt-4 space-y-1.5 text-center text-xs">
+                        {/* Footer — only the register link now */}
+                        <div className="mt-4 text-center text-xs">
                             <p className="text-slate-500 dark:text-slate-400">
                                 Don't have an account?{' '}
                                 <Link to="/register" className="font-medium text-brand-600 hover:text-brand-700">
                                     Register
-                                </Link>
-                            </p>
-                            <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                                Unverified?{' '}
-                                <Link
-                                    to="/verify-email"
-                                    state={{ email: email.trim() }}
-                                    className="font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
-                                >
-                                    Verify now
                                 </Link>
                             </p>
                         </div>
