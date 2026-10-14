@@ -1,0 +1,9 @@
+
+# ── Local secrets ──
+application-local.properties
+application-prod-local.properties
+**/application-local.properties
+**/application-prod-local.properties
+.env
+.env.local
+uniqueue-backend/data/
