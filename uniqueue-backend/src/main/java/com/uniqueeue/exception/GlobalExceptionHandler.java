@@ -55,16 +55,22 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
-    // ── Rate limit exceeded ──
+    // ── Rate limit exceeded — send Retry-After header + seconds in body ──
     @ExceptionHandler(RateLimitExceededException.class)
-    public ResponseEntity<ApiResponse<Object>> handleRateLimit(RateLimitExceededException ex) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> handleRateLimit(RateLimitExceededException ex) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("retryAfterSeconds", ex.getRetryAfterSeconds());
+
         return ResponseEntity
                 .status(HttpStatus.TOO_MANY_REQUESTS)
                 .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
-                .body(ApiResponse.error(ex.getMessage()));
+                .body(ApiResponse.<Map<String, Object>>builder()
+                        .success(false)
+                        .message(ex.getMessage())
+                        .data(data)
+                        .build());
     }
 
-    // ── Catch-all (single, last resort) ──
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleUnexpected(Exception ex) {
         log.error("Unhandled exception", ex);

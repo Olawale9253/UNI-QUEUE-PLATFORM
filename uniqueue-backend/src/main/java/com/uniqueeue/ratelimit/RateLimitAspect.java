@@ -1,6 +1,5 @@
 package com.uniqueeue.ratelimit;
 
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uniqueeue.exception.RateLimitExceededException;
@@ -18,10 +17,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-/**
- * Intercepts methods annotated with @RateLimited.
- * Resolves the bucket key based on keyType and delegates to RateLimitService.
- */
 @Aspect
 @Component
 @RequiredArgsConstructor
@@ -30,28 +25,43 @@ public class RateLimitAspect {
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
-    private final com.uniqueeue.ratelimit.RateLimitService rateLimitService;
+    private final RateLimitService rateLimitService;
 
     @Around("@annotation(rateLimited)")
-    public Object check(ProceedingJoinPoint pjp, com.uniqueeue.ratelimit.RateLimited rateLimited) throws Throwable {
+    public Object check(ProceedingJoinPoint pjp, RateLimited rateLimited) throws Throwable {
         String key = resolveKey(rateLimited);
         String bucketKey = rateLimited.keyType() + ":" + key + ":" + rateLimited.name();
 
-        boolean allowed = rateLimitService.tryConsume(
+        long waitSeconds = rateLimitService.tryConsume(
                 bucketKey,
                 rateLimited.limit(),
                 rateLimited.windowSeconds()
         );
 
-        if (!allowed) {
-            log.warn("Rate limit hit: bucket={} limit={}/{}s",
-                    bucketKey, rateLimited.limit(), rateLimited.windowSeconds());
-            throw new RateLimitExceededException(
-                    "Too many requests. Please try again in a moment.",
-                    rateLimited.windowSeconds()
-            );
+        if (waitSeconds > 0) {
+            String message = buildMessage(rateLimited.name(), waitSeconds);
+            log.warn("Rate limit hit: bucket={} limit={}/{}s wait={}s",
+                    bucketKey, rateLimited.limit(), rateLimited.windowSeconds(), waitSeconds);
+            throw new RateLimitExceededException(message, waitSeconds);
         }
         return pjp.proceed();
+    }
+
+    private String buildMessage(String name, long waitSeconds) {
+        String action = (name == null || name.isBlank()) ? "requests" : name + " attempts";
+        return "Too many " + action + ". Try again in " + formatWait(waitSeconds) + ".";
+    }
+
+    private String formatWait(long seconds) {
+        if (seconds < 60) {
+            return seconds + " second" + (seconds == 1 ? "" : "s");
+        }
+        long minutes = (seconds + 59) / 60;
+        if (minutes < 60) {
+            return minutes + " minute" + (minutes == 1 ? "" : "s");
+        }
+        long hours = (minutes + 59) / 60;
+        return hours + " hour" + (hours == 1 ? "" : "s");
     }
 
     private String resolveKey(RateLimited rateLimited) {
