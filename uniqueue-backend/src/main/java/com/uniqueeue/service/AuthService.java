@@ -336,9 +336,9 @@ public class AuthService {
     }
 
     /** Name equality after normalisation: lowercase, sorted tokens. */
-    private boolean namesEquivalent(String a, String b) {
-        if (a == null || b == null) return false;
-        return normalizeName(a).equals(normalizeName(b));
+    private boolean namesEquivalent(String firstName, String secondName) {
+        if (firstName == null || secondName == null) return false;
+        return normalizeName(firstName).equals(normalizeName(secondName));
     }
 
     private String normalizeName(String name) {

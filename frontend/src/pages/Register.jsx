@@ -171,7 +171,7 @@ export default function Register() {
     }, [push])
 
     const selectedUni = useMemo(
-        () => universities.find((u) => String(u.id) === String(form.universityId)) || null,
+        () => universities.find((university) => String(university.id) === String(form.universityId)) || null,
         [universities, form.universityId]
     )
 
@@ -307,8 +307,8 @@ export default function Register() {
                                         <option value="">
                                             {loadingUnis ? 'Loading…' : 'Select your university'}
                                         </option>
-                                        {universities.map((u) => (
-                                            <option key={u.id} value={u.id}>{u.name}</option>
+                                        {universities.map((university) => (
+                                            <option key={university.id} value={university.id}>{university.name}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -445,7 +445,7 @@ export default function Register() {
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => setShowPassword((v) => !v)}
+                                            onClick={() => setShowPassword((isVisible) => !isVisible)}
                                             className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
                                             aria-label={showPassword ? 'Hide password' : 'Show password'}
                                         >
@@ -466,7 +466,7 @@ export default function Register() {
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => setShowConfirm((v) => !v)}
+                                            onClick={() => setShowConfirm((isVisible) => !isVisible)}
                                             className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
                                             aria-label={showConfirm ? 'Hide password' : 'Show password'}
                                         >

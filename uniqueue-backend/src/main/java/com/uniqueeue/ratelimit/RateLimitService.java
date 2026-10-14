@@ -33,7 +33,7 @@ public class RateLimitService {
      *         is refilled (rounded up, minimum 1).
      */
     public long tryConsume(String key, int limit, int windowSeconds) {
-        Bucket bucket = buckets.computeIfAbsent(key, k ->
+        Bucket bucket = buckets.computeIfAbsent(key, cacheKey ->
                 Bucket.builder()
                         .addLimit(Bandwidth.classic(
                                 limit,

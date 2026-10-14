@@ -17,10 +17,10 @@ export default function PendingVerification() {
         setChecking(true)
         try {
             const res = await api.get('/api/auth/me/verification-status')
-            const s = res.data?.data?.status
-            setStatus(s || 'PENDING')
+            const verificationStatus = res.data?.data?.status
+            setStatus(verificationStatus || 'PENDING')
             setReason(res.data?.data?.reason || null)
-            if (s === 'VERIFIED') {
+            if (verificationStatus === 'VERIFIED') {
                 push({ type: 'success', message: 'You are verified — welcome!' })
                 setTimeout(() => navigate('/student'), 800)
             }

@@ -129,7 +129,7 @@ public class AdminUserController {
         Role newRole;
         try {
             newRole = Role.valueOf(rawRole.trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException exception) {
             throw new BadRequestException(
                     "Invalid role. Allowed: USER, FRESHER, STAFF");
         }
@@ -207,12 +207,12 @@ public class AdminUserController {
     // ═══════════════════════════════════════════════════════════
 
     private User requireOwnUser(Long userId, Long universityId) {
-        User u = userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        if (u.getUniversity() == null
-                || !u.getUniversity().getId().equals(universityId)) {
+        if (user.getUniversity() == null
+                || !user.getUniversity().getId().equals(universityId)) {
             throw new ResourceNotFoundException("User not found");
         }
-        return u;
+        return user;
     }
 }

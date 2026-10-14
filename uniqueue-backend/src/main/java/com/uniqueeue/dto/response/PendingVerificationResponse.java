@@ -17,21 +17,21 @@ public class PendingVerificationResponse {
     private String registrationStatus;
     private String createdAt;
 
-    public static PendingVerificationResponse from(User u) {
-        if (u == null) return null;
+    public static PendingVerificationResponse from(User user) {
+        if (user == null) return null;
         return PendingVerificationResponse.builder()
-                .id(u.getId())
-                .email(u.getEmail())
-                .fullName(u.getFullName())
-                .role(u.getRole() != null ? u.getRole().name() : null)
-                .matricNumber(u.getMatricNumber())
-                .jambRegNumber(u.getJambRegNumber())
-                .admissionRef(u.getAdmissionRef())
-                .department(u.getDepartment())
-                .phone(u.getPhone())
-                .registrationStatus(u.getRegistrationStatus() != null
-                        ? u.getRegistrationStatus().name() : null)
-                .createdAt(u.getCreatedAt() != null ? u.getCreatedAt().toString() : null)
+                .id(user.getId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRole() != null ? user.getRole().name() : null)
+                .matricNumber(user.getMatricNumber())
+                .jambRegNumber(user.getJambRegNumber())
+                .admissionRef(user.getAdmissionRef())
+                .department(user.getDepartment())
+                .phone(user.getPhone())
+                .registrationStatus(user.getRegistrationStatus() != null
+                        ? user.getRegistrationStatus().name() : null)
+                .createdAt(user.getCreatedAt() != null ? user.getCreatedAt().toString() : null)
                 .build();
     }
 }

@@ -117,19 +117,29 @@ public class DataInitializer implements CommandLineRunner {
         log.info("✅ Seeded admin user: {} / admin1234", email);
     }
 
+    @org.springframework.beans.factory.annotation.Value("${app.super-admin.email:}")
+    private String superAdminEmail;
+
+    @org.springframework.beans.factory.annotation.Value("${app.super-admin.password:}")
+    private String superAdminPassword;
+
     private void seedSuperAdmin() {
-        String email = "superadmin@uniqueue.com";
-        if (userRepository.findByEmail(email).isPresent()) {
-            log.info("Super Admin already exists. Skipping.");
+        if (superAdminEmail == null || superAdminEmail.isBlank()) {
+            log.info("Super admin seed skipped — app.super-admin.email not set.");
+            return;
+        }
+        if (userRepository.findByEmail(superAdminEmail).isPresent()) {
+            log.info("Super admin already exists — skipping seed.");
             return;
         }
         userRepository.save(User.builder()
-                .email(email)
-                .password(passwordEncoder.encode("super1234"))
+                .email(superAdminEmail)
+                .password(passwordEncoder.encode(superAdminPassword))
                 .fullName("Super Admin")
                 .role(Role.SUPER_ADMIN)
                 .isActive(true).isVerified(true).build());
 
-        log.info("✅ Seeded SUPER ADMIN: {} / super1234", email);
+        log.info("✅ Seeded SUPER ADMIN: {}", superAdminEmail);
+        // Deliberately NOT logging the password
     }
 }

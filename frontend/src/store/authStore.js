@@ -102,28 +102,28 @@ export const useAuthStore = create((set, get) => ({
         set({ loading: true, error: null })
         try {
             const res = await api.post('/api/auth/login', { email, password })
-            const d = res.data.data
+            const userData = res.data.data
             const user = {
-                userId: d.userId,
-                email: d.email,
-                fullName: d.fullName,
-                role: d.role,
-                universityId: d.universityId,
+                userId: userData.userId,
+                email: userData.email,
+                fullName: userData.fullName,
+                role: userData.role,
+                universityId: userData.universityId,
             }
-            persistSession(d.accessToken, d.refreshToken, user)
+            persistSession(userData.accessToken, userData.refreshToken, user)
 
             useUniversityStore.getState().reset()
             usePrefsStore.getState().reset()
-            set({ token: d.accessToken, user, loading: false })
+            set({ token: userData.accessToken, user, loading: false })
 
-            if (d.role !== 'SUPER_ADMIN') {
+            if (userData.role !== 'SUPER_ADMIN') {
                 useUniversityStore.getState().load()
             }
 
             usePrefsStore.getState().load()
             syncExistingPushSubscription()
 
-            return { success: true, role: d.role }
+            return { success: true, role: userData.role }
         } catch (err) {
             const result = describeError(err, 'Login failed')
             set({ loading: false, error: result.error })
@@ -135,21 +135,21 @@ export const useAuthStore = create((set, get) => ({
         set({ loading: true, error: null })
         try {
             const res = await api.post('/api/auth/register', payload)
-            const d = res.data.data
+            const userData = res.data.data
             const user = {
-                userId: d.userId,
-                email: d.email,
-                fullName: d.fullName,
-                role: d.role,
-                universityId: d.universityId,
+                userId: userData.userId,
+                email: userData.email,
+                fullName: userData.fullName,
+                role: userData.role,
+                universityId: userData.universityId,
             }
-            persistSession(d.accessToken, d.refreshToken, user)
+            persistSession(userData.accessToken, userData.refreshToken, user)
 
             useUniversityStore.getState().reset()
             usePrefsStore.getState().reset()
-            set({ token: d.accessToken, user, loading: false })
+            set({ token: userData.accessToken, user, loading: false })
 
-            if (d.role !== 'SUPER_ADMIN') {
+            if (userData.role !== 'SUPER_ADMIN') {
                 useUniversityStore.getState().load()
             }
 
@@ -158,10 +158,10 @@ export const useAuthStore = create((set, get) => ({
 
             return {
                 success: true,
-                role: d.role,
-                devVerificationCode: d.devVerificationCode,
-                isVerified: d.isVerified,
-                registrationStatus: d.registrationStatus,
+                role: userData.role,
+                devVerificationCode: userData.devVerificationCode,
+                isVerified: userData.isVerified,
+                registrationStatus: userData.registrationStatus,
             }
         } catch (err) {
             const result = describeError(err, 'Registration failed')
@@ -201,17 +201,17 @@ export const useAuthStore = create((set, get) => ({
     refreshProfile: async () => {
         try {
             const res = await api.get('/api/profile')
-            const p = res.data?.data
-            if (!p) return { success: false }
+            const profileData = res.data?.data
+            if (!profileData) return { success: false }
 
             const current = get().user || {}
             const next = {
                 ...current,
-                userId: p.id ?? current.userId,
-                email: p.email ?? current.email,
-                fullName: p.fullName ?? current.fullName,
-                role: p.role ?? current.role,
-                universityId: p.universityId ?? current.universityId,
+                userId: profileData.id ?? current.userId,
+                email: profileData.email ?? current.email,
+                fullName: profileData.fullName ?? current.fullName,
+                role: profileData.role ?? current.role,
+                universityId: profileData.universityId ?? current.universityId,
             }
 
             localStorage.setItem(USER_KEY, JSON.stringify(next))

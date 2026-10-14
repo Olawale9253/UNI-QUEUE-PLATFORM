@@ -40,58 +40,79 @@ public class AdminSettingsController {
             @RequestBody UpdateUniversitySettingsRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
 
-        University u = universityRepository.findById(principal.getUniversityId())
+        University universityValue = universityRepository.findById(principal.getUniversityId())
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
 
         // Identity / basics
-        if (request.getName() != null && !request.getName().isBlank()) u.setName(request.getName().trim());
-        if (request.getEmailDomain() != null) u.setEmailDomain(request.getEmailDomain().trim());
-        if (request.getMatricPattern() != null) u.setMatricPattern(request.getMatricPattern());
-        if (request.getMatricExample() != null) u.setMatricExample(request.getMatricExample());
-        if (request.getMatricDescription() != null) u.setMatricDescription(request.getMatricDescription());
+        if (request.getName() != null && !request.getName().isBlank())
+            universityValue.setName(request.getName().trim());
+        if (request.getEmailDomain() != null)
+            universityValue.setEmailDomain(request.getEmailDomain().trim());
+        if (request.getMatricPattern() != null)
+            universityValue.setMatricPattern(request.getMatricPattern());
+        if (request.getMatricExample() != null)
+            universityValue.setMatricExample(request.getMatricExample());
+        if (request.getMatricDescription() != null)
+            universityValue.setMatricDescription(request.getMatricDescription());
         if (request.getMatricVerificationMode() != null)
-            u.setMatricVerificationMode(request.getMatricVerificationMode().toUpperCase());
+            universityValue.setMatricVerificationMode(request.getMatricVerificationMode().toUpperCase());
 
         // Branding
-        if (request.getLogoUrl() != null) u.setLogoUrl(request.getLogoUrl().trim());
-        if (request.getCampusImageUrl() != null) u.setCampusImageUrl(request.getCampusImageUrl().trim());
-        if (request.getTagline() != null) u.setTagline(request.getTagline().trim());
-        if (request.getPrimaryColor() != null) u.setPrimaryColor(request.getPrimaryColor().trim());
+        if (request.getLogoUrl() != null)
+            universityValue.setLogoUrl(request.getLogoUrl().trim());
+        if (request.getCampusImageUrl() != null)
+            universityValue.setCampusImageUrl(request.getCampusImageUrl().trim());
+        if (request.getTagline() != null)
+            universityValue.setTagline(request.getTagline().trim());
+        if (request.getPrimaryColor() != null)
+            universityValue.setPrimaryColor(request.getPrimaryColor().trim());
 
         // Schedule
         if (request.getTimezone() != null && !request.getTimezone().isBlank()) {
-            u.setTimezone(request.getTimezone().trim());
+            universityValue.setTimezone(request.getTimezone().trim());
         }
         if (request.getCountryCode() != null && !request.getCountryCode().isBlank()) {
-            u.setCountryCode(request.getCountryCode().trim().toUpperCase());
+            universityValue.setCountryCode(request.getCountryCode().trim().toUpperCase());
         }
 
         // Limits
-        if (request.getMaxStaff() != null) u.setMaxStaff(request.getMaxStaff());
-        if (request.getMaxQueues() != null) u.setMaxQueues(request.getMaxQueues());
+        if (request.getMaxStaff() != null) universityValue.setMaxStaff(request.getMaxStaff());
+        if (request.getMaxQueues() != null) universityValue.setMaxQueues(request.getMaxQueues());
 
-        // Fresher config
+        // Fresher registration config
         if (request.getFresherRegistrationEnabled() != null)
-            u.setFresherRegistrationEnabled(request.getFresherRegistrationEnabled());
+            universityValue.setFresherRegistrationEnabled(request.getFresherRegistrationEnabled());
         if (request.getFresherVerificationMode() != null)
-            u.setFresherVerificationMode(request.getFresherVerificationMode().toUpperCase());
+            universityValue.setFresherVerificationMode(request.getFresherVerificationMode().toUpperCase());
 
-        if (request.getRequireJambReg() != null) u.setRequireJambReg(request.getRequireJambReg());
-        if (request.getJambRegPattern() != null) u.setJambRegPattern(request.getJambRegPattern());
-        if (request.getJambRegExample() != null) u.setJambRegExample(request.getJambRegExample());
-        if (request.getJambRegDescription() != null) u.setJambRegDescription(request.getJambRegDescription());
+        if (request.getRequireJambReg() != null)
+            universityValue.setRequireJambReg(request.getRequireJambReg());
+        if (request.getJambRegPattern() != null)
+            universityValue.setJambRegPattern(request.getJambRegPattern());
+        if (request.getJambRegExample() != null)
+            universityValue.setJambRegExample(request.getJambRegExample());
+        if (request.getJambRegDescription() != null)
+            universityValue.setJambRegDescription(request.getJambRegDescription());
 
-        if (request.getRequireAdmissionRef() != null) u.setRequireAdmissionRef(request.getRequireAdmissionRef());
-        if (request.getAdmissionRefPattern() != null) u.setAdmissionRefPattern(request.getAdmissionRefPattern());
-        if (request.getAdmissionRefExample() != null) u.setAdmissionRefExample(request.getAdmissionRefExample());
-        if (request.getAdmissionRefDescription() != null) u.setAdmissionRefDescription(request.getAdmissionRefDescription());
+        if (request.getRequireAdmissionRef() != null)
+            universityValue.setRequireAdmissionRef(request.getRequireAdmissionRef());
+        if (request.getAdmissionRefPattern() != null)
+            universityValue.setAdmissionRefPattern(request.getAdmissionRefPattern());
+        if (request.getAdmissionRefExample() != null)
+            universityValue.setAdmissionRefExample(request.getAdmissionRefExample());
+        if (request.getAdmissionRefDescription() != null)
+            universityValue.setAdmissionRefDescription(request.getAdmissionRefDescription());
 
-        if (request.getRequireApplicationNumber() != null) u.setRequireApplicationNumber(request.getRequireApplicationNumber());
-        if (request.getApplicationNumberPattern() != null) u.setApplicationNumberPattern(request.getApplicationNumberPattern());
-        if (request.getApplicationNumberExample() != null) u.setApplicationNumberExample(request.getApplicationNumberExample());
-        if (request.getApplicationNumberDescription() != null) u.setApplicationNumberDescription(request.getApplicationNumberDescription());
+        if (request.getRequireApplicationNumber() != null)
+            universityValue.setRequireApplicationNumber(request.getRequireApplicationNumber());
+        if (request.getApplicationNumberPattern() != null)
+            universityValue.setApplicationNumberPattern(request.getApplicationNumberPattern());
+        if (request.getApplicationNumberExample() != null)
+            universityValue.setApplicationNumberExample(request.getApplicationNumberExample());
+        if (request.getApplicationNumberDescription() != null)
+            universityValue.setApplicationNumberDescription(request.getApplicationNumberDescription());
 
-        University saved = universityRepository.save(u);
+        University saved = universityRepository.save(universityValue);
 
         auditService.record(principal.getId(), principal.getUniversityId(),
                 UNIVERSITY_UPDATED, "University", saved.getId(),

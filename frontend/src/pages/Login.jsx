@@ -74,12 +74,12 @@ function useCountdown(targetTime) {
 function formatWait(seconds) {
     if (seconds <= 0) return 'now'
     if (seconds < 60) return `${seconds}s`
-    const m = Math.floor(seconds / 60)
-    const s = seconds % 60
-    if (m < 60) return s === 0 ? `${m}m` : `${m}m ${s}s`
-    const h = Math.floor(m / 60)
-    const rem = m % 60
-    return rem === 0 ? `${h}h` : `${h}h ${rem}m`
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    if (minutes < 60) return remainingSeconds === 0 ? `${minutes}m` : `${minutes}m ${remainingSeconds}s`
+    const hours = Math.floor(minutes / 60)
+    const remainingMinutes = minutes % 60
+    return remainingMinutes === 0 ? `${hours}h` : `${hours}h ${remainingMinutes}m`
 }
 
 /* ─────────────────────────────────────────────
@@ -129,7 +129,7 @@ function LeftPanel({ brand, imageError, onImageError }) {
                                 src={brand.logoUrl}
                                 alt={brand.name}
                                 className="h-full w-full object-contain p-1"
-                                onError={(e) => { e.target.style.display = 'none' }}
+                                onError={(event) => { event.target.style.display = 'none' }}
                             />
                         ) : (
                             <Building2 className="h-4.5 w-4.5 text-white" />
@@ -247,12 +247,12 @@ export default function Login() {
         const timer = setTimeout(async () => {
             try {
                 const res = await api.get(`/api/auth/universities/lookup?domain=${encodeURIComponent(domain)}`)
-                const d = res.data?.data
-                if (d) {
+                const universityData = res.data?.data
+                if (universityData) {
                     setBrand({
-                        name: d.name || DEFAULT_BRAND.name,
-                        logoUrl: resolveImageUrl(d.logoUrl),
-                        campusImageUrl: resolveImageUrl(d.campusImageUrl),
+                        name: universityData.name || DEFAULT_BRAND.name,
+                        logoUrl: resolveImageUrl(universityData.logoUrl),
+                        campusImageUrl: resolveImageUrl(universityData.campusImageUrl),
                     })
                     setImageError(false)
                 } else {
@@ -334,7 +334,7 @@ export default function Login() {
                                         src={brand.logoUrl}
                                         alt={brand.name}
                                         className="h-full w-full object-contain p-1"
-                                        onError={(e) => { e.target.style.display = 'none' }}
+                                        onError={(event) => { event.target.style.display = 'none' }}
                                     />
                                 ) : (
                                     <Building2 className="h-4.5 w-4.5" />
@@ -426,7 +426,7 @@ export default function Login() {
                                     <input
                                         type={showPassword ? 'text' : 'password'}
                                         value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
+                                        onChange={(event) => setPassword(event.target.value)}
                                         placeholder="Enter your password"
                                         autoComplete="current-password"
                                         required
@@ -435,7 +435,7 @@ export default function Login() {
                                     />
                                     <button
                                         type="button"
-                                        onClick={() => setShowPassword((v) => !v)}
+                                        onClick={() => setShowPassword((isVisible) => !isVisible)}
                                         className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
                                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                                     >

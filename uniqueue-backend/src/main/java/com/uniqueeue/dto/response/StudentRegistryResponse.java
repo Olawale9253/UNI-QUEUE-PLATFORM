@@ -15,18 +15,18 @@ public class StudentRegistryResponse {
     private Long claimedByUserId;
     private String claimedAt;
 
-    public static StudentRegistryResponse from(StudentRegistry r) {
-        if (r == null) return null;
+    public static StudentRegistryResponse from(StudentRegistry registryEntry) {
+        if (registryEntry == null) return null;
         return StudentRegistryResponse.builder()
-                .id(r.getId())
-                .matricNumber(r.getMatricNumber())
-                .fullName(r.getFullName())
-                .department(r.getDepartment())
-                .faculty(r.getFaculty())
-                .level(r.getLevel())
-                .entryYear(r.getEntryYear())
-                .claimedByUserId(r.getClaimedBy() != null ? r.getClaimedBy().getId() : null)
-                .claimedAt(r.getClaimedAt() != null ? r.getClaimedAt().toString() : null)
+                .id(registryEntry.getId())
+                .matricNumber(registryEntry.getMatricNumber())
+                .fullName(registryEntry.getFullName())
+                .department(registryEntry.getDepartment())
+                .faculty(registryEntry.getFaculty())
+                .level(registryEntry.getLevel())
+                .entryYear(registryEntry.getEntryYear())
+                .claimedByUserId(registryEntry.getClaimedBy() != null ? registryEntry.getClaimedBy().getId() : null)
+                .claimedAt(registryEntry.getClaimedAt() != null ? registryEntry.getClaimedAt().toString() : null)
                 .build();
     }
 }

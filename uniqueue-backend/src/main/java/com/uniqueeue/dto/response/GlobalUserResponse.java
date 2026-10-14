@@ -32,25 +32,25 @@ public class GlobalUserResponse {
     private LocalDateTime createdAt;
     private LocalDateTime lastLoginAt;
 
-    public static GlobalUserResponse from(User u) {
-        if (u == null) return null;
+    public static GlobalUserResponse from(User user) {
+        if (user == null) return null;
         return GlobalUserResponse.builder()
-                .id(u.getId())
-                .email(u.getEmail())
-                .fullName(u.getFullName())
-                .role(u.getRole() != null ? u.getRole().name() : null)
-                .matricNumber(u.getMatricNumber())
-                .department(u.getDepartment())
-                .phone(u.getPhone())
-                .universityId(u.getUniversity() != null ? u.getUniversity().getId() : null)
-                .universityName(u.getUniversity() != null ? u.getUniversity().getName() : null)
-                .universityCode(u.getUniversity() != null ? u.getUniversity().getCode() : null)
-                .isActive(u.getIsActive())
-                .isVerified(u.getIsVerified())
-                .registrationStatus(u.getRegistrationStatus() != null
-                        ? u.getRegistrationStatus().name()
+                .id(user.getId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRole() != null ? user.getRole().name() : null)
+                .matricNumber(user.getMatricNumber())
+                .department(user.getDepartment())
+                .phone(user.getPhone())
+                .universityId(user.getUniversity() != null ? user.getUniversity().getId() : null)
+                .universityName(user.getUniversity() != null ? user.getUniversity().getName() : null)
+                .universityCode(user.getUniversity() != null ? user.getUniversity().getCode() : null)
+                .isActive(user.getIsActive())
+                .isVerified(user.getIsVerified())
+                .registrationStatus(user.getRegistrationStatus() != null
+                        ? user.getRegistrationStatus().name()
                         : null)                              // ⬅ NEW
-                .createdAt(u.getCreatedAt())
+                .createdAt(user.getCreatedAt())
                 .build();
     }
 }

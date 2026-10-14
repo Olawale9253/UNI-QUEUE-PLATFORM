@@ -89,10 +89,10 @@ public class StudentRegistryService {
 
     @Transactional
     public void markClaimed(Long registryId, User user) {
-        registryRepository.findById(registryId).ifPresent(r -> {
-            r.setClaimedBy(user);
-            r.setClaimedAt(LocalDateTime.now());
-            registryRepository.save(r);
+        registryRepository.findById(registryId).ifPresent(entry -> {
+            entry.setClaimedBy(user);
+            entry.setClaimedAt(LocalDateTime.now());
+            registryRepository.save(entry);
         });
     }
 
@@ -111,11 +111,11 @@ public class StudentRegistryService {
     public Map<String, Long> stats(Long universityId) {
         long total = registryRepository.countByUniversityId(universityId);
         long unclaimed = registryRepository.countByUniversityIdAndClaimedByIsNull(universityId);
-        Map<String, Long> s = new LinkedHashMap<>();
-        s.put("total", total);
-        s.put("unclaimed", unclaimed);
-        s.put("claimed", total - unclaimed);
-        return s;
+        Map<String, Long> result = new LinkedHashMap<>();
+        result.put("total", total);
+        result.put("unclaimed", unclaimed);
+        result.put("claimed", total - unclaimed);
+        return result;
     }
 
     @Transactional
@@ -145,13 +145,13 @@ public class StudentRegistryService {
         return idx;
     }
 
-    private String normalizeHeader(String h) {
-        return h.toLowerCase()
+    private String normalizeHeader(String header) {
+        return header.toLowerCase()
                 .replaceAll("[\\s_\\-]+", "")
                 .replaceAll("[^a-z0-9]", "");
     }
 
-    private StudentRegistry buildFromCells(University uni, List<String> cells, Map<String, Integer> idx) {
+    private StudentRegistry buildFromCells(University university, List<String> cells, Map<String, Integer> idx) {
         String matric = firstNonBlank(cells, idx,
                 "matricnumber", "matric", "matricno", "matriculationnumber");
         String name = firstNonBlank(cells, idx, "fullname", "name", "studentname");
@@ -159,7 +159,7 @@ public class StudentRegistryService {
         if (matric == null || name == null) return null;
 
         return StudentRegistry.builder()
-                .university(uni)
+                .university(university)
                 .matricNumber(matric)
                 .fullName(name)
                 .department(firstNonBlank(cells, idx, "department", "dept"))
@@ -170,20 +170,20 @@ public class StudentRegistryService {
     }
 
     private String firstNonBlank(List<String> cells, Map<String, Integer> idx, String... keys) {
-        for (String k : keys) {
-            Integer i = idx.get(k);
-            if (i != null && i < cells.size()) {
-                String v = cells.get(i);
-                if (v != null && !v.isBlank()) return v.trim();
+        for (String key : keys) {
+            Integer position = idx.get(key);
+            if (position != null && position < cells.size()) {
+                String value = cells.get(position);
+                if (value != null && !value.isBlank()) return value.trim();
             }
         }
         return null;
     }
 
-    private Integer parseInt(String v) {
-        if (v == null || v.isBlank()) return null;
+    private Integer parseInt(String raw) {
+        if (raw == null || raw.isBlank()) return null;
         try {
-            String cleaned = v.replaceAll("[^0-9]", " ").trim();
+            String cleaned = raw.replaceAll("[^0-9]", " ").trim();
             return Integer.parseInt(cleaned.split("\\s+")[0]);
         } catch (Exception e) {
             return null;
@@ -196,18 +196,19 @@ public class StudentRegistryService {
         StringBuilder sb = new StringBuilder();
         boolean inQuotes = false;
         for (int i = 0; i < line.length(); i++) {
-            char c = line.charAt(i);
-            if (c == '"') {
+            char ch = line.charAt(i);
+            if (ch == '"') {
                 if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
-                    sb.append('"'); i++;
+                    sb.append('"');
+                    i++;
                 } else {
                     inQuotes = !inQuotes;
                 }
-            } else if (c == ',' && !inQuotes) {
+            } else if (ch == ',' && !inQuotes) {
                 out.add(sb.toString());
                 sb.setLength(0);
             } else {
-                sb.append(c);
+                sb.append(ch);
             }
         }
         out.add(sb.toString());

@@ -13,7 +13,7 @@ import { useToastStore } from '../../store/toastStore'
  *           { key: 'id', label: 'ID' },
  *           { key: 'action', label: 'Action' },
  *           { key: 'createdAt', label: 'Timestamp',
- *             value: (r) => new Date(r.createdAt).toLocaleString() },
+ *             value: (row) => new Date(row.createdAt).toLocaleString() },
  *       ]}
  *       filename="uniqueue-audit-logs"
  *       label="Export CSV"

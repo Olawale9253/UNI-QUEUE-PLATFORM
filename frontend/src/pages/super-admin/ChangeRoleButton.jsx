@@ -109,7 +109,7 @@ export default function ChangeRoleButton({ user, onChanged, variant = 'compact' 
                 >
                     <div
                         className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl dark:bg-slate-900"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(event) => event.stopPropagation()}
                     >
                         {/* Header */}
                         <div className="flex items-start justify-between gap-3">
@@ -153,13 +153,13 @@ export default function ChangeRoleButton({ user, onChanged, variant = 'compact' 
                             </label>
                             <select
                                 value={role}
-                                onChange={(e) => setRole(e.target.value)}
+                                onChange={(event) => setRole(event.target.value)}
                                 disabled={busy}
                                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                             >
-                                {ASSIGNABLE_ROLES.map((r) => (
-                                    <option key={r.value} value={r.value}>
-                                        {r.label}
+                                {ASSIGNABLE_ROLES.map((assignableRole) => (
+                                    <option key={assignableRole.value} value={assignableRole.value}>
+                                        {assignableRole.label}
                                     </option>
                                 ))}
                             </select>

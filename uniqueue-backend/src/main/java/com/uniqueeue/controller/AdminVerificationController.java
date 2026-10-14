@@ -118,11 +118,11 @@ public class AdminVerificationController {
     }
 
     private User requireOwnUser(Long userId, Long universityId) {
-        User u = userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        if (u.getUniversity() == null || !u.getUniversity().getId().equals(universityId)) {
+        if (user.getUniversity() == null || !user.getUniversity().getId().equals(universityId)) {
             throw new ResourceNotFoundException("User not found");
         }
-        return u;
+        return user;
     }
 }

@@ -308,23 +308,23 @@ export default function Settings() {
                                 { v: 'PATTERN', label: 'Pattern', hint: 'Regex only — queue for review' },
                                 { v: 'LIST',    label: 'Registry',hint: 'Must match uploaded list' },
                                 { v: 'BOTH',    label: 'Both',    hint: 'Regex + registry match' },
-                            ].map((m) => (
+                            ].map((verificationOption) => (
                                 <button
-                                    key={m.v}
+                                    key={verificationOption.v}
                                     type="button"
-                                    onClick={() => setForm({ ...form, matricVerificationMode: m.v })}
+                                    onClick={() => setForm({ ...form, matricVerificationMode: verificationOption.v })}
                                     className={`rounded-lg border p-3 text-left transition-colors ${
-                                        form.matricVerificationMode === m.v
+                                        form.matricVerificationMode === verificationOption.v
                                             ? 'border-brand-500 bg-brand-50'
                                             : 'border-slate-200 hover:border-slate-300'
                                     }`}
                                 >
                                     <div className={`text-sm font-semibold ${
-                                        form.matricVerificationMode === m.v ? 'text-brand-700' : 'text-slate-900'
+                                        form.matricVerificationMode === verificationOption.v ? 'text-brand-700' : 'text-slate-900'
                                     }`}>
-                                        {m.label}
+                                        {verificationOption.label}
                                     </div>
-                                    <div className="mt-0.5 text-[11px] text-slate-500">{m.hint}</div>
+                                    <div className="mt-0.5 text-[11px] text-slate-500">                                    {verificationOption.hint}</div>
                                 </button>
                             ))}
                         </div>

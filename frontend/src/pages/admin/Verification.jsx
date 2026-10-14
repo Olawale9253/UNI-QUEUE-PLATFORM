@@ -38,15 +38,15 @@ function UploadCard({ title, description, endpoint, templateHeaders, stats, onUp
         const csv = templateHeaders.join(',') + '\n'
         const blob = new Blob([csv], { type: 'text/csv' })
         const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = 'template.csv'
-        a.click()
+        const downloadLink = document.createElement('a')
+        downloadLink.href = url
+        downloadLink.download = 'template.csv'
+        downloadLink.click()
         URL.revokeObjectURL(url)
     }
 
-    const handleFile = async (e) => {
-        const file = e.target.files?.[0]
+    const handleFile = async (event) => {
+        const file = event.target.files?.[0]
         if (!file) return
         setBusy(true)
         try {
@@ -135,7 +135,7 @@ function UploadCard({ title, description, endpoint, templateHeaders, stats, onUp
                 <input
                     type="checkbox"
                     checked={replace}
-                    onChange={(e) => setReplace(e.target.checked)}
+                    onChange={(event) => setReplace(event.target.checked)}
                     className="h-3.5 w-3.5 rounded border-slate-300 text-brand-600"
                 />
                 Replace existing rows on upload
@@ -159,7 +159,7 @@ export default function Verification() {
     const load = async () => {
         setLoading(true)
         try {
-            const [s, r, a, p] = await Promise.all([
+            const [statsResponse, registryResponse, admittedResponse, pendingResponse] = await Promise.all([
                 api.get('/api/admin/verification/stats'),
                 api.get('/api/admin/student-registry/stats'),
                 api.get('/api/admin/admitted-students/stats'),
@@ -167,10 +167,10 @@ export default function Verification() {
                     params: { search: search || undefined, page: 0, size: 50 },
                 }),
             ])
-            setStats(s.data?.data || { pending: 0, verified: 0, rejected: 0 })
-            setRegistryStats(r.data?.data || { total: 0, unclaimed: 0, claimed: 0 })
-            setAdmittedStats(a.data?.data || { total: 0, unclaimed: 0, claimed: 0 })
-            setPending(p.data?.data?.content || [])
+            setStats(statsResponse.data?.data || { pending: 0, verified: 0, rejected: 0 })
+            setRegistryStats(registryResponse.data?.data || { total: 0, unclaimed: 0, claimed: 0 })
+            setAdmittedStats(admittedResponse.data?.data || { total: 0, unclaimed: 0, claimed: 0 })
+            setPending(pendingResponse.data?.data?.content || [])
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed to load' })
         } finally {
@@ -182,8 +182,8 @@ export default function Verification() {
 
     // Debounced search reload
     useEffect(() => {
-        const t = setTimeout(() => { load() }, 400)
-        return () => clearTimeout(t)
+        const searchTimeout = setTimeout(() => { load() }, 400)
+        return () => clearTimeout(searchTimeout)
     }, [search])   // eslint-disable-line
 
     const approve = async (id) => {
@@ -269,7 +269,7 @@ export default function Verification() {
                             <input
                                 type="text"
                                 value={search}
-                                onChange={(e) => setSearch(e.target.value)}
+                                onChange={(event) => setSearch(event.target.value)}
                                 placeholder="Search name, email, matric…"
                                 className="w-64 rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-1.5 text-sm placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                             />
@@ -312,42 +312,42 @@ export default function Verification() {
                             </tr>
                             </thead>
                             <tbody>
-                            {pending.map((u) => (
-                                <tr key={u.id} className="border-b border-slate-100 hover:bg-slate-50/60">
-                                    <td className="py-2.5 pr-3 font-medium text-slate-900">{u.fullName}</td>
-                                    <td className="py-2.5 pr-3 text-slate-600">{u.email}</td>
+                            {pending.map((pendingUser) => (
+                                <tr key={pendingUser.id} className="border-b border-slate-100 hover:bg-slate-50/60">
+                                    <td className="py-2.5 pr-3 font-medium text-slate-900">{pendingUser.fullName}</td>
+                                    <td className="py-2.5 pr-3 text-slate-600">{pendingUser.email}</td>
                                     <td className="py-2.5 pr-3 font-mono text-xs text-slate-600">
-                                        {u.matricNumber || u.jambRegNumber || '—'}
+                                        {pendingUser.matricNumber || pendingUser.jambRegNumber || '—'}
                                     </td>
                                     <td className="py-2.5 pr-3">
                                             <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                                                u.role === 'FRESHER'
+                                                pendingUser.role === 'FRESHER'
                                                     ? 'bg-sky-100 text-sky-700'
                                                     : 'bg-slate-100 text-slate-700'
                                             }`}>
-                                                {u.role === 'FRESHER' ? 'Fresher' : 'Student'}
+                                                {pendingUser.role === 'FRESHER' ? 'Fresher' : 'Student'}
                                             </span>
                                     </td>
                                     <td className="py-2.5 pr-3 text-xs text-slate-500">
-                                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
+                                        {pendingUser.createdAt ? new Date(pendingUser.createdAt).toLocaleDateString() : '—'}
                                     </td>
                                     <td className="py-2.5 pr-3 text-right">
                                         <div className="inline-flex items-center gap-1.5">
                                             <button
                                                 type="button"
-                                                onClick={() => approve(u.id)}
-                                                disabled={actionId === u.id}
+                                                onClick={() => approve(pendingUser.id)}
+                                                disabled={actionId === pendingUser.id}
                                                 className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
                                             >
-                                                {actionId === u.id
+                                                {actionId === pendingUser.id
                                                     ? <Loader2 className="h-3 w-3 animate-spin" />
                                                     : <CheckCircle2 className="h-3 w-3" />}
                                                 Approve
                                             </button>
                                             <button
                                                 type="button"
-                                                onClick={() => reject(u.id)}
-                                                disabled={actionId === u.id}
+                                                onClick={() => reject(pendingUser.id)}
+                                                disabled={actionId === pendingUser.id}
                                                 className="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-white px-2.5 py-1 text-[11px] font-medium text-rose-700 transition-colors hover:bg-rose-50 disabled:opacity-50"
                                             >
                                                 <XCircle className="h-3 w-3" />

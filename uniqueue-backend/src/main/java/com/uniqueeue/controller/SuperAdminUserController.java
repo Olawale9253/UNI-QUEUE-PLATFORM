@@ -136,7 +136,7 @@ public class SuperAdminUserController {
         Role newRole;
         try {
             newRole = Role.valueOf(rawRole.trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException exception) {
             throw new BadRequestException(
                     "Invalid role. Allowed: USER, FRESHER, STAFF, ADMIN");
         }

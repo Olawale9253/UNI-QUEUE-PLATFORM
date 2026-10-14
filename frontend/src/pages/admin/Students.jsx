@@ -143,7 +143,7 @@ export default function Students() {
                     <Button
                         variant={showFilters ? 'secondary' : 'primary'}
                         icon={Filter}
-                        onClick={() => setShowFilters((v) => !v)}
+                        onClick={() => setShowFilters((areFiltersVisible) => !areFiltersVisible)}
                     >
                         Filters
                         {activeFilterCount > 0 && (
@@ -274,7 +274,7 @@ export default function Students() {
                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
                                         {user.fullName
                                             ?.split(' ')
-                                            .map((p) => p[0])
+                                            .map((namePart) => namePart[0])
                                             .slice(0, 2)
                                             .join('')}
                                     </div>
