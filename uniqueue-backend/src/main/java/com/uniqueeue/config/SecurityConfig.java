@@ -104,6 +104,9 @@ public class SecurityConfig {
                         // ─── PUBLIC FILE SERVING (GET only) ───
                         .requestMatchers(HttpMethod.GET, "/api/files/**").permitAll()
 
+                        // ─── REAL-TIME EVENTS ───
+                        .requestMatchers("/api/events/**").authenticated()
+
                         // ─── ROLE-SCOPED ───
                         .requestMatchers("/api/super-admin/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
