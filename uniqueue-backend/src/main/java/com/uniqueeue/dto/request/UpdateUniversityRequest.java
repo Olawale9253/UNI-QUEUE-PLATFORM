@@ -6,7 +6,8 @@ import lombok.*;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class UpdateUniversityRequest {
 
-    @Size(max = 500)
+    // Base64 data URLs — cap generously. See CreateUniversityRequest for rationale.
+    @Size(max = 2_000_000)
     private String campusImageUrl;
 
     @Size(max = 255)
@@ -21,11 +22,13 @@ public class UpdateUniversityRequest {
     private String matricPattern;
     private String matricExample;
     private String matricDescription;
-    @Size(max = 500)
+
+    @Size(max = 2_000_000)
     private String logoUrl;
+
     private String primaryColor;
 
-    // ─── Schedule ───  ⬅ NEW
+    // ─── Schedule ───
     @Size(max = 64)
     private String timezone;
 

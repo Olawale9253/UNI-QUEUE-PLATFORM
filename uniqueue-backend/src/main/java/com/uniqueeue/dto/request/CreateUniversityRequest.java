@@ -33,10 +33,12 @@ public class CreateUniversityRequest {
     private String matricDescription;
 
     // ─── Branding ───
-    @Size(max = 500)
+    // logoUrl / campusImageUrl can be base64 data URLs (100 KB–1 MB images)
+    // which inflate to ~1.4× the source size as characters. Cap generously.
+    @Size(max = 2_000_000)
     private String logoUrl;
 
-    @Size(max = 500)
+    @Size(max = 2_000_000)
     private String campusImageUrl;
 
     @Size(max = 255)
