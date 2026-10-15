@@ -4,12 +4,15 @@ import com.uniqueeue.dto.response.AuditLogResponse;
 import com.uniqueeue.enums.AuditAction;
 import com.uniqueeue.model.AuditLog;
 import com.uniqueeue.repository.AuditLogRepository;
+import com.uniqueeue.repository.spec.AuditLogSpecifications;
 import com.uniqueeue.util.RequestUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -26,13 +29,6 @@ public class AuditService {
     private final AuditLogRepository auditLogRepository;
     private final PlatformTransactionManager transactionManager;
 
-    /**
-     * Records an audit event in a fully isolated transaction.
-     *
-     * Uses TransactionTemplate directly — bypasses AOP so a failure cannot
-     * mark the caller's transaction as rollback-only, regardless of how the
-     * underlying JPA provider handles constraint violations.
-     */
     public void record(Long userId, Long universityId, AuditAction action,
                        String entityType, Long entityId, String details) {
         TransactionTemplate template = new TransactionTemplate(transactionManager);
@@ -60,9 +56,16 @@ public class AuditService {
     public Page<AuditLogResponse> search(Long universityId, Long userId, AuditAction action,
                                          LocalDateTime from, LocalDateTime to,
                                          int page, int size) {
-        Pageable pageable = PageRequest.of(page, Math.min(size, 200));
-        return auditLogRepository
-                .search(universityId, userId, action, from, to, pageable)
+
+        Pageable pageable = PageRequest.of(
+                page,
+                Math.min(size, 200),
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Specification<AuditLog> spec = AuditLogSpecifications.withFilters(
+                universityId, userId, action, from, to);
+
+        return auditLogRepository.findAll(spec, pageable)
                 .map(AuditLogResponse::from);
     }
 }
