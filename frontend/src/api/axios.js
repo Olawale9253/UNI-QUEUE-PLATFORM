@@ -32,14 +32,29 @@ function doRefresh() {
             { refreshToken },
             { headers: { 'Content-Type': 'application/json' } }
         )
-        .then((res) => {
-            const dateValue = res.data?.data
-            if (!dateValue?.accessToken) throw new Error('Refresh failed')
-            localStorage.setItem('uniqueue_token', dateValue.accessToken)
-            if (dateValue.refreshToken) {
-                localStorage.setItem('uniqueue_refresh_token', dateValue.refreshToken)
+        .then(async (res) => {
+            const dataValue = res.data?.data
+            if (!dataValue?.accessToken) throw new Error('Refresh failed')
+
+            localStorage.setItem('uniqueue_token', dataValue.accessToken)
+            if (dataValue.refreshToken) {
+                localStorage.setItem('uniqueue_refresh_token', dataValue.refreshToken)
             }
-            return dateValue.accessToken
+
+            // ─── Sync the zustand store so dependent hooks (SSE, etc.) re-run ───
+            // Lazy import — avoids a circular dependency with authStore which
+            // itself imports this module.
+            try {
+                const mod = await import('../store/authStore')
+                mod.useAuthStore.getState().updateTokens(
+                    dataValue.accessToken,
+                    dataValue.refreshToken
+                )
+            } catch (e) {
+                console.debug('[refresh] could not sync auth store:', e?.message)
+            }
+
+            return dataValue.accessToken
         })
         .finally(() => {
             refreshPromise = null
@@ -75,7 +90,6 @@ api.interceptors.response.use(
             return Promise.reject(error)
         }
 
-        // Don't try to refresh a refresh call itself.
         if (original._retried) {
             clearAuthAndRedirect()
             return Promise.reject(error)
