@@ -27,6 +27,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // ─────────────────────────────────────────────────────────────
     //  Global user search (super-admin "All Users" page)
+    //
+    //  The search param is pre-built as "%term%" in the caller
+    //  (see SuperAdminUserController / AdminUserController).
+    //  We use cast(:search as String) to force Postgres to treat
+    //  the parameter as varchar — otherwise Hibernate binds it as
+    //  bytea and the DB rejects LOWER(bytea).
     // ─────────────────────────────────────────────────────────────
 
     @Query(
@@ -37,9 +43,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
                       AND (:role IS NULL OR u.role = :role)
                       AND (:isActive IS NULL OR u.isActive = :isActive)
                       AND (:search IS NULL
-                           OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
-                           OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))
-                           OR LOWER(u.matricNumber) LIKE LOWER(CONCAT('%', :search, '%')))
+                           OR LOWER(u.fullName)    LIKE cast(:search as String)
+                           OR LOWER(u.email)       LIKE cast(:search as String)
+                           OR LOWER(u.matricNumber) LIKE cast(:search as String))
                     ORDER BY u.createdAt DESC
                     """,
             countQuery = """
@@ -49,9 +55,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
                       AND (:role IS NULL OR u.role = :role)
                       AND (:isActive IS NULL OR u.isActive = :isActive)
                       AND (:search IS NULL
-                           OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
-                           OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))
-                           OR LOWER(u.matricNumber) LIKE LOWER(CONCAT('%', :search, '%')))
+                           OR LOWER(u.fullName)    LIKE cast(:search as String)
+                           OR LOWER(u.email)       LIKE cast(:search as String)
+                           OR LOWER(u.matricNumber) LIKE cast(:search as String))
                     """
     )
     Page<User> searchGlobalUsers(
@@ -66,7 +72,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByIsActive(Boolean isActive);
 
     // ─────────────────────────────────────────────────────────────
-    //  Registration verification (NEW)
+    //  Pending verification queue (admin Verifications page)
     // ─────────────────────────────────────────────────────────────
 
     @Query(
@@ -76,10 +82,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
                     WHERE uni.id = :universityId
                       AND u.registrationStatus = :status
                       AND (:search IS NULL
-                           OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
-                           OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))
-                           OR LOWER(u.matricNumber) LIKE LOWER(CONCAT('%', :search, '%'))
-                           OR LOWER(u.jambRegNumber) LIKE LOWER(CONCAT('%', :search, '%')))
+                           OR LOWER(u.fullName)     LIKE cast(:search as String)
+                           OR LOWER(u.email)        LIKE cast(:search as String)
+                           OR LOWER(u.matricNumber) LIKE cast(:search as String)
+                           OR LOWER(u.jambRegNumber) LIKE cast(:search as String))
                     ORDER BY u.createdAt ASC
                     """,
             countQuery = """
@@ -88,10 +94,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
                     WHERE uni.id = :universityId
                       AND u.registrationStatus = :status
                       AND (:search IS NULL
-                           OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
-                           OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))
-                           OR LOWER(u.matricNumber) LIKE LOWER(CONCAT('%', :search, '%'))
-                           OR LOWER(u.jambRegNumber) LIKE LOWER(CONCAT('%', :search, '%')))
+                           OR LOWER(u.fullName)     LIKE cast(:search as String)
+                           OR LOWER(u.email)        LIKE cast(:search as String)
+                           OR LOWER(u.matricNumber) LIKE cast(:search as String)
+                           OR LOWER(u.jambRegNumber) LIKE cast(:search as String))
                     """
     )
     Page<User> searchPendingVerifications(
@@ -104,7 +110,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByUniversityIdAndRegistrationStatus(Long universityId, RegistrationStatus status);
 
     // ─────────────────────────────────────────────────────────────
-    //  Phase 5 — Cleanup support
+    //  Cleanup support
     // ─────────────────────────────────────────────────────────────
 
     @Modifying
