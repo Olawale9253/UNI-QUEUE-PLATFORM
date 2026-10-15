@@ -24,6 +24,7 @@ import Button from '../components/ui/Button'
 import Badge from '../components/ui/Badge'
 import { SkeletonRow } from '../components/ui/Skeleton'
 import ChangeEmailModal from '../components/profile/ChangeEmailModal'
+import SignOutAllButton from '../components/SignOutAllButton'
 import { useAuthStore } from '../store/authStore'
 import { useUniversityStore } from '../store/universityStore'
 import { useToastStore } from '../store/toastStore'
@@ -689,6 +690,22 @@ export default function Profile() {
                             </Button>
                         </div>
                     </form>
+
+                    {/* ───── SIGN OUT ALL DEVICES ───── */}
+                    <div className="mt-6 border-t border-slate-100 pt-5 dark:border-slate-800">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0">
+                                <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                    Sign out of all devices
+                                </div>
+                                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                    Revokes every active session on every device. Use this if you
+                                    think someone else has access to your account.
+                                </p>
+                            </div>
+                            <SignOutAllButton variant="danger" />
+                        </div>
+                    </div>
                 </Card>
             </motion.div>
 
