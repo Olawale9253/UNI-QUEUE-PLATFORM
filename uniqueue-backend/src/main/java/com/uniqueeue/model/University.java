@@ -44,21 +44,15 @@ public class University {
     @Column(name = "matric_description")
     private String matricDescription;
 
-    /**
-     * How to verify a continuing student's matric number:
-     * OPEN    — no checks, auto-verify everyone
-     * PATTERN — regex only (default)
-     * LIST    — must match the uploaded student registry
-     * BOTH    — regex + registry match
-     */
     @Column(name = "matric_verification_mode", length = 20)
     @Builder.Default
     private String matricVerificationMode = "PATTERN";
 
-    @Column(name = "logo_url", length = 500)
+    // ─── Widened to TEXT to allow base64 data URLs ───
+    @Column(name = "logo_url", columnDefinition = "TEXT")
     private String logoUrl;
 
-    @Column(name = "campus_image_url", length = 500)
+    @Column(name = "campus_image_url", columnDefinition = "TEXT")
     private String campusImageUrl;
 
     @Column(length = 255)
@@ -117,7 +111,6 @@ public class University {
     @Builder.Default
     private String fresherVerificationMode = "PATTERN";
 
-    // ─── JAMB Registration Number ───
     @Column(name = "require_jamb_reg")
     @Builder.Default
     private Boolean requireJambReg = true;
@@ -131,7 +124,6 @@ public class University {
     @Column(name = "jamb_reg_description")
     private String jambRegDescription;
 
-    // ─── Admission Reference Number ───
     @Column(name = "require_admission_ref")
     @Builder.Default
     private Boolean requireAdmissionRef = false;
@@ -145,7 +137,6 @@ public class University {
     @Column(name = "admission_ref_description")
     private String admissionRefDescription;
 
-    // ─── Application Number ───
     @Column(name = "require_application_number")
     @Builder.Default
     private Boolean requireApplicationNumber = false;
