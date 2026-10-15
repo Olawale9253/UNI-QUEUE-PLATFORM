@@ -68,6 +68,7 @@ frontend/dist-ssr/
 frontend/.vite/
 application-prod.properties
 application-local.properties
+application-local.properties.save
 .env
 *.env
 data/
