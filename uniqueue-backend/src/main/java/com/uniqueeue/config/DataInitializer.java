@@ -7,6 +7,7 @@ import com.uniqueeue.model.User;
 import com.uniqueeue.repository.PlanConfigRepository;
 import com.uniqueeue.repository.UniversityRepository;
 import com.uniqueeue.repository.UserRepository;
+import com.uniqueeue.util.EmailNormalizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -159,12 +160,36 @@ public class DataInitializer implements CommandLineRunner {
             log.info("Super admin seed skipped — app.super-admin.email not set.");
             return;
         }
-        if (userRepository.findByEmail(superAdminEmail).isPresent()) {
-            log.info("Super admin already exists — skipping seed.");
+        if (superAdminPassword == null || superAdminPassword.isBlank()) {
+            log.warn("Super admin seed skipped — app.super-admin.password not set.");
             return;
         }
+
+        String email = EmailNormalizer.normalize(superAdminEmail);
+        if (email == null) {
+            log.warn("Super admin seed skipped — app.super-admin.email is invalid.");
+            return;
+        }
+
+        var existing = userRepository.findByEmail(email);
+        if (existing.isPresent()) {
+            User superAdmin = existing.get();
+            if (superAdmin.getRole() != Role.SUPER_ADMIN) {
+                log.warn("Super admin seed skipped — configured email belongs to a non-super-admin account.");
+                return;
+            }
+            if (!passwordEncoder.matches(superAdminPassword, superAdmin.getPassword())) {
+                superAdmin.setPassword(passwordEncoder.encode(superAdminPassword));
+                userRepository.save(superAdmin);
+                log.info("Super admin password synchronized from configured secret.");
+            } else {
+                log.info("Super admin already exists with the configured password. Skipping.");
+            }
+            return;
+        }
+
         userRepository.save(User.builder()
-                .email(superAdminEmail)
+                .email(email)
                 .password(passwordEncoder.encode(superAdminPassword))
                 .fullName("Super Admin")
                 .role(Role.SUPER_ADMIN)
