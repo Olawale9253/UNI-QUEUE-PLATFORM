@@ -20,7 +20,10 @@ export function useServerEvents() {
 
         if (esRef.current) return undefined
 
-        const url = `/api/events/stream?token=${encodeURIComponent(token)}`
+        const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+        const url = apiBase
+            ? `${apiBase}/api/events/stream?token=${encodeURIComponent(token)}`
+            : `/api/events/stream?token=${encodeURIComponent(token)}`
 
         let es
         try {
