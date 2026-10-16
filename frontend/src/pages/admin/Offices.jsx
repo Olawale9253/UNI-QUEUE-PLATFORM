@@ -384,7 +384,7 @@ export default function Offices() {
                     icon={Building2}
                     variant="info"
                     title="No offices yet"
-                    description="Create your first office — Bursary, Registry, Library — then add services under it."
+                    description="Create your first office, such as Bursary, Registry, or Library, then add services under it."
                     action={<Button icon={Plus} onClick={openCreate}>Create office</Button>}
                 />
             ) : filtered.length === 0 ? (

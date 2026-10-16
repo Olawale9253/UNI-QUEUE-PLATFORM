@@ -283,7 +283,7 @@ function ProfileSection({ profile, onSaved, onEmailChange }) {
                     <Field
                         label="Matric number"
                         icon={GraduationCap}
-                        hint="Enter this once you receive it — it upgrades your account to full access."
+                        hint="Enter this once you receive it to upgrade your account to full access."
                     >
                         <TextInput
                             value={form.matricNumber}
@@ -521,7 +521,7 @@ function NotificationsSection() {
 
     const pushHint = (() => {
         if (!pushSupported) return 'Not supported on this device'
-        if (pushDenied) return 'Blocked in browser — enable in your site settings'
+        if (pushDenied) return 'Blocked in browser. Enable it in your site settings.'
         if (pushEnabled) return 'Enabled on this device'
         return 'Get alerted even when the app is closed'
     })()

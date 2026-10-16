@@ -23,7 +23,7 @@ import StudentSettings from './student/StudentSettings'
 import { useUniversityStore } from '../store/universityStore'
 
 const ROUTE_SUBTITLES = {
-    '/student': "Skip the line — join a queue from anywhere and get notified when it's your turn.",
+    '/student': "Skip the line. Join a queue from anywhere and get notified when it's your turn.",
     '/student/queues': 'Join a queue, track your position, and manage your tickets.',
     '/student/offices': 'Browse every office and the services it offers.',
     '/student/history': 'Your past queue tickets and how long you waited.',

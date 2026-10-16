@@ -39,7 +39,7 @@ export default function HolidayStrip({ closedDates, className = 'mb-6' }) {
                         Closed today
                     </div>
                     <div className="truncate text-xs text-rose-900 dark:text-rose-200">
-                        {todayReason || 'Public holiday'} — all queues resume next working day
+                        {todayReason || 'Public holiday'}: all queues resume the next working day.
                     </div>
                 </div>
             </div>

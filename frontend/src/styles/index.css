@@ -307,3 +307,33 @@ input:disabled,
 .scrollbar-none::-webkit-scrollbar {
     display: none;
 }
+
+.dashboard-shell {
+    background-color: #f8fafc;
+    background-image: radial-gradient(ellipse at top, rgba(99, 102, 241, 0.055), transparent 42rem);
+}
+
+.dark .dashboard-shell {
+    background-color: #0f172a;
+    background-image: radial-gradient(ellipse at top, rgba(99, 102, 241, 0.09), transparent 42rem);
+}
+
+.dashboard-shell h1,
+.dashboard-shell h2,
+.dashboard-shell h3 {
+    text-shadow: 0 1px 2px rgba(15, 23, 42, 0.1);
+}
+
+.dark .dashboard-shell h1,
+.dark .dashboard-shell h2,
+.dark .dashboard-shell h3 {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+}
+
+.dashboard-shell .rounded-xl.border {
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035), 0 12px 28px -22px rgba(15, 23, 42, 0.32);
+}
+
+.dark .dashboard-shell .rounded-xl.border {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 12px 28px -22px rgba(0, 0, 0, 0.75);
+}

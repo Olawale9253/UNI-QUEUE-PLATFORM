@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -20,6 +21,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
@@ -95,7 +97,6 @@ public class SecurityConfig {
                                 "/api/auth/reset-password",
                                 "/api/auth/verify-email",
                                 "/api/auth/resend-verification",
-                                "/api/auth/universities/lookup",
                                 "/api/auth/refresh",
                                 "/h2-console/**"
                         ).permitAll()
@@ -110,17 +111,48 @@ public class SecurityConfig {
                         // ─── ROLE-SCOPED ───
                         .requestMatchers("/api/super-admin/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
                         .requestMatchers("/api/staff/**").hasRole("STAFF")
                         .requestMatchers("/api/user/**").hasAnyRole("USER", "FRESHER")
                         .requestMatchers("/api/offices/**").hasAnyRole("USER", "FRESHER", "STAFF", "ADMIN")
 
-                        // ─── EVERYTHING ELSE (including POST /api/files/upload) ───
+                        // ─── EVERYTHING ELSE ───
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .headers(headers -> headers.frameOptions(frame -> frame.disable()));
+
+                // ─── SECURITY HEADERS ───
+                .headers(headers -> headers
+                        // X-Content-Type-Options: nosniff — blocks MIME sniffing
+                        .contentTypeOptions(Customizer.withDefaults())
+
+                        // X-Frame-Options: SAMEORIGIN — blocks clickjacking, allows H2 console
+                        .frameOptions(frame -> frame.sameOrigin())
+
+                        // Strict-Transport-Security — force HTTPS for a year
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31_536_000))
+
+                        // Referrer-Policy: no-referrer — never leak URLs to third parties
+                        .referrerPolicy(r -> r.policy(
+                                ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
+
+                        // Content-Security-Policy — the big one. Blocks inline/remote
+                        // script injection on any response the backend serves.
+                        .contentSecurityPolicy(csp -> csp.policyDirectives(
+                                "default-src 'none'; " +
+                                        "script-src 'self'; " +
+                                        "style-src 'self' 'unsafe-inline'; " +
+                                        "img-src 'self' data:; " +
+                                        "connect-src 'self'; " +
+                                        "font-src 'self'; " +
+                                        "object-src 'none'; " +
+                                        "base-uri 'none'; " +
+                                        "form-action 'self'; " +
+                                        "frame-ancestors 'self'"
+                        ))
+                );
 
         return http.build();
     }

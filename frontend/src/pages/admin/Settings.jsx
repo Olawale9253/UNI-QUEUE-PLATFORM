@@ -14,19 +14,19 @@ import { useToastStore } from '../../store/toastStore'
 import { useUniversityStore } from '../../store/universityStore'
 
 const VERIFICATION_MODES = [
-    { value: 'PATTERN', label: 'Pattern only',   hint: 'Fast — validates format only' },
+    { value: 'PATTERN', label: 'Pattern only',   hint: 'Fast. Validates format only.' },
     { value: 'LIST',    label: 'Admission list', hint: 'Matches against uploaded list' },
-    { value: 'BOTH',    label: 'Both',           hint: 'Strongest — pattern + list match' },
+    { value: 'BOTH',    label: 'Both',           hint: 'Strongest. Checks the pattern and student list.' },
 ]
 
 const TIMEZONES = [
-    { value: 'Africa/Lagos', label: 'Africa/Lagos (WAT — Nigeria)' },
-    { value: 'Africa/Accra', label: 'Africa/Accra (GMT — Ghana)' },
-    { value: 'Africa/Nairobi', label: 'Africa/Nairobi (EAT — Kenya)' },
-    { value: 'Africa/Johannesburg', label: 'Africa/Johannesburg (SAST — South Africa)' },
-    { value: 'Africa/Cairo', label: 'Africa/Cairo (EET — Egypt)' },
-    { value: 'Africa/Casablanca', label: 'Africa/Casablanca (WEST — Morocco)' },
-    { value: 'Europe/London', label: 'Europe/London (GMT/BST — UK)' },
+    { value: 'Africa/Lagos', label: 'Africa/Lagos (WAT, Nigeria)' },
+    { value: 'Africa/Accra', label: 'Africa/Accra (GMT, Ghana)' },
+    { value: 'Africa/Nairobi', label: 'Africa/Nairobi (EAT, Kenya)' },
+    { value: 'Africa/Johannesburg', label: 'Africa/Johannesburg (SAST, South Africa)' },
+    { value: 'Africa/Cairo', label: 'Africa/Cairo (EET, Egypt)' },
+    { value: 'Africa/Casablanca', label: 'Africa/Casablanca (WEST, Morocco)' },
+    { value: 'Europe/London', label: 'Europe/London (GMT/BST, UK)' },
     { value: 'UTC', label: 'UTC' },
 ]
 
@@ -305,7 +305,7 @@ export default function Settings() {
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
                             {[
                                 { v: 'OPEN',    label: 'Open',    hint: 'Auto-verify everyone' },
-                                { v: 'PATTERN', label: 'Pattern', hint: 'Regex only — queue for review' },
+                                { v: 'PATTERN', label: 'Pattern', hint: 'Regex only. Queue for review.' },
                                 { v: 'LIST',    label: 'Registry',hint: 'Must match uploaded list' },
                                 { v: 'BOTH',    label: 'Both',    hint: 'Regex + registry match' },
                             ].map((verificationOption) => (

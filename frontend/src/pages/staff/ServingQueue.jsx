@@ -106,7 +106,7 @@ function describeEmptyQueue(queue, tickets) {
             : `${queue.name} is closed for the day.`
     }
     if (serving) {
-        return `${queue.name} has no one waiting — ${serving.ticketNumber} is currently being served.`
+        return `${queue.name} has no one waiting. ${serving.ticketNumber} is currently being served.`
     }
     if (waiting === 0) {
         return `No one is waiting in ${queue.name}. New students will appear here as they join.`
@@ -691,7 +691,7 @@ export default function ServingQueue() {
 
                             {waiting.length > 0 && isClosed && (
                                 <p className="mt-5 text-xs text-amber-700 dark:text-amber-400">
-                                    Service is closed — Call Next is disabled.
+                                    Service is closed. Call Next is disabled.
                                 </p>
                             )}
                         </motion.div>

@@ -313,7 +313,7 @@ export default function Queues() {
             } else {
                 push({
                     type: 'warning',
-                    message: `${succeeded} succeeded, ${failed} failed — ${result.failed[0]?.reason || 'see logs'}`,
+                    message: `${succeeded} succeeded, ${failed} failed. ${result.failed[0]?.reason || 'See logs for details.'}`,
                 })
             }
 
@@ -537,7 +537,7 @@ export default function Queues() {
                                         </select>
                                         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                             {offices.length === 0
-                                                ? 'No offices yet — create one first.'
+                                                ? 'No offices yet. Create one first.'
                                                 : 'Students see services grouped by office.'}
                                         </p>
                                     </div>
@@ -622,7 +622,7 @@ export default function Queues() {
 
                                     {(!form.operatingDays || form.operatingDays.length === 0) && (
                                         <p className="mt-2 text-xs font-medium text-rose-600 dark:text-rose-400">
-                                            Pick at least one day — otherwise students can never join.
+                                            Pick at least one day. Otherwise, students cannot join.
                                         </p>
                                     )}
                                 </div>
@@ -725,7 +725,7 @@ export default function Queues() {
                     icon={LayoutGrid}
                     variant="info"
                     title="No services yet"
-                    description="Create your first service — students will see it grouped under its office."
+                    description="Create your first service. Students will see it grouped under its office."
                     action={<Button icon={Plus} onClick={() => openCreate()}>Create service</Button>}
                 />
             ) : filteredQueues.length === 0 ? (

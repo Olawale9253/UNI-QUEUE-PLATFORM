@@ -217,7 +217,7 @@ function VerifyStep({ request, onSuccess, onBack, onResent }) {
                         </div>
                         <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                             {expired
-                                ? 'Code has expired — request a new one below.'
+                                ? 'Code has expired. Request a new one below.'
                                 : `Expires in ${mm}:${ss}`}
                         </div>
                     </div>

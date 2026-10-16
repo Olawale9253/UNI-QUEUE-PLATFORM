@@ -25,7 +25,7 @@ public class TestFixtures {
     private final PasswordEncoder passwordEncoder;
 
     public Fixture build() {
-        University uni = universityRepository.save(University.builder()
+        University university = universityRepository.save(University.builder()
                 .name("Test University")
                 .code("TESTUNI")
                 .emailDomain("@testuni.edu")
@@ -33,14 +33,14 @@ public class TestFixtures {
                 .build());
 
         Office office = officeRepository.save(Office.builder()
-                .university(uni)
+                .university(university)
                 .name("Bursary")
                 .location("Main Campus")
                 .isActive(true)
                 .build());
 
-        Queue pay = queueRepository.save(Queue.builder()
-                .university(uni)
+        Queue paymentQueue = queueRepository.save(Queue.builder()
+                .university(university)
                 .office(office)
                 .name("Payment Clearance")
                 .opensAt(LocalTime.of(0, 0))
@@ -55,8 +55,8 @@ public class TestFixtures {
                 .isActive(true)
                 .build());
 
-        Queue reg = queueRepository.save(Queue.builder()
-                .university(uni)
+        Queue registrationQueue = queueRepository.save(Queue.builder()
+                .university(university)
                 .office(office)
                 .name("Department Registration")
                 .opensAt(LocalTime.of(0, 0))
@@ -76,7 +76,7 @@ public class TestFixtures {
                 .password(passwordEncoder.encode(PASSWORD))
                 .fullName("Test Admin")
                 .role(Role.ADMIN)
-                .university(uni)
+                .university(university)
                 .isActive(true)
                 .isVerified(true)
                 .build());
@@ -86,7 +86,7 @@ public class TestFixtures {
                 .password(passwordEncoder.encode(PASSWORD))
                 .fullName("Test Staff")
                 .role(Role.STAFF)
-                .university(uni)
+                .university(university)
                 .isActive(true)
                 .isVerified(true)
                 .build());
@@ -96,58 +96,58 @@ public class TestFixtures {
                 .password(passwordEncoder.encode(PASSWORD))
                 .fullName("Test Student")
                 .role(Role.USER)
-                .university(uni)
+                .university(university)
                 .isActive(true)
                 .isVerified(true)
                 .build());
 
-        queueStaffRepository.save(QueueStaff.builder().queue(pay).user(staff).build());
-        queueStaffRepository.save(QueueStaff.builder().queue(reg).user(staff).build());
+        queueStaffRepository.save(QueueStaff.builder().queue(paymentQueue).user(staff).build());
+        queueStaffRepository.save(QueueStaff.builder().queue(registrationQueue).user(staff).build());
 
-        return new Fixture(uni, office, pay, reg, admin, staff, student);
+        return new Fixture(university, office, paymentQueue, registrationQueue, admin, staff, student);
     }
 
     /**
      * Builds on {@link #build()} and adds a 2-step workflow:
-     *   step 1 = Bursary Payment (pay queue)
-     *   step 2 = Department Registration (reg queue)
+     *   step 1 = Bursary Payment (payment queue)
+     *   step 2 = Department Registration (registration queue)
      */
     public WorkflowFixture buildWithWorkflow() {
-        Fixture base = build();
+        Fixture fixture = build();
 
-        Workflow wf = workflowRepository.save(Workflow.builder()
-                .university(base.university())
+        Workflow workflow = workflowRepository.save(Workflow.builder()
+                .university(fixture.university())
                 .name("Fresher Clearance")
                 .description("Two-step fresher clearance")
                 .session("2026/2027")
                 .isActive(true)
-                .createdBy(base.admin())
+                .createdBy(fixture.admin())
                 .build());
 
-        WorkflowStep step1 = workflowStepRepository.save(WorkflowStep.builder()
-                .workflow(wf)
-                .queue(base.payQueue())
+        WorkflowStep firstStep = workflowStepRepository.save(WorkflowStep.builder()
+                .workflow(workflow)
+                .queue(fixture.paymentQueue())
                 .stepOrder(1)
                 .label("Bursary Payment")
                 .isRequired(true)
                 .build());
 
-        WorkflowStep step2 = workflowStepRepository.save(WorkflowStep.builder()
-                .workflow(wf)
-                .queue(base.regQueue())
+        WorkflowStep secondStep = workflowStepRepository.save(WorkflowStep.builder()
+                .workflow(workflow)
+                .queue(fixture.registrationQueue())
                 .stepOrder(2)
                 .label("Department Registration")
                 .isRequired(true)
                 .build());
 
-        return new WorkflowFixture(base, wf, step1, step2);
+        return new WorkflowFixture(fixture, workflow, firstStep, secondStep);
     }
 
     public record Fixture(
             University university,
             Office office,
-            Queue payQueue,
-            Queue regQueue,
+            Queue paymentQueue,
+            Queue registrationQueue,
             User admin,
             User staff,
             User student
@@ -156,7 +156,7 @@ public class TestFixtures {
     public record WorkflowFixture(
             Fixture base,
             Workflow workflow,
-            WorkflowStep step1,
-            WorkflowStep step2
+            WorkflowStep firstStep,
+            WorkflowStep secondStep
     ) {}
 }

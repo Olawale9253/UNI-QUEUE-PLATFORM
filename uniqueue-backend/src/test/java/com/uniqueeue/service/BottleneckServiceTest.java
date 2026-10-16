@@ -40,10 +40,10 @@ class BottleneckServiceTest {
         // Clear the cooldown map so tests don't interfere with each other
         tracker.reset();
 
-        TestFixtures.WorkflowFixture wf = fixtures.buildWithWorkflow();
-        university = wf.base().university();
-        workflow = wf.workflow();
-        studentId = wf.base().student().getId();
+        TestFixtures.WorkflowFixture workflowFixture = fixtures.buildWithWorkflow();
+        university = workflowFixture.base().university();
+        workflow = workflowFixture.workflow();
+        studentId = workflowFixture.base().student().getId();
 
         // Low thresholds so a single enrollment triggers detection
         props.setMinAvgHours(0);

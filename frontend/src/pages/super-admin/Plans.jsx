@@ -85,7 +85,7 @@ export default function Plans() {
                 <div>
                     <p className="font-medium">How pricing works</p>
                     <p className="mt-1 text-xs text-sky-800">
-                        Prices are for display only — billing integration comes later. When you change
+                        Prices are for display only. Billing integration will be added later. When you change
                         a plan's limits, universities currently on that plan keep their existing
                         limits until you re-save their plan on the Tiers tab. Use the limits below as
                         the source of truth for new plan assignments.

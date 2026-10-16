@@ -409,7 +409,7 @@ export default function AppointmentsTab() {
                                         <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                                         <span>
                       No slots published yet for <strong>{selectedService.name}</strong>.
-                      Check back soon — staff publish new slots regularly.
+                      Check back soon. Staff publish new slots regularly.
                     </span>
                                     </div>
                                 )}
@@ -451,7 +451,7 @@ export default function AppointmentsTab() {
                                             <option value="">Select Time</option>
                                             {timeSlots.map((timeSlot) => (
                                                 <option key={timeSlot.id} value={timeSlot.id}>
-                                                    {formatTimeOnly(timeSlot.startTime)} — {timeSlot.remaining} left
+                                                    {formatTimeOnly(timeSlot.startTime)} ({timeSlot.remaining} available)
                                                 </option>
                                             ))}
                                         </select>

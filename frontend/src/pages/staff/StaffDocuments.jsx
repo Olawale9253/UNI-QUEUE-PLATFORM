@@ -177,7 +177,7 @@ export default function StaffDocuments() {
                     title={`No ${filter.toLowerCase()} documents`}
                     description={
                         filter === 'PENDING'
-                            ? "You're all caught up — nothing to review right now."
+                            ? "You're all caught up. Nothing to review right now."
                             : `No ${filter.toLowerCase()} documents yet.`
                     }
                 />

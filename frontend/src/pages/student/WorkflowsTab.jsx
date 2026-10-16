@@ -135,7 +135,7 @@ export default function WorkflowsTab() {
                     Clearance Workflows
                 </h2>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Multi-step clearance chains. Complete each step in order — you can only join
+                    Multi-step clearance chains. Complete each step in order. You can only join
                     the current step's queue.
                 </p>
             </div>

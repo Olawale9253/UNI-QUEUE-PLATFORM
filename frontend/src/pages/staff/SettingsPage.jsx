@@ -101,7 +101,7 @@ export default function SettingsPage() {
     const pushDescription = (() => {
         if (!webPush.supported) return 'Your browser does not support push notifications.'
         if (webPush.permission === 'denied') return 'Blocked. Enable notifications in your browser settings and reload.'
-        if (webPush.subscription) return 'Active — you\'ll get real OS popups even when this tab is closed.'
+        if (webPush.subscription) return 'Active. You will get system notifications even when this tab is closed.'
         return 'Allow your phone or desktop to alert you when something happens.'
     })()
 
@@ -227,7 +227,7 @@ export default function SettingsPage() {
                                                         eventValue4.preventDefault()
                                                         eventValue4.stopPropagation()
                                                         webPush.sendTest()
-                                                            .then(() => push({ type: 'success', message: 'Test push sent — check your device' }))
+                                                            .then(() => push({ type: 'success', message: 'Test notification sent. Check your device.' }))
                                                             .catch(() => push({ type: 'error', message: 'Failed to send test push' }))
                                                     }}
                                                     className="text-[11px] font-medium text-brand-600 hover:underline dark:text-brand-400"

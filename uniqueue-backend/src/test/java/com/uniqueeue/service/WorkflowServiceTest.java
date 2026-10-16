@@ -37,20 +37,20 @@ class WorkflowServiceTest {
 
     private User student;
     private Workflow workflow;
-    private WorkflowStep step1;
-    private WorkflowStep step2;
-    private Queue payQueue;
-    private Queue regQueue;
+    private WorkflowStep firstStep;
+    private WorkflowStep secondStep;
+    private Queue paymentQueue;
+    private Queue registrationQueue;
 
     @BeforeEach
     void setup() {
-        TestFixtures.WorkflowFixture wf = fixtures.buildWithWorkflow();
-        student = wf.base().student();
-        workflow = wf.workflow();
-        step1 = wf.step1();
-        step2 = wf.step2();
-        payQueue = wf.base().payQueue();
-        regQueue = wf.base().regQueue();
+        TestFixtures.WorkflowFixture workflowFixture = fixtures.buildWithWorkflow();
+        student = workflowFixture.base().student();
+        workflow = workflowFixture.workflow();
+        firstStep = workflowFixture.firstStep();
+        secondStep = workflowFixture.secondStep();
+        paymentQueue = workflowFixture.base().paymentQueue();
+        registrationQueue = workflowFixture.base().registrationQueue();
     }
 
     // ─── START ────────────────────────────────────────────────
@@ -79,9 +79,9 @@ class WorkflowServiceTest {
                 .findByStudentWorkflowIdOrderByWorkflowStepStepOrderAsc(sw.getId());
 
         assertThat(tracking).hasSize(2);
-        assertThat(tracking.get(0).getWorkflowStep().getId()).isEqualTo(step1.getId());
+        assertThat(tracking.get(0).getWorkflowStep().getId()).isEqualTo(firstStep.getId());
         assertThat(tracking.get(0).getStatus()).isEqualTo(StepStatus.IN_PROGRESS);
-        assertThat(tracking.get(1).getWorkflowStep().getId()).isEqualTo(step2.getId());
+        assertThat(tracking.get(1).getWorkflowStep().getId()).isEqualTo(secondStep.getId());
         assertThat(tracking.get(1).getStatus()).isEqualTo(StepStatus.PENDING);
     }
 
@@ -99,7 +99,7 @@ class WorkflowServiceTest {
     @Test
     @DisplayName("autoEnrollOnQueueJoin enrolls when the joined queue is the first step")
     void autoEnroll_firstStep_enrolls() {
-        workflowService.autoEnrollOnQueueJoin(student.getId(), payQueue.getId());
+        workflowService.autoEnrollOnQueueJoin(student.getId(), paymentQueue.getId());
 
         Optional<StudentWorkflow> sw = studentWorkflowRepository
                 .findByStudentIdAndWorkflowId(student.getId(), workflow.getId());
@@ -111,7 +111,7 @@ class WorkflowServiceTest {
     @Test
     @DisplayName("autoEnrollOnQueueJoin skips when the joined queue is not the first step")
     void autoEnroll_nonFirstStep_doesNothing() {
-        workflowService.autoEnrollOnQueueJoin(student.getId(), regQueue.getId());
+        workflowService.autoEnrollOnQueueJoin(student.getId(), registrationQueue.getId());
 
         Optional<StudentWorkflow> sw = studentWorkflowRepository
                 .findByStudentIdAndWorkflowId(student.getId(), workflow.getId());
@@ -126,15 +126,15 @@ class WorkflowServiceTest {
     void getMyProgress_freshStart() {
         workflowService.start(student.getId(), workflow.getId());
 
-        WorkflowProgressResponse res = workflowService.getMyProgress(student.getId());
+        WorkflowProgressResponse progressResponse = workflowService.getMyProgress(student.getId());
 
-        assertThat(res.getWorkflowName()).isEqualTo("Fresher Clearance");
-        assertThat(res.getTotalSteps()).isEqualTo(2);
-        assertThat(res.getCompletedSteps()).isEqualTo(0);
-        assertThat(res.getProgressPercent()).isEqualTo(0);
-        assertThat(res.getCurrentStepOrder()).isEqualTo(1);
-        assertThat(res.getNextAction()).isNotNull();
-        assertThat(res.getNextAction().getQueueId()).isEqualTo(payQueue.getId());
+        assertThat(progressResponse.getWorkflowName()).isEqualTo("Fresher Clearance");
+        assertThat(progressResponse.getTotalSteps()).isEqualTo(2);
+        assertThat(progressResponse.getCompletedSteps()).isEqualTo(0);
+        assertThat(progressResponse.getProgressPercent()).isEqualTo(0);
+        assertThat(progressResponse.getCurrentStepOrder()).isEqualTo(1);
+        assertThat(progressResponse.getNextAction()).isNotNull();
+        assertThat(progressResponse.getNextAction().getQueueId()).isEqualTo(paymentQueue.getId());
     }
 
     @Test
@@ -152,7 +152,7 @@ class WorkflowServiceTest {
         workflowService.start(student.getId(), workflow.getId());
 
         // No exception expected
-        workflowService.assertCanJoinQueue(student.getId(), payQueue.getId());
+        workflowService.assertCanJoinQueue(student.getId(), paymentQueue.getId());
     }
 
     @Test
@@ -161,7 +161,7 @@ class WorkflowServiceTest {
         workflowService.start(student.getId(), workflow.getId());
 
         assertThatThrownBy(() ->
-                workflowService.assertCanJoinQueue(student.getId(), regQueue.getId()))
+                workflowService.assertCanJoinQueue(student.getId(), registrationQueue.getId()))
                 .hasMessageContaining("must complete step");
     }
 }

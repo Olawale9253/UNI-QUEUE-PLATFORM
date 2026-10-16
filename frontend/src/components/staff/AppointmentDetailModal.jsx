@@ -248,7 +248,7 @@ export default function AppointmentDetailModal({ appointment, onClose, onUpdated
                                 value={staffNotes}
                                 onChange={(eventValue) => setStaffNotes(eventValue.target.value)}
                                 disabled={!!acting}
-                                placeholder="Add notes for the record — e.g. outcome of the meeting, follow-ups needed…"
+                                placeholder="Add notes for the record, such as the meeting outcome or any follow-up needed"
                                 className="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                             />
                         </div>

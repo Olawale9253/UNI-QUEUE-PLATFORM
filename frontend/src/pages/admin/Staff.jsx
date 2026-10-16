@@ -235,7 +235,7 @@ export default function Staff() {
             } else {
                 push({
                     type: 'warning',
-                    message: `${succeeded} removed, ${failed} failed — ${result.failed[0]?.reason || 'see logs'}`,
+                    message: `${succeeded} removed, ${failed} failed. ${result.failed[0]?.reason || 'See logs for details.'}`,
                 })
             }
 
@@ -577,7 +577,7 @@ export default function Staff() {
                 onClose={() => !bulkBusy && setBulkConfirm(false)}
                 onConfirm={handleBulkRemove}
                 title={`Remove ${selectedIds.size} staff member${selectedIds.size === 1 ? '' : 's'} from all queues?`}
-                description="Each selected staff member will be removed from every queue they're currently assigned to. Their accounts stay active — you can reassign them anytime."
+                description="Each selected staff member will be removed from every queue they're currently assigned to. Their accounts stay active, and you can reassign them anytime."
                 confirmLabel="Remove from all queues"
                 cancelLabel="Cancel"
                 variant="danger"

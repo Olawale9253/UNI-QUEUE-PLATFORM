@@ -78,13 +78,13 @@ export default function DashboardLayout({ tabs, title, description, action, chil
     }
 
     return (
-        <div className="flex w-full">
+        <div className="dashboard-shell flex min-h-[calc(100vh-4rem)] w-full">
             <aside
-                className={`sticky top-16 hidden h-[calc(100vh-4rem)] shrink-0 self-start border-r border-slate-200 bg-white transition-[width] duration-300 ease-out md:flex md:flex-col dark:border-slate-800 dark:bg-slate-900 ${
+                className={`sticky top-16 hidden h-[calc(100vh-4rem)] shrink-0 self-start border-r border-slate-200 bg-white/90 shadow-sm transition-[width] duration-300 ease-out md:flex md:flex-col dark:border-slate-800 dark:bg-slate-900/90 ${
                     sidebarCollapsed ? 'w-16' : 'w-56'
                 }`}
             >
-                <nav className="flex-1 overflow-y-auto px-2 py-3">
+                <nav className="flex-1 overflow-y-auto px-2 py-4">
                     {!sidebarCollapsed && (
                         <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                             Menu
@@ -168,7 +168,7 @@ export default function DashboardLayout({ tabs, title, description, action, chil
             </AnimatePresence>
 
             <main className="min-w-0 flex-1">
-                <div className="w-full px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+                <div className="mx-auto w-full max-w-[1680px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
                     {title && (
                         <PageHeader title={title} description={description} action={action} />
                     )}

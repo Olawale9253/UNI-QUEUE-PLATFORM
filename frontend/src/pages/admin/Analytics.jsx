@@ -274,7 +274,7 @@ export default function Analytics() {
                     <div>
                         <h3 className="text-base font-semibold text-slate-900">Activity trend</h3>
                         <p className="mt-0.5 text-xs text-slate-500">
-                            Tickets joined, completed, and new users — last 14 days
+                            Tickets joined, completed, and new users over the last 14 days
                         </p>
                     </div>
                     <div className="flex items-center gap-3 text-xs">
@@ -514,7 +514,7 @@ export default function Analytics() {
                     <div className="border-b border-slate-100 px-6 py-4">
                         <h3 className="text-sm font-semibold text-slate-900">Department summary</h3>
                         <p className="mt-0.5 text-xs text-slate-500">
-                            Rolled up by department — past 14 days.
+                            Rolled up by department over the past 14 days.
                         </p>
                     </div>
                     <div className="overflow-x-auto">

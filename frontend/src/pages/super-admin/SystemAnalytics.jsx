@@ -234,7 +234,7 @@ export default function SystemAnalytics() {
                             Platform activity
                         </h3>
                         <p className="mt-0.5 text-xs text-slate-500">
-                            Tickets joined, completed, and new users — last 14 days
+                            Tickets joined, completed, and new users over the last 14 days
                         </p>
                     </div>
                     <div className="flex items-center gap-3 text-xs">
@@ -484,7 +484,7 @@ export default function SystemAnalytics() {
                 <Card padded={false}>
                     <div className="border-b border-slate-100 px-6 py-4">
                         <h3 className="text-sm font-semibold text-slate-900">
-                            All universities — detailed breakdown
+                            Detailed breakdown across all universities
                         </h3>
                     </div>
                     <div className="overflow-x-auto">

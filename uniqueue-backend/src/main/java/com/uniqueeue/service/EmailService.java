@@ -37,11 +37,13 @@ public class EmailService {
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
     // ============================================================
-    //  Low-level send
+    //  Low-level send — runs inside the caller's async thread.
+    //  Not annotated @Async itself: annotating it would be a no-op
+    //  for self-invocations (Spring proxies don't intercept same-class
+    //  method calls). The public methods below carry @Async instead.
     // ============================================================
 
-    @Async
-    public void sendHtml(String to, String subject, String htmlBody) {
+    private void sendHtml(String to, String subject, String htmlBody) {
         if (to == null || to.isBlank()) return;
 
         if (!emailEnabled) {
@@ -64,8 +66,8 @@ public class EmailService {
 
             mailSender.send(message);
             log.info("📧 Sent email to {} · {}", to, subject);
-        } catch (Exception exceptionValue7) {
-            log.error("📧 Failed to send email to {} — {}", to, exceptionValue7.getMessage());
+        } catch (Exception ex) {
+            log.error("📧 Failed to send email to {} — {}", to, ex.getMessage());
         }
     }
 
@@ -79,196 +81,235 @@ public class EmailService {
     }
 
     // ============================================================
-    //  Domain templates
+    //  Ticket notifications — all @Async so nothing blocks the request
     // ============================================================
 
+    @Async
     public void sendTicketCalled(User user, Ticket ticket, Queue queue) {
-        if (user == null || ticket == null) return;
-        if (!wantsTicketEmails(user)) {
-            log.debug("Skipping ticket-called email — user {} disabled ticket emails", user.getId());
-            return;
+        try {
+            if (user == null || ticket == null) return;
+            if (!wantsTicketEmails(user)) {
+                log.debug("Skipping ticket-called email — user {} disabled ticket emails", user.getId());
+                return;
+            }
+
+            String subject = "🎫 It's your turn — Ticket " + ticket.getTicketNumber();
+
+            String html = wrap(
+                    user,
+                    queue,
+                    "It's your turn",
+                    "Hi " + firstName(user) + ",<br><br>" +
+                            "Your ticket is being called at <strong>" + escape(queue.getName()) + "</strong>. " +
+                            "Please head to the service desk now.",
+                    calloutBlock(
+                            "Ticket number",
+                            ticket.getTicketNumber(),
+                            queue.getLocation() != null
+                                    ? "Location: " + queue.getLocation()
+                                    : null
+                    ),
+                    "Open my queue",
+                    baseUrl + "/student/queues"
+            );
+
+            sendHtml(user.getEmail(), subject, html);
+        } catch (Exception ex) {
+            log.error("sendTicketCalled failed: {}", ex.getMessage());
         }
-
-        String subject = "🎫 It's your turn — Ticket " + ticket.getTicketNumber();
-
-        String html = wrap(
-                user,
-                queue,
-                "It's your turn",
-                "Hi " + firstName(user) + ",<br><br>" +
-                        "Your ticket is being called at <strong>" + escape(queue.getName()) + "</strong>. " +
-                        "Please head to the service desk now.",
-                calloutBlock(
-                        "Ticket number",
-                        ticket.getTicketNumber(),
-                        queue.getLocation() != null
-                                ? "Location: " + queue.getLocation()
-                                : null
-                ),
-                "Open my queue",
-                baseUrl + "/student/queues"
-        );
-
-        sendHtml(user.getEmail(), subject, html);
     }
 
+    @Async
     public void sendTicketCompleted(User user, Ticket ticket, Queue queue) {
-        if (user == null || ticket == null) return;
-        if (!wantsTicketEmails(user)) {
-            log.debug("Skipping ticket-completed email — user {} disabled ticket emails", user.getId());
-            return;
+        try {
+            if (user == null || ticket == null) return;
+            if (!wantsTicketEmails(user)) {
+                log.debug("Skipping ticket-completed email — user {} disabled ticket emails", user.getId());
+                return;
+            }
+
+            String subject = "✅ Service complete — Ticket " + ticket.getTicketNumber();
+
+            String html = wrap(
+                    user,
+                    queue,
+                    "All done",
+                    "Hi " + firstName(user) + ",<br><br>" +
+                            "Your service at <strong>" + escape(queue.getName()) + "</strong> is complete. " +
+                            "If you have a moment, please rate your experience.",
+                    null,
+                    "Rate your experience",
+                    baseUrl + "/student/history"
+            );
+
+            sendHtml(user.getEmail(), subject, html);
+        } catch (Exception ex) {
+            log.error("sendTicketCompleted failed: {}", ex.getMessage());
         }
-
-        String subject = "✅ Service complete — Ticket " + ticket.getTicketNumber();
-
-        String html = wrap(
-                user,
-                queue,
-                "All done",
-                "Hi " + firstName(user) + ",<br><br>" +
-                        "Your service at <strong>" + escape(queue.getName()) + "</strong> is complete. " +
-                        "If you have a moment, please rate your experience.",
-                null,
-                "Rate your experience",
-                baseUrl + "/student/history"
-        );
-
-        sendHtml(user.getEmail(), subject, html);
     }
 
+    @Async
     public void sendTicketNoShow(User user, Ticket ticket, Queue queue) {
-        if (user == null || ticket == null) return;
-        if (!wantsTicketEmails(user)) {
-            log.debug("Skipping ticket-no-show email — user {} disabled ticket emails", user.getId());
-            return;
+        try {
+            if (user == null || ticket == null) return;
+            if (!wantsTicketEmails(user)) {
+                log.debug("Skipping ticket-no-show email — user {} disabled ticket emails", user.getId());
+                return;
+            }
+
+            String subject = "⚠️ You missed your turn — Ticket " + ticket.getTicketNumber();
+
+            String html = wrap(
+                    user,
+                    queue,
+                    "You missed your turn",
+                    "Hi " + firstName(user) + ",<br><br>" +
+                            "Your ticket <strong>" + escape(ticket.getTicketNumber()) + "</strong> was marked as no-show " +
+                            "because it wasn't served in time. You can join the queue again whenever you're ready.",
+                    null,
+                    "Rejoin the queue",
+                    baseUrl + "/student/queues"
+            );
+
+            sendHtml(user.getEmail(), subject, html);
+        } catch (Exception ex) {
+            log.error("sendTicketNoShow failed: {}", ex.getMessage());
         }
-
-        String subject = "⚠️ You missed your turn — Ticket " + ticket.getTicketNumber();
-
-        String html = wrap(
-                user,
-                queue,
-                "You missed your turn",
-                "Hi " + firstName(user) + ",<br><br>" +
-                        "Your ticket <strong>" + escape(ticket.getTicketNumber()) + "</strong> was marked as no-show " +
-                        "because it wasn't served in time. You can join the queue again whenever you're ready.",
-                null,
-                "Rejoin the queue",
-                baseUrl + "/student/queues"
-        );
-
-        sendHtml(user.getEmail(), subject, html);
     }
 
+    @Async
     public void sendQueueClosed(User user, Ticket ticket, Queue queue) {
-        if (user == null || ticket == null) return;
-        if (!wantsTicketEmails(user)) {
-            log.debug("Skipping queue-closed email — user {} disabled ticket emails", user.getId());
-            return;
+        try {
+            if (user == null || ticket == null) return;
+            if (!wantsTicketEmails(user)) {
+                log.debug("Skipping queue-closed email — user {} disabled ticket emails", user.getId());
+                return;
+            }
+
+            String subject = "🔒 Queue closed — Ticket " + ticket.getTicketNumber();
+
+            String html = wrap(
+                    user,
+                    queue,
+                    "The queue has closed",
+                    "Hi " + firstName(user) + ",<br><br>" +
+                            "<strong>" + escape(queue.getName()) + "</strong> closed for the day, " +
+                            "so your waiting ticket was cancelled. You can rejoin when it reopens.",
+                    null,
+                    "Browse services",
+                    baseUrl + "/student/queues"
+            );
+
+            sendHtml(user.getEmail(), subject, html);
+        } catch (Exception ex) {
+            log.error("sendQueueClosed failed: {}", ex.getMessage());
         }
-
-        String subject = "🔒 Queue closed — Ticket " + ticket.getTicketNumber();
-
-        String html = wrap(
-                user,
-                queue,
-                "The queue has closed",
-                "Hi " + firstName(user) + ",<br><br>" +
-                        "<strong>" + escape(queue.getName()) + "</strong> closed for the day, " +
-                        "so your waiting ticket was cancelled. You can rejoin when it reopens.",
-                null,
-                "Browse services",
-                baseUrl + "/student/queues"
-        );
-
-        sendHtml(user.getEmail(), subject, html);
     }
 
-    /** Transactional — always sends regardless of prefs. */
+    // ============================================================
+    //  Transactional emails — @Async so registration returns instantly
+    // ============================================================
+
+    /** @Async — returns immediately; SMTP happens in the background. */
+    @Async
     public void sendVerificationCode(User user, String code) {
-        if (user == null) return;
+        try {
+            if (user == null) return;
 
-        String subject = "Your UniQueue verification code";
+            String subject = "Your UniQueue verification code";
 
-        String html = wrap(
-                user,
-                null,
-                "Verify your email",
-                "Hi " + firstName(user) + ",<br><br>" +
-                        "Enter this 6-digit code to activate your UniQueue account. " +
-                        "It expires in 24 hours.",
-                codeBlock(code),
-                null,
-                null
-        );
+            String html = wrap(
+                    user,
+                    null,
+                    "Verify your email",
+                    "Hi " + firstName(user) + ",<br><br>" +
+                            "Enter this 6-digit code to activate your UniQueue account. " +
+                            "It expires in 24 hours.",
+                    codeBlock(code),
+                    null,
+                    null
+            );
 
-        sendHtml(user.getEmail(), subject, html);
+            sendHtml(user.getEmail(), subject, html);
+        } catch (Exception ex) {
+            log.error("sendVerificationCode failed: {}", ex.getMessage());
+        }
     }
 
-    /** Transactional — always sends regardless of prefs. */
+    /** @Async — returns immediately; SMTP happens in the background. */
+    @Async
     public void sendPasswordReset(User user, String token) {
-        if (user == null) return;
+        try {
+            if (user == null) return;
 
-        String resetUrl = baseUrl + "/reset-password?token=" + token;
-        String subject = "Reset your UniQueue password";
+            String resetUrl = baseUrl + "/reset-password?token=" + token;
+            String subject = "Reset your UniQueue password";
 
-        String html = wrap(
-                user,
-                null,
-                "Reset your password",
-                "Hi " + firstName(user) + ",<br><br>" +
-                        "We received a request to reset your password. Click the button below to choose a new one. " +
-                        "This link expires in 30 minutes. If you didn't request it, you can ignore this email.",
-                null,
-                "Reset password",
-                resetUrl
-        );
+            String html = wrap(
+                    user,
+                    null,
+                    "Reset your password",
+                    "Hi " + firstName(user) + ",<br><br>" +
+                            "We received a request to reset your password. Click the button below to choose a new one. " +
+                            "This link expires in 30 minutes. If you didn't request it, you can ignore this email.",
+                    null,
+                    "Reset password",
+                    resetUrl
+            );
 
-        sendHtml(user.getEmail(), subject, html);
+            sendHtml(user.getEmail(), subject, html);
+        } catch (Exception ex) {
+            log.error("sendPasswordReset failed: {}", ex.getMessage());
+        }
     }
 
-    /** Admin-facing — always sends regardless of prefs. */
+    /** Admin-facing — @Async so bottleneck scans don't block the scheduler. */
+    @Async
     public void sendBottleneckAlert(
             User admin,
             WorkflowAnalyticsResponse analytics,
             WorkflowAnalyticsResponse.StepAnalytics step) {
 
-        if (admin == null || analytics == null || step == null) return;
+        try {
+            if (admin == null || analytics == null || step == null) return;
 
-        String workflowName = analytics.getWorkflowName() != null
-                ? analytics.getWorkflowName()
-                : "Workflow";
+            String workflowName = analytics.getWorkflowName() != null
+                    ? analytics.getWorkflowName()
+                    : "Workflow";
 
-        String subject = "⚠️ Bottleneck alert — " + workflowName;
+            String subject = "⚠️ Bottleneck alert — " + workflowName;
 
-        String stepLabel = step.getLabel() != null && !step.getLabel().isBlank()
-                ? step.getLabel()
-                : (step.getQueueName() != null ? step.getQueueName() : "Step " + step.getOrder());
+            String stepLabel = step.getLabel() != null && !step.getLabel().isBlank()
+                    ? step.getLabel()
+                    : (step.getQueueName() != null ? step.getQueueName() : "Step " + step.getOrder());
 
-        String body = "Hi " + firstName(admin) + ",<br><br>" +
-                "We detected a bottleneck in <strong>" + escape(workflowName) + "</strong>. " +
-                "Students are spending significantly longer than usual at one step, " +
-                "and a growing number are currently waiting there.";
+            String body = "Hi " + firstName(admin) + ",<br><br>" +
+                    "We detected a bottleneck in <strong>" + escape(workflowName) + "</strong>. " +
+                    "Students are spending significantly longer than usual at one step, " +
+                    "and a growing number are currently waiting there.";
 
-        String table = bottleneckTable(analytics, step, stepLabel);
+            String table = bottleneckTable(analytics, step, stepLabel);
 
-        String analyticsUrl = baseUrl + "/admin/workflows/" + analytics.getWorkflowId() + "/analytics";
+            String analyticsUrl = baseUrl + "/admin/workflows/" + analytics.getWorkflowId() + "/analytics";
 
-        String html = wrap(
-                admin,
-                null,
-                "Bottleneck detected",
-                body,
-                table,
-                "View analytics",
-                analyticsUrl
-        );
+            String html = wrap(
+                    admin,
+                    null,
+                    "Bottleneck detected",
+                    body,
+                    table,
+                    "View analytics",
+                    analyticsUrl
+            );
 
-        sendHtml(admin.getEmail(), subject, html);
+            sendHtml(admin.getEmail(), subject, html);
+        } catch (Exception ex) {
+            log.error("sendBottleneckAlert failed: {}", ex.getMessage());
+        }
     }
 
     // ============================================================
-    //  HTML builders
+    //  HTML builders — unchanged
     // ============================================================
 
     private String wrap(User user, Queue queue, String heading, String body, String callout, String ctaLabel, String ctaUrl) {
@@ -434,9 +475,9 @@ public class EmailService {
         return parts.length > 0 ? parts[0] : "there";
     }
 
-    private String escape(String stringValueValue7) {
-        if (stringValueValue7 == null) return "";
-        return stringValueValue7.replace("&", "&amp;")
+    private String escape(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;")
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;")

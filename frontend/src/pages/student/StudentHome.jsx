@@ -376,7 +376,7 @@ export default function StudentHome() {
                                 No open queues
                             </p>
                             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                Check back shortly — your university hasn't opened any queues yet.
+                                Check back soon. Your university has not opened any queues yet.
                             </p>
                         </div>
                     </Card>

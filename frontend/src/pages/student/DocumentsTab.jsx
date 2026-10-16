@@ -286,7 +286,7 @@ export default function DocumentsTab() {
                 <EmptyState
                     icon={FileText}
                     title="No documents yet"
-                    description="Upload your first document — staff will review it shortly."
+                    description="Upload your first document. Staff will review it shortly."
                     action={<Button icon={Upload} onClick={() => setUploadOpen(true)}>Upload document</Button>}
                 />
             ) : filtered.length === 0 ? (
@@ -346,7 +346,7 @@ export default function DocumentsTab() {
                                                             {itemValue2.reviewNotes}
                                                             {itemValue2.reviewedByName && (
                                                                 <div className="mt-0.5 text-[10px] opacity-70">
-                                                                    — {itemValue2.reviewedByName}, {formatDateTime(itemValue2.reviewedAt)}
+                                                                    Reviewed by {itemValue2.reviewedByName} on {formatDateTime(itemValue2.reviewedAt)}
                                                                 </div>
                                                             )}
                                                         </div>

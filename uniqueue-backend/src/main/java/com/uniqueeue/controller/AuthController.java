@@ -216,6 +216,23 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Session refreshed", response));
     }
 
+    /**
+     * Revokes every JWT issued to the caller — all devices, all browsers.
+     * Also invalidates the caller's current token, so they'll be forced
+     * to sign in again immediately.
+     */
+    @PostMapping("/sign-out-all")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> signOutAll(
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        authService.signOutAllDevices(principal.getId());
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("signedOut", true);
+        return ResponseEntity.ok(ApiResponse.success(
+                "Signed out on all devices. Please sign in again.", data));
+    }
+
     // ─────────────────────────────────────────────────────────────
     //  UNIVERSITY LOOKUP BY EMAIL DOMAIN — used by Login.jsx branding
     // ─────────────────────────────────────────────────────────────

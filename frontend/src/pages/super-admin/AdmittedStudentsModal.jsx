@@ -127,7 +127,7 @@ export default function AdmittedStudentsModal({ university, onClose }) {
                     </button>
 
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                        Admitted students list — {university.name}
+                        Admitted students list for {university.name}
                     </h3>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                         Upload a CSV so freshers can be verified against the official admission list.

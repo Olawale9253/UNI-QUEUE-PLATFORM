@@ -761,7 +761,7 @@ function UniversitiesTab() {
                                             Delete {deleteTarget.name}?
                                         </h3>
                                         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                            This permanently removes the university and <strong>all</strong> its data — users, queues, tickets, feedback, and notifications. This cannot be undone.
+                                            This permanently removes the university and <strong>all</strong> its data: users, queues, tickets, feedback, and notifications. This cannot be undone.
                                         </p>
                                     </div>
                                 </div>

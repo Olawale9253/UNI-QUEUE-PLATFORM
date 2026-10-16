@@ -36,16 +36,16 @@ class TicketServiceTest {
 
     private User student;
     private User staff;
-    private Queue pay;
-    private Queue reg;
+    private Queue paymentQueue;
+    private Queue registrationQueue;
 
     @BeforeEach
     void setup() {
         TestFixtures.Fixture fixture = fixtures.build();
         student = fixture.student();
         staff = fixture.staff();
-        pay = fixture.payQueue();
-        reg = fixture.regQueue();
+        paymentQueue = fixture.paymentQueue();
+        registrationQueue = fixture.registrationQueue();
     }
 
     // ─── JOIN ─────────────────────────────────────────────────
@@ -53,20 +53,20 @@ class TicketServiceTest {
     @Test
     @DisplayName("joinQueue with a valid student + queue creates a WAITING ticket")
     void joinQueue_createsWaitingTicket() {
-        TicketResponse res = ticketService.joinQueue(student.getId(), pay.getId());
+        TicketResponse ticketResponse = ticketService.joinQueue(student.getId(), paymentQueue.getId());
 
-        assertThat(res.getId()).isNotNull();
-        assertThat(res.getStatus()).isEqualTo(TicketStatus.WAITING);
-        assertThat(res.getTicketNumber()).isNotBlank();
-        assertThat(res.getQueueId()).isEqualTo(pay.getId());
+        assertThat(ticketResponse.getId()).isNotNull();
+        assertThat(ticketResponse.getStatus()).isEqualTo(TicketStatus.WAITING);
+        assertThat(ticketResponse.getTicketNumber()).isNotBlank();
+        assertThat(ticketResponse.getQueueId()).isEqualTo(paymentQueue.getId());
     }
 
     @Test
     @DisplayName("joinQueue while another ticket is active throws")
     void joinQueue_whenActiveTicketExists_throws() {
-        ticketService.joinQueue(student.getId(), pay.getId());
+        ticketService.joinQueue(student.getId(), paymentQueue.getId());
 
-        assertThatThrownBy(() -> ticketService.joinQueue(student.getId(), reg.getId()))
+        assertThatThrownBy(() -> ticketService.joinQueue(student.getId(), registrationQueue.getId()))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("already have an active ticket");
     }
@@ -76,9 +76,9 @@ class TicketServiceTest {
     @Test
     @DisplayName("callNext sets the first waiting ticket to CALLED")
     void callNext_marksFirstWaitingAsCalled() {
-        ticketService.joinQueue(student.getId(), pay.getId());
+        ticketService.joinQueue(student.getId(), paymentQueue.getId());
 
-        TicketResponse called = ticketService.callNext(staff.getId(), pay.getId());
+        TicketResponse called = ticketService.callNext(staff.getId(), paymentQueue.getId());
 
         assertThat(called.getStatus()).isEqualTo(TicketStatus.CALLED);
         assertThat(called.getCalledAt()).isNotNull();
@@ -87,10 +87,10 @@ class TicketServiceTest {
     @Test
     @DisplayName("callNext when a ticket is already CALLED throws")
     void callNext_whenAlreadyCalled_throws() {
-        ticketService.joinQueue(student.getId(), pay.getId());
-        ticketService.callNext(staff.getId(), pay.getId());
+        ticketService.joinQueue(student.getId(), paymentQueue.getId());
+        ticketService.callNext(staff.getId(), paymentQueue.getId());
 
-        assertThatThrownBy(() -> ticketService.callNext(staff.getId(), pay.getId()))
+        assertThatThrownBy(() -> ticketService.callNext(staff.getId(), paymentQueue.getId()))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("already being called");
     }
@@ -98,7 +98,7 @@ class TicketServiceTest {
     @Test
     @DisplayName("callNext on an empty queue throws")
     void callNext_whenNoWaiting_throws() {
-        assertThatThrownBy(() -> ticketService.callNext(staff.getId(), pay.getId()))
+        assertThatThrownBy(() -> ticketService.callNext(staff.getId(), paymentQueue.getId()))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("No waiting tickets");
     }
@@ -108,8 +108,8 @@ class TicketServiceTest {
     @Test
     @DisplayName("serveTicket moves CALLED → SERVING")
     void serveTicket_movesToServing() {
-        ticketService.joinQueue(student.getId(), pay.getId());
-        TicketResponse called = ticketService.callNext(staff.getId(), pay.getId());
+        ticketService.joinQueue(student.getId(), paymentQueue.getId());
+        TicketResponse called = ticketService.callNext(staff.getId(), paymentQueue.getId());
 
         TicketResponse served = ticketService.serveTicket(staff.getId(), called.getId());
 
@@ -119,7 +119,7 @@ class TicketServiceTest {
     @Test
     @DisplayName("serveTicket on a WAITING ticket throws")
     void serveTicket_fromWaiting_throws() {
-        TicketResponse joined = ticketService.joinQueue(student.getId(), pay.getId());
+        TicketResponse joined = ticketService.joinQueue(student.getId(), paymentQueue.getId());
 
         assertThatThrownBy(() -> ticketService.serveTicket(staff.getId(), joined.getId()))
                 .isInstanceOf(BadRequestException.class)
@@ -131,8 +131,8 @@ class TicketServiceTest {
     @Test
     @DisplayName("completeTicket from SERVING marks the ticket COMPLETED")
     void completeTicket_fromServing_marksCompleted() {
-        ticketService.joinQueue(student.getId(), pay.getId());
-        TicketResponse called = ticketService.callNext(staff.getId(), pay.getId());
+        ticketService.joinQueue(student.getId(), paymentQueue.getId());
+        TicketResponse called = ticketService.callNext(staff.getId(), paymentQueue.getId());
         ticketService.serveTicket(staff.getId(), called.getId());
 
         TicketResponse completed = ticketService.completeTicket(staff.getId(), called.getId());
@@ -144,8 +144,8 @@ class TicketServiceTest {
     @Test
     @DisplayName("completeTicket from CALLED is rejected (must serve first)")
     void completeTicket_fromCalled_throws() {
-        ticketService.joinQueue(student.getId(), pay.getId());
-        TicketResponse called = ticketService.callNext(staff.getId(), pay.getId());
+        ticketService.joinQueue(student.getId(), paymentQueue.getId());
+        TicketResponse called = ticketService.callNext(staff.getId(), paymentQueue.getId());
 
         assertThatThrownBy(() -> ticketService.completeTicket(staff.getId(), called.getId()))
                 .isInstanceOf(BadRequestException.class)
@@ -157,11 +157,11 @@ class TicketServiceTest {
     @Test
     @DisplayName("noShowTicket from WAITING marks NO_SHOW")
     void noShowTicket_fromWaiting_marksNoShow() {
-        TicketResponse joined = ticketService.joinQueue(student.getId(), pay.getId());
+        TicketResponse joined = ticketService.joinQueue(student.getId(), paymentQueue.getId());
 
-        TicketResponse res = ticketService.noShowTicket(staff.getId(), joined.getId());
+        TicketResponse ticketResponse = ticketService.noShowTicket(staff.getId(), joined.getId());
 
-        assertThat(res.getStatus()).isEqualTo(TicketStatus.NO_SHOW);
+        assertThat(ticketResponse.getStatus()).isEqualTo(TicketStatus.NO_SHOW);
     }
 
     // ─── HAPPY PATH ───────────────────────────────────────────
@@ -169,10 +169,10 @@ class TicketServiceTest {
     @Test
     @DisplayName("Full lifecycle: join → call → serve → complete")
     void fullLifecycle() {
-        TicketResponse joined = ticketService.joinQueue(student.getId(), pay.getId());
+        TicketResponse joined = ticketService.joinQueue(student.getId(), paymentQueue.getId());
         assertThat(joined.getStatus()).isEqualTo(TicketStatus.WAITING);
 
-        TicketResponse called = ticketService.callNext(staff.getId(), pay.getId());
+        TicketResponse called = ticketService.callNext(staff.getId(), paymentQueue.getId());
         assertThat(called.getStatus()).isEqualTo(TicketStatus.CALLED);
 
         TicketResponse served = ticketService.serveTicket(staff.getId(), called.getId());
