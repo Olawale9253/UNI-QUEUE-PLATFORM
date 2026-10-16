@@ -7,14 +7,14 @@ export default function PageHeader({ title, description, action }) {
             variants={fadeUp}
             initial="initial"
             animate="animate"
-            className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+            className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
         >
             <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+                <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl">
                     {title}
                 </h1>
                 {description && (
-                    <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">{description}</p>
+                    <p className="mt-0.5 max-w-3xl text-xs leading-relaxed text-slate-500 dark:text-slate-400 sm:text-sm">{description}</p>
                 )}
             </div>
             {action && <div>{action}</div>}
