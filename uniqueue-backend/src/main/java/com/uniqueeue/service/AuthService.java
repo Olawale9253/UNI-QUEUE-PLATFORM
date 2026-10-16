@@ -22,6 +22,7 @@ import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.util.EmailNormalizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -59,6 +60,18 @@ public class AuthService {
     private final AdmittedStudentService admittedStudentService;
     private final StudentRegistryService studentRegistryService;
     private final EmailService emailService;
+
+    /**
+     * Dev-only switch.
+     * When TRUE:  verification codes / reset links are logged + returned in
+     *             the AuthResponse body for local testing.
+     * When FALSE: codes only leave the server via email; nothing hits logs
+     *             and nothing hits the response body.
+     *
+     * Set to false in prod (already false by default).
+     */
+    @Value("${app.security.log-verification-codes:false}")
+    private boolean logVerificationCodes;
 
     // ============================================================
     //  REGISTER
@@ -100,7 +113,7 @@ public class AuthService {
             userRepository.save(existing);
 
             emailService.sendVerificationCode(existing, code);
-            log.info("🔐 [RESEND] Verification code for {}: {}", email, code);
+            logCodeForDev("RESEND code", email, code);
         }
 
         return AuthResponse.builder()
@@ -216,7 +229,7 @@ public class AuthService {
                 AuditAction.USER_REGISTERED, "User", saved.getId(),
                 "{\"registrationStatus\":\"" + status + "\"}");
 
-        log.info("🔐 Verification code for {}: {} (status={})", saved.getEmail(), code, status);
+        logCodeForDev("Verification code (status=" + status + ")", saved.getEmail(), code);
         return buildAuthResponse(saved, code);
     }
 
@@ -290,7 +303,7 @@ public class AuthService {
                 AuditAction.USER_REGISTERED, "User", saved.getId(),
                 "{\"role\":\"FRESHER\",\"matched\":" + (matched != null) + "}");
 
-        log.info("🔐 [FRESHER] Verification code for {}: {}", saved.getEmail(), code);
+        logCodeForDev("Fresher verification code", saved.getEmail(), code);
         return buildAuthResponse(saved, code);
     }
 
@@ -489,7 +502,7 @@ public class AuthService {
 
         emailService.sendVerificationCode(user, code);
 
-        log.info("🔐 New verification code for {}: {}", user.getEmail(), code);
+        logCodeForDev("New verification code", user.getEmail(), code);
         return code;
     }
 
@@ -523,7 +536,12 @@ public class AuthService {
 
         emailService.sendPasswordReset(user, token);
 
-        log.info("🔐 Password reset link for {}: /reset-password?token={}", user.getEmail(), token);
+        if (logVerificationCodes) {
+            log.info("🔐 [DEV-ONLY] Password reset link for {}: /reset-password?token={}",
+                    user.getEmail(), token);
+        } else {
+            log.info("Password reset requested for {}", user.getEmail());
+        }
         return token;
     }
 
@@ -598,8 +616,38 @@ public class AuthService {
     }
 
     // ============================================================
+    //  SIGN OUT ALL DEVICES
+    // ============================================================
+
+    /**
+     * Revokes every JWT ever issued for this user by bumping tokenVersion.
+     * Current sessions die immediately; the user must sign in again everywhere.
+     */
+    @Transactional
+    public void signOutAllDevices(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setTokenVersion(
+                (user.getTokenVersion() != null ? user.getTokenVersion() : 0) + 1);
+        userRepository.save(user);
+
+        log.info("Signed out all devices for user {} ({})", user.getEmail(), user.getId());
+    }
+
+    // ============================================================
     //  HELPERS
     // ============================================================
+
+    /**
+     * Logs the verification code ONLY in dev mode.
+     * In prod (logVerificationCodes=false) this is a no-op.
+     */
+    private void logCodeForDev(String label, String email, String code) {
+        if (logVerificationCodes) {
+            log.info("🔐 [DEV-ONLY] {} for {}: {}", label, email, code);
+        }
+    }
 
     private AuthResponse buildAuthResponse(User user, String devVerificationCode) {
         UserPrincipal principal = new UserPrincipal(user);
@@ -621,7 +669,7 @@ public class AuthService {
                 .universityId(user.getUniversity() != null ? user.getUniversity().getId() : null)
                 .isVerified(user.getIsVerified())
                 .registrationStatus(user.getRegistrationStatus())
-                .devVerificationCode(devVerificationCode)
+                .devVerificationCode(logVerificationCodes ? devVerificationCode : null)
                 .build();
     }
 }
