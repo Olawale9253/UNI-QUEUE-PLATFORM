@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-    ArrowRight, ArrowLeft, Loader2, Eye, EyeOff,
+    ArrowRight, ArrowLeft, Loader2, AlertCircle, Eye, EyeOff,
     Ticket, ShieldCheck, Building2, Users,
 } from 'lucide-react'
 import api from '../api/axios'
@@ -19,10 +19,6 @@ function resolveImageUrl(url) {
     const base = import.meta.env.VITE_API_URL || ''
     return base ? `${base}${url}` : url
 }
-
-/* ─────────────────────────────────────────────
-   Left panel
-   ───────────────────────────────────────────── */
 
 function LeftPanel({ university, imageError, onImageError }) {
     const backgroundSrc =
@@ -72,7 +68,7 @@ function LeftPanel({ university, imageError, onImageError }) {
                                 src={logoUrl}
                                 alt={brandName}
                                 className="h-full w-full object-contain p-1"
-                                onError={(event) => { event.target.style.display = 'none' }}
+                                onError={(e) => { e.target.style.display = 'none' }}
                             />
                         ) : (
                             <Building2 className="h-4.5 w-4.5 text-white" />
@@ -127,10 +123,6 @@ function LeftPanel({ university, imageError, onImageError }) {
     )
 }
 
-/* ─────────────────────────────────────────────
-   Page
-   ───────────────────────────────────────────── */
-
 export default function Register() {
     const navigate = useNavigate()
     const { register, loading } = useAuthStore()
@@ -171,7 +163,7 @@ export default function Register() {
     }, [push])
 
     const selectedUni = useMemo(
-        () => universities.find((university) => String(university.id) === String(form.universityId)) || null,
+        () => universities.find((u) => String(u.id) === String(form.universityId)) || null,
         [universities, form.universityId]
     )
 
@@ -232,10 +224,11 @@ export default function Register() {
                     ? 'Account created. An admin will verify your details shortly.'
                     : 'Account created. Check your email for the code.',
             })
+            // devVerificationCode is intentionally NOT forwarded.
+            // The code must arrive only via email.
             navigate('/verify-email', {
                 state: {
                     email: form.email.trim(),
-                    devCode: res.devVerificationCode,
                     registrationStatus: status,
                 },
             })
@@ -265,7 +258,6 @@ export default function Register() {
                         transition={{ duration: 0.5, ease }}
                         className="w-full max-w-lg"
                     >
-                        {/* Mobile-only brand strip */}
                         <div className="mb-5 flex items-center gap-2.5 lg:hidden">
                             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-xs font-bold text-white">
                                 UQ
@@ -280,7 +272,6 @@ export default function Register() {
                             </div>
                         </div>
 
-                        {/* Header */}
                         <div className="mb-5">
                             <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                                 Create your account
@@ -293,7 +284,6 @@ export default function Register() {
                         </div>
 
                         <form onSubmit={submit} className="space-y-3">
-                            {/* University | Full name */}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
                                     <label className={labelClass}>University</label>
@@ -304,11 +294,9 @@ export default function Register() {
                                         disabled={loadingUnis}
                                         className={`${inputClass} appearance-none`}
                                     >
-                                        <option value="">
-                                            {loadingUnis ? 'Loading…' : 'Select your university'}
-                                        </option>
-                                        {universities.map((university) => (
-                                            <option key={university.id} value={university.id}>{university.name}</option>
+                                        <option value="">{loadingUnis ? 'Loading…' : 'Select your university'}</option>
+                                        {universities.map((u) => (
+                                            <option key={u.id} value={u.id}>{u.name}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -326,7 +314,6 @@ export default function Register() {
                                 </div>
                             </div>
 
-                            {/* Email | Matric or JAMB */}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
                                     <label className={labelClass}>
@@ -371,7 +358,6 @@ export default function Register() {
                                 )}
                             </div>
 
-                            {/* Fresher extras */}
                             {mode === 'fresher' && selectedUni &&
                                 (selectedUni.requireAdmissionRef || selectedUni.requireApplicationNumber) && (
                                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -402,7 +388,6 @@ export default function Register() {
                                     </div>
                                 )}
 
-                            {/* Department | Phone */}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
                                     <label className={labelClass}>
@@ -430,7 +415,6 @@ export default function Register() {
                                 </div>
                             </div>
 
-                            {/* Password | Confirm */}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
                                     <label className={labelClass}>Password</label>
@@ -445,7 +429,7 @@ export default function Register() {
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => setShowPassword((isVisible) => !isVisible)}
+                                            onClick={() => setShowPassword((v) => !v)}
                                             className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
                                             aria-label={showPassword ? 'Hide password' : 'Show password'}
                                         >
@@ -466,7 +450,7 @@ export default function Register() {
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => setShowConfirm((isVisible) => !isVisible)}
+                                            onClick={() => setShowConfirm((v) => !v)}
                                             className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
                                             aria-label={showConfirm ? 'Hide password' : 'Show password'}
                                         >

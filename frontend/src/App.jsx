@@ -18,11 +18,11 @@ import StaffDashboard from './pages/StaffDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import SuperAdminDashboard from './pages/SuperAdminDashboard'
 import NotFound from './pages/NotFound'
+import PendingVerification from './pages/PendingVerification'
 import { initSoundUnlock } from './lib/soundService'
 import { usePrefsStore } from './store/prefsStore'
 import { useServerEvents } from './hooks/useServerEvents'
 import { useUniversityTheme } from './hooks/useUniversityTheme'
-import PendingVerification from './pages/PendingVerification'
 
 const AUTH_ROUTES = [
     '/login',
@@ -36,29 +36,43 @@ export default function App() {
     const location = useLocation()
     const hideNavbar = AUTH_ROUTES.includes(location.pathname)
 
-    // Cross-device real-time: opens an SSE connection while authenticated.
     useServerEvents()
-
-    // Themes the entire app with the current university's primary color
-    // by overriding Tailwind's --color-brand-* CSS variables on <html>.
     useUniversityTheme()
 
     useEffect(() => {
-        // Register click/keypress/touch listeners once at app boot.
-        // Browsers block audio until the user has interacted at least once.
         initSoundUnlock()
 
-        // Register the push service worker so subscriptions can be created later.
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').catch((err) => {
                 console.warn('SW registration failed:', err)
             })
         }
 
-        // Load notification preferences for the logged-in user (if any).
         if (localStorage.getItem('uniqueue_token')) {
             usePrefsStore.getState().load()
         }
+    }, [])
+
+    /**
+     * Back-forward cache (bfcache) defense.
+     *
+     * When the browser restores a page from its in-memory back/forward cache,
+     * React does not re-run effects and the DOM is served frozen — including
+     * any previous user's data that was on screen when they logged out.
+     *
+     * Listening to `pageshow` with `event.persisted === true` tells us the
+     * page came from bfcache. A hard reload discards the frozen DOM, so the
+     * app re-initialises from localStorage (which is empty after logout)
+     * and the user gets a fresh login screen instead of a stale dashboard.
+     */
+    useEffect(() => {
+        const onPageShow = (event) => {
+            if (event.persisted) {
+                window.location.reload()
+            }
+        }
+        window.addEventListener('pageshow', onPageShow)
+        return () => window.removeEventListener('pageshow', onPageShow)
     }, [])
 
     return (
@@ -72,7 +86,14 @@ export default function App() {
                             <Route path="/" element={<Home />} />
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />
-                            <Route path="/pending-verification" element={<ProtectedRoute><PendingVerification /></ProtectedRoute>} />
+                            <Route
+                                path="/pending-verification"
+                                element={
+                                    <ProtectedRoute>
+                                        <PendingVerification />
+                                    </ProtectedRoute>
+                                }
+                            />
                             <Route path="/forgot-password" element={<ForgotPassword />} />
                             <Route path="/reset-password" element={<ResetPassword />} />
                             <Route path="/verify-email" element={<VerifyEmail />} />

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
     Mail,
     ShieldCheck,
@@ -11,7 +11,6 @@ import {
     RefreshCw,
 } from 'lucide-react'
 import api from '../api/axios'
-import Button from '../components/ui/Button'
 import { useToastStore } from '../store/toastStore'
 
 export default function VerifyEmail() {
@@ -20,11 +19,9 @@ export default function VerifyEmail() {
     const { push } = useToastStore()
 
     const passedEmail = location.state?.email || ''
-    const passedCode = location.state?.devCode || ''
 
     const [email, setEmail] = useState(passedEmail)
     const [code, setCode] = useState('')
-    const [devCode, setDevCode] = useState(passedCode || null)
     const [loading, setLoading] = useState(false)
     const [resending, setResending] = useState(false)
     const [error, setError] = useState(null)
@@ -36,17 +33,9 @@ export default function VerifyEmail() {
     // Resend cooldown timer
     useEffect(() => {
         if (resendIn <= 0) return
-        const token = setTimeout(() => setResendIn((item) => item - 1), 1000)
+        const token = setTimeout(() => setResendIn((s) => s - 1), 1000)
         return () => clearTimeout(token)
     }, [resendIn])
-
-    // If no email passed, send the user back to login
-    useEffect(() => {
-        if (!passedEmail && !location.state) {
-            // Don't force redirect — user might type it manually.
-            // But show a hint below.
-        }
-    }, [passedEmail, location.state])
 
     const verify = async (event) => {
         event.preventDefault()
@@ -85,7 +74,6 @@ export default function VerifyEmail() {
             setSuccess(true)
             push({ type: 'success', message: 'Email verified! Redirecting…' })
 
-            // Auto-redirect to dashboard
             setTimeout(() => {
                 const dashboards = {
                     SUPER_ADMIN: '/super-admin',
@@ -111,18 +99,13 @@ export default function VerifyEmail() {
         setResending(true)
         setError(null)
         try {
-            const res = await api.post('/api/auth/resend-verification', {
+            await api.post('/api/auth/resend-verification', {
                 email: email.trim(),
             })
-            const data = res.data?.data
-            // In dev mode, backend returns the fresh code
-            if (data?.devVerificationCode) {
-                setDevCode(data.devVerificationCode)
-            }
             setResendIn(30)
             push({
                 type: 'success',
-                message: 'New verification code generated',
+                message: 'A fresh code has been sent to your email.',
             })
             codeInputRef.current?.focus()
         } catch (err) {
@@ -176,52 +159,30 @@ export default function VerifyEmail() {
                 transition={{ duration: 0.4 }}
                 className="w-full max-w-md"
             >
-                {/* Header icon */}
                 <div className="mb-6 flex justify-center">
                     <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 shadow-lg shadow-brand-500/30">
                         <ShieldCheck className="h-7 w-7 text-white" />
                     </div>
                 </div>
 
-                {/* Title */}
                 <div className="mb-8 text-center">
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                        Verify your email
+                        Check your email
                     </h1>
                     <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                        Enter the 6-digit code we sent to your email to activate your account.
+                        We sent a 6-digit verification code to{' '}
+                        {passedEmail ? (
+                            <strong className="text-slate-700 dark:text-slate-300">
+                                {passedEmail}
+                            </strong>
+                        ) : (
+                            'your email address'
+                        )}
+                        . Enter it below to activate your account.
                     </p>
                 </div>
 
-                {/* Dev code banner */}
-                <AnimatePresence>
-                    {devCode && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -4 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/40"
-                        >
-                            <div className="flex items-start gap-3">
-                                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                                <div className="flex-1">
-                                    <div className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
-                                        Dev mode — code
-                                    </div>
-                                    <div className="mt-1 font-mono text-2xl font-bold tracking-[0.3em] text-amber-900 dark:text-amber-100">
-                                        {devCode}
-                                    </div>
-                                    <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
-                                        In production, this code arrives by email.
-                                    </p>
-                                </div>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
                 <form onSubmit={verify} className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                    {/* Email */}
                     <div>
                         <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
                             Email address
@@ -231,7 +192,7 @@ export default function VerifyEmail() {
                             <input
                                 type="email"
                                 value={email}
-                                onChange={(eventValue) => setEmail(eventValue.target.value)}
+                                onChange={(e) => setEmail(e.target.value)}
                                 placeholder="Enter your email"
                                 required
                                 disabled={loading}
@@ -240,7 +201,6 @@ export default function VerifyEmail() {
                         </div>
                     </div>
 
-                    {/* Code */}
                     <div>
                         <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
                             Verification code
@@ -250,16 +210,15 @@ export default function VerifyEmail() {
                             type="text"
                             inputMode="numeric"
                             value={code}
-                            onChange={(eventValue2) => setCode(eventValue2.target.value.replace(/\D/g, '').slice(0, 6))}
+                            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                             placeholder="Enter 6-digit code"
                             required
                             disabled={loading}
-                            autoFocus={!devCode}
+                            autoFocus
                             className="w-full rounded-lg border border-slate-200 bg-white py-3 text-center font-mono text-2xl tracking-[0.5em] text-slate-900 placeholder-slate-300 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-600"
                         />
                     </div>
 
-                    {/* Error */}
                     {error && (
                         <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
                             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -267,7 +226,6 @@ export default function VerifyEmail() {
                         </div>
                     )}
 
-                    {/* Verify button */}
                     <button
                         type="submit"
                         disabled={loading || code.length < 6}
@@ -286,11 +244,10 @@ export default function VerifyEmail() {
                         )}
                     </button>
 
-                    {/* Resend row */}
                     <div className="flex items-center justify-between pt-2 text-xs">
-            <span className="text-slate-500 dark:text-slate-400">
-              Didn't receive the code?
-            </span>
+                        <span className="text-slate-500 dark:text-slate-400">
+                            Didn't receive the code?
+                        </span>
                         <button
                             type="button"
                             onClick={resend}
@@ -307,7 +264,6 @@ export default function VerifyEmail() {
                     </div>
                 </form>
 
-                {/* Footer */}
                 <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
                     Already verified?{' '}
                     <Link

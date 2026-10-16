@@ -6,14 +6,34 @@ const dashboards = {
     ADMIN: '/admin',
     STAFF: '/staff',
     USER: '/student',
+    FRESHER: '/student',
 }
 
 export default function ProtectedRoute({ children, allowedRoles }) {
     const { user, token } = useAuthStore()
 
-    if (!token || !user) return <Navigate to="/login" replace />
+    // 1. No session at all → login
+    if (!token || !user) {
+        return <Navigate to="/login" replace />
+    }
+
+    // 2. Logged in but email not verified → verification page.
+    //    Uses strict === false so undefined (older sessions) doesn't
+    //    lock anyone out — those users are treated as verified.
+    if (user.isVerified === false) {
+        return (
+            <Navigate
+                to="/verify-email"
+                replace
+                state={{ email: user.email }}
+            />
+        )
+    }
+
+    // 3. Role gate (if the route requires specific roles)
     if (allowedRoles && !allowedRoles.includes(user.role)) {
         return <Navigate to={dashboards[user.role] || '/'} replace />
     }
+
     return children
 }
