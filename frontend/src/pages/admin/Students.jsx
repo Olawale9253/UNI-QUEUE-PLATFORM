@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
     Search,
@@ -30,7 +30,6 @@ const ROLE_OPTIONS = [
     { value: 'USER', label: 'Student (returning)' },
     { value: 'FRESHER', label: 'Fresher' },
     { value: 'STAFF', label: 'Staff' },
-    { value: 'ADMIN', label: 'Administrator' },
 ]
 
 const STATUS_OPTIONS = [
@@ -49,6 +48,9 @@ const roleVariant = {
 
 // Roles an admin can assign — mirrors the backend allow-list.
 const ADMIN_ASSIGNABLE_ROLES = ['USER', 'FRESHER', 'STAFF']
+
+// Roles hidden from this page. Admins manage students & staff only.
+const HIDDEN_ROLES = ['ADMIN', 'SUPER_ADMIN']
 
 export default function Students() {
     const { push } = useToastStore()
@@ -134,6 +136,13 @@ export default function Students() {
 
     const activeFilterCount = Object.values(filters).filter(Boolean).length
 
+    // Hide admin accounts — this page is for students & staff only.
+    const visibleUsers = useMemo(
+        () => users.filter((u) => !HIDDEN_ROLES.includes(u.role)),
+        [users]
+    )
+    const hiddenCount = users.length - visibleUsers.length
+
     return (
         <>
             <PageHeader
@@ -172,11 +181,13 @@ export default function Students() {
                 >
                     <Card>
                         <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-slate-900">Filters</h3>
+                            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                Filters
+                            </h3>
                             {activeFilterCount > 0 && (
                                 <button
                                     onClick={clearFilters}
-                                    className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700"
+                                    className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400"
                                 >
                                     <CloseIcon className="h-3.5 w-3.5" />
                                     Clear all
@@ -202,7 +213,7 @@ export default function Students() {
                 </motion.div>
             )}
 
-            <div className="mb-4 flex items-center justify-between text-sm text-slate-500">
+            <div className="mb-4 flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
                 <div className="flex items-center gap-2">
                     <UserIcon className="h-4 w-4" />
                     <span>
@@ -210,9 +221,16 @@ export default function Students() {
                             'Loading…'
                         ) : (
                             <>
-                                <strong className="text-slate-900">{totalElements}</strong>{' '}
-                                {totalElements === 1 ? 'user' : 'users'}
+                                <strong className="text-slate-900 dark:text-slate-100">
+                                    {visibleUsers.length}
+                                </strong>{' '}
+                                {visibleUsers.length === 1 ? 'user' : 'users'} on this page
                                 {activeFilterCount > 0 && ' (filtered)'}
+                                {hiddenCount > 0 && (
+                                    <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">
+                                        · {hiddenCount} admin{hiddenCount === 1 ? '' : 's'} hidden
+                                    </span>
+                                )}
                             </>
                         )}
                     </span>
@@ -229,24 +247,24 @@ export default function Students() {
                     {Array.from({ length: 8 }).map((unusedValue, index) => (
                         <div
                             key={index}
-                            className="flex items-center gap-4 border-b border-slate-100 px-6 py-4"
+                            className="flex items-center gap-4 border-b border-slate-100 px-6 py-4 dark:border-slate-800"
                         >
-                            <div className="h-10 w-10 animate-pulse rounded-full bg-slate-100" />
+                            <div className="h-10 w-10 animate-pulse rounded-full bg-slate-100 dark:bg-slate-800" />
                             <div className="flex-1 space-y-2">
-                                <div className="h-3 w-1/4 animate-pulse rounded bg-slate-100" />
-                                <div className="h-3 w-1/3 animate-pulse rounded bg-slate-100" />
+                                <div className="h-3 w-1/4 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+                                <div className="h-3 w-1/3 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
                             </div>
                         </div>
                     ))}
                 </Card>
-            ) : users.length === 0 ? (
+            ) : visibleUsers.length === 0 ? (
                 <EmptyState
                     icon={UserIcon}
                     title="No users found"
                     description={
                         activeFilterCount > 0
                             ? 'Try adjusting or clearing your filters.'
-                            : 'No users have registered yet.'
+                            : 'No students or staff have registered yet.'
                     }
                     action={
                         activeFilterCount > 0 ? (
@@ -262,16 +280,16 @@ export default function Students() {
                         variants={stagger(0, 0.02)}
                         initial="initial"
                         animate="animate"
-                        className="divide-y divide-slate-100"
+                        className="divide-y divide-slate-100 dark:divide-slate-800"
                     >
-                        {users.map((user) => (
+                        {visibleUsers.map((user) => (
                             <motion.li
                                 key={user.id}
                                 variants={staggerItem}
                                 className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6"
                             >
                                 <div className="flex min-w-0 flex-1 items-start gap-3">
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white dark:bg-slate-700">
                                         {user.fullName
                                             ?.split(' ')
                                             .map((namePart) => namePart[0])
@@ -280,7 +298,7 @@ export default function Students() {
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <span className="text-sm font-semibold text-slate-900">
+                                            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                                                 {user.fullName}
                                             </span>
                                             <Badge variant={roleVariant[user.role] || 'default'}>
@@ -295,7 +313,7 @@ export default function Students() {
                                             {!user.isActive && <Badge variant="danger">Disabled</Badge>}
                                         </div>
 
-                                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
                                             <span className="flex items-center gap-1">
                                                 <Mail className="h-3 w-3" />
                                                 {user.email}
@@ -327,8 +345,8 @@ export default function Students() {
                                             onClick={() => setToggleTarget(user)}
                                             className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
                                                 user.isActive
-                                                    ? 'text-rose-600 hover:bg-rose-50'
-                                                    : 'text-emerald-600 hover:bg-emerald-50'
+                                                    ? 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40'
+                                                    : 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
                                             }`}
                                         >
                                             {user.isActive ? (
@@ -362,7 +380,7 @@ export default function Students() {
                     >
                         Previous
                     </Button>
-                    <span className="text-sm text-slate-600">
+                    <span className="text-sm text-slate-600 dark:text-slate-400">
                         Page {page + 1} of {totalPages}
                     </span>
                     <Button

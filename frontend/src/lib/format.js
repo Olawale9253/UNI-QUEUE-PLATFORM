@@ -1,19 +1,26 @@
+function parseIso(iso) {
+    if (!iso) return null
+    const hasTz = /(?:Z|[+-]\d{2}:?\d{2})$/.test(iso)
+    return new Date(hasTz ? iso : `${iso}Z`)
+}
+
 export function formatTimeAgo(iso) {
-    if (!iso) return '—'
-    const diff = Date.now() - new Date(iso).getTime()
-    const MathValue = Math.floor(diff / 60000)
-    if (MathValue < 1) return 'just now'
-    if (MathValue < 60) return `${MathValue}m ago`
-    const MathValueValue = Math.floor(MathValue / 60)
-    if (MathValueValue < 24) return `${MathValueValue}h ago`
-    const MathValueValue2 = Math.floor(MathValueValue / 24)
-    return `${MathValueValue2}d ago`
+    const date = parseIso(iso)
+    if (!date) return '—'
+    const diff = Date.now() - date.getTime()
+    const minutes = Math.floor(diff / 60000)
+    if (minutes < 1) return 'just now'
+    if (minutes < 60) return `${minutes}m ago`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours}h ago`
+    const days = Math.floor(hours / 24)
+    return `${days}d ago`
 }
 
 export function formatDateTime(iso) {
-    if (!iso) return '—'
-    const dateValue = new Date(iso)
-    return dateValue.toLocaleString('en-GB', {
+    const date = parseIso(iso)
+    if (!date) return '—'
+    return date.toLocaleString('en-GB', {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
@@ -23,22 +30,22 @@ export function formatDateTime(iso) {
 }
 
 export function formatTime(iso) {
-    if (!iso) return '—'
-    const dateValueValue = new Date(iso)
-    return dateValueValue.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+    const date = parseIso(iso)
+    if (!date) return '—'
+    return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 }
 
 export function formatDate(iso) {
-    if (!iso) return '—'
-    const dateValueValue2 = new Date(iso)
-    return dateValueValue2.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    const date = parseIso(iso)
+    if (!date) return '—'
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 export function getInitials(name) {
     if (!name) return '?'
     return name
         .split(' ')
-        .map((parameter) => parameter[0])
+        .map((part) => part[0])
         .slice(0, 2)
         .join('')
         .toUpperCase()
