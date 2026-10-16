@@ -47,6 +47,43 @@ const ROLE_VARIANTS = {
     FRESHER: 'info',
 }
 
+/**
+ * Push-notification copy varies by role.
+ * Students get "your turn" language; staff and admins get queue-health
+ * language. Without this, a university admin sees "Get alerted when it's
+ * your turn" — which is confusing because admins don't join queues.
+ */
+function getNotificationCopy(role) {
+    switch (role) {
+        case 'SUPER_ADMIN':
+            return {
+                heading: 'Get notified about the universities you manage.',
+                active: "Active — you'll get a popup on this device for cross-university alerts.",
+                off: 'Off — turn on to receive admin alerts.',
+            }
+        case 'ADMIN':
+            return {
+                heading: 'Get notified when a queue needs your attention.',
+                active: "Active — you'll get a popup on this device when a service is under strain.",
+                off: 'Off — turn on to receive admin alerts.',
+            }
+        case 'STAFF':
+            return {
+                heading: 'Get notified when a student needs service.',
+                active: "Active — you'll get a popup on this device when a ticket is assigned to you.",
+                off: 'Off — turn on to receive service alerts.',
+            }
+        case 'USER':
+        case 'FRESHER':
+        default:
+            return {
+                heading: "Get alerted when it's your turn, even when the app is closed.",
+                active: "Active — you'll get a popup on this device when something happens to your queue.",
+                off: "Off — turn on to get notified when it's your turn.",
+            }
+    }
+}
+
 // ── Reusable password input with show/hide toggle ──
 function PasswordField({ label, value, onChange, placeholder, autoComplete }) {
     const [show, setShow] = useState(false)
@@ -109,6 +146,8 @@ export default function Profile() {
     const isAdmin = role === 'ADMIN'
     const isStudent = role === 'USER'
     const isFresher = role === 'FRESHER'
+
+    const notifications = getNotificationCopy(role)
 
     const dashboards = {
         SUPER_ADMIN: '/super-admin',
@@ -465,7 +504,7 @@ export default function Profile() {
                 </Card>
             </motion.div>
 
-            {/* ───── NOTIFICATIONS ───── */}
+            {/* ───── NOTIFICATIONS — role-aware copy ───── */}
             <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -481,7 +520,7 @@ export default function Profile() {
                                 Notifications
                             </h2>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                                Get alerted when it's your turn, even when the app is closed.
+                                {notifications.heading}
                             </p>
                         </div>
                     </div>
@@ -497,8 +536,8 @@ export default function Profile() {
                                     : webPush.permission === 'denied'
                                         ? 'Blocked. Enable notifications in your browser settings and reload.'
                                         : webPush.subscription
-                                            ? 'Active — you\'ll get a popup on this device when something happens to your queue.'
-                                            : 'Off — turn on to get notified when it\'s your turn.'}
+                                            ? notifications.active
+                                            : notifications.off}
                             </p>
                             {webPush.subscription && (
                                 <div className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
