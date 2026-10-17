@@ -6,8 +6,15 @@ import {
     X as CloseIcon,
     ChevronLeft,
     ChevronRight,
-    User as UserIcon,
     Activity,
+    LogIn,
+    UserPlus,
+    Trash2,
+    PlusCircle,
+    ShieldAlert,
+    KeyRound,
+    Building2,
+    ListOrdered,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -18,7 +25,7 @@ import EmptyState from '../../components/ui/EmptyState'
 import PageHeader from '../../components/layout/PageHeader'
 import ExportButton from '../../components/ui/ExportButton'
 import { useToastStore } from '../../store/toastStore'
-import { formatDateTime, formatTimeAgo } from '../../lib/format'
+import { formatTimeAgo, formatDateTime } from '../../lib/format'
 import { stagger, staggerItem } from '../../lib/motion'
 
 const ACTION_GROUPS = [
@@ -29,18 +36,10 @@ const ACTION_GROUPS = [
     {
         label: 'Tickets',
         actions: [
-            'TICKET_JOINED',
-            'TICKET_WAITLISTED',
-            'TICKET_WAITLIST_PROMOTED',
-            'TICKET_CALLED',
-            'TICKET_SERVED',
-            'TICKET_COMPLETED',
-            'TICKET_NO_SHOW',
-            'TICKET_TRANSFERRED',
-            'TICKET_CANCELLED',
-            'TICKET_PRIORITY_CHANGED',
-            'TICKET_RESCHEDULED',
-            'TICKET_SKIPPED',
+            'TICKET_JOINED', 'TICKET_WAITLISTED', 'TICKET_WAITLIST_PROMOTED',
+            'TICKET_CALLED', 'TICKET_SERVED', 'TICKET_COMPLETED',
+            'TICKET_NO_SHOW', 'TICKET_TRANSFERRED', 'TICKET_CANCELLED',
+            'TICKET_PRIORITY_CHANGED', 'TICKET_RESCHEDULED', 'TICKET_SKIPPED',
         ],
     },
     {
@@ -56,46 +55,67 @@ const ACTION_GROUPS = [
     {
         label: 'Appointments',
         actions: [
-            'APPOINTMENT_SLOT_CREATED',
-            'APPOINTMENT_SLOT_UPDATED',
-            'APPOINTMENT_SLOT_DELETED',
-            'APPOINTMENT_BOOKED',
-            'APPOINTMENT_CANCELLED',
-            'APPOINTMENT_COMPLETED',
-            'APPOINTMENT_NO_SHOW',
+            'APPOINTMENT_SLOT_CREATED', 'APPOINTMENT_SLOT_UPDATED', 'APPOINTMENT_SLOT_DELETED',
+            'APPOINTMENT_BOOKED', 'APPOINTMENT_CANCELLED', 'APPOINTMENT_COMPLETED', 'APPOINTMENT_NO_SHOW',
         ],
     },
     {
         label: 'Workflows',
         actions: [
-            'WORKFLOW_CREATED',
-            'WORKFLOW_UPDATED',
-            'WORKFLOW_DELETED',
-            'WORKFLOW_STARTED',
-            'WORKFLOW_STEP_COMPLETED',
-            'WORKFLOW_COMPLETED',
-            'WORKFLOW_ABANDONED',
+            'WORKFLOW_CREATED', 'WORKFLOW_UPDATED', 'WORKFLOW_DELETED',
+            'WORKFLOW_STARTED', 'WORKFLOW_STEP_COMPLETED', 'WORKFLOW_COMPLETED', 'WORKFLOW_ABANDONED',
         ],
     },
 ]
 
-function actionVariant(action) {
+// ── Naming & Icon Helpers ──
+function formatActionName(action) {
+    if (!action) return 'Unknown Action'
+    return action
+        .replace(/_/g, ' ')
+        .toLowerCase()
+        .replace(/\b\w/g, (char) => char.toUpperCase())
+}
+
+function getActionIcon(action) {
+    if (action.includes('LOGIN') || action.includes('PASSWORD')) return KeyRound
+    if (action.includes('REGISTERED') || action.includes('STAFF_CREATED')) return UserPlus
+    if (action.includes('DELETED') || action.includes('FAILED')) return Trash2
+    if (action.includes('CREATED')) return PlusCircle
+    if (action.includes('QUEUE') || action.includes('TICKET')) return ListOrdered
+    if (action.includes('UNIVERSITY') || action.includes('OFFICE')) return Building2
+    if (action.includes('WORKFLOW') || action.includes('APPOINTMENT')) return Activity
+    return Activity
+}
+
+function getActionColor(action) {
     if (!action) return 'default'
-    if (
-        action.includes('FAILED') ||
-        action.includes('DEACTIVATED') ||
-        action.includes('DELETED')
-    )
+    if (action.includes('FAILED') || action.includes('DELETED') || action.includes('DEACTIVATED')) {
         return 'danger'
-    if (
-        action.includes('COMPLETED') ||
-        action.includes('CREATED') ||
-        action.includes('LOGIN')
-    )
+    }
+    if (action.includes('LOGIN') || action.includes('REGISTERED')) {
         return 'success'
-    if (action.startsWith('TICKET') || action.startsWith('WORKFLOW')) return 'indigo'
-    if (action.startsWith('UNIVERSITY') || action.startsWith('ADMIN')) return 'warning'
+    }
+    if (action.includes('CREATED') || action.includes('COMPLETED')) {
+        return 'indigo'
+    }
+    if (action.includes('UPDATED') || action.includes('ASSIGNED')) {
+        return 'warning'
+    }
     return 'default'
+}
+
+// ── JSON Prettifier ──
+function parseDetails(details) {
+    if (!details) return null
+    try {
+        // Some logs might be double stringified
+        let parsed = typeof details === 'string' ? JSON.parse(details) : details
+        if (typeof parsed === 'string') parsed = JSON.parse(parsed)
+        return parsed
+    } catch {
+        return details // Return raw string if it's not valid JSON
+    }
 }
 
 export default function AuditLog() {
@@ -191,7 +211,7 @@ export default function AuditLog() {
                             {activeFilterCount > 0 && (
                                 <button
                                     onClick={clearFilters}
-                                    className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"
+                                    className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400"
                                 >
                                     <CloseIcon className="h-3.5 w-3.5" />
                                     Clear all
@@ -200,21 +220,21 @@ export default function AuditLog() {
                         </div>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                            <div className="mb-4">
+                            <div>
                                 <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
                                     Action
                                 </label>
                                 <select
                                     value={filters.action}
                                     onChange={setFilter('action')}
-                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                 >
                                     <option value="">All actions</option>
                                     {ACTION_GROUPS.map((item) => (
                                         <optgroup key={item.label} label={item.label}>
                                             {item.actions.map((itemValue) => (
                                                 <option key={itemValue} value={itemValue}>
-                                                    {itemValue.replace(/_/g, ' ')}
+                                                    {formatActionName(itemValue)}
                                                 </option>
                                             ))}
                                         </optgroup>
@@ -222,18 +242,8 @@ export default function AuditLog() {
                                 </select>
                             </div>
 
-                            <Input
-                                label="From"
-                                type="datetime-local"
-                                value={filters.from}
-                                onChange={setFilter('from')}
-                            />
-                            <Input
-                                label="To"
-                                type="datetime-local"
-                                value={filters.to}
-                                onChange={setFilter('to')}
-                            />
+                            <Input label="From" type="datetime-local" value={filters.from} onChange={setFilter('from')} />
+                            <Input label="To" type="datetime-local" value={filters.to} onChange={setFilter('to')} />
                         </div>
                     </Card>
                 </motion.div>
@@ -248,9 +258,7 @@ export default function AuditLog() {
                                 'Loading…'
                             ) : (
                                 <>
-                                    <strong className="text-slate-900 dark:text-slate-100">
-                                        {totalElements}
-                                    </strong>{' '}
+                                    <strong className="text-slate-900 dark:text-slate-100">{totalElements}</strong>{' '}
                                     {totalElements === 1 ? 'entry' : 'entries'}
                                     {activeFilterCount > 0 && ' (filtered)'}
                                 </>
@@ -275,9 +283,7 @@ export default function AuditLog() {
                 </div>
                 {totalPages > 1 && (
                     <div className="flex items-center gap-2">
-                        <span>
-                            Page {page + 1} of {totalPages}
-                        </span>
+                        <span>Page {page + 1} of {totalPages}</span>
                     </div>
                 )}
             </div>
@@ -285,13 +291,10 @@ export default function AuditLog() {
             {loading ? (
                 <Card padded={false}>
                     {Array.from({ length: 8 }).map((unusedValue, index) => (
-                        <div
-                            key={index}
-                            className="flex items-center gap-4 border-b border-slate-100 px-6 py-4 dark:border-slate-800"
-                        >
-                            <div className="h-10 w-10 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />
+                        <div key={index} className="flex items-center gap-4 border-b border-slate-100 px-6 py-5 dark:border-slate-800">
+                            <div className="h-10 w-10 animate-pulse rounded-full bg-slate-100 dark:bg-slate-800" />
                             <div className="flex-1 space-y-2">
-                                <div className="h-3 w-1/3 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+                                <div className="h-3 w-1/4 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
                                 <div className="h-3 w-1/2 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
                             </div>
                         </div>
@@ -322,57 +325,86 @@ export default function AuditLog() {
                         animate="animate"
                         className="divide-y divide-slate-100 dark:divide-slate-800"
                     >
-                        {logs.map((log) => (
-                            <motion.li
-                                key={log.id}
-                                variants={staggerItem}
-                                className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6"
-                            >
-                                <div className="flex min-w-0 flex-1 items-start gap-3">
-                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
-                                        <Activity className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                        {logs.map((log) => {
+                            const Icon = getActionIcon(log.action)
+                            const variant = getActionColor(log.action)
+                            const parsedDetails = parseDetails(log.details)
+
+                            return (
+                                <motion.li
+                                    key={log.id}
+                                    variants={staggerItem}
+                                    className="group relative flex flex-col gap-4 p-5 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/30 sm:flex-row sm:items-start sm:p-6"
+                                >
+                                    {/* Icon Column */}
+                                    <div className="flex shrink-0 items-center justify-center sm:items-start pt-1">
+                                        <div className="relative">
+                                            <div className={`flex h-10 w-10 items-center justify-center rounded-full ring-4 ring-white dark:ring-slate-900 bg-${variant === 'default' ? 'slate' : variant}-50 text-${variant === 'default' ? 'slate' : variant}-600 dark:bg-${variant === 'default' ? 'slate' : variant}-950/50 dark:text-${variant === 'default' ? 'slate' : variant}-400`}>
+                                                <Icon className="h-4 w-4" />
+                                            </div>
+                                            {/* Timeline line */}
+                                            <div className="absolute top-10 left-1/2 -ml-px h-full w-0.5 bg-slate-100 dark:bg-slate-800 group-last:hidden" />
+                                        </div>
                                     </div>
+
+                                    {/* Content Column */}
                                     <div className="min-w-0 flex-1">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <Badge variant={actionVariant(log.action)}>
-                                                {String(log.action).replace(/_/g, ' ')}
-                                            </Badge>
-                                            {log.entityType && (
-                                                <span className="text-xs text-slate-500 dark:text-slate-400">
-                                                    {log.entityType}
-                                                    {log.entityId ? ` #${log.entityId}` : ''}
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <Badge variant={variant} className="uppercase tracking-wide text-[10px]">
+                                                    {formatActionName(log.action)}
+                                                </Badge>
+                                                {log.entityType && (
+                                                    <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                                                        {log.entityType} {log.entityId ? `#${log.entityId}` : ''}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className="flex flex-col text-left sm:text-right text-xs text-slate-500 dark:text-slate-400">
+                                                <span className="font-medium text-slate-900 dark:text-slate-300">
+                                                    {formatTimeAgo(log.createdAt)}
                                                 </span>
-                                            )}
+                                                <span title={formatDateTime(log.createdAt)}>
+                                                    {formatDateTime(log.createdAt)}
+                                                </span>
+                                            </div>
                                         </div>
 
-                                        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                                        <div className="mt-2 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                                             {log.userId && (
-                                                <span className="flex items-center gap-1">
-                                                    <UserIcon className="h-3 w-3" />
+                                                <span className="flex items-center gap-1.5">
+                                                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-[9px] font-bold">
+                                                        U
+                                                    </div>
                                                     User #{log.userId}
                                                 </span>
                                             )}
                                             {log.ipAddress && (
-                                                <span className="font-mono">{log.ipAddress}</span>
+                                                <span className="flex items-center gap-1 font-mono text-[11px]">
+                                                    IP: {log.ipAddress}
+                                                </span>
                                             )}
                                         </div>
 
-                                        {log.details && (
-                                            <div className="mt-1.5 truncate rounded bg-slate-50 px-2 py-1 font-mono text-xs text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
-                                                {log.details}
+                                        {/* Formatted Details */}
+                                        {parsedDetails && (
+                                            <div className="mt-3">
+                                                {typeof parsedDetails === 'object' ? (
+                                                    <pre className="overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 p-3 font-mono text-[11px] leading-relaxed text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                                                        {JSON.stringify(parsedDetails, null, 2)}
+                                                    </pre>
+                                                ) : (
+                                                    <p className="rounded-lg border border-slate-200 bg-slate-50 p-3 font-mono text-[11px] text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                                                        {parsedDetails}
+                                                    </p>
+                                                )}
                                             </div>
                                         )}
                                     </div>
-                                </div>
-
-                                <div className="ml-12 shrink-0 text-xs text-slate-500 sm:ml-0 sm:text-right dark:text-slate-400">
-                                    <div className="font-medium text-slate-700 dark:text-slate-300">
-                                        {formatTimeAgo(log.createdAt)}
-                                    </div>
-                                    <div>{formatDateTime(log.createdAt)}</div>
-                                </div>
-                            </motion.li>
-                        ))}
+                                </motion.li>
+                            )
+                        })}
                     </motion.ul>
                 </Card>
             )}
