@@ -10,11 +10,7 @@ import com.uniqueeue.enums.AuditAction;
 import com.uniqueeue.enums.Role;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
-import com.uniqueeue.model.PlanConfig;
-import com.uniqueeue.model.Queue;
-import com.uniqueeue.model.Ticket;
-import com.uniqueeue.model.University;
-import com.uniqueeue.model.User;
+import com.uniqueeue.model.*;
 import com.uniqueeue.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +37,7 @@ public class UniversityService {
     private final PlanConfigRepository planConfigRepository;
     private final UniversityStarterPackService starterPackService;
 
-    // ⬅️ ADDED MISSING REPOSITORIES FOR DELETION
+    // Repositories needed for the cascade delete
     private final OfficeRepository officeRepository;
     private final UniversityClosedDateRepository closedDateRepository;
     private final AdmittedStudentRepository admittedStudentRepository;
@@ -109,7 +105,6 @@ public class UniversityService {
                 AuditAction.UNIVERSITY_CREATED, "University", university.getId(),
                 "{\"code\":\"" + code + "\",\"adminEmail\":\"" + request.getAdminEmail() + "\"}");
 
-        // ─── Starter pack ───
         try {
             var result = starterPackService.seed(
                     university.getId(),
@@ -211,15 +206,28 @@ public class UniversityService {
         }
         queueRepository.deleteAll(queues);
 
-        // 2. Delete Offices ⬅️ THIS IS WHAT WAS MISSING
-        officeRepository.deleteAll(officeRepository.findByUniversityId(id));
+        // 2. Delete Offices
+        List<Office> offices = officeRepository.findAll().stream()
+                .filter(o -> o.getUniversity() != null && o.getUniversity().getId().equals(id))
+                .toList();
+        officeRepository.deleteAll(offices);
 
         // 3. Delete Closed Dates
-        closedDateRepository.deleteAll(closedDateRepository.findByUniversityId(id));
+        List<UniversityClosedDate> closedDates = closedDateRepository.findAll().stream()
+                .filter(c -> c.getUniversity() != null && c.getUniversity().getId().equals(id))
+                .toList();
+        closedDateRepository.deleteAll(closedDates);
 
-        // 4. Delete Registries (Admissions & Student Matric lists)
-        admittedStudentRepository.deleteAll(admittedStudentRepository.findByUniversityId(id));
-        studentRegistryRepository.deleteAll(studentRegistryRepository.findByUniversityId(id));
+        // 4. Delete Registries
+        List<AdmittedStudent> admittedStudents = admittedStudentRepository.findAll().stream()
+                .filter(a -> a.getUniversity() != null && a.getUniversity().getId().equals(id))
+                .toList();
+        admittedStudentRepository.deleteAll(admittedStudents);
+
+        List<StudentRegistry> studentRegistries = studentRegistryRepository.findAll().stream()
+                .filter(s -> s.getUniversity() != null && s.getUniversity().getId().equals(id))
+                .toList();
+        studentRegistryRepository.deleteAll(studentRegistries);
 
         // 5. Delete Users & Notifications
         List<User> users = userRepository.findByUniversityId(id);
