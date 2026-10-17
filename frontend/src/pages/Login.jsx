@@ -225,6 +225,9 @@ export default function Login() {
     const [unverified, setUnverified] = useState(false)
     const [rateLimitedUntil, setRateLimitedUntil] = useState(null)
 
+    // ── NEW: Cold-start handler ──
+    const [slowNetwork, setSlowNetwork] = useState(false)
+
     const remainingSeconds = useCountdown(rateLimitedUntil)
     const isRateLimited = remainingSeconds > 0
 
@@ -271,8 +274,16 @@ export default function Login() {
 
         setRedirecting(true)
         setUnverified(false)
+        setSlowNetwork(false)
+
+        // Start a timer: if the request takes > 4s, show "Waking up server..."
+        const wakeTimer = setTimeout(() => setSlowNetwork(true), 4000)
 
         const res = await login(email, password)
+
+        clearTimeout(wakeTimer)
+        setSlowNetwork(false)
+
         if (res.success) {
             syncExistingPushSubscription()
             push({ type: 'success', message: 'Signed in successfully' })
@@ -464,10 +475,17 @@ export default function Login() {
                                         Try again in {formatWait(remainingSeconds)}
                                     </>
                                 ) : loading || redirecting ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                        Signing in…
-                                    </>
+                                    slowNetwork ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Waking up server…
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Signing in…
+                                        </>
+                                    )
                                 ) : (
                                     <>
                                         Sign in
@@ -475,6 +493,13 @@ export default function Login() {
                                     </>
                                 )}
                             </button>
+
+                            {/* ── Cold start hint ── */}
+                            {slowNetwork && (
+                                <p className="text-center text-[11px] text-amber-700 dark:text-amber-400">
+                                    The server was asleep. Waking it up usually takes about 30–45 seconds on the first load. Hang tight!
+                                </p>
+                            )}
 
                             {isRateLimited && (
                                 <p className="text-center text-[11px] text-amber-700 dark:text-amber-400">
