@@ -44,6 +44,7 @@ public class QueueService {
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
     private final QueueScheduleService scheduleService;
+    private final ClosedDateService closedDateService; // ⬅ NEW: Injected for closure logic
 
     // ────────────────────────────────────────────────────────────
     //  QUEUES / SERVICES
@@ -263,10 +264,6 @@ public class QueueService {
     //  BULK OPERATIONS
     // ────────────────────────────────────────────────────────────
 
-    /**
-     * Remove a batch of staff from ALL queues they're currently assigned to
-     * (only queues belonging to the calling admin's university).
-     */
     @Transactional
     public BulkResult bulkUnassignStaffFromAllQueues(Long universityId, List<Long> staffIds) {
         if (staffIds == null || staffIds.isEmpty()) {
@@ -316,9 +313,6 @@ public class QueueService {
         return BulkResult.of(staffIds.size(), succeeded, failures);
     }
 
-    /**
-     * Set `isActive` on a batch of queues (only queues in the admin's university).
-     */
     @Transactional
     public BulkResult bulkSetQueuesActive(Long universityId, List<Long> queueIds, boolean active) {
         if (queueIds == null || queueIds.isEmpty()) {
@@ -352,9 +346,6 @@ public class QueueService {
         return BulkResult.of(queueIds.size(), succeeded, failures);
     }
 
-    /**
-     * Delete a batch of queues and their staff assignments.
-     */
     @Transactional
     public BulkResult bulkDeleteQueues(Long universityId, List<Long> queueIds) {
         if (queueIds == null || queueIds.isEmpty()) {
@@ -393,8 +384,13 @@ public class QueueService {
     // ────────────────────────────────────────────────────────────
 
     public QueueResponse enrichWithStaff(Queue queue) {
+        // Combine the university's open status (holiday/weekend) with the queue's specific schedule
+        boolean isUniversityOpen = closedDateService.isUniversityOpen(queue.getUniversity());
+        boolean isWithinQueueHours = scheduleService.isWithinOperatingHours(queue);
+        boolean isLive = isUniversityOpen && isWithinQueueHours;
+
         QueueResponse response = QueueResponse.from(queue)
-                .withIsOpen(scheduleService.isWithinOperatingHours(queue));
+                .withIsOpen(isLive);
 
         List<QueueStaff> assignments = queueStaffRepository.findByQueueId(queue.getId());
         List<QueueResponse.StaffInfo> staffList = assignments.stream()

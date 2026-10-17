@@ -12,7 +12,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Service
@@ -62,5 +65,32 @@ public class ClosedDateService {
             throw new BadRequestException("Closed date is not in your university");
         }
         closedDateRepository.delete(universityClosedDateValue);
+    }
+
+    /**
+     * Checks if the university is physically open right now.
+     * Returns false if:
+     *   - The university account is disabled
+     *   - It's Saturday or Sunday
+     *   - Today is marked as a Closed Date (holiday/break)
+     */
+    @Transactional(readOnly = true)
+    public boolean isUniversityOpen(University university) {
+        if (!Boolean.TRUE.equals(university.getIsActive())) {
+            return false;
+        }
+
+        ZoneId zone = ZoneId.of(university.getTimezone() != null ? university.getTimezone() : "Africa/Lagos");
+        ZonedDateTime now = ZonedDateTime.now(zone);
+
+        DayOfWeek day = now.getDayOfWeek();
+        if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
+            return false;
+        }
+
+        return !closedDateRepository.existsByUniversityIdAndClosedDate(
+                university.getId(),
+                now.toLocalDate()
+        );
     }
 }

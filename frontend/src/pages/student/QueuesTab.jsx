@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import {
     Ticket, MapPin, Clock, ListOrdered, Users,
     CheckCircle2, Lock, ArrowRight, Route as RouteIcon, Building2,
-    GraduationCap, Search, Copy, Check,
+    GraduationCap, Search, Copy, Check, Info,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -151,7 +151,6 @@ export default function QueuesTab() {
 
     const workflowByQueueId = useMemo(() => {
         const map = new Map()
-
         const ingest = (item) => {
             const steps = item.steps || []
             const total = item.totalSteps || steps.length || 0
@@ -166,7 +165,6 @@ export default function QueuesTab() {
                 })
             })
         }
-
         workflows.forEach(ingest)
         availableWorkflows.forEach(ingest)
         return map
@@ -221,19 +219,15 @@ export default function QueuesTab() {
             }
             return
         }
-
         const prev = lastActiveTicketRef.current
         if (!prev) return
-
         const finished = (history || []).find((itemValue) => itemValue.id === prev.id)
-
         if (finished && finished.status !== prev.status) {
             const event = checkTicket(finished)
             if (event) {
                 push({ type: event.severity, message: event.message })
             }
         }
-
         lastActiveTicketRef.current = null
     }, [activeTicket, history, checkTicket, push])
 
@@ -329,12 +323,10 @@ export default function QueuesTab() {
         if (statusFilter !== 'ALL') {
             sorted = sorted.filter((itemValue) => itemValue.status === statusFilter)
         }
-
         if (ticketSearch.trim()) {
             const stringValue = ticketSearch.trim().toLowerCase()
             sorted = sorted.filter((itemValue) => (itemValue.ticketNumber || '').toLowerCase().includes(stringValue))
         }
-
         return sorted
     }, [activeTicket, history, statusFilter, ticketSearch])
 
@@ -574,30 +566,37 @@ export default function QueuesTab() {
                                             </div>
                                         )}
 
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div className="rounded-lg bg-white/70 p-3 shadow-sm dark:bg-slate-800/60">
-                                                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                                    <Users className="h-3 w-3" />
-                                                    Waiting
+                                        {selectedService.isOpen !== false ? (
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="rounded-lg bg-white/70 p-3 shadow-sm dark:bg-slate-800/60">
+                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                        <Users className="h-3 w-3" />
+                                                        Waiting
+                                                    </div>
+                                                    <div
+                                                        className="mt-1 text-2xl font-bold"
+                                                        style={{ color: primaryColor }}
+                                                    >
+                                                        {selectedService.waitingCount ?? 0}
+                                                    </div>
                                                 </div>
-                                                <div
-                                                    className="mt-1 text-2xl font-bold"
-                                                    style={{ color: primaryColor }}
-                                                >
-                                                    {selectedService.waitingCount ?? 0}
+                                                <div className="rounded-lg bg-white/70 p-3 shadow-sm dark:bg-slate-800/60">
+                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                        <Clock className="h-3 w-3" />
+                                                        Est. wait
+                                                    </div>
+                                                    <div className="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">
+                                                        {selectedService.estimatedMinutes ?? 0}
+                                                        <span className="ml-0.5 text-sm font-semibold">min</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="rounded-lg bg-white/70 p-3 shadow-sm dark:bg-slate-800/60">
-                                                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                                    <Clock className="h-3 w-3" />
-                                                    Est. wait
-                                                </div>
-                                                <div className="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">
-                                                    {selectedService.estimatedMinutes ?? 0}
-                                                    <span className="ml-0.5 text-sm font-semibold">min</span>
-                                                </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center rounded-lg bg-slate-100 py-4 text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+                                                <Info className="mb-1 h-5 w-5" />
+                                                <span className="text-sm font-medium">Queue is currently closed</span>
                                             </div>
-                                        </div>
+                                        )}
 
                                         {selectedService.location && (
                                             <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
@@ -606,7 +605,7 @@ export default function QueuesTab() {
                                             </div>
                                         )}
 
-                                        {selectedService.currentlyServing && (
+                                        {selectedService.isOpen !== false && selectedService.currentlyServing && (
                                             <div className="mt-3 flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50/60 px-3 py-2 dark:border-emerald-900 dark:bg-emerald-950/30">
                                                 <span className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
                                                     Now serving
@@ -655,7 +654,7 @@ export default function QueuesTab() {
                                     loading={joining}
                                     fullWidth
                                     className="!mt-4"
-                                    style={{ backgroundColor: primaryColor }}
+                                    style={selectedService?.isOpen !== false ? { backgroundColor: primaryColor } : {}}
                                 >
                                     {activeTicket
                                         ? 'Queue turn is near'

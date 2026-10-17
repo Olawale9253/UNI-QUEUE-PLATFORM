@@ -387,6 +387,9 @@ export default function Queues() {
 
     const QueueCard = ({ q: queueValue }) => {
         const isSelected = selectedIds.has(queueValue.id)
+        // Naming Convention: isOpen dictates live status
+        const isLive = queueValue.isOpen === true
+
         return (
             <motion.div variants={staggerItem}>
                 <Card
@@ -416,9 +419,16 @@ export default function Queues() {
                                 )}
                             </div>
                         </div>
-                        <Badge variant={queueValue.isActive ? 'success' : 'default'}>
-                            {queueValue.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
+                        <div className="flex flex-col items-end gap-1.5">
+                            <Badge variant={queueValue.isActive ? 'success' : 'default'}>
+                                {queueValue.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                            {queueValue.isActive && (
+                                <Badge variant={isLive ? 'success' : 'warning'}>
+                                    {isLive ? 'Live' : 'Closed'}
+                                </Badge>
+                            )}
+                        </div>
                     </div>
 
                     {queueValue.location && (

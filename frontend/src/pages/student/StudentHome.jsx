@@ -48,6 +48,8 @@ function StatTile({ label, value, icon: Icon, accent, valueColor, to, ctaLabel, 
 
 function LiveQueueCard({ office }) {
     const hasQueue = office.queue != null
+    // isOpen is determined by the backend (checks weekends, holidays, and operating hours)
+    const isOpen = hasQueue && office.queue?.isOpen === true
     const waitingCount = office.queue?.waitingCount ?? 0
     const currentlyServing = office.queue?.currentlyServing || 'None'
     const avgWait = office.queue?.estimatedMinutes ?? 0
@@ -59,19 +61,26 @@ function LiveQueueCard({ office }) {
                     {office.name}
                 </h3>
                 {hasQueue && (
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
-                        <span className="relative flex h-1.5 w-1.5">
-                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    isOpen ? (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+                            <span className="relative flex h-1.5 w-1.5">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            </span>
+                            Live
                         </span>
-                        Live
-                    </span>
+                    ) : (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                            Closed
+                        </span>
+                    )
                 )}
             </div>
 
             <div className="text-sm text-slate-600 dark:text-slate-400">
                 Waiting:{' '}
-                <span className="font-bold text-brand-600 dark:text-brand-400">
+                <span className={`font-bold ${isOpen ? 'text-brand-600 dark:text-brand-400' : 'text-slate-400'}`}>
                     {waitingCount}
                 </span>
             </div>
@@ -83,20 +92,20 @@ function LiveQueueCard({ office }) {
                     </div>
                     <div
                         className={`mt-1 truncate text-sm font-bold ${
-                            currentlyServing && currentlyServing !== 'None'
+                            isOpen && currentlyServing && currentlyServing !== 'None'
                                 ? 'font-mono text-emerald-600 dark:text-emerald-400'
                                 : 'text-slate-400 dark:text-slate-500'
                         }`}
                     >
-                        {currentlyServing}
+                        {isOpen ? currentlyServing : '—'}
                     </div>
                 </div>
                 <div>
                     <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                         Avg Wait
                     </div>
-                    <div className="mt-1 text-sm font-bold text-amber-600 dark:text-amber-400">
-                        {avgWait} min
+                    <div className={`mt-1 text-sm font-bold ${isOpen ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}`}>
+                        {isOpen ? `${avgWait} min` : '—'}
                     </div>
                 </div>
             </div>
@@ -104,9 +113,13 @@ function LiveQueueCard({ office }) {
             <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800">
                 <Link
                     to="/student/queues"
-                    className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400"
+                    className={`inline-flex items-center gap-1 text-xs font-medium transition-colors ${
+                        isOpen
+                            ? 'text-brand-600 hover:text-brand-700 dark:text-brand-400'
+                            : 'text-slate-400 hover:text-slate-500'
+                    }`}
                 >
-                    Join this queue →
+                    {isOpen ? 'Join this queue →' : 'View service details →'}
                 </Link>
             </div>
         </Card>
@@ -346,8 +359,9 @@ export default function StudentHome() {
                 transition={{ delay: 0.2 }}
             >
                 <div className="mb-4 flex items-center justify-between">
+                    {/* Changed from "Live Queues" to "Campus Queues" */}
                     <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                        Live Queues
+                        Campus Queues
                     </h2>
                     <Link
                         to="/student/queues"
@@ -373,10 +387,10 @@ export default function StudentHome() {
                                 <Building2 className="h-6 w-6 text-slate-400" />
                             </div>
                             <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                No open queues
+                                No queues available
                             </p>
                             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                Check back soon. Your university has not opened any queues yet.
+                                Check back soon. Your university hasn't opened any queues yet.
                             </p>
                         </div>
                     </Card>

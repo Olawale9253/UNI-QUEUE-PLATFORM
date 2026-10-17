@@ -414,60 +414,74 @@ export default function OfficesTab() {
                                 ) : (
                                     <div className="max-h-[420px] overflow-y-auto pr-1">
                                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                            {selected.services.map((itemValue2) => (
-                                                <div
-                                                    key={itemValue2.id}
-                                                    className="rounded-lg border border-slate-200 p-4 transition-colors dark:border-slate-700"
-                                                    style={{
-                                                        borderColor: withAlpha(primaryColor, 0.2),
-                                                    }}
-                                                >
-                                                    <div className="flex items-start justify-between gap-2">
-                                                        <h5 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                            {itemValue2.name}
-                                                        </h5>
-                                                        {itemValue2.matricRequired && (
-                                                            <GraduationCap
-                                                                className="h-3.5 w-3.5 shrink-0 text-amber-500"
-                                                                title="Matric number required"
-                                                            />
+                                            {selected.services.map((itemValue2) => {
+                                                const isLive = itemValue2.isOpen === true
+                                                return (
+                                                    <div
+                                                        key={itemValue2.id}
+                                                        className="rounded-lg border border-slate-200 p-4 transition-colors dark:border-slate-700"
+                                                        style={{
+                                                            borderColor: withAlpha(primaryColor, 0.2),
+                                                        }}
+                                                    >
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <h5 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                                {itemValue2.name}
+                                                            </h5>
+                                                            <div className="flex gap-1.5">
+                                                                {itemValue2.matricRequired && (
+                                                                    <GraduationCap
+                                                                        className="h-3.5 w-3.5 shrink-0 text-amber-500"
+                                                                        title="Matric number required"
+                                                                    />
+                                                                )}
+                                                                <Badge variant={isLive ? 'success' : 'warning'} className="text-[10px] px-1.5 py-0">
+                                                                    {isLive ? 'Live' : 'Closed'}
+                                                                </Badge>
+                                                            </div>
+                                                        </div>
+
+                                                        {itemValue2.description ? (
+                                                            <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                                                                {itemValue2.description}
+                                                            </p>
+                                                        ) : (
+                                                            <p className="mt-1 text-xs italic text-slate-400 dark:text-slate-500">
+                                                                No description
+                                                            </p>
+                                                        )}
+
+                                                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                                                            <span
+                                                                className={`flex items-center gap-1 font-bold ${isLive ? '' : 'text-slate-400'}`}
+                                                                style={isLive ? { color: primaryColor } : undefined}
+                                                            >
+                                                                <Users className="h-3 w-3" />
+                                                                {itemValue2.waitingCount ?? 0} waiting
+                                                            </span>
+                                                            <span className={`flex items-center gap-1 font-bold ${isLive ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}`}>
+                                                                <Clock className="h-3 w-3" />
+                                                                ~{isLive ? (itemValue2.estimatedMinutes ?? 0) : 0} min
+                                                            </span>
+                                                        </div>
+
+                                                        {isLive ? (
+                                                            <button
+                                                                onClick={() => navigate('/student/queues')}
+                                                                className="mt-3 inline-flex items-center gap-1 text-xs font-medium transition-opacity hover:opacity-80"
+                                                                style={{ color: primaryColor }}
+                                                            >
+                                                                Join this service
+                                                                <ArrowRight className="h-3 w-3" />
+                                                            </button>
+                                                        ) : (
+                                                            <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-slate-400">
+                                                                Closed
+                                                            </span>
                                                         )}
                                                     </div>
-
-                                                    {itemValue2.description ? (
-                                                        <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
-                                                            {itemValue2.description}
-                                                        </p>
-                                                    ) : (
-                                                        <p className="mt-1 text-xs italic text-slate-400 dark:text-slate-500">
-                                                            No description
-                                                        </p>
-                                                    )}
-
-                                                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                                                        <span
-                                                            className="flex items-center gap-1 font-bold"
-                                                            style={{ color: primaryColor }}
-                                                        >
-                                                            <Users className="h-3 w-3" />
-                                                            {itemValue2.waitingCount ?? 0} waiting
-                                                        </span>
-                                                        <span className="flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400">
-                                                            <Clock className="h-3 w-3" />
-                                                            ~{itemValue2.estimatedMinutes ?? 0} min
-                                                        </span>
-                                                    </div>
-
-                                                    <button
-                                                        onClick={() => navigate('/student/queues')}
-                                                        className="mt-3 inline-flex items-center gap-1 text-xs font-medium transition-opacity hover:opacity-80"
-                                                        style={{ color: primaryColor }}
-                                                    >
-                                                        Join this service
-                                                        <ArrowRight className="h-3 w-3" />
-                                                    </button>
-                                                </div>
-                                            ))}
+                                                )
+                                            })}
                                         </div>
                                     </div>
                                 )}
