@@ -84,6 +84,39 @@ function getNotificationCopy(role) {
     }
 }
 
+/**
+ * Returns the status text below "Push notifications" — either the role's
+ * generic state, or a specific reason the browser can't do push.
+ */
+function getPushStatusText(webPush, notifications) {
+    // Enabled & subscribed
+    if (webPush.subscription) return notifications.active
+
+    // Unsupported — explain why
+    if (!webPush.supported) {
+        switch (webPush.reason) {
+            case 'ios-not-installed':
+                return 'Push notifications on iPhone require the app to be added to your Home Screen. Tap the Share icon at the bottom of Safari → "Add to Home Screen" → then open UniQueue from your Home Screen. (iOS 16.4+)'
+            case 'in-app-browser':
+                return 'Push notifications aren\'t available in this in-app browser. Open UniQueue in Safari or Chrome to enable them.'
+            case 'insecure-context':
+                return 'Push notifications require a secure (HTTPS) connection.'
+            case 'browser-unsupported':
+                return 'Your browser does not support push notifications.'
+            default:
+                return 'Push notifications are unavailable.'
+        }
+    }
+
+    // Supported but blocked by the user
+    if (webPush.permission === 'denied') {
+        return 'Blocked. Enable notifications in your browser settings and reload.'
+    }
+
+    // Supported but not yet enabled
+    return notifications.off
+}
+
 // ── Reusable password input with show/hide toggle ──
 function PasswordField({ label, value, onChange, placeholder, autoComplete }) {
     const [show, setShow] = useState(false)
@@ -148,6 +181,7 @@ export default function Profile() {
     const isFresher = role === 'FRESHER'
 
     const notifications = getNotificationCopy(role)
+    const pushStatusText = getPushStatusText(webPush, notifications)
 
     const dashboards = {
         SUPER_ADMIN: '/super-admin',
@@ -504,7 +538,7 @@ export default function Profile() {
                 </Card>
             </motion.div>
 
-            {/* ───── NOTIFICATIONS — role-aware copy ───── */}
+            {/* ───── NOTIFICATIONS — reason-aware ───── */}
             <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -531,13 +565,7 @@ export default function Profile() {
                                 Push notifications
                             </div>
                             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                                {!webPush.supported
-                                    ? 'Your browser does not support push notifications.'
-                                    : webPush.permission === 'denied'
-                                        ? 'Blocked. Enable notifications in your browser settings and reload.'
-                                        : webPush.subscription
-                                            ? notifications.active
-                                            : notifications.off}
+                                {pushStatusText}
                             </p>
                             {webPush.subscription && (
                                 <div className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
@@ -548,7 +576,11 @@ export default function Profile() {
                         </div>
                         <button
                             type="button"
-                            disabled={!webPush.supported || webPush.permission === 'denied' || webPush.busy}
+                            disabled={
+                                !webPush.supported ||
+                                webPush.permission === 'denied' ||
+                                webPush.busy
+                            }
                             onClick={async () => {
                                 if (webPush.subscription) {
                                     await webPush.unsubscribe()
@@ -570,7 +602,11 @@ export default function Profile() {
                                     : 'bg-brand-600 text-white hover:bg-brand-700'
                             }`}
                         >
-                            {webPush.subscription ? 'Turn off' : 'Enable'}
+                            {webPush.subscription
+                                ? 'Turn off'
+                                : webPush.supported
+                                    ? 'Enable'
+                                    : 'Unavailable'}
                         </button>
                     </div>
                 </Card>

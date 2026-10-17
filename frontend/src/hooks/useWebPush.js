@@ -9,36 +9,81 @@ const URL_B64_TO_UINT8 = (base64String) => {
 }
 
 /**
- * Registers the service worker and manages the push subscription for the
- * current user. Call `subscribe()` on login, `unsubscribe()` on logout.
+ * Detect whether push notifications can work in this browser context.
+ * Returns { supported, reason }.
+ *
+ * Reasons:
+ *   'supported'          — everything's ready; subscribe() will work
+ *   'ios-not-installed'  — iOS Safari, app not added to Home Screen (main iPhone blocker)
+ *   'in-app-browser'     — Instagram/WhatsApp/Facebook/TikTok in-app browsers
+ *   'insecure-context'   — HTTP (only localhost is exempt)
+ *   'browser-unsupported'— old browsers with no push API
  */
+function getPushSupportInfo() {
+    if (typeof navigator === 'undefined') {
+        return { supported: false, reason: 'browser-unsupported' }
+    }
+
+    const ua = navigator.userAgent || ''
+
+    // iPadOS 13+ reports as "MacIntel" — must check maxTouchPoints too
+    const isIOS =
+        /iPad|iPhone|iPod/.test(ua) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+
+    const isStandalone =
+        navigator.standalone === true ||
+        (typeof window.matchMedia === 'function' &&
+            window.matchMedia('(display-mode: standalone)').matches)
+
+    const isInAppBrowser = /FBAN|FBAV|FB_IAB|Instagram|WhatsApp|TikTok|Line\//.test(ua)
+
+    const isLocalhost =
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1'
+
+    const isSecure = window.isSecureContext || isLocalhost
+
+    if (isInAppBrowser) return { supported: false, reason: 'in-app-browser' }
+    if (isIOS && !isStandalone) return { supported: false, reason: 'ios-not-installed' }
+    if (!isSecure) return { supported: false, reason: 'insecure-context' }
+
+    if (
+        !('serviceWorker' in navigator) ||
+        !('PushManager' in window) ||
+        !('Notification' in window)
+    ) {
+        return { supported: false, reason: 'browser-unsupported' }
+    }
+
+    return { supported: true, reason: 'supported' }
+}
+
 export function useWebPush() {
     const [supported, setSupported] = useState(false)
+    const [reason, setReason] = useState('checking')
     const [permission, setPermission] = useState('default')
     const [subscription, setSubscription] = useState(null)
     const [busy, setBusy] = useState(false)
 
     useEffect(() => {
-        const ok = 'serviceWorker' in navigator
-            && 'PushManager' in window
-            && 'Notification' in window
+        const info = getPushSupportInfo()
+        setSupported(info.supported)
+        setReason(info.reason)
 
-        setSupported(ok)
+        if (!info.supported) return
 
-        if (ok) {
-            setPermission(Notification.permission)
-            navigator.serviceWorker.getRegistration('/sw.js').then((reg) => {
+        setPermission(Notification.permission)
+        navigator.serviceWorker
+            .getRegistration('/sw.js')
+            .then((reg) => {
                 if (reg) {
                     reg.pushManager.getSubscription().then(setSubscription)
                 }
             })
-        }
+            .catch(() => {})
     }, [])
 
-    /**
-     * Ask for permission, create a subscription, POST it to the backend.
-     * Returns 'granted', 'denied', or 'unsupported'.
-     */
     const subscribe = useCallback(async () => {
         if (!supported) return 'unsupported'
         setBusy(true)
@@ -88,9 +133,11 @@ export function useWebPush() {
             if (reg) {
                 const sub = await reg.pushManager.getSubscription()
                 if (sub) {
-                    await api.delete('/api/push/unsubscribe', {
-                        params: { endpoint: sub.endpoint },
-                    }).catch(() => {})
+                    await api
+                        .delete('/api/push/unsubscribe', {
+                            params: { endpoint: sub.endpoint },
+                        })
+                        .catch(() => {})
                     await sub.unsubscribe()
                 }
             }
@@ -102,15 +149,13 @@ export function useWebPush() {
         }
     }, [supported])
 
-    /**
-     * Send a test push to the current user.
-     */
     const sendTest = useCallback(async () => {
         await api.post('/api/push/test')
     }, [])
 
     return {
         supported,
+        reason,
         permission,
         subscription,
         busy,
