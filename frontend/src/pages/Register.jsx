@@ -224,8 +224,6 @@ export default function Register() {
                     ? 'Account created. An admin will verify your details shortly.'
                     : 'Account created. Check your email for the code.',
             })
-            // devVerificationCode is intentionally NOT forwarded.
-            // The code must arrive only via email.
             navigate('/verify-email', {
                 state: {
                     email: form.email.trim(),
@@ -241,6 +239,9 @@ export default function Register() {
         'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 disabled:opacity-50'
 
     const labelClass = 'mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300'
+
+    // Determines if the JAMB field is shown
+    const showJamb = mode === 'fresher' && selectedUni?.requireJambReg !== false
 
     return (
         <div className="h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
@@ -284,6 +285,7 @@ export default function Register() {
                         </div>
 
                         <form onSubmit={submit} className="space-y-3">
+                            {/* University | Full name */}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
                                     <label className={labelClass}>University</label>
@@ -314,8 +316,9 @@ export default function Register() {
                                 </div>
                             </div>
 
+                            {/* Email | (Matric or JAMB) */}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                <div>
+                                <div className={!showJamb && mode === 'fresher' ? 'sm:col-span-2' : ''}>
                                     <label className={labelClass}>
                                         {mode === 'fresher' ? 'Personal email' : 'Email'}
                                     </label>
@@ -341,46 +344,51 @@ export default function Register() {
                                             className={inputClass}
                                         />
                                     </div>
-                                ) : (
-                                    selectedUni?.requireJambReg !== false && (
-                                        <div>
-                                            <label className={labelClass}>JAMB registration number</label>
-                                            <input
-                                                type="text"
-                                                value={form.jambRegNumber}
-                                                onChange={setField('jambRegNumber')}
-                                                placeholder="Enter your JAMB registration number"
-                                                required
-                                                className={inputClass}
-                                            />
-                                        </div>
-                                    )
-                                )}
+                                ) : showJamb ? (
+                                    <div>
+                                        <label className={labelClass}>
+                                            {selectedUni?.jambRegDescription || 'JAMB registration number'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={form.jambRegNumber}
+                                            onChange={setField('jambRegNumber')}
+                                            placeholder={selectedUni?.jambRegExample || 'Enter JAMB registration number'}
+                                            required
+                                            className={inputClass}
+                                        />
+                                    </div>
+                                ) : null}
                             </div>
 
+                            {/* Fresher extras */}
                             {mode === 'fresher' && selectedUni &&
                                 (selectedUni.requireAdmissionRef || selectedUni.requireApplicationNumber) && (
                                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                         {selectedUni.requireAdmissionRef && (
                                             <div>
-                                                <label className={labelClass}>Admission reference</label>
+                                                <label className={labelClass}>
+                                                    {selectedUni.admissionRefDescription || 'Admission reference'}
+                                                </label>
                                                 <input
                                                     type="text"
                                                     value={form.admissionRef}
                                                     onChange={setField('admissionRef')}
-                                                    placeholder="Enter admission reference"
+                                                    placeholder={selectedUni.admissionRefExample || 'Enter admission reference'}
                                                     className={inputClass}
                                                 />
                                             </div>
                                         )}
                                         {selectedUni.requireApplicationNumber && (
                                             <div>
-                                                <label className={labelClass}>Application number</label>
+                                                <label className={labelClass}>
+                                                    {selectedUni.applicationNumberDescription || 'Application number'}
+                                                </label>
                                                 <input
                                                     type="text"
                                                     value={form.applicationNumber}
                                                     onChange={setField('applicationNumber')}
-                                                    placeholder="Enter application number"
+                                                    placeholder={selectedUni.applicationNumberExample || 'Enter application number'}
                                                     className={inputClass}
                                                 />
                                             </div>
@@ -388,6 +396,7 @@ export default function Register() {
                                     </div>
                                 )}
 
+                            {/* Department | Phone */}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
                                     <label className={labelClass}>
@@ -415,6 +424,7 @@ export default function Register() {
                                 </div>
                             </div>
 
+                            {/* Password | Confirm */}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
                                     <label className={labelClass}>Password</label>
