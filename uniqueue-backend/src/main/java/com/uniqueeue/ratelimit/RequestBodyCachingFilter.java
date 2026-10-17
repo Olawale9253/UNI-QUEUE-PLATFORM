@@ -11,7 +11,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 /**
- * Wraps every incoming request so its body can be re-read downstream.
+ * Wraps incoming requests so their body can be re-read downstream.
+ * IMPORTANT: Skips `multipart/form-data` requests to prevent breaking file uploads.
  */
 @Component
 @Order(1)
@@ -23,6 +24,14 @@ public class RequestBodyCachingFilter extends OncePerRequestFilter {
                                     FilterChain chain) throws ServletException, IOException {
 
         String method = request.getMethod();
+        String contentType = request.getContentType();
+
+        // If it's a file upload, bypass the caching wrapper entirely
+        if (contentType != null && contentType.toLowerCase().startsWith("multipart/")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         if ("POST".equals(method) || "PUT".equals(method) || "PATCH".equals(method)) {
             CachedBodyHttpServletRequest wrapped = new CachedBodyHttpServletRequest(request);
             chain.doFilter(wrapped, response);
