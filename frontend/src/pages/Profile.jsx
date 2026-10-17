@@ -373,8 +373,7 @@ export default function Profile() {
             >
                 <Card className="mb-6 overflow-hidden">
                     <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
-                        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-50 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
-                            {profile?.universityLogoUrl ? (
+                        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-50 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">                            {profile?.universityLogoUrl ? (
                                 <img
                                     src={profile.universityLogoUrl}
                                     alt={profile.universityName || 'University'}

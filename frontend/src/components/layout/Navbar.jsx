@@ -41,17 +41,14 @@ export default function Navbar() {
     )
     const showHamburger = !!user && isDashboardRoute
 
-    // Load university info once
     useEffect(() => {
         if (user && user.role !== 'SUPER_ADMIN' && !loaded && load) load()
     }, [user, loaded, load])
 
-    // Reset logo error on URL change
     useEffect(() => {
         setLogoFailed(false)
     }, [university?.logoUrl])
 
-    // Close dropdown on outside click
     useEffect(() => {
         const handler = (event) => {
             if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -62,7 +59,6 @@ export default function Navbar() {
         return () => document.removeEventListener('mousedown', handler)
     }, [])
 
-    // Close dropdown on route change
     useEffect(() => {
         setMenuOpen(false)
     }, [location.pathname])
@@ -84,12 +80,9 @@ export default function Navbar() {
     return (
         <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/95">
             <div className="flex h-16 w-full items-center justify-between gap-2 px-3 sm:px-5 lg:px-6">
-                {/* ───── LEFT: hamburger + brand ───── */}
                 <div className="flex min-w-0 items-center gap-2">
-                    {/* Hamburger — same three-line icon on every device */}
                     {showHamburger && (
                         <>
-                            {/* Desktop: toggles the sidebar rail */}
                             <button
                                 onClick={toggleSidebar}
                                 aria-label="Toggle menu"
@@ -98,8 +91,6 @@ export default function Navbar() {
                             >
                                 <Menu className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
                             </button>
-
-                            {/* Mobile: opens the drawer */}
                             <button
                                 onClick={openMobileSidebar}
                                 aria-label="Open menu"
@@ -110,12 +101,12 @@ export default function Navbar() {
                         </>
                     )}
 
-                    {/* Brand */}
                     <Link
                         to={dashboardHref}
                         className="flex min-w-0 items-center gap-3 transition-opacity hover:opacity-90"
                     >
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 ring-1 ring-slate-200 sm:h-12 sm:w-12 dark:bg-slate-800 dark:ring-slate-700">
+                        {/* ⬅️ LOGO CHANGED TO ROUNDED-FULL */}
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-slate-200 sm:h-12 sm:w-12 dark:bg-slate-800 dark:ring-slate-700">
                             {isSuperAdmin ? (
                                 <div className="flex h-full w-full items-center justify-center bg-slate-900 text-white dark:bg-slate-700">
                                     <Shield className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -124,7 +115,7 @@ export default function Navbar() {
                                 <img
                                     src={university.logoUrl}
                                     alt={university.name}
-                                    className="h-full w-full object-contain p-1"
+                                    className="h-full w-full object-cover" // ⬅️ object-cover so it fills the circle
                                     onError={() => setLogoFailed(true)}
                                 />
                             ) : hasUniversity ? (
@@ -155,7 +146,6 @@ export default function Navbar() {
                     </Link>
                 </div>
 
-                {/* ───── RIGHT: utilities + user ───── */}
                 <div className="flex items-center gap-1 sm:gap-2">
                     {!user && (
                         <nav className="hidden items-center gap-1 lg:flex">
@@ -261,7 +251,6 @@ export default function Navbar() {
                 </div>
             </div>
 
-            {/* Mobile-only entry links when logged out */}
             {!user && (
                 <div className="flex items-center gap-1 border-t border-slate-100 px-3 py-2 sm:hidden dark:border-slate-800">
                     <Link
