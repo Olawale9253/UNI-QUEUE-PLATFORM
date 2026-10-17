@@ -1,13 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
-    Save,
-    Sparkles,
-    CheckCircle2,
-    XCircle,
-    Building2,
-    DollarSign,
-    Layers,
+    Save, Sparkles, CheckCircle2, XCircle, Building2, DollarSign, Layers,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -38,11 +32,18 @@ export default function TiersAndFeatures() {
     const [universities, setUniversities] = useState([])
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState({})
+    const [rate, setRate] = useState(1500) // ⬅️ NEW
 
     const load = useCallback(async () => {
         try {
-            const res = await api.get('/api/super-admin/universities')
-            setUniversities(res.data.data || [])
+            const [uniRes, settingsRes] = await Promise.all([
+                api.get('/api/super-admin/universities'),
+                api.get('/api/super-admin/settings').catch(() => ({ data: { data: { ngnExchangeRate: 1500 } } }))
+            ])
+            setUniversities(uniRes.data.data || [])
+            if (settingsRes.data?.data?.ngnExchangeRate) {
+                setRate(settingsRes.data.data.ngnExchangeRate)
+            }
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed to load' })
         } finally {
@@ -50,9 +51,7 @@ export default function TiersAndFeatures() {
         }
     }, [push])
 
-    useEffect(() => {
-        load()
-    }, [load])
+    useEffect(() => { load() }, [load])
 
     const updateLocal = (id, field, value) => {
         setUniversities((prev) =>
@@ -113,55 +112,46 @@ export default function TiersAndFeatures() {
                 description="Control billing plans and enable/disable platform features per university."
             />
 
-            {/* Plan reference */}
             <Card className="mb-6">
                 <div className="mb-3 flex items-center gap-2">
                     <DollarSign className="h-4 w-4 text-brand-600" />
                     <h3 className="text-sm font-semibold text-slate-900">Available plans</h3>
                 </div>
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                    {Object.entries(PLANS).map(([key, plan]) => (
-                        <div
-                            key={key}
-                            className="rounded-lg border border-slate-200 bg-slate-50/50 p-3"
-                        >
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm font-semibold text-slate-900">{plan.label}</span>
-                                <Badge variant={plan.color}>{plan.price === 0 ? 'Free' : `$${plan.price}/mo`}</Badge>
+                    {Object.entries(PLANS).map(([key, plan]) => {
+                        const ngnPrice = plan.price * rate
+                        return (
+                            <div key={key} className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-semibold text-slate-900">{plan.label}</span>
+                                    <Badge variant={plan.color}>
+                                        {plan.price === 0 ? 'Free' : `$${plan.price} / ₦${ngnPrice.toLocaleString()}`}
+                                    </Badge>
+                                </div>
+                                <div className="mt-2 space-y-0.5 text-xs text-slate-500">
+                                    <div>{plan.maxQueues} queues</div>
+                                    <div>{plan.maxStaff} staff</div>
+                                    <div>{plan.maxTicketsPerDay.toLocaleString()} tickets/day</div>
+                                </div>
                             </div>
-                            <div className="mt-2 space-y-0.5 text-xs text-slate-500">
-                                <div>{plan.maxQueues} queues</div>
-                                <div>{plan.maxStaff} staff</div>
-                                <div>{plan.maxTicketsPerDay.toLocaleString()} tickets/day</div>
-                            </div>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
             </Card>
 
-            {/* Universities */}
             {universities.length === 0 ? (
-                <EmptyState
-                    icon={Building2}
-                    title="No universities yet"
-                    description="Register a university first to manage tiers and features."
-                />
+                <EmptyState icon={Building2} title="No universities yet" description="Register a university first to manage tiers and features." />
             ) : (
-                <motion.div
-                    variants={stagger(0, 0.05)}
-                    initial="initial"
-                    animate="animate"
-                    className="space-y-4"
-                >
+                <motion.div variants={stagger(0, 0.05)} initial="initial" animate="animate" className="space-y-4">
                     {universities.map((uni) => {
                         const planMeta = PLANS[uni.plan] || PLANS.FREE
                         const planSaving = saving[uni.id]?.plan
                         const featuresSaving = saving[uni.id]?.features
+                        const ngnPrice = planMeta.price * rate
 
                         return (
                             <motion.div key={uni.id} variants={staggerItem}>
                                 <Card>
-                                    {/* Header row */}
                                     <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
                                         <div className="flex items-center gap-3">
                                             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">
@@ -169,13 +159,9 @@ export default function TiersAndFeatures() {
                                             </div>
                                             <div>
                                                 <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-base font-semibold text-slate-900">
-                            {uni.name}
-                          </span>
+                                                    <span className="text-base font-semibold text-slate-900">{uni.name}</span>
                                                     <Badge variant={planMeta.color}>{planMeta.label}</Badge>
-                                                    <Badge variant={uni.isActive ? 'success' : 'default'}>
-                                                        {uni.isActive ? 'Active' : 'Inactive'}
-                                                    </Badge>
+                                                    <Badge variant={uni.isActive ? 'success' : 'default'}>{uni.isActive ? 'Active' : 'Inactive'}</Badge>
                                                 </div>
                                                 <div className="mt-0.5 text-xs text-slate-500">
                                                     Code: {uni.code} · {uni.queueCount || 0} queues · {uni.staffCount || 0} staff
@@ -185,13 +171,11 @@ export default function TiersAndFeatures() {
                                     </div>
 
                                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                                        {/* Plan section */}
                                         <div>
                                             <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
                                                 <Layers className="h-4 w-4 text-brand-600" />
                                                 Billing plan
                                             </h4>
-
                                             <div className="flex items-center gap-2">
                                                 <select
                                                     value={uni.plan || 'FREE'}
@@ -200,50 +184,26 @@ export default function TiersAndFeatures() {
                                                 >
                                                     {Object.entries(PLANS).map(([key, parameter]) => (
                                                         <option key={key} value={key}>
-                                                            {parameter.label} {parameter.price > 0 && `— $${parameter.price}/mo`}
+                                                            {parameter.label} {parameter.price > 0 && `— $${parameter.price} / ₦${(parameter.price * rate).toLocaleString()}`}
                                                         </option>
                                                     ))}
                                                 </select>
-                                                <Button
-                                                    size="sm"
-                                                    icon={Save}
-                                                    onClick={() => savePlan(uni)}
-                                                    loading={planSaving}
-                                                    disabled={planSaving}
-                                                >
+                                                <Button size="sm" icon={Save} onClick={() => savePlan(uni)} loading={planSaving} disabled={planSaving}>
                                                     Save
                                                 </Button>
                                             </div>
-
                                             <div className="mt-3 grid grid-cols-3 gap-2 rounded-lg bg-slate-50 p-3 text-xs">
-                                                <div>
-                                                    <div className="text-slate-500">Max queues</div>
-                                                    <div className="mt-0.5 text-sm font-semibold text-slate-900">
-                                                        {uni.maxQueues}
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <div className="text-slate-500">Max staff</div>
-                                                    <div className="mt-0.5 text-sm font-semibold text-slate-900">
-                                                        {uni.maxStaff}
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <div className="text-slate-500">Max tickets/day</div>
-                                                    <div className="mt-0.5 text-sm font-semibold text-slate-900">
-                                                        {(uni.maxTicketsPerDay || 0).toLocaleString()}
-                                                    </div>
-                                                </div>
+                                                <div><div className="text-slate-500">Max queues</div><div className="mt-0.5 text-sm font-semibold text-slate-900">{uni.maxQueues}</div></div>
+                                                <div><div className="text-slate-500">Max staff</div><div className="mt-0.5 text-sm font-semibold text-slate-900">{uni.maxStaff}</div></div>
+                                                <div><div className="text-slate-500">Max tickets/day</div><div className="mt-0.5 text-sm font-semibold text-slate-900">{(uni.maxTicketsPerDay || 0).toLocaleString()}</div></div>
                                             </div>
                                         </div>
 
-                                        {/* Features section */}
                                         <div>
                                             <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
                                                 <Sparkles className="h-4 w-4 text-brand-600" />
                                                 Feature access
                                             </h4>
-
                                             <div className="space-y-2">
                                                 {FEATURES.map((item) => {
                                                     const enabled = uni[item.key] !== false
@@ -252,64 +212,24 @@ export default function TiersAndFeatures() {
                                                             key={item.key}
                                                             type="button"
                                                             onClick={() => updateLocal(uni.id, item.key, !enabled)}
-                                                            className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition-colors ${
-                                                                enabled
-                                                                    ? 'border-emerald-200 bg-emerald-50'
-                                                                    : 'border-slate-200 bg-slate-50'
-                                                            }`}
+                                                            className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition-colors ${enabled ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-50'}`}
                                                         >
                                                             <div className="min-w-0">
                                                                 <div className="flex items-center gap-2">
-                                                                    {enabled ? (
-                                                                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-                                                                    ) : (
-                                                                        <XCircle className="h-4 w-4 shrink-0 text-slate-400" />
-                                                                    )}
-                                                                    <span
-                                                                        className={`text-sm font-medium ${
-                                                                            enabled ? 'text-emerald-900' : 'text-slate-600'
-                                                                        }`}
-                                                                    >
-                                    {item.label}
-                                  </span>
+                                                                    {enabled ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" /> : <XCircle className="h-4 w-4 shrink-0 text-slate-400" />}
+                                                                    <span className={`text-sm font-medium ${enabled ? 'text-emerald-900' : 'text-slate-600'}`}>{item.label}</span>
                                                                 </div>
-                                                                <div
-                                                                    className={`ml-6 text-xs ${
-                                                                        enabled ? 'text-emerald-700' : 'text-slate-500'
-                                                                    }`}
-                                                                >
-                                                                    {item.description}
-                                                                </div>
+                                                                <div className={`ml-6 text-xs ${enabled ? 'text-emerald-700' : 'text-slate-500'}`}>{item.description}</div>
                                                             </div>
-
-                                                            {/* Toggle switch */}
-                                                            <div
-                                                                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-                                                                    enabled ? 'bg-emerald-600' : 'bg-slate-300'
-                                                                }`}
-                                                            >
-                                                                <div
-                                                                    className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
-                                                                    style={{
-                                                                        transform: enabled ? 'translateX(20px)' : 'translateX(0)',
-                                                                        left: '2px',
-                                                                    }}
-                                                                />
+                                                            <div className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${enabled ? 'bg-emerald-600' : 'bg-slate-300'}`}>
+                                                                <div className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform" style={{ transform: enabled ? 'translateX(20px)' : 'translateX(0)', left: '2px' }} />
                                                             </div>
                                                         </button>
                                                     )
                                                 })}
                                             </div>
-
                                             <div className="mt-3 flex justify-end">
-                                                <Button
-                                                    size="sm"
-                                                    variant="secondary"
-                                                    icon={Save}
-                                                    onClick={() => saveFeatures(uni)}
-                                                    loading={featuresSaving}
-                                                    disabled={featuresSaving}
-                                                >
+                                                <Button size="sm" variant="secondary" icon={Save} onClick={() => saveFeatures(uni)} loading={featuresSaving} disabled={featuresSaving}>
                                                     Save features
                                                 </Button>
                                             </div>

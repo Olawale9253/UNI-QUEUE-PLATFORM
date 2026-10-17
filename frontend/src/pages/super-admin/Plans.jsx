@@ -23,11 +23,18 @@ export default function Plans() {
     const [plans, setPlans] = useState([])
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState({})
+    const [rate, setRate] = useState(1500) // ⬅️ NEW
 
     const load = useCallback(async () => {
         try {
-            const res = await api.get('/api/super-admin/plans')
-            setPlans(res.data.data || [])
+            const [plansRes, settingsRes] = await Promise.all([
+                api.get('/api/super-admin/plans'),
+                api.get('/api/super-admin/settings').catch(() => ({ data: { data: { ngnExchangeRate: 1500 } } }))
+            ])
+            setPlans(plansRes.data.data || [])
+            if (settingsRes.data?.data?.ngnExchangeRate) {
+                setRate(settingsRes.data.data.ngnExchangeRate)
+            }
         } catch (err) {
             push({ type: 'error', message: err.response?.data?.message || 'Failed to load plans' })
         } finally {
@@ -35,9 +42,7 @@ export default function Plans() {
         }
     }, [push])
 
-    useEffect(() => {
-        load()
-    }, [load])
+    useEffect(() => { load() }, [load])
 
     const updateLocal = (id, field, value) => {
         setPlans((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)))
@@ -85,10 +90,7 @@ export default function Plans() {
                 <div>
                     <p className="font-medium">How pricing works</p>
                     <p className="mt-1 text-xs text-sky-800">
-                        Prices are for display only. Billing integration will be added later. When you change
-                        a plan's limits, universities currently on that plan keep their existing
-                        limits until you re-save their plan on the Tiers tab. Use the limits below as
-                        the source of truth for new plan assignments.
+                        Prices are for display only. Naira equivalents are calculated using the Exchange Rate in Platform Settings (currently 1 USD = ₦{Number(rate).toLocaleString()}).
                     </p>
                 </div>
             </div>
@@ -109,6 +111,7 @@ export default function Plans() {
                     {plans.map((plan) => {
                         const color = DEFAULT_COLORS[plan.code] || 'slate'
                         const planSaving = saving[plan.id]
+                        const ngnPrice = plan.priceUsd * rate
 
                         return (
                             <motion.div key={plan.id} variants={staggerItem}>
@@ -123,7 +126,7 @@ export default function Plans() {
                                                 {!plan.isActive && <Badge variant="default">Inactive</Badge>}
                                             </div>
                                             <p className="mt-0.5 text-xs text-slate-500">
-                                                Currently at <strong>${plan.priceUsd}</strong>/month
+                                                Currently at <strong>${plan.priceUsd}</strong> / <strong>₦{ngnPrice.toLocaleString()}</strong> /month
                                             </p>
                                         </div>
                                         <div className="text-right">
@@ -131,7 +134,7 @@ export default function Plans() {
                                                 ${plan.priceUsd}
                                             </div>
                                             <div className="text-[10px] uppercase tracking-wide text-slate-500">
-                                                per month
+                                                ₦{ngnPrice.toLocaleString()} / month
                                             </div>
                                         </div>
                                     </div>
@@ -142,9 +145,9 @@ export default function Plans() {
                                             Monthly price (USD)
                                         </label>
                                         <div className="relative">
-                      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-slate-400">
-                        $
-                      </span>
+                                            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-slate-400">
+                                                $
+                                            </span>
                                             <input
                                                 type="number"
                                                 min="0"
@@ -167,7 +170,7 @@ export default function Plans() {
                                                 type="number"
                                                 min="1"
                                                 value={plan.maxQueues}
-                                                onChange={(eventValue) => updateLocal(plan.id, 'maxQueues', eventValue.target.value)}
+                                                onChange={(event) => updateLocal(plan.id, 'maxQueues', event.target.value)}
                                                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                                             />
                                         </div>
@@ -181,7 +184,7 @@ export default function Plans() {
                                                 type="number"
                                                 min="1"
                                                 value={plan.maxStaff}
-                                                onChange={(eventValue2) => updateLocal(plan.id, 'maxStaff', eventValue2.target.value)}
+                                                onChange={(event) => updateLocal(plan.id, 'maxStaff', event.target.value)}
                                                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                                             />
                                         </div>
@@ -195,7 +198,7 @@ export default function Plans() {
                                                 type="number"
                                                 min="1"
                                                 value={plan.maxTicketsPerDay}
-                                                onChange={(eventValue3) => updateLocal(plan.id, 'maxTicketsPerDay', eventValue3.target.value)}
+                                                onChange={(event) => updateLocal(plan.id, 'maxTicketsPerDay', event.target.value)}
                                                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                                             />
                                         </div>
@@ -204,7 +207,7 @@ export default function Plans() {
                                             <input
                                                 type="checkbox"
                                                 checked={plan.isActive}
-                                                onChange={(eventValue4) => updateLocal(plan.id, 'isActive', eventValue4.target.checked)}
+                                                onChange={(event) => updateLocal(plan.id, 'isActive', event.target.checked)}
                                                 className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                                             />
                                             Available for new assignments
