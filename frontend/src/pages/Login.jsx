@@ -45,10 +45,6 @@ async function syncExistingPushSubscription() {
     }
 }
 
-/* ─────────────────────────────────────────────
-   Countdown helpers
-   ───────────────────────────────────────────── */
-
 function useCountdown(targetTime) {
     const computeRemaining = () =>
         targetTime ? Math.max(0, Math.ceil((targetTime - Date.now()) / 1000)) : 0
@@ -82,10 +78,6 @@ function formatWait(seconds) {
     return remainingMinutes === 0 ? `${hours}h` : `${hours}h ${remainingMinutes}m`
 }
 
-/* ─────────────────────────────────────────────
-   Left panel
-   ───────────────────────────────────────────── */
-
 function LeftPanel({ brand, imageError, onImageError }) {
     const backgroundSrc =
         brand.campusImageUrl && !imageError ? brand.campusImageUrl : LOGIN_BACKGROUND
@@ -104,11 +96,12 @@ function LeftPanel({ brand, imageError, onImageError }) {
                 className="absolute inset-0 h-full w-full object-cover object-center"
                 draggable={false}
             />
+            {/* ⬅️ LIGHTER GRADIENT OVERLAY so the image is clearly visible */}
             <div
                 className="absolute inset-0"
                 style={{
                     background:
-                        'linear-gradient(160deg, rgb(var(--brand-800, 30 64 175) / 0.65) 0%, rgb(var(--brand-900, 30 58 138) / 0.82) 60%, rgb(var(--brand-950, 23 37 84) / 0.94) 100%)',
+                        'linear-gradient(160deg, rgb(var(--brand-800, 30 64 175) / 0.35) 0%, rgb(var(--brand-900, 30 58 138) / 0.55) 50%, rgb(var(--brand-950, 23 37 84) / 0.8) 100%)',
                 }}
                 aria-hidden
             />
@@ -208,10 +201,6 @@ function LeftPanel({ brand, imageError, onImageError }) {
     )
 }
 
-/* ─────────────────────────────────────────────
-   Page
-   ───────────────────────────────────────────── */
-
 export default function Login() {
     const navigate = useNavigate()
     const { login, loading, user, logout } = useAuthStore()
@@ -224,8 +213,6 @@ export default function Login() {
     const [imageError, setImageError] = useState(false)
     const [unverified, setUnverified] = useState(false)
     const [rateLimitedUntil, setRateLimitedUntil] = useState(null)
-
-    // ── NEW: Cold-start handler ──
     const [slowNetwork, setSlowNetwork] = useState(false)
 
     const remainingSeconds = useCountdown(rateLimitedUntil)
@@ -276,7 +263,6 @@ export default function Login() {
         setUnverified(false)
         setSlowNetwork(false)
 
-        // Start a timer: if the request takes > 4s, show "Waking up server..."
         const wakeTimer = setTimeout(() => setSlowNetwork(true), 4000)
 
         const res = await login(email, password)
@@ -390,8 +376,6 @@ export default function Login() {
                             </div>
                         )}
 
-                        {/* Only shows if a login attempt fails because the account
-                            isn't verified — acts as an automatic redirect cue. */}
                         {unverified && (
                             <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
                                 <p className="font-medium">Your email isn't verified</p>
@@ -494,7 +478,6 @@ export default function Login() {
                                 )}
                             </button>
 
-                            {/* ── Cold start hint ── */}
                             {slowNetwork && (
                                 <p className="text-center text-[11px] text-amber-700 dark:text-amber-400">
                                     The server was asleep. Waking it up usually takes about 30–45 seconds on the first load. Hang tight!
@@ -508,7 +491,6 @@ export default function Login() {
                             )}
                         </form>
 
-                        {/* Footer — only the register link now */}
                         <div className="mt-4 text-center text-xs">
                             <p className="text-slate-500 dark:text-slate-400">
                                 Don't have an account?{' '}

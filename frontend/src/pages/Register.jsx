@@ -20,6 +20,10 @@ function resolveImageUrl(url) {
     return base ? `${base}${url}` : url
 }
 
+/* ─────────────────────────────────────────────
+   Left panel — image + brief institutional copy
+   ───────────────────────────────────────────── */
+
 function LeftPanel({ university, imageError, onImageError }) {
     const backgroundSrc =
         university?.campusImageUrl && !imageError
@@ -43,11 +47,12 @@ function LeftPanel({ university, imageError, onImageError }) {
                 className="absolute inset-0 h-full w-full object-cover object-center"
                 draggable={false}
             />
+            {/* ⬅️ LIGHTER GRADIENT OVERLAY so the image is clearly visible */}
             <div
                 className="absolute inset-0"
                 style={{
                     background:
-                        'linear-gradient(160deg, rgb(var(--brand-800, 30 64 175) / 0.68) 0%, rgb(var(--brand-900, 30 58 138) / 0.84) 60%, rgb(var(--brand-950, 23 37 84) / 0.95) 100%)',
+                        'linear-gradient(160deg, rgb(var(--brand-800, 30 64 175) / 0.35) 0%, rgb(var(--brand-900, 30 58 138) / 0.55) 50%, rgb(var(--brand-950, 23 37 84) / 0.8) 100%)',
                 }}
                 aria-hidden
             />
@@ -123,11 +128,17 @@ function LeftPanel({ university, imageError, onImageError }) {
     )
 }
 
+/* ─────────────────────────────────────────────
+   Page
+   ───────────────────────────────────────────── */
+
 export default function Register() {
     const navigate = useNavigate()
     const { register, loading } = useAuthStore()
     const { push } = useToastStore()
 
+    // "student" (default) or "fresher". Not a visible tab — set via a small
+    // text link at the bottom of the form. Keeps the default experience clean.
     const [mode, setMode] = useState('student')
 
     const [universities, setUniversities] = useState([])
