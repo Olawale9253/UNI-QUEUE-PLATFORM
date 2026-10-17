@@ -2,7 +2,8 @@ import axios from 'axios'
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL || '',
-    headers: { 'Content-Type': 'application/json' },
+    // ⬅️ REMOVED: headers: { 'Content-Type': 'application/json' },
+    // Axios will automatically set the correct Content-Type (JSON or FormData) per request.
 })
 
 // Endpoints that should NEVER trigger an auto-logout on 401
@@ -15,9 +16,6 @@ const PUBLIC_AUTH_PATHS = [
     '/api/auth/universities',
 ]
 
-// ─── Concurrency guard ───
-// If three requests 401 at the same time, only one refresh call fires;
-// the other two wait for its result and retry with the new token.
 let refreshPromise = null
 
 function doRefresh() {
@@ -30,7 +28,7 @@ function doRefresh() {
         .post(
             (import.meta.env.VITE_API_URL || '') + '/api/auth/refresh',
             { refreshToken },
-            { headers: { 'Content-Type': 'application/json' } }
+            { headers: { 'Content-Type': 'application/json' } } // Explicit here is fine
         )
         .then(async (res) => {
             const dataValue = res.data?.data
@@ -41,9 +39,6 @@ function doRefresh() {
                 localStorage.setItem('uniqueue_refresh_token', dataValue.refreshToken)
             }
 
-            // ─── Sync the zustand store so dependent hooks (SSE, etc.) re-run ───
-            // Lazy import — avoids a circular dependency with authStore which
-            // itself imports this module.
             try {
                 const mod = await import('../store/authStore')
                 mod.useAuthStore.getState().updateTokens(

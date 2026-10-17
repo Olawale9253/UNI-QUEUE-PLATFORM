@@ -98,7 +98,6 @@ export default function DocumentsTab() {
 
     useEffect(() => { load() }, [load])
     useAdaptivePoll(load, { fastMs: 10000, slowMs: 30000 })
-
     const upload = async (event) => {
         event.preventDefault()
         if (!file) {
@@ -111,8 +110,7 @@ export default function DocumentsTab() {
             form.append('file', file)
             form.append('type', type)
 
-            // ⬅️ FIX: Removed the manual Content-Type header.
-            // Axios will automatically set 'multipart/form-data' with the correct boundary.
+            // Axios will now automatically detect FormData and set the right boundary
             await api.post('/api/user/documents', form)
 
             push({ type: 'success', message: 'Document uploaded' })
