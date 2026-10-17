@@ -105,8 +105,8 @@ export default function Navbar() {
                         to={dashboardHref}
                         className="flex min-w-0 items-center gap-3 transition-opacity hover:opacity-90"
                     >
-                        {/* ⬅️ FORCED CIRCLE LOGO CONTAINER */}
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-slate-200 sm:h-12 sm:w-12 dark:bg-slate-800 dark:ring-slate-700">
+                        {/* ⬅️ THE SQUIRCLE LOGO CONTAINER */}
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-slate-200 sm:h-12 sm:w-12 dark:bg-slate-800 dark:ring-slate-700">
                             {isSuperAdmin ? (
                                 <div className="flex h-full w-full items-center justify-center bg-slate-900 text-white dark:bg-slate-700">
                                     <Shield className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -115,11 +115,13 @@ export default function Navbar() {
                                 <img
                                     src={university.logoUrl}
                                     alt={university.name}
-                                    className="h-full w-full rounded-full object-cover" // ⬅️ rounded-full + object-cover
+                                    // object-contain ensures the whole crest is visible
+                                    // p-1.5 gives it a nice border padding
+                                    className="h-full w-full rounded-xl object-contain p-1.5"
                                     onError={() => setLogoFailed(true)}
                                 />
                             ) : hasUniversity ? (
-                                <div className="flex h-full w-full items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white sm:text-base">
+                                <div className="flex h-full w-full items-center justify-center rounded-xl bg-brand-600 text-sm font-bold text-white sm:text-base">
                                     {initials}
                                 </div>
                             ) : (

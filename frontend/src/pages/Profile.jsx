@@ -49,9 +49,6 @@ const ROLE_VARIANTS = {
 
 /**
  * Push-notification copy varies by role.
- * Students get "your turn" language; staff and admins get queue-health
- * language. Without this, a university admin sees "Get alerted when it's
- * your turn" — which is confusing because admins don't join queues.
  */
 function getNotificationCopy(role) {
     switch (role) {
@@ -89,10 +86,8 @@ function getNotificationCopy(role) {
  * generic state, or a specific reason the browser can't do push.
  */
 function getPushStatusText(webPush, notifications) {
-    // Enabled & subscribed
     if (webPush.subscription) return notifications.active
 
-    // Unsupported — explain why
     if (!webPush.supported) {
         switch (webPush.reason) {
             case 'ios-not-installed':
@@ -108,12 +103,10 @@ function getPushStatusText(webPush, notifications) {
         }
     }
 
-    // Supported but blocked by the user
     if (webPush.permission === 'denied') {
         return 'Blocked. Enable notifications in your browser settings and reload.'
     }
 
-    // Supported but not yet enabled
     return notifications.off
 }
 
@@ -373,14 +366,16 @@ export default function Profile() {
             >
                 <Card className="mb-6 overflow-hidden">
                     <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
-                        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-50 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">                            {profile?.universityLogoUrl ? (
+                        {/* ⬅️ SQUIRCLE LOGO CONTAINER */}
+                        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
+                            {profile?.universityLogoUrl ? (
                                 <img
                                     src={profile.universityLogoUrl}
                                     alt={profile.universityName || 'University'}
-                                    className="h-full w-full object-contain p-2"
+                                    className="h-full w-full rounded-xl object-contain p-2"
                                 />
                             ) : (
-                                <div className="flex h-full w-full items-center justify-center bg-slate-900 text-2xl font-semibold text-white dark:bg-slate-700">
+                                <div className="flex h-full w-full items-center justify-center rounded-xl bg-slate-900 text-2xl font-semibold text-white dark:bg-slate-700">
                                     {getInitials(display?.fullName)}
                                 </div>
                             )}
@@ -537,7 +532,7 @@ export default function Profile() {
                 </Card>
             </motion.div>
 
-            {/* ───── NOTIFICATIONS — reason-aware ───── */}
+            {/* ───── NOTIFICATIONS — role-aware ───── */}
             <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
