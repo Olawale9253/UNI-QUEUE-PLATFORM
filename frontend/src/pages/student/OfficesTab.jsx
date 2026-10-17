@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     Building2, MapPin, Clock, Users, ListOrdered, Search, Ticket,
-    ArrowRight, GraduationCap, Mail, UserCircle2, Info,
+    ArrowRight, GraduationCap, UserCircle2, Info,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -29,10 +29,7 @@ function OfficesSkeleton() {
                 <SkeletonBox className="mt-4 h-9 w-full" />
                 <div className="mt-4 space-y-2">
                     {Array.from({ length: 6 }).map((unusedValue, index) => (
-                        <div
-                            key={index}
-                            className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5"
-                        >
+                        <div key={index} className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5">
                             <SkeletonBox className="h-3.5 w-32" />
                             <SkeletonBox className="h-4 w-6 rounded-full" />
                         </div>
@@ -490,7 +487,7 @@ export default function OfficesTab() {
                             {selected.staff.length > 0 && (
                                 <div className="mt-6">
                                     <h4 className="mb-3 text-base font-semibold text-slate-900 dark:text-slate-100">
-                                        Assigned staff
+                                        Staff serving this office
                                     </h4>
                                     <div className="max-h-[280px] overflow-y-auto pr-1">
                                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -511,12 +508,7 @@ export default function OfficesTab() {
                                                         <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                                                             {itemValue3.fullName}
                                                         </div>
-                                                        {itemValue3.email && (
-                                                            <div className="flex items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400">
-                                                                <Mail className="h-3 w-3 shrink-0" />
-                                                                {itemValue3.email}
-                                                            </div>
-                                                        )}
+                                                        {/* ⬅️ Email removed to prevent students from bypassing the queue */}
                                                     </div>
                                                 </div>
                                             ))}
