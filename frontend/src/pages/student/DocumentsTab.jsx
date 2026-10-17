@@ -110,9 +110,11 @@ export default function DocumentsTab() {
             const form = new FormData()
             form.append('file', file)
             form.append('type', type)
-            await api.post('/api/user/documents', form, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            })
+
+            // ⬅️ FIX: Removed the manual Content-Type header.
+            // Axios will automatically set 'multipart/form-data' with the correct boundary.
+            await api.post('/api/user/documents', form)
+
             push({ type: 'success', message: 'Document uploaded' })
             setFile(null)
             setType('OTHER')
