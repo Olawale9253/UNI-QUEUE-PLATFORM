@@ -98,7 +98,7 @@ function getPushStatusText(webPush, notifications) {
             case 'ios-not-installed':
                 return 'Push notifications on iPhone require the app to be added to your Home Screen. Tap the Share icon at the bottom of Safari → "Add to Home Screen" → then open UniQueue from your Home Screen. (iOS 16.4+)'
             case 'in-app-browser':
-                return 'Push notifications aren\'t available in this in-app browser. Open UniQueue in Safari or Chrome to enable them.'
+                return 'Push notifications aren\'t available in this in-app browser. Open UniQueue in Chrome or Safari to enable them.'
             case 'insecure-context':
                 return 'Push notifications require a secure (HTTPS) connection.'
             case 'browser-unsupported':
