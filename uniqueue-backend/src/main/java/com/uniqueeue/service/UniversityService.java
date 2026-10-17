@@ -41,6 +41,12 @@ public class UniversityService {
     private final PlanConfigRepository planConfigRepository;
     private final UniversityStarterPackService starterPackService;
 
+    // ⬅️ ADDED MISSING REPOSITORIES FOR DELETION
+    private final OfficeRepository officeRepository;
+    private final UniversityClosedDateRepository closedDateRepository;
+    private final AdmittedStudentRepository admittedStudentRepository;
+    private final StudentRegistryRepository studentRegistryRepository;
+
     @Transactional(readOnly = true)
     public List<UniversityResponse> listAll() {
         return universityRepository.findAll().stream().map(this::enrich).toList();
@@ -77,7 +83,6 @@ public class UniversityService {
                 .logoUrl(request.getLogoUrl())
                 .campusImageUrl(request.getCampusImageUrl())
                 .tagline(request.getTagline())
-                // ⬇ Default is deep navy — matches the frontend default in lib/colors.js
                 .primaryColor(request.getPrimaryColor() != null
                         ? request.getPrimaryColor()
                         : "#1e3a8a")
@@ -139,7 +144,6 @@ public class UniversityService {
         if (request.getLogoUrl() != null) universityValue13.setLogoUrl(request.getLogoUrl());
         if (request.getCampusImageUrl() != null) universityValue13.setCampusImageUrl(request.getCampusImageUrl());
         if (request.getTagline() != null) universityValue13.setTagline(request.getTagline());
-        // ⬇ primaryColor update already handled — leave as-is
         if (request.getPrimaryColor() != null) universityValue13.setPrimaryColor(request.getPrimaryColor());
         if (request.getTimezone() != null) {
             universityValue13.setTimezone(request.getTimezone().trim());
@@ -195,6 +199,7 @@ public class UniversityService {
         String code = universityValue16.getCode();
         String name = universityValue16.getName();
 
+        // 1. Delete Queues & Dependencies
         List<Queue> queues = queueRepository.findByUniversityId(id);
         for (Queue queueValue5 : queues) {
             List<Ticket> tickets = ticketRepository.findByQueueId(queueValue5.getId());
@@ -204,15 +209,26 @@ public class UniversityService {
             ticketRepository.deleteAll(tickets);
             queueStaffRepository.deleteAll(queueStaffRepository.findByQueueId(queueValue5.getId()));
         }
-
         queueRepository.deleteAll(queues);
 
+        // 2. Delete Offices ⬅️ THIS IS WHAT WAS MISSING
+        officeRepository.deleteAll(officeRepository.findByUniversityId(id));
+
+        // 3. Delete Closed Dates
+        closedDateRepository.deleteAll(closedDateRepository.findByUniversityId(id));
+
+        // 4. Delete Registries (Admissions & Student Matric lists)
+        admittedStudentRepository.deleteAll(admittedStudentRepository.findByUniversityId(id));
+        studentRegistryRepository.deleteAll(studentRegistryRepository.findByUniversityId(id));
+
+        // 5. Delete Users & Notifications
         List<User> users = userRepository.findByUniversityId(id);
         for (User user : users) {
             notificationRepository.deleteAll(notificationRepository.findByUserId(user.getId()));
         }
         userRepository.deleteAll(users);
 
+        // 6. Delete the University
         universityRepository.delete(universityValue16);
 
         auditService.record(null, null, AuditAction.UNIVERSITY_DELETED,
