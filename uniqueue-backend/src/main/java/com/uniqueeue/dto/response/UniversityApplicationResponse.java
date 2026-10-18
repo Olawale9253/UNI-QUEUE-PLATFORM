@@ -2,12 +2,10 @@ package com.uniqueeue.dto.response;
 
 import com.uniqueeue.model.UniversityApplication;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class UniversityApplicationResponse {
-
     private Long id;
     private String universityName;
     private String universityCode;

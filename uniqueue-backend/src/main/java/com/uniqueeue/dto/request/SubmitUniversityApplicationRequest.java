@@ -7,7 +7,6 @@ import lombok.*;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class SubmitUniversityApplicationRequest {
-
     @NotBlank(message = "University name is required")
     @Size(max = 255)
     private String universityName;

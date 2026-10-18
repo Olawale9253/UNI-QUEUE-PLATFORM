@@ -37,7 +37,7 @@ public class UniversityApplication {
     private String adminPhone;
 
     @Column(name = "admin_role", length = 100)
-    private String adminRole; // e.g. "ICT Director", "Registrar"
+    private String adminRole;
 
     @Column(length = 1000)
     private String message;

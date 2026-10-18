@@ -12,7 +12,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -28,33 +27,19 @@ public class SuperAdminUniversityApplicationController {
             @RequestParam(required = false) UniversityApplication.Status status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "25") int size) {
-
-        return ResponseEntity.ok(ApiResponse.success(
-                "Applications", service.list(status, page, size)));
-    }
-
-    @GetMapping("/count")
-    public ResponseEntity<ApiResponse<Map<String, Long>>> pendingCount() {
-        Map<String, Long> data = new HashMap<>();
-        data.put("pending", service.countPending());
-        return ResponseEntity.ok(ApiResponse.success("Count", data));
+        return ResponseEntity.ok(ApiResponse.success("Applications", service.list(status, page, size)));
     }
 
     @PostMapping("/{id}/approve")
     public ResponseEntity<ApiResponse<UniversityApplicationResponse>> approve(
-            @PathVariable Long id,
-            @AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.ok(ApiResponse.success(
-                "Approved. A password-setup email has been sent to the admin.",
-                service.approve(id, principal.getId())));
+            @PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.success("Approved. Setup email sent.", service.approve(id, principal.getId())));
     }
 
     @PostMapping("/{id}/reject")
     public ResponseEntity<ApiResponse<UniversityApplicationResponse>> reject(
-            @PathVariable Long id,
-            @RequestBody(required = false) Map<String, String> body) {
+            @PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
         String reason = body != null ? body.get("reason") : null;
-        return ResponseEntity.ok(ApiResponse.success(
-                "Application rejected", service.reject(id, reason)));
+        return ResponseEntity.ok(ApiResponse.success("Rejected", service.reject(id, reason)));
     }
 }

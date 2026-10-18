@@ -10,17 +10,9 @@ import java.util.Optional;
 
 @Repository
 public interface UniversityApplicationRepository extends JpaRepository<UniversityApplication, Long> {
-
-    Page<UniversityApplication> findByStatusOrderByCreatedAtDesc(
-            UniversityApplication.Status status, Pageable pageable);
-
+    Page<UniversityApplication> findByStatusOrderByCreatedAtDesc(UniversityApplication.Status status, Pageable pageable);
     Page<UniversityApplication> findAllByOrderByCreatedAtDesc(Pageable pageable);
-
-    Optional<UniversityApplication> findByAdminEmailAndStatus(
-            String adminEmail, UniversityApplication.Status status);
-
-    boolean existsByUniversityCodeAndStatus(
-            String universityCode, UniversityApplication.Status status);
-
+    Optional<UniversityApplication> findByAdminEmailAndStatus(String adminEmail, UniversityApplication.Status status);
+    boolean existsByUniversityCodeAndStatus(String universityCode, UniversityApplication.Status status);
     long countByStatus(UniversityApplication.Status status);
 }
