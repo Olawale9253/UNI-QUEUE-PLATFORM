@@ -7,7 +7,8 @@ import { useToastStore } from '../store/toastStore'
 import { ease } from '../lib/motion'
 import Logo from '../components/ui/Logo'
 
-const BG_IMAGE = 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=2000'
+// ⬅️ NEW BACKGROUND IMAGE: A classic university building
+const BG_IMAGE = 'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&q=80&w=2000'
 
 export default function PublicRegisterUniversity() {
     const { push } = useToastStore()
@@ -64,22 +65,19 @@ export default function PublicRegisterUniversity() {
         <div className="relative min-h-screen bg-slate-900 flex items-center justify-center py-12 px-6 sm:px-8 lg:px-12">
             {/* Background Image & Overlays */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <img src={BG_IMAGE} alt="University Campus" className="h-full w-full object-cover" />
+                <img src={BG_IMAGE} alt="University Campus Building" className="h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-slate-900/75 mix-blend-multiply" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent" />
             </div>
 
+            {/* ⬅️ REMOVED THE EXTRA LOGO CONTAINER HERE */}
             <div className="relative z-10 w-full max-w-5xl">
-                <Link to="/" className="mb-8 inline-flex items-center gap-3 text-white hover:opacity-90">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/20 backdrop-blur-md">
-                        <Logo size={22} variant="icon" />
-                    </div>
-                    <span className="text-lg font-bold tracking-tight">UniQueue</span>
-                </Link>
+                {/* ⬅️ CHANGED items-center TO items-start FOR TOP ALIGNMENT */}
+                <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16 items-start">
 
-                <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16 items-center">
-                    {/* Left: Pitch (Responsive for Mobile and Desktop) */}
-                    <div className="text-white">
+                    {/* Left: Pitch */}
+                    {/* Added lg:pt-8 so the text aligns perfectly with the inside of the form card */}
+                    <div className="text-white lg:pt-8">
                         <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-400/30 bg-brand-500/20 px-3 py-1 text-xs font-medium text-brand-200 backdrop-blur-md">
                             <Building2 className="h-3 w-3" /> For universities
                         </span>
