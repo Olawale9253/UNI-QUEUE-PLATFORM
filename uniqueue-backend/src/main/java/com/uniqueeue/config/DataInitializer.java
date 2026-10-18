@@ -81,48 +81,55 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  UNIVERSITIES
+    //  UNIVERSITIES (idempotent, per-code)
     // ═══════════════════════════════════════════════════════════
 
     private void seedUniversities() {
-        if (universityRepository.count() > 0) {
-            log.info("Universities already seeded. Skipping.");
-            return;
-        }
+        int inserted = 0;
 
-        University unilag = University.builder()
+        inserted += seedUniversityIfMissing(University.builder()
                 .name("University of Lagos").code("UNILAG")
                 .emailDomain("@unilag.edu.ng")
                 .matricPattern("^\\d{2}/\\d{5}/\\d{3}$")
                 .matricExample("21/12345/001")
                 .matricDescription("YY/XXXXX/XXX")
-                .build();
+                .build());
 
-        University ui = University.builder()
+        inserted += seedUniversityIfMissing(University.builder()
                 .name("University of Ibadan").code("UI")
                 .emailDomain("@ui.edu.ng")
                 .matricPattern("^\\d{6}$")
                 .matricExample("123456")
                 .matricDescription("XXXXXX (6 digits)")
-                .build();
+                .build());
 
-        University oau = University.builder()
+        inserted += seedUniversityIfMissing(University.builder()
                 .name("Obafemi Awolowo University").code("OAU")
                 .emailDomain("@oau.edu.ng")
                 .matricPattern("^[A-Z]{3}/\\d{4}/\\d{3}$")
                 .matricExample("ABC/1234/567")
                 .matricDescription("XXX/XXXX/XXX")
-                .build();
+                .build());
 
-        universityRepository.save(unilag);
-        universityRepository.save(ui);
-        universityRepository.save(oau);
+        if (inserted == 0) {
+            log.info("All seed universities already present. Skipping.");
+        } else {
+            log.info("✅ Seeded {} new university(ies). Total: {}",
+                    inserted, universityRepository.count());
+        }
+    }
 
-        log.info("✅ Seeded {} universities", universityRepository.count());
+    private int seedUniversityIfMissing(University candidate) {
+        if (universityRepository.findByCode(candidate.getCode()).isPresent()) {
+            return 0;
+        }
+        universityRepository.save(candidate);
+        log.info("  + inserted university: {} ({})", candidate.getCode(), candidate.getName());
+        return 1;
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  ADMIN (env-driven — no more hardcoded password)
+    //  ADMIN (env-driven — never crashes the app)
     // ═══════════════════════════════════════════════════════════
 
     private void seedAdmin() {
@@ -136,8 +143,13 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
-        University unilag = universityRepository.findByCode("UNILAG")
-                .orElseThrow(() -> new IllegalStateException("UNILAG missing"));
+        // ⬅️ CHANGED: orElseThrow → orElse(null). Never block boot on a missing seed row.
+        University unilag = universityRepository.findByCode("UNILAG").orElse(null);
+        if (unilag == null) {
+            log.warn("Admin seed skipped — UNILAG not found in DB. " +
+                    "Create it (or let seedUniversities run) and restart to seed the admin.");
+            return;
+        }
 
         userRepository.save(User.builder()
                 .email(seedAdminEmail)
