@@ -25,22 +25,17 @@ import { useServerEvents } from './hooks/useServerEvents'
 import { useUniversityTheme } from './hooks/useUniversityTheme'
 import PublicRegisterUniversity from './pages/PublicRegisterUniversity'
 
-// Added dashboard routes here so the top Navbar hides on these pages
-const HIDE_NAVBAR_ROUTES = [
+const AUTH_ROUTES = [
     '/login',
     '/register',
     '/forgot-password',
     '/reset-password',
     '/verify-email',
-    '/student',
-    '/staff',
-    '/admin',
-    '/super-admin',
 ]
 
 export default function App() {
     const location = useLocation()
-    const hideNavbar = HIDE_NAVBAR_ROUTES.some(route => location.pathname.startsWith(route))
+    const hideNavbar = AUTH_ROUTES.includes(location.pathname)
 
     useServerEvents()
     useUniversityTheme()
@@ -59,6 +54,18 @@ export default function App() {
         }
     }, [])
 
+    /**
+     * Back-forward cache (bfcache) defense.
+     *
+     * When the browser restores a page from its in-memory back/forward cache,
+     * React does not re-run effects and the DOM is served frozen — including
+     * any previous user's data that was on screen when they logged out.
+     *
+     * Listening to `pageshow` with `event.persisted === true` tells us the
+     * page came from bfcache. A hard reload discards the frozen DOM, so the
+     * app re-initialises from localStorage (which is empty after logout)
+     * and the user gets a fresh login screen instead of a stale dashboard.
+     */
     useEffect(() => {
         const onPageShow = (event) => {
             if (event.persisted) {

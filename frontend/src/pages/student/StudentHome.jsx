@@ -3,166 +3,222 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     Calendar, Ticket, FileText, CheckCircle2, Building2,
-    Route as RouteIcon, ArrowRight, Clock, ChevronRight
+    Route as RouteIcon, ArrowRight, Clock,
 } from 'lucide-react'
 import api from '../../api/axios'
+import Card from '../../components/ui/Card'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { groupQueuesByOffice } from '../../lib/groupQueues'
-import { useAuthStore } from '../../store/authStore'
 
-/* ─────────────────────────────────────────────────────────────
-   Stat Card Component (Matches the 4 top cards in the image)
-   ───────────────────────────────────────────────────────────── */
-function StatTile({ label, value, icon: Icon, colorTheme }) {
-    const colorMap = {
-        blue: 'bg-blue-50 text-blue-600',
-        green: 'bg-emerald-50 text-emerald-600',
-        orange: 'bg-orange-50 text-orange-600',
-        purple: 'bg-purple-50 text-purple-600',
-    }
-
+function StatTile({ label, value, icon: Icon, accent, valueColor, to, ctaLabel, delay }) {
     return (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className="text-sm font-medium text-slate-500">{label}</p>
-                    <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
+        <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay }}
+        >
+            <Card className="flex h-full flex-col">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                            {label}
+                        </div>
+                        <div className={`mt-2 text-3xl font-bold tracking-tight ${valueColor}`}>
+                            {value}
+                        </div>
+                    </div>
+                    {Icon && (
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${accent}`}>
+                            <Icon className="h-5 w-5" />
+                        </div>
+                    )}
                 </div>
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${colorMap[colorTheme]}`}>
-                    <Icon className="h-5 w-5" />
-                </div>
-            </div>
-        </div>
+                {to && (
+                    <Link
+                        to={to}
+                        className="mt-auto pt-3 text-xs font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400"
+                    >
+                        {ctaLabel || 'View all'} →
+                    </Link>
+                )}
+            </Card>
+        </motion.div>
     )
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Queue Card Component (Matches the "Popular Services" grid)
-   ───────────────────────────────────────────────────────────── */
-function ServiceQueueCard({ office }) {
+function LiveQueueCard({ office }) {
     const hasQueue = office.queue != null
+    // isOpen is determined by the backend (checks weekends, holidays, and operating hours)
     const isOpen = hasQueue && office.queue?.isOpen === true
     const waitingCount = office.queue?.waitingCount ?? 0
+    const currentlyServing = office.queue?.currentlyServing || 'None'
     const avgWait = office.queue?.estimatedMinutes ?? 0
 
-    // Map colors based on name (just for visual variety like the image)
-    const colorTheme = office.name.toLowerCase().includes('bursary') ? 'blue' :
-        office.name.toLowerCase().includes('library') ? 'green' :
-            office.name.toLowerCase().includes('hostel') ? 'orange' : 'purple'
-
-    const colorMap = {
-        blue: 'bg-blue-50 text-blue-600 border-blue-100',
-        green: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-        orange: 'bg-orange-50 text-orange-600 border-orange-100',
-        purple: 'bg-purple-50 text-purple-600 border-purple-100',
-    }
-
     return (
-        <div className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-blue-300 hover:shadow-md">
-            <div className="flex items-start gap-4">
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border ${colorMap[colorTheme]}`}>
-                    <Building2 className="h-5 w-5" />
+        <Card className="flex h-full flex-col">
+            <div className="mb-3 flex items-start justify-between gap-2">
+                <h3 className="min-w-0 flex-1 text-base font-semibold text-slate-900 dark:text-slate-100">
+                    {office.name}
+                </h3>
+                {hasQueue && (
+                    isOpen ? (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+                            <span className="relative flex h-1.5 w-1.5">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            </span>
+                            Live
+                        </span>
+                    ) : (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                            Closed
+                        </span>
+                    )
+                )}
+            </div>
+
+            <div className="text-sm text-slate-600 dark:text-slate-400">
+                Waiting:{' '}
+                <span className={`font-bold ${isOpen ? 'text-brand-600 dark:text-brand-400' : 'text-slate-400'}`}>
+                    {waitingCount}
+                </span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+                <div>
+                    <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        Now Serving
+                    </div>
+                    <div
+                        className={`mt-1 truncate text-sm font-bold ${
+                            isOpen && currentlyServing && currentlyServing !== 'None'
+                                ? 'font-mono text-emerald-600 dark:text-emerald-400'
+                                : 'text-slate-400 dark:text-slate-500'
+                        }`}
+                    >
+                        {isOpen ? currentlyServing : '—'}
+                    </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-bold text-slate-900">{office.name}</h3>
-                    <p className="mt-1 text-xs text-slate-500 truncate">
-                        {isOpen ? `${waitingCount} currently waiting` : 'Closed'}
-                    </p>
+                <div>
+                    <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        Avg Wait
+                    </div>
+                    <div className={`mt-1 text-sm font-bold ${isOpen ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}`}>
+                        {isOpen ? `${avgWait} min` : '—'}
+                    </div>
                 </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
-                <div className="text-xs font-medium text-slate-500">
-                    Wait: <strong className="text-slate-900">{isOpen ? `${avgWait} min` : '—'}</strong>
-                </div>
+            <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800">
                 <Link
                     to="/student/queues"
-                    className="flex items-center gap-1 text-xs font-semibold text-blue-600 transition-colors hover:text-blue-700"
+                    className={`inline-flex items-center gap-1 text-xs font-medium transition-colors ${
+                        isOpen
+                            ? 'text-brand-600 hover:text-brand-700 dark:text-brand-400'
+                            : 'text-slate-400 hover:text-slate-500'
+                    }`}
                 >
-                    Join Queue
-                    <ChevronRight className="h-3 w-3" />
+                    {isOpen ? 'Join this queue →' : 'View service details →'}
                 </Link>
             </div>
-        </div>
+        </Card>
     )
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Active Clearance Card (Matches the "My Queue Position" card)
-   ───────────────────────────────────────────────────────────── */
 function ActiveClearanceCard({ data }) {
     const pct = data.progressPercent ?? 0
     const next = data.nextAction
 
     return (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+        <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="relative overflow-hidden rounded-xl border border-brand-300 bg-gradient-to-br from-brand-50 to-white p-5 dark:border-brand-700 dark:from-brand-950/40 dark:to-slate-900"
+        >
+            <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-sm">
                         <RouteIcon className="h-5 w-5" />
                     </div>
-                    <div>
-                        <h2 className="text-base font-bold text-slate-900">{data.workflowName}</h2>
-                        <p className="text-xs text-slate-500">Session {data.session || 'Current'}</p>
+
+                    <div className="min-w-0">
+                        <div className="text-[10px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">
+                            Active progress
+                        </div>
+                        <h3 className="mt-0.5 truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+                            {data.workflowName}
+                        </h3>
+                        {data.session && (
+                            <div className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                <Clock className="h-3 w-3" />
+                                Session {data.session}
+                            </div>
+                        )}
                     </div>
                 </div>
-                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">Active</span>
+
+                <span className="shrink-0 rounded-full bg-brand-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">
+                    {pct}%
+                </span>
             </div>
 
-            <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-3">
-                <div>
-                    <p className="text-xs font-medium text-slate-500">Progress</p>
-                    <p className="mt-1 text-3xl font-bold text-slate-900">{pct}%</p>
-                    <p className="text-xs text-slate-400">{data.completedSteps} of {data.totalSteps} steps</p>
-                </div>
-                <div className="md:col-span-2">
-                    <p className="text-xs font-medium text-slate-500">Next Step</p>
-                    {next ? (
-                        <>
-                            <p className="mt-1 text-lg font-bold text-slate-900">{next.label || next.queueName}</p>
-                            <p className="text-xs text-slate-500">{next.officeName}</p>
-                        </>
-                    ) : (
-                        <p className="mt-1 text-sm text-slate-400">No pending steps</p>
-                    )}
-                </div>
-            </div>
-
-            <div className="mt-6">
-                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+            <div className="mt-4">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                     <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${pct}%` }}
                         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                        className="h-full rounded-full bg-blue-600"
+                        className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-600"
                     />
                 </div>
-                <div className="mt-6 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                        <span>Started</span>
-                        <div className="h-0.5 w-8 bg-blue-600"></div>
-                        <span className="font-semibold text-blue-600">In Progress</span>
-                        <div className="h-0.5 w-8 bg-slate-200"></div>
-                        <span>Completed</span>
+                <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                    <strong className="text-slate-700 dark:text-slate-300">{data.completedSteps}</strong>
+                    {' '}of{' '}
+                    <strong className="text-slate-700 dark:text-slate-300">{data.totalSteps}</strong>
+                    {' '}steps complete
+                </div>
+            </div>
+
+            {next && (
+                <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-brand-200 bg-white/70 px-3 py-2.5 dark:border-brand-800 dark:bg-slate-900/60">
+                    <div className="min-w-0">
+                        <div className="text-[10px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">
+                            Next step
+                        </div>
+                        <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {next.label || next.queueName}
+                        </div>
+                        {next.officeName && (
+                            <div className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                                {next.officeName}
+                            </div>
+                        )}
                     </div>
                     <Link
                         to="/student/clearance"
-                        className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+                        className="shrink-0 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-brand-700"
                     >
                         Continue
                     </Link>
                 </div>
+            )}
+
+            <div className="mt-3 flex justify-end">
+                <Link
+                    to="/student/workflows"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 transition-colors hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400"
+                >
+                    All workflows
+                    <ArrowRight className="h-3 w-3" />
+                </Link>
             </div>
-        </div>
+        </motion.div>
     )
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Main Component
-   ───────────────────────────────────────────────────────────── */
 export default function StudentHome() {
-    const { user } = useAuthStore()
     const [queues, setQueues] = useState([])
     const [stats, setStats] = useState(null)
     const [appointments, setAppointments] = useState([])
@@ -231,89 +287,131 @@ export default function StudentHome() {
     const myQueueTickets = stats?.hasActiveTicket ? 1 : stats?.todayJoined ?? 0
     const myDocuments = documents.length
     const completedTasks = stats?.totalCompleted ?? 0
-    const avgWaitTime = liveQueues.length > 0 ? Math.round(liveQueues.reduce((acc, q) => acc + (q.queue?.estimatedMinutes || 0), 0) / liveQueues.length) : 0
-
-    const firstName = user?.fullName?.split(' ')[0] || 'Student'
 
     return (
-        <div className="mx-auto max-w-6xl">
-            {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-slate-900">Good morning, {firstName} 👋</h1>
-                <p className="mt-1 text-sm text-slate-500">Welcome back to UniFlow. Here's what's happening at your university today.</p>
+        <>
+            <div className="mb-7 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                <StatTile
+                    label="My Appointments"
+                    value={myAppointments}
+                    icon={Calendar}
+                    accent="bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400"
+                    valueColor="text-violet-600 dark:text-violet-400"
+                    to="/student/appointments"
+                    ctaLabel="View all"
+                    delay={0}
+                />
+                <StatTile
+                    label="My Queue Tickets"
+                    value={myQueueTickets}
+                    icon={Ticket}
+                    accent="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                    valueColor="text-emerald-600 dark:text-emerald-400"
+                    to="/student/queues"
+                    ctaLabel="View all"
+                    delay={0.05}
+                />
+                <StatTile
+                    label="My Documents"
+                    value={myDocuments}
+                    icon={FileText}
+                    accent="bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400"
+                    valueColor="text-purple-600 dark:text-purple-400"
+                    to="/student/documents"
+                    ctaLabel="View all"
+                    delay={0.1}
+                />
+                <StatTile
+                    label="Completed Tasks"
+                    value={completedTasks}
+                    icon={CheckCircle2}
+                    accent="bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+                    valueColor="text-amber-600 dark:text-amber-400"
+                    delay={0.15}
+                />
             </div>
 
-            {/* Stat Cards Grid */}
-            <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <StatTile label="My Queue Tickets" value={myQueueTickets} icon={Ticket} colorTheme="blue" />
-                <StatTile label="Your Appointments" value={myAppointments} icon={Calendar} colorTheme="green" />
-                <StatTile label="Average Wait Time" value={`${avgWaitTime} min`} icon={Clock} colorTheme="orange" />
-                <StatTile label="Completed Tasks" value={completedTasks} icon={CheckCircle2} colorTheme="purple" />
-            </div>
-
-            {/* Active Clearance (My Progress) */}
             {activeClearance && (
                 <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="mb-8"
+                    transition={{ delay: 0.18 }}
+                    className="mb-7"
                 >
                     <div className="mb-4 flex items-center justify-between">
-                        <h2 className="text-lg font-bold text-slate-900">My Queue Position</h2>
-                        <Link to="/student/workflows" className="text-xs font-semibold text-blue-600 hover:text-blue-700">
-                            View all history →
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                            My Progress
+                        </h2>
+                        <Link
+                            to="/student/workflows"
+                            className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
+                        >
+                            View all →
                         </Link>
                     </div>
                     <ActiveClearanceCard data={activeClearance} />
                 </motion.div>
             )}
 
-            {/* Popular Services (Live Queues) */}
             <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
             >
                 <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-lg font-bold text-slate-900">Popular Services</h2>
-                    <Link to="/student/queues" className="text-xs font-semibold text-blue-600 hover:text-blue-700">
-                        View all queues →
+                    {/* Changed from "Live Queues" to "Campus Queues" */}
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                        Campus Queues
+                    </h2>
+                    <Link
+                        to="/student/queues"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
+                    >
+                        View my queues →
                     </Link>
                 </div>
 
                 {loading ? (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        {Array.from({ length: 4 }).map((_, i) => (
-                            <div key={i} className="h-40 animate-pulse rounded-xl bg-slate-100" />
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {Array.from({ length: 6 }).map((unusedValue, index) => (
+                            <div
+                                key={index}
+                                className="h-44 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"
+                            />
                         ))}
                     </div>
                 ) : liveQueues.length === 0 ? (
-                    <div className="rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm">
-                        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
-                            <Building2 className="h-6 w-6 text-slate-400" />
+                    <Card>
+                        <div className="py-12 text-center">
+                            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+                                <Building2 className="h-6 w-6 text-slate-400" />
+                            </div>
+                            <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                No queues available
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                Check back soon. Your university hasn't opened any queues yet.
+                            </p>
                         </div>
-                        <p className="text-sm font-medium text-slate-900">No services available</p>
-                        <p className="mt-1 text-xs text-slate-500">Check back soon. Your university hasn't opened any queues yet.</p>
-                    </div>
+                    </Card>
                 ) : (
                     <motion.div
                         initial="initial"
                         animate="animate"
-                        variants={{ initial: {}, animate: { transition: { staggerChildren: 0.05 } } }}
-                        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+                        variants={{ initial: {}, animate: { transition: { staggerChildren: 0.04 } } }}
+                        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
                     >
                         {liveQueues.map((liveQueue) => (
                             <motion.div
                                 key={liveQueue.key}
                                 variants={{ initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 } }}
                             >
-                                <ServiceQueueCard office={liveQueue} />
+                                <LiveQueueCard office={liveQueue} />
                             </motion.div>
                         ))}
                     </motion.div>
                 )}
             </motion.div>
-        </div>
+        </>
     )
 }
