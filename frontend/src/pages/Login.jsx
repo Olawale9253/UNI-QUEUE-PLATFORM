@@ -3,13 +3,13 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     ArrowRight, LogOut, CheckCircle2, Loader2, Eye, EyeOff,
-    Ticket, Bell, ShieldCheck, Lock,
+    Ticket, Bell, ShieldCheck, Lock, UserPlus, // ⬅️ Added UserPlus
 } from 'lucide-react'
 import api from '../api/axios'
 import { useAuthStore } from '../store/authStore'
 import { useToastStore } from '../store/toastStore'
 import { ease, fadeUp } from '../lib/motion'
-import Logo from '../components/ui/Logo' // ⬅️ IMPORTED LOGO
+import Logo from '../components/ui/Logo'
 
 const dashboards = {
     SUPER_ADMIN: '/super-admin',
@@ -62,6 +62,7 @@ function useCountdown(targetTime) {
             setRemaining(computeRemaining())
         }, 1000)
         return () => clearInterval(interval)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [targetTime])
 
     return remaining
@@ -124,7 +125,6 @@ function LeftPanel({ brand, imageError, onImageError }) {
                                 onError={(event) => { event.target.style.display = 'none' }}
                             />
                         ) : (
-                            /* ⬅️ USING YOUR CUSTOM LOGO */
                             <Logo size={24} variant="icon" />
                         )}
                     </div>
@@ -334,7 +334,6 @@ export default function Login() {
                                         onError={(event) => { event.target.style.display = 'none' }}
                                     />
                                 ) : (
-                                    /* ⬅️ USING YOUR CUSTOM LOGO */
                                     <Logo size={20} variant="icon" />
                                 )}
                             </div>
@@ -492,13 +491,25 @@ export default function Login() {
                             )}
                         </form>
 
-                        <div className="mt-4 text-center text-xs">
-                            <p className="text-slate-500 dark:text-slate-400">
-                                Don't have an account?{' '}
-                                <Link to="/register" className="font-medium text-brand-600 hover:text-brand-700">
-                                    Register
-                                </Link>
-                            </p>
+                        {/* ── Redesigned Footer Links ── */}
+                        <div className="mt-6">
+                            {/* Or Divider */}
+                            <div className="mb-5 flex items-center">
+                                <div className="flex-1 border-t border-slate-200 dark:border-slate-800" />
+                                <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                    New to UniQueue?
+                                </span>
+                                <div className="flex-1 border-t border-slate-200 dark:border-slate-800" />
+                            </div>
+
+                            {/* Create Account secondary button */}
+                            <Link
+                                to="/register"
+                                className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-brand-700 dark:hover:bg-brand-950/30 dark:hover:text-brand-400"
+                            >
+                                <UserPlus className="h-4 w-4 text-slate-400" />
+                                Create an account
+                            </Link>
                         </div>
                     </motion.div>
                 </div>

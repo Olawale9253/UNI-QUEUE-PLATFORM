@@ -95,7 +95,7 @@ function LeftPanel({ university, imageError, onImageError }) {
                         <span className="block text-white/75">Join every queue.</span>
                     </h2>
                     <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/80">
-                        One account for every service at your university — Bursary,
+                        One account for every service at your university. Bursary,
                         Registry, Library, Health Center, and more.
                     </p>
                     <ul className="mt-6 grid gap-2.5">
