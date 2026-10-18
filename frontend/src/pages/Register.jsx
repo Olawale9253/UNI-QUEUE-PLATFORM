@@ -3,13 +3,13 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     ArrowRight, ArrowLeft, Loader2, AlertCircle, Eye, EyeOff,
-    Ticket, ShieldCheck, Building2, Users,
+    Ticket, ShieldCheck, Building2, Users, GraduationCap,
 } from 'lucide-react'
 import api from '../api/axios'
 import { useAuthStore } from '../store/authStore'
 import { useToastStore } from '../store/toastStore'
 import { ease } from '../lib/motion'
-import Logo from '../components/ui/Logo' // ⬅️ IMPORTED CUSTOM LOGO
+import Logo from '../components/ui/Logo'
 
 const REGISTER_BACKGROUND =
     'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=1600'
@@ -76,7 +76,6 @@ function LeftPanel({ university, imageError, onImageError }) {
                                 onError={(e) => { e.target.style.display = 'none' }}
                             />
                         ) : (
-                            /* ⬅️ CUSTOM FALLBACK LOGO */
                             <Logo size={24} variant="icon" />
                         )}
                     </div>
@@ -270,7 +269,6 @@ export default function Register() {
                     >
                         <div className="mb-5 flex items-center gap-2.5 lg:hidden">
                             <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-brand-600 text-xs font-bold text-white">
-                                {/* ⬅️ CUSTOM FALLBACK LOGO FOR MOBILE */}
                                 <Logo size={20} variant="icon" />
                             </div>
                             <div className="min-w-0">
@@ -499,40 +497,47 @@ export default function Register() {
                             </button>
                         </form>
 
-                        <div className="mt-5 space-y-2 text-center text-xs">
-                            <p className="text-slate-500 dark:text-slate-400">
+                        {/* ── Redesigned Footer Links ── */}
+                        <div className="mt-6">
+                            <p className="text-center text-sm text-slate-600 dark:text-slate-400">
                                 Already have an account?{' '}
-                                <Link to="/login" className="font-medium text-brand-600 hover:text-brand-700">
+                                <Link to="/login" className="font-semibold text-brand-600 hover:text-brand-700 hover:underline">
                                     Sign in
                                 </Link>
                             </p>
 
+                            {/* Or Divider */}
+                            <div className="my-5 flex items-center">
+                                <div className="flex-1 border-t border-slate-200 dark:border-slate-800" />
+                                <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                    Or
+                                </span>
+                                <div className="flex-1 border-t border-slate-200 dark:border-slate-800" />
+                            </div>
+
+                            {/* Fresher Toggle as secondary button */}
                             {mode === 'student' && fresherEnabled && (
-                                <p className="text-slate-400 dark:text-slate-500">
-                                    New student without a matric number?{' '}
-                                    <button
-                                        type="button"
-                                        onClick={() => setMode('fresher')}
-                                        className="inline-flex items-center gap-0.5 font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
-                                    >
-                                        Register as fresher
-                                        <ArrowRight className="h-3 w-3" />
-                                    </button>
-                                </p>
+                                <button
+                                    type="button"
+                                    onClick={() => setMode('fresher')}
+                                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-brand-700 dark:hover:bg-brand-950/30 dark:hover:text-brand-400"
+                                >
+                                    <GraduationCap className="h-4 w-4 text-slate-400" />
+                                    Register as a Fresher
+                                    <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
+                                </button>
                             )}
 
+                            {/* Back to Standard Registration (if in Fresher mode) */}
                             {mode === 'fresher' && (
-                                <p className="text-slate-400 dark:text-slate-500">
-                                    Already have your matric number?{' '}
-                                    <button
-                                        type="button"
-                                        onClick={() => setMode('student')}
-                                        className="inline-flex items-center gap-0.5 font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
-                                    >
-                                        <ArrowLeft className="h-3 w-3" />
-                                        Standard registration
-                                    </button>
-                                </p>
+                                <button
+                                    type="button"
+                                    onClick={() => setMode('student')}
+                                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                                >
+                                    <ArrowLeft className="h-4 w-4 text-slate-400" />
+                                    Back to Standard Registration
+                                </button>
                             )}
                         </div>
                     </motion.div>
