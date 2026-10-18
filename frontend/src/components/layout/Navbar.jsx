@@ -136,12 +136,9 @@ export default function Navbar() {
                                         ? university.name
                                         : 'UniQueue'}
                             </div>
+                            {/* ⬅️ UPDATED SUBTITLE HERE */}
                             <div className="truncate text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                {isSuperAdmin
-                                    ? 'Platform Console'
-                                    : hasUniversity
-                                        ? 'Digital Queue System'
-                                        : 'University Queue'}
+                                {isSuperAdmin ? 'Platform Console' : 'Digital Queue System'}
                             </div>
                         </div>
                     </Link>
