@@ -21,10 +21,6 @@ function resolveImageUrl(url) {
     return base ? `${base}${url}` : url
 }
 
-/* ─────────────────────────────────────────────
-   Left panel — image + brief institutional copy
-   ───────────────────────────────────────────── */
-
 function LeftPanel({ university, imageError, onImageError }) {
     const backgroundSrc =
         university?.campusImageUrl && !imageError
@@ -95,7 +91,7 @@ function LeftPanel({ university, imageError, onImageError }) {
                         <span className="block text-white/75">Join every queue.</span>
                     </h2>
                     <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/80">
-                        One account for every service at your university. Bursary,
+                        One account for every service at your university — Bursary,
                         Registry, Library, Health Center, and more.
                     </p>
                     <ul className="mt-6 grid gap-2.5">
@@ -128,10 +124,6 @@ function LeftPanel({ university, imageError, onImageError }) {
     )
 }
 
-/* ─────────────────────────────────────────────
-   Page
-   ───────────────────────────────────────────── */
-
 export default function Register() {
     const navigate = useNavigate()
     const { register, loading } = useAuthStore()
@@ -145,14 +137,13 @@ export default function Register() {
     const [showConfirm, setShowConfirm] = useState(false)
     const [imageError, setImageError] = useState(false)
 
+    // ⬅️ REMOVED Department and Phone from the state
     const [form, setForm] = useState({
         email: '',
         password: '',
         confirmPassword: '',
         fullName: '',
         universityId: '',
-        department: '',
-        phone: '',
         matricNumber: '',
         jambRegNumber: '',
         admissionRef: '',
@@ -205,8 +196,8 @@ export default function Register() {
             password: form.password,
             fullName: form.fullName.trim(),
             universityId: Number(form.universityId),
-            department: form.department.trim() || null,
-            phone: form.phone.trim() || null,
+            department: null, // ⬅️ Send null since we removed the field
+            phone: null,      // ⬅️ Send null since we removed the field
             accountType: mode === 'fresher' ? 'FRESHER' : 'STUDENT',
         }
 
@@ -404,33 +395,7 @@ export default function Register() {
                                     </div>
                                 )}
 
-                            {/* Department | Phone */}
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                <div>
-                                    <label className={labelClass}>
-                                        Department <span className="text-slate-400">(optional)</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={form.department}
-                                        onChange={setField('department')}
-                                        placeholder="e.g. Computer Science"
-                                        className={inputClass}
-                                    />
-                                </div>
-                                <div>
-                                    <label className={labelClass}>
-                                        Phone <span className="text-slate-400">(optional)</span>
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        value={form.phone}
-                                        onChange={setField('phone')}
-                                        placeholder="e.g. 08012345678"
-                                        className={inputClass}
-                                    />
-                                </div>
-                            </div>
+                            {/* ⬅️ REMOVED THE DEPARTMENT / PHONE ROW HERE */}
 
                             {/* Password | Confirm */}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -497,7 +462,6 @@ export default function Register() {
                             </button>
                         </form>
 
-                        {/* ── Redesigned Footer Links ── */}
                         <div className="mt-6">
                             <p className="text-center text-sm text-slate-600 dark:text-slate-400">
                                 Already have an account?{' '}
@@ -506,7 +470,6 @@ export default function Register() {
                                 </Link>
                             </p>
 
-                            {/* Or Divider */}
                             <div className="my-5 flex items-center">
                                 <div className="flex-1 border-t border-slate-200 dark:border-slate-800" />
                                 <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -515,7 +478,6 @@ export default function Register() {
                                 <div className="flex-1 border-t border-slate-200 dark:border-slate-800" />
                             </div>
 
-                            {/* Fresher Toggle as secondary button */}
                             {mode === 'student' && fresherEnabled && (
                                 <button
                                     type="button"
@@ -528,7 +490,6 @@ export default function Register() {
                                 </button>
                             )}
 
-                            {/* Back to Standard Registration (if in Fresher mode) */}
                             {mode === 'fresher' && (
                                 <button
                                     type="button"

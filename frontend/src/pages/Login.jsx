@@ -139,7 +139,6 @@ function LeftPanel({ brand, imageError, onImageError }) {
                 </Link>
 
                 <div className="max-w-md">
-                    {/* ⬅️ REDESIGNED WELCOME BADGE */}
                     <div className="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white/95 shadow-xl shadow-black/20 ring-1 ring-white/10 backdrop-blur-xl transition-all hover:bg-white/15">
                         <span className="relative flex h-2 w-2">
                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -157,26 +156,13 @@ function LeftPanel({ brand, imageError, onImageError }) {
                         Sign in to see live wait times and pick up where you left off.
                     </p>
 
-                    <div className="mt-6 flex max-w-[280px] items-center gap-3 rounded-xl border border-white/20 bg-white/95 px-3.5 py-3 shadow-xl shadow-black/30">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white">
-                            <Ticket className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                            <div className="flex items-baseline gap-1.5">
-                                <span className="font-mono text-base font-black tracking-tight text-brand-700">
-                                    A-042
-                                </span>
-                                <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-600">
-                                    ● Live
-                                </span>
-                            </div>
-                            <div className="truncate text-[10px] font-medium text-slate-500">
-                                Now serving · ≈ 3 min
-                            </div>
-                        </div>
+                    {/* ⬅️ REPLACED BULKY CARD WITH SLEEK INLINE STATS */}
+                    <div className="mt-6 flex items-center gap-2 text-xs font-medium text-white/70">
+                        <Ticket className="h-3.5 w-3.5 text-brand-300" />
+                        <span>142 students currently in queues across campus</span>
                     </div>
 
-                    <ul className="mt-5 grid gap-2">
+                    <ul className="mt-6 grid gap-2.5">
                         <li className="flex items-center gap-2.5 text-xs text-white/85">
                             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15">
                                 <Bell className="h-2.5 w-2.5" />
