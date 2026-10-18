@@ -9,6 +9,7 @@ import api from '../api/axios'
 import { useAuthStore } from '../store/authStore'
 import { useToastStore } from '../store/toastStore'
 import { ease } from '../lib/motion'
+import Logo from '../components/ui/Logo' // ⬅️ IMPORTED CUSTOM LOGO
 
 const REGISTER_BACKGROUND =
     'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=1600'
@@ -47,7 +48,6 @@ function LeftPanel({ university, imageError, onImageError }) {
                 className="absolute inset-0 h-full w-full object-cover object-center"
                 draggable={false}
             />
-            {/* ⬅️ LIGHTER GRADIENT OVERLAY so the image is clearly visible */}
             <div
                 className="absolute inset-0"
                 style={{
@@ -76,7 +76,8 @@ function LeftPanel({ university, imageError, onImageError }) {
                                 onError={(e) => { e.target.style.display = 'none' }}
                             />
                         ) : (
-                            <Building2 className="h-4.5 w-4.5 text-white" />
+                            /* ⬅️ CUSTOM FALLBACK LOGO */
+                            <Logo size={24} variant="icon" />
                         )}
                     </div>
                     <div className="min-w-0">
@@ -137,8 +138,6 @@ export default function Register() {
     const { register, loading } = useAuthStore()
     const { push } = useToastStore()
 
-    // "student" (default) or "fresher". Not a visible tab — set via a small
-    // text link at the bottom of the form. Keeps the default experience clean.
     const [mode, setMode] = useState('student')
 
     const [universities, setUniversities] = useState([])
@@ -251,7 +250,6 @@ export default function Register() {
 
     const labelClass = 'mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300'
 
-    // Determines if the JAMB field is shown
     const showJamb = mode === 'fresher' && selectedUni?.requireJambReg !== false
 
     return (
@@ -271,8 +269,9 @@ export default function Register() {
                         className="w-full max-w-lg"
                     >
                         <div className="mb-5 flex items-center gap-2.5 lg:hidden">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-xs font-bold text-white">
-                                UQ
+                            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-brand-600 text-xs font-bold text-white">
+                                {/* ⬅️ CUSTOM FALLBACK LOGO FOR MOBILE */}
+                                <Logo size={20} variant="icon" />
                             </div>
                             <div className="min-w-0">
                                 <div className="truncate text-sm font-bold uppercase tracking-tight text-slate-900 dark:text-slate-100">

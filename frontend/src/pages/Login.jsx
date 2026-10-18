@@ -3,12 +3,13 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     ArrowRight, LogOut, CheckCircle2, Loader2, Eye, EyeOff,
-    Ticket, Bell, ShieldCheck, Building2, Lock,
+    Ticket, Bell, ShieldCheck, Lock,
 } from 'lucide-react'
 import api from '../api/axios'
 import { useAuthStore } from '../store/authStore'
 import { useToastStore } from '../store/toastStore'
 import { ease, fadeUp } from '../lib/motion'
+import Logo from '../components/ui/Logo' // ⬅️ IMPORTED LOGO
 
 const dashboards = {
     SUPER_ADMIN: '/super-admin',
@@ -61,7 +62,6 @@ function useCountdown(targetTime) {
             setRemaining(computeRemaining())
         }, 1000)
         return () => clearInterval(interval)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [targetTime])
 
     return remaining
@@ -124,8 +124,8 @@ function LeftPanel({ brand, imageError, onImageError }) {
                                 onError={(event) => { event.target.style.display = 'none' }}
                             />
                         ) : (
-                            /* ⬅️ Changed from Building2 to Ticket */
-                            <Ticket className="h-5 w-5 text-white" />
+                            /* ⬅️ USING YOUR CUSTOM LOGO */
+                            <Logo size={24} variant="icon" />
                         )}
                     </div>
                     <div className="min-w-0">
@@ -334,8 +334,8 @@ export default function Login() {
                                         onError={(event) => { event.target.style.display = 'none' }}
                                     />
                                 ) : (
-                                    /* ⬅️ Changed from Building2 to Ticket */
-                                    <Ticket className="h-4.5 w-4.5" />
+                                    /* ⬅️ USING YOUR CUSTOM LOGO */
+                                    <Logo size={20} variant="icon" />
                                 )}
                             </div>
                             <div className="min-w-0">
