@@ -216,7 +216,7 @@ export const useAuthStore = create((set, get) => ({
 
             localStorage.setItem(USER_KEY, JSON.stringify(next))
             set({ user: next })
-            return { success: true, profile: p }
+            return { success: true, profile: profileData }
         } catch (err) {
             return {
                 success: false,

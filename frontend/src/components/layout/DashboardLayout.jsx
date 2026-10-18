@@ -1,180 +1,111 @@
-import { useEffect } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { X as CloseIcon, Home as HomeIcon } from 'lucide-react'
-import PageHeader from './PageHeader'
-import { useUIStore } from '../../store/uiStore'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Search, Bell, LogOut, GraduationCap, ChevronDown } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
+import { useUniversityStore } from '../../store/universityStore'
 
-const ROLE_HOME = {
-    SUPER_ADMIN: '/super-admin',
-    ADMIN: '/admin',
-    STAFF: '/staff',
-    USER: '/student',
-    FRESHER: '/student',
-}
-
-function SidebarLink({ item, collapsed, onClick }) {
-    const Icon = item.icon
-    return (
-        <NavLink
-            to={item.to}
-            end={item.end}
-            onClick={onClick}
-            title={collapsed ? item.label : undefined}
-            className={({ isActive }) =>
-                `group flex items-center rounded-lg py-2 text-sm font-medium transition-colors ${
-                    collapsed ? 'justify-center px-2' : 'gap-3 px-3'
-                } ${
-                    isActive
-                        ? 'bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-300'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100'
-                }`
-            }
-        >
-            {({ isActive }) => (
-                <>
-                    <Icon
-                        className={`h-4 w-4 shrink-0 ${
-                            isActive
-                                ? 'text-brand-600 dark:text-brand-400'
-                                : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
-                        }`}
-                    />
-                    {!collapsed && <span className="truncate">{item.label}</span>}
-                </>
-            )}
-        </NavLink>
-    )
-}
-
-export default function DashboardLayout({ tabs, title, description, action, children }) {
-    const {
-        sidebarCollapsed,
-        mobileSidebarOpen,
-        closeMobileSidebar,
-    } = useUIStore()
-    const { user } = useAuthStore()
+export default function DashboardLayout({ children, tabs }) {
     const location = useLocation()
+    const navigate = useNavigate()
+    const { user, logout } = useAuthStore()
+    const { university } = useUniversityStore()
 
-    useEffect(() => {
-        closeMobileSidebar()
-    }, [location.pathname, closeMobileSidebar])
-
-    useEffect(() => {
-        document.body.style.overflow = mobileSidebarOpen ? 'hidden' : ''
-        return () => {
-            document.body.style.overflow = ''
-        }
-    }, [mobileSidebarOpen])
-
-    const homeHref = user ? ROLE_HOME[user.role] || '/' : '/'
-
-    const homeItem = {
-        to: homeHref,
-        label: 'Home',
-        icon: HomeIcon,
-        end: true,
+    const handleLogout = () => {
+        logout()
+        navigate('/login')
     }
 
     return (
-        <div className="dashboard-shell flex min-h-[calc(100vh-4rem)] w-full">
-            <aside
-                className={`sticky top-16 hidden h-[calc(100vh-4rem)] shrink-0 self-start border-r border-slate-200 bg-white/90 shadow-sm transition-[width] duration-300 ease-out md:flex md:flex-col dark:border-slate-800 dark:bg-slate-900/90 ${
-                    sidebarCollapsed ? 'w-16' : 'w-56'
-                }`}
-            >
-                <nav className="flex-1 overflow-y-auto px-2 py-4">
-                    {!sidebarCollapsed && (
-                        <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                            Menu
-                        </p>
-                    )}
-
-                    <div className="space-y-0.5">
-                        <SidebarLink item={homeItem} collapsed={sidebarCollapsed} />
+        <div className="flex h-screen w-full bg-[#f8fafc]">
+            {/* Sidebar */}
+            <aside className="flex w-64 flex-col bg-[#0f172a] text-white">
+                {/* Logo Area */}
+                <div className="flex h-16 items-center gap-3 px-6 border-b border-slate-800">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
+                        <GraduationCap className="h-5 w-5 text-white" />
                     </div>
-
-                    <div className="my-2 mx-2 border-t border-slate-100 dark:border-slate-800" />
-
-                    <div className="space-y-0.5">
-                        {tabs.map((item) => (
-                            <SidebarLink
-                                key={item.to}
-                                item={item}
-                                collapsed={sidebarCollapsed}
-                            />
-                        ))}
+                    <div>
+                        <h1 className="text-lg font-bold leading-tight">UniFlow</h1>
+                        <p className="text-[10px] text-slate-400">Student Portal</p>
                     </div>
+                </div>
+
+                {/* Navigation */}
+                <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+                    {tabs.map((tab) => {
+                        // Match exact path for index, or startsWith for nested routes
+                        const isActive = tab.to === '/student'
+                            ? location.pathname === '/student' || location.pathname === '/student/'
+                            : location.pathname.startsWith(tab.to)
+
+                        return (
+                            <Link
+                                key={tab.to}
+                                to={tab.to}
+                                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                                    isActive
+                                        ? 'bg-blue-600 text-white'
+                                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                }`}
+                            >
+                                <tab.icon className="h-4.5 w-4.5" />
+                                {tab.label}
+                            </Link>
+                        )
+                    })}
                 </nav>
+
+                {/* Logout */}
+                <div className="border-t border-slate-800 p-3">
+                    <button
+                        onClick={handleLogout}
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+                    >
+                        <LogOut className="h-4.5 w-4.5" />
+                        Log Out
+                    </button>
+                </div>
             </aside>
 
-            <AnimatePresence>
-                {mobileSidebarOpen && (
-                    <>
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            onClick={closeMobileSidebar}
-                            className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm md:hidden"
+            {/* Main Content Area */}
+            <div className="flex flex-1 flex-col overflow-hidden">
+                {/* Topbar */}
+                <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-8">
+                    {/* Search */}
+                    <div className="flex w-96 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                        <Search className="h-4 w-4 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Search for a service..."
+                            className="ml-2 w-full bg-transparent text-sm text-slate-700 placeholder-slate-400 focus:outline-none"
                         />
-                        <motion.aside
-                            initial={{ x: '-100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '-100%' }}
-                            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                            className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-white shadow-2xl md:hidden dark:bg-slate-900"
-                        >
-                            <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-4 dark:border-slate-800">
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                                    Menu
-                                </span>
-                                <button
-                                    onClick={closeMobileSidebar}
-                                    className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
-                                    aria-label="Close menu"
-                                >
-                                    <CloseIcon className="h-4 w-4" />
-                                </button>
+                    </div>
+
+                    {/* Right Side */}
+                    <div className="flex items-center gap-6">
+                        <button className="relative text-slate-400 hover:text-slate-600">
+                            <Bell className="h-5 w-5" />
+                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                                3
+                            </span>
+                        </button>
+                        <div className="flex items-center gap-3 border-l border-slate-200 pl-6">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold">
+                                {user?.fullName?.charAt(0) || 'U'}
                             </div>
+                            <div className="hidden sm:block">
+                                <p className="text-sm font-medium text-slate-900">{user?.fullName || 'Student'}</p>
+                                <p className="text-xs text-slate-500 capitalize">{user?.role?.toLowerCase() || 'Student'}</p>
+                            </div>
+                            <ChevronDown className="h-4 w-4 text-slate-400" />
+                        </div>
+                    </div>
+                </header>
 
-                            <nav className="flex-1 overflow-y-auto px-2 py-3">
-                                <div className="space-y-0.5">
-                                    <SidebarLink
-                                        item={homeItem}
-                                        collapsed={false}
-                                        onClick={closeMobileSidebar}
-                                    />
-                                </div>
-
-                                <div className="my-2 mx-2 border-t border-slate-100 dark:border-slate-800" />
-
-                                <div className="space-y-0.5">
-                                    {tabs.map((item) => (
-                                        <SidebarLink
-                                            key={item.to}
-                                            item={item}
-                                            collapsed={false}
-                                            onClick={closeMobileSidebar}
-                                        />
-                                    ))}
-                                </div>
-                            </nav>
-                        </motion.aside>
-                    </>
-                )}
-            </AnimatePresence>
-
-            <main className="min-w-0 flex-1">
-                <div className="mx-auto w-full max-w-[1680px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-                    {title && (
-                        <PageHeader title={title} description={description} action={action} />
-                    )}
+                {/* Page Content */}
+                <main className="flex-1 overflow-y-auto p-8">
                     {children}
-                </div>
-            </main>
+                </main>
+            </div>
         </div>
     )
 }
