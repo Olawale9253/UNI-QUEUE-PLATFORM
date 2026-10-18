@@ -23,7 +23,7 @@ import { initSoundUnlock } from './lib/soundService'
 import { usePrefsStore } from './store/prefsStore'
 import { useServerEvents } from './hooks/useServerEvents'
 import { useUniversityTheme } from './hooks/useUniversityTheme'
-import PublicRegisterUniversity from './pages/PublicRegisterUniversity'
+import PublicRegisterUniversity from './pages/PublicRegisterUniversity''
 
 const AUTH_ROUTES = [
     '/login',
