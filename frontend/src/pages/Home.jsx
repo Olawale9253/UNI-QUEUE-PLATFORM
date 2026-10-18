@@ -34,9 +34,9 @@ const SLIDES = [
         eyebrow: { icon: GraduationCap, label: 'For students' },
         headline: 'Skip the line.',
         headlineAccent: 'Not the service.',
-        sub: 'Join a queue from your phone, watch your position in real time, and show up exactly when it’s your turn.',
+        sub: 'Join a queue from your phone, watch your position in real time, and show up exactly when it is your turn.',
         cta: { label: 'Get started free', to: '/register' },
-        ctaSecondary: { label: 'Sign in', to: '/login' },
+        ctaSecondary: { label: 'Sign in', to: '/login' }, // Kept because it's a valid alternative action
     },
     {
         id: 'freshers',
@@ -45,9 +45,9 @@ const SLIDES = [
         eyebrow: { icon: Sparkles, label: 'For freshers' },
         headline: 'Register before',
         headlineAccent: 'you get your matric.',
-        sub: 'Sign up with your JAMB number the moment you’re admitted. Get your dashboard from day one. Upgrade in one tap once your matric arrives.',
+        sub: 'Sign up with your JAMB number the moment you are admitted. Get your dashboard from day one. Upgrade in one tap once your matric arrives.',
         cta: { label: 'Register as fresher', to: '/register' },
-        ctaSecondary: { label: 'How it works', to: '#how-it-works' },
+        ctaSecondary: null, // Removed dead link
     },
     {
         id: 'staff',
@@ -58,7 +58,7 @@ const SLIDES = [
         headlineAccent: 'Wait less.',
         sub: 'Call the next ticket, transfer students between desks, and mark service complete. All from one clean dashboard.',
         cta: { label: 'Explore staff tools', to: '/login' },
-        ctaSecondary: { label: 'See a demo', to: '#features' },
+        ctaSecondary: null, // Removed dead link
     },
     {
         id: 'admins',
@@ -69,7 +69,7 @@ const SLIDES = [
         headlineAccent: 'At a glance.',
         sub: 'Live analytics, staff performance, wait times, and feedback. So you can fix bottlenecks before students feel them.',
         cta: { label: 'Register your university', to: '/register' },
-        ctaSecondary: { label: 'Learn more', to: '#features' },
+        ctaSecondary: null, // Removed dead link
     },
 ]
 
@@ -135,7 +135,6 @@ function HeroCarousel() {
         return () => window.removeEventListener('mousemove', onMove)
     }, [])
 
-    // Preload all slide images so slides are instant when they cycle
     useEffect(() => {
         SLIDES.forEach((item, indexValue) => {
             if (loaded.has(indexValue)) return
@@ -188,7 +187,6 @@ function HeroCarousel() {
                             className="relative h-full w-full shrink-0 overflow-hidden"
                             aria-hidden={!isActive}
                         >
-                            {/* Skeleton shimmer while the image loads */}
                             <div
                                 className={`absolute inset-0 overflow-hidden bg-gradient-to-br from-slate-800 via-slate-700 to-slate-800 transition-opacity duration-500 ${
                                     isLoaded ? 'opacity-0' : 'opacity-100'
@@ -202,7 +200,6 @@ function HeroCarousel() {
                                 />
                             </div>
 
-                            {/* Background image */}
                             <img
                                 src={FULL_URL(item.src)}
                                 srcSet={buildSrcSet(item.src)}
@@ -225,7 +222,6 @@ function HeroCarousel() {
                                 draggable={false}
                             />
 
-                            {/* Gradient overlays — keep text legible over any image */}
                             <div
                                 className="pointer-events-none absolute inset-0"
                                 style={{
@@ -235,7 +231,6 @@ function HeroCarousel() {
                             />
                             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950/75 via-slate-950/25 to-transparent" />
 
-                            {/* Slide text content */}
                             <div className="absolute inset-0 z-10 mx-auto flex max-w-7xl flex-col justify-center px-6 sm:px-8 lg:px-12">
                                 <div className="max-w-2xl">
                                     <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/[0.06] py-1.5 pl-1.5 pr-4 shadow-xl shadow-black/25 backdrop-blur-xl">
@@ -267,12 +262,14 @@ function HeroCarousel() {
                                             {dashboardHref ? 'Go to dashboard' : item.cta.label}
                                             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                                         </Link>
-                                        <Link
-                                            to={item.ctaSecondary.to}
-                                            className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur-md transition-colors hover:border-white/50 hover:bg-white/20"
-                                        >
-                                            {item.ctaSecondary.label}
-                                        </Link>
+                                        {item.ctaSecondary && (
+                                            <Link
+                                                to={item.ctaSecondary.to}
+                                                className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur-md transition-colors hover:border-white/50 hover:bg-white/20"
+                                            >
+                                                {item.ctaSecondary.label}
+                                            </Link>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -281,7 +278,6 @@ function HeroCarousel() {
                 })}
             </motion.div>
 
-            {/* Prev/next arrows — visible on lg+ */}
             <button
                 type="button"
                 onClick={prev}
@@ -299,7 +295,6 @@ function HeroCarousel() {
                 <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
             </button>
 
-            {/* Dots + progress bar */}
             <div className="absolute inset-x-0 bottom-8 z-20 flex flex-col items-center gap-3">
                 <div className="flex items-center gap-2.5">
                     {SLIDES.map((itemValue, indexValue2) => {
@@ -355,7 +350,7 @@ const FEATURES = [
     {
         icon: Bell,
         title: 'Real-time notifications',
-        body: 'Push alerts the moment it’s their turn — no more crowded corridors or missed calls.',
+        body: 'Push alerts the moment it is their turn. No more crowded corridors or missed calls.',
     },
     {
         icon: RouteIcon,
@@ -370,11 +365,11 @@ const FEATURES = [
     {
         icon: LineChart,
         title: 'Deep analytics',
-        body: 'Wait times, no-show rates, staff performance, and demand trends — per queue.',
+        body: 'Wait times, no-show rates, staff performance, and demand trends for every queue.',
     },
     {
         icon: ShieldCheck,
-        title: 'Multi-tenant & secure',
+        title: 'Multi-tenant security',
         body: 'Each university gets isolated data, custom branding, and role-based access.',
     },
 ]
@@ -392,8 +387,8 @@ function Features() {
                         Built for how universities actually work
                     </h2>
                     <p className="mt-4 text-base text-slate-600 dark:text-slate-400">
-                        One platform for students, staff, and administrators — with the tools
-                        each role needs, without the clutter.
+                        One platform for students, staff, and administrators, with the tools
+                        each role needs without the clutter.
                     </p>
                 </div>
 
@@ -440,7 +435,7 @@ const STEPS = [
     {
         icon: UserPlus,
         title: 'Join the queue',
-        body: 'Get a ticket number from anywhere — no more standing in line.',
+        body: 'Get a ticket number from anywhere. No more standing in line.',
     },
     {
         icon: Activity,
@@ -450,7 +445,7 @@ const STEPS = [
     {
         icon: Bell,
         title: 'Get notified',
-        body: "We ring a chime and push a notification when it's your turn.",
+        body: "We ring a chime and push a notification when it is your turn.",
     },
     {
         icon: BadgeCheck,
