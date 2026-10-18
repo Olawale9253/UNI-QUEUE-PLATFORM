@@ -84,14 +84,17 @@ export default function PublicRegisterUniversity() {
                                 { icon: Building2, text: 'Dedicated subdomain and branded dashboard' },
                                 { icon: GraduationCap, text: 'Full student, staff, and admin accounts' },
                                 { icon: CheckCircle2, text: 'Free tier to start — upgrade anytime' },
-                            ].map((b) => (
-                                <li key={b.text} className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
-                                    <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 dark:bg-brand-950/40 dark:text-brand-400">
-                                        <b.icon className="h-3.5 w-3.5" />
-                                    </span>
-                                    {b.text}
-                                </li>
-                            ))}
+                            ].map((item, index) => {
+                                const Icon = item.icon;
+                                return (
+                                    <li key={index} className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
+                                        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 dark:bg-brand-950/40 dark:text-brand-400">
+                                            <Icon className="h-3.5 w-3.5" />
+                                        </span>
+                                        {item.text}
+                                    </li>
+                                )
+                            })}
                         </ul>
                     </div>
 
@@ -140,7 +143,13 @@ export default function PublicRegisterUniversity() {
                                 <textarea value={form.message} onChange={setField('message')} rows={3} placeholder="We have 8,000 students..." className={inputClass} />
                             </div>
                             <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60">
-                                {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Submitting…</> : 'Submit application'}
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" /> Submitting…
+                                    </>
+                                ) : (
+                                    'Submit application'
+                                )}
                             </button>
                         </form>
                     </motion.div>

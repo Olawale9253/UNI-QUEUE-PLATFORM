@@ -76,12 +76,28 @@ export default function UniversityApplications() {
                                             <Badge variant="info">{app.universityCode}</Badge>
                                         </div>
                                         <div className="mt-3 grid grid-cols-1 gap-2 text-sm text-slate-600 sm:grid-cols-2 dark:text-slate-400">
-                                            <span className="flex items-center gap-1.5"><UserIcon className="h-4 w-4" /> {app.adminFullName} ({app.adminRole || 'Admin'})</span>
-                                            <span className="flex items-center gap-1.5"><Mail className="h-4 w-4" /> {app.adminEmail}</span>
-                                            {app.adminPhone && <span className="flex items-center gap-1.5"><Phone className="h-4 w-4" /> {app.adminPhone}</span>}
-                                            {app.emailDomain && <span className="flex items-center gap-1.5"><Building2 className="h-4 w-4" /> {app.emailDomain}</span>}
+                                            <span className="flex items-center gap-1.5">
+                                                <UserIcon className="h-4 w-4" /> {app.adminFullName} ({app.adminRole || 'Admin'})
+                                            </span>
+                                            <span className="flex items-center gap-1.5">
+                                                <Mail className="h-4 w-4" /> {app.adminEmail}
+                                            </span>
+                                            {app.adminPhone && (
+                                                <span className="flex items-center gap-1.5">
+                                                    <Phone className="h-4 w-4" /> {app.adminPhone}
+                                                </span>
+                                            )}
+                                            {app.emailDomain && (
+                                                <span className="flex items-center gap-1.5">
+                                                    <Building2 className="h-4 w-4" /> {app.emailDomain}
+                                                </span>
+                                            )}
                                         </div>
-                                        {app.message && <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm italic text-slate-700 dark:bg-slate-800 dark:text-slate-300">"{app.message}"</p>}
+                                        {app.message && (
+                                            <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm italic text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                "{app.message}"
+                                            </p>
+                                        )}
                                     </div>
                                     <div className="flex shrink-0 items-center gap-2">
                                         <Button onClick={() => handleApprove(app)} disabled={actionId === app.id} className="bg-emerald-600 hover:bg-emerald-700">
