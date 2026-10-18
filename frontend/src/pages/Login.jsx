@@ -96,7 +96,6 @@ function LeftPanel({ brand, imageError, onImageError }) {
                 className="absolute inset-0 h-full w-full object-cover object-center"
                 draggable={false}
             />
-            {/* ⬅️ LIGHTER GRADIENT OVERLAY so the image is clearly visible */}
             <div
                 className="absolute inset-0"
                 style={{
@@ -125,7 +124,8 @@ function LeftPanel({ brand, imageError, onImageError }) {
                                 onError={(event) => { event.target.style.display = 'none' }}
                             />
                         ) : (
-                            <Building2 className="h-4.5 w-4.5 text-white" />
+                            /* ⬅️ Changed from Building2 to Ticket */
+                            <Ticket className="h-5 w-5 text-white" />
                         )}
                     </div>
                     <div className="min-w-0">
@@ -334,7 +334,8 @@ export default function Login() {
                                         onError={(event) => { event.target.style.display = 'none' }}
                                     />
                                 ) : (
-                                    <Building2 className="h-4.5 w-4.5" />
+                                    /* ⬅️ Changed from Building2 to Ticket */
+                                    <Ticket className="h-4.5 w-4.5" />
                                 )}
                             </div>
                             <div className="min-w-0">
