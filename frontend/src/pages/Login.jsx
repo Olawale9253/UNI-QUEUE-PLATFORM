@@ -156,7 +156,7 @@ function LeftPanel({ brand, imageError, onImageError }) {
                         Sign in to see live wait times and pick up where you left off.
                     </p>
 
-                    {/* ⬅️ REPLACED BULKY CARD WITH SLEEK INLINE STATS */}
+                    {/* INLINE STATS */}
                     <div className="mt-6 flex items-center gap-2 text-xs font-medium text-white/70">
                         <Ticket className="h-3.5 w-3.5 text-brand-300" />
                         <span>142 students currently in queues across campus</span>
@@ -203,7 +203,6 @@ export default function Login() {
     const [imageError, setImageError] = useState(false)
     const [unverified, setUnverified] = useState(false)
     const [rateLimitedUntil, setRateLimitedUntil] = useState(null)
-    const [slowNetwork, setSlowNetwork] = useState(false)
 
     const remainingSeconds = useCountdown(rateLimitedUntil)
     const isRateLimited = remainingSeconds > 0
@@ -251,14 +250,8 @@ export default function Login() {
 
         setRedirecting(true)
         setUnverified(false)
-        setSlowNetwork(false)
-
-        const wakeTimer = setTimeout(() => setSlowNetwork(true), 4000)
 
         const res = await login(email, password)
-
-        clearTimeout(wakeTimer)
-        setSlowNetwork(false)
 
         if (res.success) {
             syncExistingPushSubscription()
@@ -449,17 +442,10 @@ export default function Login() {
                                         Try again in {formatWait(remainingSeconds)}
                                     </>
                                 ) : loading || redirecting ? (
-                                    slowNetwork ? (
-                                        <>
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                            Waking up server…
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                            Signing in…
-                                        </>
-                                    )
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Signing in…
+                                    </>
                                 ) : (
                                     <>
                                         Sign in
@@ -467,12 +453,6 @@ export default function Login() {
                                     </>
                                 )}
                             </button>
-
-                            {slowNetwork && (
-                                <p className="text-center text-[11px] text-amber-700 dark:text-amber-400">
-                                    The server was asleep. Waking it up usually takes about 30–45 seconds on the first load. Hang tight!
-                                </p>
-                            )}
 
                             {isRateLimited && (
                                 <p className="text-center text-[11px] text-amber-700 dark:text-amber-400">
