@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     ArrowRight, LogOut, CheckCircle2, Loader2, Eye, EyeOff,
-    Ticket, Bell, ShieldCheck, Lock, UserPlus, // ⬅️ Added UserPlus
+    Ticket, Bell, ShieldCheck, Lock, UserPlus,
 } from 'lucide-react'
 import api from '../api/axios'
 import { useAuthStore } from '../store/authStore'
@@ -139,12 +139,16 @@ function LeftPanel({ brand, imageError, onImageError }) {
                 </Link>
 
                 <div className="max-w-md">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.22em] text-white backdrop-blur-md">
-                        <span className="h-1 w-1 rounded-full bg-white/80" />
+                    {/* ⬅️ REDESIGNED WELCOME BADGE */}
+                    <div className="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white/95 shadow-xl shadow-black/20 ring-1 ring-white/10 backdrop-blur-xl transition-all hover:bg-white/15">
+                        <span className="relative flex h-2 w-2">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                        </span>
                         Welcome back
                     </div>
 
-                    <h2 className="mt-4 text-3xl font-bold leading-[1.1] tracking-tight text-white drop-shadow-lg xl:text-4xl">
+                    <h2 className="mt-5 text-3xl font-bold leading-[1.1] tracking-tight text-white drop-shadow-lg xl:text-4xl">
                         Your spot in line
                         <span className="block text-white/75">is waiting.</span>
                     </h2>
@@ -190,10 +194,10 @@ function LeftPanel({ brand, imageError, onImageError }) {
 
                 <div className="max-w-sm border-l-2 border-white/30 pl-3">
                     <p className="text-xs italic leading-relaxed text-white/80">
-                        "Thirty minutes saved every morning, that's a full lecture's worth of time."
+                        "Thirty minutes saved every morning — that's a full lecture's worth of time."
                     </p>
                     <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-white/50">
-                         VICE CHANCELLOR
+                        — Registry staff, LAUTECH
                     </p>
                 </div>
             </div>
@@ -491,9 +495,7 @@ export default function Login() {
                             )}
                         </form>
 
-                        {/* ── Redesigned Footer Links ── */}
                         <div className="mt-6">
-                            {/* Or Divider */}
                             <div className="mb-5 flex items-center">
                                 <div className="flex-1 border-t border-slate-200 dark:border-slate-800" />
                                 <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -502,7 +504,6 @@ export default function Login() {
                                 <div className="flex-1 border-t border-slate-200 dark:border-slate-800" />
                             </div>
 
-                            {/* Create Account secondary button */}
                             <Link
                                 to="/register"
                                 className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-brand-700 dark:hover:bg-brand-950/30 dark:hover:text-brand-400"
