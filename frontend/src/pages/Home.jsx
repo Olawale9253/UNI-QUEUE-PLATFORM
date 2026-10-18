@@ -36,7 +36,7 @@ const SLIDES = [
         headlineAccent: 'Not the service.',
         sub: 'Join a queue from your phone, watch your position in real time, and show up exactly when it is your turn.',
         cta: { label: 'Get started free', to: '/register' },
-        ctaSecondary: { label: 'Sign in', to: '/login' }, // Kept because it's a valid alternative action
+        ctaSecondary: { label: 'Sign in', to: '/login' },
     },
     {
         id: 'freshers',
@@ -47,7 +47,7 @@ const SLIDES = [
         headlineAccent: 'you get your matric.',
         sub: 'Sign up with your JAMB number the moment you are admitted. Get your dashboard from day one. Upgrade in one tap once your matric arrives.',
         cta: { label: 'Register as fresher', to: '/register' },
-        ctaSecondary: null, // Removed dead link
+        ctaSecondary: null,
     },
     {
         id: 'staff',
@@ -58,7 +58,7 @@ const SLIDES = [
         headlineAccent: 'Wait less.',
         sub: 'Call the next ticket, transfer students between desks, and mark service complete. All from one clean dashboard.',
         cta: { label: 'Explore staff tools', to: '/login' },
-        ctaSecondary: null, // Removed dead link
+        ctaSecondary: null,
     },
     {
         id: 'admins',
@@ -68,8 +68,8 @@ const SLIDES = [
         headline: 'See every queue.',
         headlineAccent: 'At a glance.',
         sub: 'Live analytics, staff performance, wait times, and feedback. So you can fix bottlenecks before students feel them.',
-        cta: { label: 'Register your university', to: '/register' },
-        ctaSecondary: null, // Removed dead link
+        cta: { label: 'Register your university', to: '/for-universities' }, // ⬅️ UPDATED THIS LINE
+        ctaSecondary: null,
     },
 ]
 

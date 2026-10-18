@@ -9,7 +9,7 @@ import {
     Menu,
     Home,
     Info,
-    Building2, // ⬅️ ADDED THIS ICON
+    Building2,
 } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { useUniversityStore } from '../../store/universityStore'
@@ -162,7 +162,6 @@ export default function Navbar() {
                             >
                                 Home
                             </NavLink>
-                            {/* ⬅️ ADDED DESKTOP FOR UNIVERSITIES LINK HERE */}
                             <NavLink
                                 to="/for-universities"
                                 className={({ isActive }) =>
@@ -275,7 +274,6 @@ export default function Navbar() {
                         <Home className="h-4 w-4 text-slate-400" />
                         Home
                     </Link>
-                    {/* ⬅️ FIXED MOBILE FOR UNIVERSITIES LINK */}
                     <Link
                         to="/for-universities"
                         className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 dark:text-slate-400"

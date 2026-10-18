@@ -7,6 +7,8 @@ import { useToastStore } from '../store/toastStore'
 import { ease } from '../lib/motion'
 import Logo from '../components/ui/Logo'
 
+const BG_IMAGE = 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=2000'
+
 export default function PublicRegisterUniversity() {
     const { push } = useToastStore()
     const [loading, setLoading] = useState(false)
@@ -36,18 +38,18 @@ export default function PublicRegisterUniversity() {
         }
     }
 
-    const inputClass = 'w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500'
-    const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300'
+    const inputClass = 'w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20'
+    const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700'
 
     if (submitted) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6 dark:bg-slate-950">
-                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-lg dark:border-slate-800 dark:bg-slate-900">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/40">
-                        <CheckCircle2 className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+            <div className="flex min-h-screen items-center justify-center bg-slate-900 px-6">
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md rounded-2xl border border-white/10 bg-white/95 p-8 text-center shadow-2xl backdrop-blur-xl">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+                        <CheckCircle2 className="h-8 w-8 text-emerald-600" />
                     </div>
-                    <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Application received</h1>
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                    <h1 className="text-xl font-bold text-slate-900">Application received</h1>
+                    <p className="mt-2 text-sm text-slate-600">
                         Our team will review your request and send a setup link to <strong>{form.adminEmail}</strong>.
                     </p>
                     <Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
@@ -59,37 +61,48 @@ export default function PublicRegisterUniversity() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-            <div className="mx-auto max-w-5xl px-6 py-12 sm:px-8 lg:px-12">
-                <Link to="/" className="mb-8 flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 text-white">
+        <div className="relative min-h-screen bg-slate-900 flex items-center justify-center py-12 px-6 sm:px-8 lg:px-12">
+            {/* Background Image & Overlays */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <img src={BG_IMAGE} alt="University Campus" className="h-full w-full object-cover" />
+                <div className="absolute inset-0 bg-slate-900/75 mix-blend-multiply" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent" />
+            </div>
+
+            <div className="relative z-10 w-full max-w-5xl">
+                <Link to="/" className="mb-8 inline-flex items-center gap-3 text-white hover:opacity-90">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/20 backdrop-blur-md">
                         <Logo size={22} variant="icon" />
                     </div>
-                    <span className="text-lg font-bold text-slate-900 dark:text-slate-100">UniQueue</span>
+                    <span className="text-lg font-bold tracking-tight">UniQueue</span>
                 </Link>
 
-                <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_1.2fr] lg:gap-16">
-                    <div className="max-w-md">
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 dark:border-brand-900 dark:bg-brand-950/40 dark:text-brand-300">
+                <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16 items-center">
+                    {/* Left: Pitch (Responsive for Mobile and Desktop) */}
+                    <div className="text-white">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-400/30 bg-brand-500/20 px-3 py-1 text-xs font-medium text-brand-200 backdrop-blur-md">
                             <Building2 className="h-3 w-3" /> For universities
                         </span>
-                        <h1 className="mt-5 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-slate-100">
-                            Bring UniQueue to your campus.
+                        <h1 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
+                            Bring UniQueue to <br className="hidden sm:block" />
+                            <span className="text-brand-400">your campus.</span>
                         </h1>
-                        <p className="mt-4 text-base leading-relaxed text-slate-600 dark:text-slate-400">
+                        <p className="mt-4 text-base leading-relaxed text-slate-300 max-w-lg">
                             Set up a managed queue workspace for your university in under 24 hours. No setup fee, no engineering team required.
                         </p>
+
+                        {/* Features */}
                         <ul className="mt-8 space-y-4">
                             {[
                                 { icon: Building2, text: 'Dedicated subdomain and branded dashboard' },
                                 { icon: GraduationCap, text: 'Full student, staff, and admin accounts' },
-                                { icon: CheckCircle2, text: 'Free tier to start — upgrade anytime' },
+                                { icon: CheckCircle2, text: 'Free tier to start, upgrade anytime' },
                             ].map((item, index) => {
                                 const Icon = item.icon;
                                 return (
-                                    <li key={index} className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
-                                        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 dark:bg-brand-950/40 dark:text-brand-400">
-                                            <Icon className="h-3.5 w-3.5" />
+                                    <li key={index} className="flex items-center gap-3 text-sm font-medium text-slate-200">
+                                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 backdrop-blur-sm">
+                                            <Icon className="h-4 w-4 text-brand-300" />
                                         </span>
                                         {item.text}
                                     </li>
@@ -98,17 +111,27 @@ export default function PublicRegisterUniversity() {
                         </ul>
                     </div>
 
-                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
-                        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Request a workspace</h2>
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Fill this out and our team will email you a setup link.</p>
+                    {/* Right: Form */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="rounded-2xl border border-white/10 bg-white/95 p-6 shadow-2xl backdrop-blur-xl sm:p-8"
+                    >
+                        <h2 className="text-xl font-bold text-slate-900">Request a workspace</h2>
+                        <p className="mt-1 text-sm text-slate-500">Fill this out and our team will email you a setup link.</p>
 
-                        {error && <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">{error}</div>}
+                        {error && (
+                            <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+                                {error}
+                            </div>
+                        )}
 
                         <form onSubmit={submit} className="mt-6 space-y-4">
                             <div>
                                 <label className={labelClass}>University name</label>
                                 <input type="text" value={form.universityName} onChange={setField('universityName')} placeholder="University of Lagos" required className={inputClass} />
                             </div>
+
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
                                     <label className={labelClass}>Short code</label>
@@ -119,11 +142,14 @@ export default function PublicRegisterUniversity() {
                                     <input type="text" value={form.emailDomain} onChange={setField('emailDomain')} placeholder="@unilag.edu.ng" className={inputClass} />
                                 </div>
                             </div>
-                            <hr className="my-4 border-slate-100 dark:border-slate-800" />
+
+                            <hr className="my-4 border-slate-200" />
+
                             <div>
                                 <label className={labelClass}>Your full name</label>
                                 <input type="text" value={form.adminFullName} onChange={setField('adminFullName')} placeholder="Jane Doe" required className={inputClass} />
                             </div>
+
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
                                     <label className={labelClass}>Your role</label>
@@ -134,14 +160,17 @@ export default function PublicRegisterUniversity() {
                                     <input type="tel" value={form.adminPhone} onChange={setField('adminPhone')} placeholder="+234 801 234 5678" className={inputClass} />
                                 </div>
                             </div>
+
                             <div>
                                 <label className={labelClass}>Your email</label>
                                 <input type="email" value={form.adminEmail} onChange={setField('adminEmail')} placeholder="jane@unilag.edu.ng" required className={inputClass} />
                             </div>
+
                             <div>
                                 <label className={labelClass}>Anything we should know? (optional)</label>
                                 <textarea value={form.message} onChange={setField('message')} rows={3} placeholder="We have 8,000 students..." className={inputClass} />
                             </div>
+
                             <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60">
                                 {loading ? (
                                     <>
