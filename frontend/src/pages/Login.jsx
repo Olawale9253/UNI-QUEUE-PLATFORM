@@ -190,10 +190,10 @@ function LeftPanel({ brand, imageError, onImageError }) {
 
                 <div className="max-w-sm border-l-2 border-white/30 pl-3">
                     <p className="text-xs italic leading-relaxed text-white/80">
-                        "Thirty minutes saved every morning — that's a full lecture's worth of time."
+                        "Thirty minutes saved every morning, that's a full lecture's worth of time."
                     </p>
                     <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-white/50">
-                        — Registry staff, LAUTECH
+                         VICE CHANCELLOR
                     </p>
                 </div>
             </div>
