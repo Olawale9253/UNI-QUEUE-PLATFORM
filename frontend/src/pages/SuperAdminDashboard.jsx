@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     Building2, Users, BarChart3, Plus, Power, PowerOff, History,
     UserPlus, X as CloseIcon, Layers, Megaphone, Eye, DollarSign,
-    Pencil, Trash2, AlertTriangle, Palette, Settings as SettingsIcon, // ⬅️ NEW
+    Pencil, Trash2, AlertTriangle, Palette, Settings as SettingsIcon, Inbox,
 } from 'lucide-react'
 import api from '../api/axios'
 import Card from '../components/ui/Card'
@@ -29,7 +29,8 @@ import TiersAndFeatures from './super-admin/TiersAndFeatures'
 import Broadcast from './super-admin/Broadcast'
 import Plans from './super-admin/Plans'
 import AdmittedStudentsButton from './super-admin/AdmittedStudentsButton'
-import Settings from './super-admin/Settings' // ⬅️ NEW
+import Settings from './super-admin/Settings'
+import UniversityApplications from './super-admin/UniversityApplications'
 
 const PRESET_COLORS = [
     { label: 'Deep Navy',  value: '#1e3a8a' },
@@ -93,6 +94,7 @@ const emptyAdminForm = { fullName: '', email: '', password: '', department: '', 
 
 const tabs = [
     { to: '/super-admin', label: 'Universities', icon: Building2, end: true },
+    { to: '/super-admin/applications', label: 'Applications', icon: Inbox },
     { to: '/super-admin/plans', label: 'Plans', icon: DollarSign },
     { to: '/super-admin/tiers', label: 'Tiers & Features', icon: Layers },
     { to: '/super-admin/broadcast', label: 'Broadcast', icon: Megaphone },
@@ -452,7 +454,8 @@ export default function SuperAdminDashboard() {
                 <Route path="analytics" element={<SystemAnalytics />} />
                 <Route path="users" element={<UsersPage />} />
                 <Route path="audit-logs" element={<AuditLogs />} />
-                <Route path="settings" element={<Settings />} /> {/* ⬅️ NEW */}
+                <Route path="settings" element={<Settings />} />
+                <Route path="applications" element={<UniversityApplications />} />
                 <Route path="*" element={<Navigate to="/super-admin" replace />} />
             </Routes>
         </DashboardLayout>

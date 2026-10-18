@@ -23,6 +23,7 @@ import { initSoundUnlock } from './lib/soundService'
 import { usePrefsStore } from './store/prefsStore'
 import { useServerEvents } from './hooks/useServerEvents'
 import { useUniversityTheme } from './hooks/useUniversityTheme'
+import PublicRegisterUniversity from './pages/PublicRegisterUniversity'
 
 const AUTH_ROUTES = [
     '/login',
@@ -86,6 +87,7 @@ export default function App() {
                             <Route path="/" element={<Home />} />
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />
+                            <Route path="/for-universities" element={<PublicRegisterUniversity />} />
                             <Route
                                 path="/pending-verification"
                                 element={
