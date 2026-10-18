@@ -9,6 +9,7 @@ import {
     Menu,
     Home,
     Info,
+    Building2, // ⬅️ ADDED THIS ICON
 } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { useUniversityStore } from '../../store/universityStore'
@@ -105,7 +106,7 @@ export default function Navbar() {
                         to={dashboardHref}
                         className="flex min-w-0 items-center gap-3 transition-opacity hover:opacity-90"
                     >
-                        {/* ⬅️ THE SQUIRCLE LOGO CONTAINER */}
+                        {/* THE SQUIRCLE LOGO CONTAINER */}
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-slate-200 sm:h-12 sm:w-12 dark:bg-slate-800 dark:ring-slate-700">
                             {isSuperAdmin ? (
                                 <div className="flex h-full w-full items-center justify-center bg-slate-900 text-white dark:bg-slate-700">
@@ -115,8 +116,6 @@ export default function Navbar() {
                                 <img
                                     src={university.logoUrl}
                                     alt={university.name}
-                                    // object-contain ensures the whole crest is visible
-                                    // p-1.5 gives it a nice border padding
                                     className="h-full w-full rounded-xl object-contain p-1.5"
                                     onError={() => setLogoFailed(true)}
                                 />
@@ -162,6 +161,19 @@ export default function Navbar() {
                                 }
                             >
                                 Home
+                            </NavLink>
+                            {/* ⬅️ ADDED DESKTOP FOR UNIVERSITIES LINK HERE */}
+                            <NavLink
+                                to="/for-universities"
+                                className={({ isActive }) =>
+                                    `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                                        isActive
+                                            ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
+                                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800'
+                                    }`
+                                }
+                            >
+                                For Universities
                             </NavLink>
                         </nav>
                     )}
@@ -253,6 +265,7 @@ export default function Navbar() {
                 </div>
             </div>
 
+            {/* MOBILE MENU SECTION */}
             {!user && (
                 <div className="flex items-center gap-1 border-t border-slate-100 px-3 py-2 sm:hidden dark:border-slate-800">
                     <Link
@@ -262,19 +275,20 @@ export default function Navbar() {
                         <Home className="h-4 w-4 text-slate-400" />
                         Home
                     </Link>
+                    {/* ⬅️ FIXED MOBILE FOR UNIVERSITIES LINK */}
+                    <Link
+                        to="/for-universities"
+                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 dark:text-slate-400"
+                    >
+                        <Building2 className="h-4 w-4 text-slate-400" />
+                        For Universities
+                    </Link>
                     <Link
                         to="/login"
                         className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 dark:text-slate-400"
                     >
                         <Info className="h-4 w-4 text-slate-400" />
                         Sign in
-                    </Link>
-
-                    <Link
-                        to="/for-universities"
-                        className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 lg:inline-flex dark:text-slate-400 dark:hover:bg-slate-800"
-                    >
-                        For Universities
                     </Link>
                 </div>
             )}
