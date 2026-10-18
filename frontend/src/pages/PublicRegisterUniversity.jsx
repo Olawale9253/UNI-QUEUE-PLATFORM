@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-    ArrowLeft, Building2, CheckCircle2, Loader2, Mail, Phone, User, GraduationCap,
+    ArrowLeft, Building2, CheckCircle2, Loader2, GraduationCap,
 } from 'lucide-react'
 import api from '../api/axios'
 import { useToastStore } from '../store/toastStore'
@@ -38,7 +38,9 @@ export default function PublicRegisterUniversity() {
             setSubmitted(true)
             push({ type: 'success', message: 'Application submitted!' })
         } catch (err) {
-            const msg = err.response?.data?.message || 'Could not submit your application. Please try again.'
+            const msg =
+                err.response?.data?.message ||
+                'Could not submit your application. Please try again.'
             setError(msg)
             push({ type: 'error', message: msg })
         } finally {
@@ -49,7 +51,8 @@ export default function PublicRegisterUniversity() {
     const inputClass =
         'w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500'
 
-    const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300'
+    const labelClass =
+        'mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300'
 
     if (submitted) {
         return (
@@ -105,17 +108,29 @@ export default function PublicRegisterUniversity() {
                             Bring UniQueue to your campus.
                         </h1>
                         <p className="mt-4 text-base leading-relaxed text-slate-600 dark:text-slate-400">
-                            Set up a managed queue workspace for your university in under 24 hours.
-                            No setup fee, no engineering team required.
+                            Set up a managed queue workspace for your university in under
+                            24 hours. No setup fee, no engineering team required.
                         </p>
 
                         <ul className="mt-8 space-y-4">
                             {[
-                                { icon: Building2, text: 'Dedicated subdomain and branded dashboard' },
-                                { icon: GraduationCap, text: 'Full student, staff, and admin accounts' },
-                                { icon: CheckCircle2, text: 'Free tier to start — upgrade anytime' },
+                                {
+                                    icon: Building2,
+                                    text: 'Dedicated subdomain and branded dashboard',
+                                },
+                                {
+                                    icon: GraduationCap,
+                                    text: 'Full student, staff, and admin accounts',
+                                },
+                                {
+                                    icon: CheckCircle2,
+                                    text: 'Free tier to start — upgrade anytime',
+                                },
                             ].map((b) => (
-                                <li key={b.text} className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
+                                <li
+                                    key={b.text}
+                                    className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300"
+                                >
                                     <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 dark:bg-brand-950/40 dark:text-brand-400">
                                         <b.icon className="h-3.5 w-3.5" />
                                     </span>
@@ -172,7 +187,9 @@ export default function PublicRegisterUniversity() {
                                     />
                                 </div>
                                 <div>
-                                    <label className={labelClass}>Email domain (optional)</label>
+                                    <label className={labelClass}>
+                                        Email domain (optional)
+                                    </label>
                                     <input
                                         type="text"
                                         value={form.emailDomain}
@@ -233,7 +250,9 @@ export default function PublicRegisterUniversity() {
                             </div>
 
                             <div>
-                                <label className={labelClass}>Anything we should know? (optional)</label>
+                                <label className={labelClass}>
+                                    Anything we should know? (optional)
+                                </label>
                                 <textarea
                                     value={form.message}
                                     onChange={setField('message')}
