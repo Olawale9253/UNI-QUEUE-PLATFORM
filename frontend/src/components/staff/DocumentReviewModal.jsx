@@ -57,7 +57,7 @@ export default function DocumentReviewModal({ document: doc, onClose, onReviewed
             onReviewed?.()
             onClose()
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to approve')
+            setError(err.message || 'Failed to approve')
         } finally {
             setActing(null)
         }
@@ -78,7 +78,7 @@ export default function DocumentReviewModal({ document: doc, onClose, onReviewed
             onReviewed?.()
             onClose()
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to reject')
+            setError(err.message || 'Failed to reject')
         } finally {
             setActing(null)
         }

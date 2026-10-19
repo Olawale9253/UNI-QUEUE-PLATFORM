@@ -88,7 +88,7 @@ export default function AppointmentsList() {
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Failed to load appointments',
+                message: err.message || 'Failed to load appointments',
             })
         } finally {
             setLoading(false)

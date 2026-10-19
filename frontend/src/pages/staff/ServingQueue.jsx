@@ -146,7 +146,7 @@ export default function ServingQueue() {
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Failed to load queues',
+                message: err.message || 'Failed to load queues',
             })
         } finally {
             setLoading(false)
@@ -165,7 +165,7 @@ export default function ServingQueue() {
             } catch (err) {
                 push({
                     type: 'error',
-                    message: err.response?.data?.message || 'Failed to load tickets',
+                    message: err.message || 'Failed to load tickets',
                 })
             } finally {
                 if (showSkeleton) setTicketsLoading(false)
@@ -278,7 +278,7 @@ export default function ServingQueue() {
             loadQueues()
         } catch (err) {
             const status = err.response?.status
-            const message = err.response?.data?.message || ''
+            const message = err.message || ''
 
             // ─── Empty queue: informational, not an error ───
             if (/no waiting tickets/i.test(message)) {

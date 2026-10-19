@@ -273,7 +273,7 @@ export default function AppointmentsTab() {
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Failed to book',
+                message: err.message || 'Failed to book',
             })
         } finally {
             setBooking(false)
@@ -291,7 +291,7 @@ export default function AppointmentsTab() {
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Failed to cancel',
+                message: err.message || 'Failed to cancel',
             })
         } finally {
             setCancelling(false)

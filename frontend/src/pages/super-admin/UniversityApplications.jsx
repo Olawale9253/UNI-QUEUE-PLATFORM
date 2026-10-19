@@ -37,7 +37,7 @@ export default function UniversityApplications() {
             push({ type: 'success', message: `${app.universityName} approved! Setup email sent.` })
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to approve' })
+            push({ type: 'error', message: err.message || 'Failed to approve' })
         } finally {
             setActionId(null)
         }

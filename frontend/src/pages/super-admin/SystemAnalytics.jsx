@@ -125,7 +125,7 @@ export default function SystemAnalytics() {
             const res = await api.get('/api/super-admin/analytics')
             setAnalytics(res.data.data)
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load' })
+            push({ type: 'error', message: err.message || 'Failed to load' })
         } finally {
             setLoading(false)
         }

@@ -53,7 +53,7 @@ export default function Overview() {
             setAnalytics(firstValue.data.data || null)
             setStaff(stringValue.data.data || [])
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load' })
+            push({ type: 'error', message: err.message || 'Failed to load' })
         } finally {
             setLoading(false)
         }
@@ -87,7 +87,7 @@ export default function Overview() {
             setShowCreate(false)
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to create queue' })
+            push({ type: 'error', message: err.message || 'Failed to create queue' })
         } finally {
             setCreating(false)
         }

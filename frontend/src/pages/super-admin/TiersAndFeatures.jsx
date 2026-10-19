@@ -45,7 +45,7 @@ export default function TiersAndFeatures() {
                 setRate(settingsRes.data.data.ngnExchangeRate)
             }
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load' })
+            push({ type: 'error', message: err.message || 'Failed to load' })
         } finally {
             setLoading(false)
         }
@@ -70,7 +70,7 @@ export default function TiersAndFeatures() {
             )
             push({ type: 'success', message: `${uni.name} → ${uni.plan}` })
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to update plan' })
+            push({ type: 'error', message: err.message || 'Failed to update plan' })
             await load()
         } finally {
             setSaving((itemValue) => ({ ...itemValue, [uni.id]: { ...itemValue[uni.id], plan: false } }))
@@ -88,7 +88,7 @@ export default function TiersAndFeatures() {
             })
             push({ type: 'success', message: `${uni.name} features updated` })
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to update features' })
+            push({ type: 'error', message: err.message || 'Failed to update features' })
             await load()
         } finally {
             setSaving((itemValue) => ({ ...itemValue, [uni.id]: { ...itemValue[uni.id], features: false } }))

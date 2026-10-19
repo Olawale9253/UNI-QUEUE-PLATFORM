@@ -113,7 +113,7 @@ export default function StaffHome() {
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Failed to load data',
+                message: err.message || 'Failed to load data',
             })
         } finally {
             setTicketsLoading(false)

@@ -254,7 +254,7 @@ function CreateWorkflowModal({ open, onClose, onCreated }) {
             onCreated?.(res.data.data)
             onClose()
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to create workflow')
+            toast.error(err.message || 'Failed to create workflow')
         } finally {
             setSaving(false)
         }
@@ -479,7 +479,7 @@ export default function Workflows() {
             const res = await api.get('/api/admin/workflows')
             setWorkflows(res.data.data || [])
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to load workflows')
+            setError(err.message || 'Failed to load workflows')
         } finally {
             setLoading(false)
             setRefreshing(false)
@@ -503,7 +503,7 @@ export default function Workflows() {
             toast.success('Workflow deleted')
             setDeleteTarget(null)
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to delete workflow')
+            toast.error(err.message || 'Failed to delete workflow')
         } finally {
             setDeleting(false)
         }

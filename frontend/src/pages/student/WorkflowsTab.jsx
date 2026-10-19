@@ -81,7 +81,7 @@ export default function WorkflowsTab() {
             push({ type: 'success', message: 'Workflow started' })
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to start' })
+            push({ type: 'error', message: err.message || 'Failed to start' })
         } finally {
             setStarting(null)
         }
@@ -96,7 +96,7 @@ export default function WorkflowsTab() {
             setAbandonTarget(null)
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to abandon' })
+            push({ type: 'error', message: err.message || 'Failed to abandon' })
         } finally {
             setAbandoning(false)
         }

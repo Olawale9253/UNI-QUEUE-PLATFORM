@@ -110,7 +110,7 @@ export default function AppointmentDetailModal({ appointment, onClose, onUpdated
             onUpdated?.()
             onClose()
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to complete appointment')
+            setError(err.message || 'Failed to complete appointment')
         } finally {
             setActing(null)
         }
@@ -127,7 +127,7 @@ export default function AppointmentDetailModal({ appointment, onClose, onUpdated
             onUpdated?.()
             onClose()
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to mark no-show')
+            setError(err.message || 'Failed to mark no-show')
         } finally {
             setActing(null)
         }

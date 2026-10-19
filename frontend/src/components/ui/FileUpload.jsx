@@ -53,7 +53,7 @@ export default function FileUpload({
             } catch (err) {
                 push({
                     type: 'error',
-                    message: err.response?.data?.message || 'Upload failed',
+                    message: err.message || 'Upload failed',
                 })
             } finally {
                 setUploading(false)

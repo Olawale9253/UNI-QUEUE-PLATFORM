@@ -25,7 +25,7 @@ export default function ForgotPassword() {
             const token = res.data.data?.resetToken
             if (token) setResetToken(token)
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to send reset link' })
+            push({ type: 'error', message: err.message || 'Failed to send reset link' })
         } finally {
             setLoading(false)
         }

@@ -67,7 +67,7 @@ export default function Appointments() {
             setAppointments(firstValue.data?.data || [])
             setStats(stringValue.data?.data || null)
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load appointments' })
+            push({ type: 'error', message: err.message || 'Failed to load appointments' })
         } finally {
             setLoading(false)
         }

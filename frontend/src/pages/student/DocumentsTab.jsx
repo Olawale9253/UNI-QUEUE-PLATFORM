@@ -90,7 +90,7 @@ export default function DocumentsTab() {
             const res = await api.get('/api/user/documents')
             setDocs(res.data?.data || [])
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load documents' })
+            push({ type: 'error', message: err.message || 'Failed to load documents' })
         } finally {
             setLoading(false)
         }
@@ -120,7 +120,7 @@ export default function DocumentsTab() {
             setUploadOpen(false)
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Upload failed' })
+            push({ type: 'error', message: err.message || 'Upload failed' })
         } finally {
             setUploading(false)
         }
@@ -135,7 +135,7 @@ export default function DocumentsTab() {
             setDeleteTarget(null)
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to delete' })
+            push({ type: 'error', message: err.message || 'Failed to delete' })
         } finally {
             setDeleting(false)
         }

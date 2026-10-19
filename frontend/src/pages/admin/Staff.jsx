@@ -121,7 +121,7 @@ export default function Staff() {
             setStaff(stringValue.data.data || [])
             setQueues(queue.data.data || [])
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load' })
+            push({ type: 'error', message: err.message || 'Failed to load' })
         } finally {
             setLoading(false)
         }
@@ -143,7 +143,7 @@ export default function Staff() {
             setShowCreate(false)
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to create staff' })
+            push({ type: 'error', message: err.message || 'Failed to create staff' })
         } finally {
             setCreating(false)
         }
@@ -157,7 +157,7 @@ export default function Staff() {
             push({ type: 'success', message: 'Staff assigned to queue' })
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to assign' })
+            push({ type: 'error', message: err.message || 'Failed to assign' })
         } finally {
             setAssigning(false)
         }
@@ -169,7 +169,7 @@ export default function Staff() {
             push({ type: 'success', message: 'Staff removed from queue' })
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to unassign' })
+            push({ type: 'error', message: err.message || 'Failed to unassign' })
         }
     }
 
@@ -245,7 +245,7 @@ export default function Staff() {
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Bulk removal failed',
+                message: err.message || 'Bulk removal failed',
             })
         } finally {
             setBulkBusy(false)
@@ -560,7 +560,7 @@ export default function Staff() {
                         setDeleteTarget(null)
                         await load()
                     } catch (err) {
-                        push({ type: 'error', message: err.response?.data?.message || 'Failed' })
+                        push({ type: 'error', message: err.message || 'Failed' })
                     } finally {
                         setDeleting(false)
                     }

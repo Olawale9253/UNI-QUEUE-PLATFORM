@@ -87,7 +87,7 @@ export default function AuditLog() {
                 setTotalElements(data.totalElements || 0)
                 setPage(pageToLoad)
             } catch (err) {
-                push({ type: 'error', message: err.response?.data?.message || 'Failed to load' })
+                push({ type: 'error', message: err.message || 'Failed to load' })
             } finally {
                 setLoading(false)
             }

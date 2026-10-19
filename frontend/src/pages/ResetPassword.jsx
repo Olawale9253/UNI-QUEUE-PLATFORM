@@ -45,7 +45,7 @@ export default function ResetPassword() {
             push({ type: 'success', message: 'Password reset. You can now sign in.' })
             setTimeout(() => navigate('/login'), 1500)
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to reset password')
+            setError(err.message || 'Failed to reset password')
         } finally {
             setLoading(false)
         }

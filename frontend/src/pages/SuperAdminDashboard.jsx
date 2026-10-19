@@ -138,7 +138,7 @@ function UniversitiesTab() {
             setUniversities(userValue.data.data || [])
             setAnalytics(firstValue.data.data || null)
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load' })
+            push({ type: 'error', message: err.message || 'Failed to load' })
         } finally {
             setLoading(false)
         }
@@ -156,7 +156,7 @@ function UniversitiesTab() {
             setShowCreate(false)
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to register' })
+            push({ type: 'error', message: err.message || 'Failed to register' })
         } finally {
             setCreating(false)
         }
@@ -189,7 +189,7 @@ function UniversitiesTab() {
             push({ type: 'success', message: 'University updated' })
             closeEdit(); await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to update' })
+            push({ type: 'error', message: err.message || 'Failed to update' })
         } finally { setEditing(false) }
     }
 
@@ -204,7 +204,7 @@ function UniversitiesTab() {
             push({ type: 'success', message: `${deleteTarget.name} deleted` })
             setDeleteTarget(null); setDeleteConfirmCode(''); await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to delete' })
+            push({ type: 'error', message: err.message || 'Failed to delete' })
         } finally { setDeleting(false) }
     }
 
@@ -216,7 +216,7 @@ function UniversitiesTab() {
             if (u.isActive) { await api.post(`/api/super-admin/universities/${u.id}/deactivate`); push({ type: 'success', message: `${u.name} deactivated` }) }
             else { await api.post(`/api/super-admin/universities/${u.id}/reactivate`); push({ type: 'success', message: `${u.name} reactivated` }) }
             setConfirmDeactivate(null); await load()
-        } catch (err) { push({ type: 'error', message: err.response?.data?.message || 'Failed' }) } finally { setToggling(null) }
+        } catch (err) { push({ type: 'error', message: err.message || 'Failed' }) } finally { setToggling(null) }
     }
 
     const submitNewAdmin = async (e) => {
@@ -224,7 +224,7 @@ function UniversitiesTab() {
         try {
             await api.post(`/api/super-admin/universities/${addAdminTarget.id}/admins`, adminForm)
             push({ type: 'success', message: 'Admin added' }); setAddAdminTarget(null); setAdminForm(emptyAdminForm); await load()
-        } catch (err) { push({ type: 'error', message: err.response?.data?.message || 'Failed to add admin' }) } finally { setAddingAdmin(false) }
+        } catch (err) { push({ type: 'error', message: err.message || 'Failed to add admin' }) } finally { setAddingAdmin(false) }
     }
 
     const handleImpersonate = async (university) => {
@@ -241,7 +241,7 @@ function UniversitiesTab() {
             refreshUniversity()
             push({ type: 'success', message: `Now viewing as ${d.fullName}` })
             navigate({ SUPER_ADMIN: '/super-admin', ADMIN: '/admin', STAFF: '/staff', USER: '/student' }[d.role] || '/')
-        } catch (err) { push({ type: 'error', message: err.response?.data?.message || 'Impersonation failed' }) } finally { setImpersonating(null) }
+        } catch (err) { push({ type: 'error', message: err.message || 'Impersonation failed' }) } finally { setImpersonating(null) }
     }
 
     if (loading) return <SkeletonStats count={4} />

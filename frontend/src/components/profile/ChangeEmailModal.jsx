@@ -51,7 +51,7 @@ export default function ChangeEmailModal({ currentEmail, onClose, onSuccess }) {
             setResendIn(30)
             push({ type: 'success', message: 'Verification code sent' })
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to send code')
+            setError(err.message || 'Failed to send code')
         } finally {
             setLoading(false)
         }
@@ -71,7 +71,7 @@ export default function ChangeEmailModal({ currentEmail, onClose, onSuccess }) {
             setStep('success')
             setTimeout(() => onSuccess?.(profile), 1200)
         } catch (err) {
-            setError(err.response?.data?.message || 'Invalid or expired code')
+            setError(err.message || 'Invalid or expired code')
         } finally {
             setLoading(false)
         }

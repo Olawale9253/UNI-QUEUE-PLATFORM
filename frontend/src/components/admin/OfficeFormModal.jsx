@@ -85,7 +85,7 @@ export default function OfficeFormModal({ office, onClose, onSaved, onDeleted })
             onSaved?.()
             onClose()
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to save office')
+            setError(err.message || 'Failed to save office')
         } finally {
             setSaving(false)
         }
@@ -100,7 +100,7 @@ export default function OfficeFormModal({ office, onClose, onSaved, onDeleted })
             onDeleted?.()
             onClose()
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to delete office')
+            setError(err.message || 'Failed to delete office')
             setConfirmDelete(false)
         } finally {
             setDeleting(false)

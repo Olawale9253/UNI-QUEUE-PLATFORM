@@ -100,7 +100,7 @@ export default function Settings() {
                 applicationNumberDescription: user.applicationNumberDescription || '',
             })
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load settings' })
+            push({ type: 'error', message: err.message || 'Failed to load settings' })
         } finally {
             setLoading(false)
         }
@@ -121,7 +121,7 @@ export default function Settings() {
             refreshUniversity()
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to save' })
+            push({ type: 'error', message: err.message || 'Failed to save' })
         } finally {
             setSaving(false)
         }

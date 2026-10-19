@@ -18,7 +18,7 @@ export default function Settings() {
             const res = await api.get('/api/super-admin/settings')
             setRate(res.data.data.ngnExchangeRate || 1500)
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load settings' })
+            push({ type: 'error', message: err.message || 'Failed to load settings' })
         } finally {
             setLoading(false)
         }
@@ -33,7 +33,7 @@ export default function Settings() {
             await api.put('/api/super-admin/settings', { ngnExchangeRate: Number(rate) })
             push({ type: 'success', message: 'Platform settings updated' })
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to save' })
+            push({ type: 'error', message: err.message || 'Failed to save' })
         } finally {
             setSaving(false)
         }

@@ -40,7 +40,7 @@ export default function FeedbackModal({ ticket, open, onClose, onSubmitted }) {
             onSubmitted?.()
             onClose?.()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to submit' })
+            push({ type: 'error', message: err.message || 'Failed to submit' })
         } finally {
             setSubmitting(false)
         }

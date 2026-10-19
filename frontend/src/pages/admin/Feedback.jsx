@@ -34,7 +34,7 @@ export default function Feedback() {
             const res = await api.get('/api/admin/feedback')
             setFeedback(res.data.data || [])
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load feedback' })
+            push({ type: 'error', message: err.message || 'Failed to load feedback' })
         } finally {
             setLoading(false)
         }

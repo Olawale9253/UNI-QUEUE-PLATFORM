@@ -268,7 +268,7 @@ export default function StudentWorkflowProgress() {
             setData(res.data.data)
         } catch (err) {
             const status = err.response?.status
-            const msg = err.response?.data?.message
+            const msg = err.message
             if (status === 404) setError('NONE')
             else setError(msg || 'Failed to load progress')
         } finally {

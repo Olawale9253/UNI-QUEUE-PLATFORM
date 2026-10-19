@@ -84,7 +84,7 @@ export default function ChangeRoleButton({
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Failed to change role',
+                message: err.message || 'Failed to change role',
             })
         } finally {
             setBusy(false)

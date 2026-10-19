@@ -141,7 +141,7 @@ export default function ClosedDatesPanel() {
             const res = await api.get('/api/admin/closed-dates')
             setList(res.data?.data || [])
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load closed dates' })
+            push({ type: 'error', message: err.message || 'Failed to load closed dates' })
         } finally {
             setLoading(false)
         }
@@ -165,7 +165,7 @@ export default function ClosedDatesPanel() {
             setReason('')
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to add' })
+            push({ type: 'error', message: err.message || 'Failed to add' })
         } finally {
             setSaving(false)
         }
@@ -182,7 +182,7 @@ export default function ClosedDatesPanel() {
             })
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Sync failed' })
+            push({ type: 'error', message: err.message || 'Sync failed' })
         } finally {
             setSyncing(false)
         }
@@ -197,7 +197,7 @@ export default function ClosedDatesPanel() {
             setDeleteTarget(null)
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to remove' })
+            push({ type: 'error', message: err.message || 'Failed to remove' })
         } finally {
             setDeleting(false)
         }

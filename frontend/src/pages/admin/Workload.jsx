@@ -254,7 +254,7 @@ export default function Workload() {
                 const res = await api.get('/api/admin/workload')
                 setData(res.data?.data || null)
             } catch (err) {
-                const msg = err.response?.data?.message || 'Failed to load workload'
+                const msg = err.message || 'Failed to load workload'
                 setError(msg)
                 if (!silent) push({ type: 'error', message: msg })
             } finally {

@@ -273,7 +273,7 @@ export default function Offices() {
             setOffices(office.data?.data || [])
             setQueues(queue.data?.data || [])
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load offices' })
+            push({ type: 'error', message: err.message || 'Failed to load offices' })
         } finally {
             setLoading(false)
         }

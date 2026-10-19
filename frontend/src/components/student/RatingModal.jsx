@@ -36,7 +36,7 @@ export default function RatingModal({ ticket, onClose, onRated }) {
                 onRated?.(ticket.id, rating)
             }, 1000)
         } catch (err) {
-            const msg = err.response?.data?.message || 'Failed to submit feedback'
+            const msg = err.message || 'Failed to submit feedback'
             // If it's a duplicate, still mark as rated and close
             if (msg.toLowerCase().includes('already')) {
                 push({ type: 'info', message: 'You already rated this ticket' })

@@ -92,7 +92,7 @@ export default function Students() {
             } catch (err) {
                 push({
                     type: 'error',
-                    message: err.response?.data?.message || 'Failed to load users',
+                    message: err.message || 'Failed to load users',
                 })
             } finally {
                 setLoading(false)
@@ -123,7 +123,7 @@ export default function Students() {
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Failed',
+                message: err.message || 'Failed',
             })
         } finally {
             setToggling(false)

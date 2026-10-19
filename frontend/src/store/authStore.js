@@ -219,7 +219,7 @@ export const useAuthStore = create((set, get) => ({
         } catch (err) {
             return {
                 success: false,
-                error: err.response?.data?.message || 'Failed to refresh profile',
+                error: err.message || 'Failed to refresh profile',
             }
         }
     },

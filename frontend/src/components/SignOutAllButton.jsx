@@ -31,7 +31,7 @@ export default function SignOutAllButton({ variant = 'default' }) {
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Failed to sign out all devices',
+                message: err.message || 'Failed to sign out all devices',
             })
             setBusy(false)
         }

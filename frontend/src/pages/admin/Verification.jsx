@@ -60,7 +60,7 @@ function UploadCard({ title, description, endpoint, templateHeaders, stats, onUp
             push({ type: 'success', message: `Imported ${imported} rows` })
             onUploaded?.()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Upload failed' })
+            push({ type: 'error', message: err.message || 'Upload failed' })
         } finally {
             setBusy(false)
             if (inputRef.current) inputRef.current.value = ''
@@ -75,7 +75,7 @@ function UploadCard({ title, description, endpoint, templateHeaders, stats, onUp
             push({ type: 'success', message: 'List cleared' })
             onUploaded?.()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to clear' })
+            push({ type: 'error', message: err.message || 'Failed to clear' })
         } finally {
             setBusy(false)
         }
@@ -172,7 +172,7 @@ export default function Verification() {
             setAdmittedStats(admittedResponse.data?.data || { total: 0, unclaimed: 0, claimed: 0 })
             setPending(pendingResponse.data?.data?.content || [])
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load' })
+            push({ type: 'error', message: err.message || 'Failed to load' })
         } finally {
             setLoading(false)
         }
@@ -193,7 +193,7 @@ export default function Verification() {
             push({ type: 'success', message: 'User approved' })
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed' })
+            push({ type: 'error', message: err.message || 'Failed' })
         } finally {
             setActionId(null)
         }
@@ -208,7 +208,7 @@ export default function Verification() {
             push({ type: 'success', message: 'User rejected' })
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed' })
+            push({ type: 'error', message: err.message || 'Failed' })
         } finally {
             setActionId(null)
         }

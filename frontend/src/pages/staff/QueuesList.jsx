@@ -168,7 +168,7 @@ export default function QueuesList() {
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Failed to load services',
+                message: err.message || 'Failed to load services',
             })
         } finally {
             setLoading(false)

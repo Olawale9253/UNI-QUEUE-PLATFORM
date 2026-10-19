@@ -63,7 +63,7 @@ export default function AppointmentSlots() {
             const res = await api.get('/api/staff/appointment-slots')
             setSlots(res.data.data || [])
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load slots' })
+            push({ type: 'error', message: err.message || 'Failed to load slots' })
         } finally {
             setLoading(false)
         }
@@ -119,7 +119,7 @@ export default function AppointmentSlots() {
             setShowCreate(false)
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to create slot' })
+            push({ type: 'error', message: err.message || 'Failed to create slot' })
         } finally {
             setCreating(false)
         }
@@ -135,7 +135,7 @@ export default function AppointmentSlots() {
             if (selectedSlot?.id === deleteTarget.id) setSelectedSlot(null)
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to delete' })
+            push({ type: 'error', message: err.message || 'Failed to delete' })
         } finally {
             setDeleting(false)
         }

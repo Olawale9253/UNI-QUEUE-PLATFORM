@@ -30,7 +30,7 @@ export default function PublicRegisterUniversity() {
             setSubmitted(true)
             push({ type: 'success', message: 'Application submitted!' })
         } catch (err) {
-            const msg = err.response?.data?.message || 'Could not submit your application.'
+            const msg = err.message || 'Could not submit your application.'
             setError(msg)
             push({ type: 'error', message: msg })
         } finally {

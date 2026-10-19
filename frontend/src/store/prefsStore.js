@@ -37,7 +37,7 @@ export const usePrefsStore = create((set, get) => ({
             set({ prefs: prev })
             return {
                 success: false,
-                error: err.response?.data?.message || 'Failed to save preferences',
+                error: err.message || 'Failed to save preferences',
             }
         }
     },

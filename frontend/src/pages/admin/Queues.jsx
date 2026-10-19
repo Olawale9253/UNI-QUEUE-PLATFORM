@@ -161,7 +161,7 @@ export default function Queues() {
             setQueues(queue.data.data || [])
             setOffices(office.data.data || [])
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load data' })
+            push({ type: 'error', message: err.message || 'Failed to load data' })
         } finally {
             setLoading(false)
         }
@@ -256,7 +256,7 @@ export default function Queues() {
             closeForm()
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to save service' })
+            push({ type: 'error', message: err.message || 'Failed to save service' })
         } finally {
             setSaving(false)
         }
@@ -271,7 +271,7 @@ export default function Queues() {
             setDeleteTarget(null)
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to delete' })
+            push({ type: 'error', message: err.message || 'Failed to delete' })
         } finally {
             setDeleting(false)
         }
@@ -323,7 +323,7 @@ export default function Queues() {
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || `Bulk ${action} failed`,
+                message: err.message || `Bulk ${action} failed`,
             })
         } finally {
             setBulkBusy(false)

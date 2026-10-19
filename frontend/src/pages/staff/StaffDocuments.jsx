@@ -69,7 +69,7 @@ export default function StaffDocuments() {
             })
             setDocs(res.data?.data || [])
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load documents' })
+            push({ type: 'error', message: err.message || 'Failed to load documents' })
         } finally {
             setLoading(false)
         }

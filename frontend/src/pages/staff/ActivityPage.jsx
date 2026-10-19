@@ -134,7 +134,7 @@ export default function ActivityPage() {
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Failed to load activity',
+                message: err.message || 'Failed to load activity',
             })
         } finally {
             setLoading(false)

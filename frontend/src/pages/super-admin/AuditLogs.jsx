@@ -157,7 +157,7 @@ export default function AuditLogs() {
             } catch (err) {
                 push({
                     type: 'error',
-                    message: err.response?.data?.message || 'Failed to load audit logs',
+                    message: err.message || 'Failed to load audit logs',
                 })
             } finally {
                 setLoading(false)

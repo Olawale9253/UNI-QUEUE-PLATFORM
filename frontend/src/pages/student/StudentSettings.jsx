@@ -234,7 +234,7 @@ function ProfileSection({ profile, onSaved, onEmailChange }) {
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Failed to save profile',
+                message: err.message || 'Failed to save profile',
             })
         } finally {
             setSaving(false)
@@ -372,7 +372,7 @@ function PasswordSection() {
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Failed to change password',
+                message: err.message || 'Failed to change password',
             })
         } finally {
             setSaving(false)
@@ -663,10 +663,10 @@ export default function StudentSettings() {
             const res = await api.get('/api/profile')
             setProfile(res.data?.data || null)
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to load profile')
+            setError(err.message || 'Failed to load profile')
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Failed to load profile',
+                message: err.message || 'Failed to load profile',
             })
         } finally {
             setLoading(false)

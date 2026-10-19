@@ -129,7 +129,7 @@ export default function QueuesTab() {
             setHistory(itemValue.data.data || [])
             setClosedDates(cd.data?.data || { todayClosed: false, todayReason: null, upcoming: [] })
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load' })
+            push({ type: 'error', message: err.message || 'Failed to load' })
         } finally {
             setLoading(false)
         }
@@ -253,7 +253,7 @@ export default function QueuesTab() {
             setSelectedServiceId('')
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to join' })
+            push({ type: 'error', message: err.message || 'Failed to join' })
         } finally {
             setJoining(false)
         }
@@ -270,7 +270,7 @@ export default function QueuesTab() {
             setConfirmLeave(false)
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to leave' })
+            push({ type: 'error', message: err.message || 'Failed to leave' })
         } finally {
             setLeaving(false)
         }
@@ -285,7 +285,7 @@ export default function QueuesTab() {
             push({ type: 'success', message: 'Turn rescheduled. You are now at the end of the queue.' })
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Reschedule not available yet' })
+            push({ type: 'error', message: err.message || 'Reschedule not available yet' })
         } finally {
             setActing(null)
         }
@@ -300,7 +300,7 @@ export default function QueuesTab() {
             push({ type: 'success', message: 'Turn skipped' })
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Skip not available yet' })
+            push({ type: 'error', message: err.message || 'Skip not available yet' })
         } finally {
             setActing(null)
         }

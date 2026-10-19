@@ -101,7 +101,7 @@ export default function Users() {
                 setTotalElements(data.totalElements || 0)
                 setPage(pageToLoad)
             } catch (err) {
-                push({ type: 'error', message: err.response?.data?.message || 'Failed to load users' })
+                push({ type: 'error', message: err.message || 'Failed to load users' })
             } finally {
                 setLoading(false)
             }
@@ -132,7 +132,7 @@ export default function Users() {
             setToggleTarget(null)
             await loadUsers(page)
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed' })
+            push({ type: 'error', message: err.message || 'Failed' })
         } finally {
             setToggling(false)
         }

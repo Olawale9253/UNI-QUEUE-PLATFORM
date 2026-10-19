@@ -85,7 +85,7 @@ export default function VerifyEmail() {
                 navigate(dashboards[data?.role] || '/login', { replace: true })
             }, 1200)
         } catch (err) {
-            setError(err.response?.data?.message || 'Verification failed')
+            setError(err.message || 'Verification failed')
         } finally {
             setLoading(false)
         }
@@ -109,7 +109,7 @@ export default function VerifyEmail() {
             })
             codeInputRef.current?.focus()
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to resend code')
+            setError(err.message || 'Failed to resend code')
         } finally {
             setResending(false)
         }

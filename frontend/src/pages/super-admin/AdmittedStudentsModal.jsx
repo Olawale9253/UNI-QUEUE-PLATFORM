@@ -34,7 +34,7 @@ export default function AdmittedStudentsModal({ university, onClose }) {
             setList(item.data?.data?.content || [])
             setStats(stringValue.data?.data || null)
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load list' })
+            push({ type: 'error', message: err.message || 'Failed to load list' })
         } finally {
             setLoading(false)
         }
@@ -69,7 +69,7 @@ export default function AdmittedStudentsModal({ university, onClose }) {
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Upload failed',
+                message: err.message || 'Upload failed',
             })
         } finally {
             setUploading(false)
@@ -84,7 +84,7 @@ export default function AdmittedStudentsModal({ university, onClose }) {
             setConfirmClear(false)
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to clear' })
+            push({ type: 'error', message: err.message || 'Failed to clear' })
         } finally {
             setClearing(false)
         }

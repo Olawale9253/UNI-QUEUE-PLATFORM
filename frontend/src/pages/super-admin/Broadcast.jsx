@@ -102,7 +102,7 @@ export default function Broadcast() {
             setConfirmOpen(false)
             setForm({ title: '', message: '', universityId: '', role: '' })
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to send' })
+            push({ type: 'error', message: err.message || 'Failed to send' })
         } finally {
             setSending(false)
         }

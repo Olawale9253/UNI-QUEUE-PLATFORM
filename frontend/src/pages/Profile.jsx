@@ -197,7 +197,7 @@ export default function Profile() {
                 phone: parameter?.phone || '',
             })
         } catch (err) {
-            setLoadError(err.response?.data?.message || 'Failed to load profile')
+            setLoadError(err.message || 'Failed to load profile')
         } finally {
             setLoading(false)
         }
@@ -228,7 +228,7 @@ export default function Profile() {
             if (refreshUniversity) refreshUniversity()
             push({ type: 'success', message: 'Profile updated' })
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to update profile' })
+            push({ type: 'error', message: err.message || 'Failed to update profile' })
         } finally {
             setSavingProfile(false)
         }
@@ -249,7 +249,7 @@ export default function Profile() {
             push({ type: 'success', message: 'Upgraded to student! You now have full access.' })
             setMatricInput('')
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Upgrade failed' })
+            push({ type: 'error', message: err.message || 'Upgrade failed' })
         } finally {
             setUpgrading(false)
         }
@@ -281,7 +281,7 @@ export default function Profile() {
             push({ type: 'success', message: 'Password changed successfully' })
             setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to change password' })
+            push({ type: 'error', message: err.message || 'Failed to change password' })
         } finally {
             setSavingPassword(false)
         }

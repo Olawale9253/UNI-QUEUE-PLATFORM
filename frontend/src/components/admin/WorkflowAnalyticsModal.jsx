@@ -120,7 +120,7 @@ export default function WorkflowAnalyticsModal({ workflowId, onClose }) {
                 if (!cancelled) setData(res.data.data)
             })
             .catch((err) => {
-                if (!cancelled) setError(err.response?.data?.message || 'Failed to load')
+                if (!cancelled) setError(err.message || 'Failed to load')
             })
             .finally(() => {
                 if (!cancelled) setLoading(false)

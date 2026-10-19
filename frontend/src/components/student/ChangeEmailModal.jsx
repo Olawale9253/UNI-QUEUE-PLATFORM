@@ -64,7 +64,7 @@ function RequestStep({ onSuccess, onCancel }) {
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Could not send the verification code',
+                message: err.message || 'Could not send the verification code',
             })
         } finally {
             setSubmitting(false)
@@ -170,7 +170,7 @@ function VerifyStep({ request, onSuccess, onBack, onResent }) {
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Invalid or expired code',
+                message: err.message || 'Invalid or expired code',
             })
         } finally {
             setSubmitting(false)
@@ -191,7 +191,7 @@ function VerifyStep({ request, onSuccess, onBack, onResent }) {
         } catch (err) {
             push({
                 type: 'error',
-                message: err.response?.data?.message || 'Could not resend the code',
+                message: err.message || 'Could not resend the code',
             })
         } finally {
             setResending(false)

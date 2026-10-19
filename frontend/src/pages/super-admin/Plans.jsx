@@ -36,7 +36,7 @@ export default function Plans() {
                 setRate(settingsRes.data.data.ngnExchangeRate)
             }
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load plans' })
+            push({ type: 'error', message: err.message || 'Failed to load plans' })
         } finally {
             setLoading(false)
         }
@@ -62,7 +62,7 @@ export default function Plans() {
             setPlans((prev) => prev.map((itemValue) => (itemValue.id === plan.id ? res.data.data : itemValue)))
             push({ type: 'success', message: `${plan.label} plan updated` })
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to save plan' })
+            push({ type: 'error', message: err.message || 'Failed to save plan' })
             await load()
         } finally {
             setSaving((itemValue) => ({ ...itemValue, [plan.id]: false }))
