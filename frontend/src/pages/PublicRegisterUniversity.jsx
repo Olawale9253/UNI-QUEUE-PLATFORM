@@ -7,7 +7,6 @@ import { useToastStore } from '../store/toastStore'
 import { ease } from '../lib/motion'
 import Logo from '../components/ui/Logo'
 
-// ⬅️ NEW BACKGROUND IMAGE: A classic university building
 const BG_IMAGE = 'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&q=80&w=2000'
 
 export default function PublicRegisterUniversity() {
@@ -39,18 +38,20 @@ export default function PublicRegisterUniversity() {
         }
     }
 
-    const inputClass = 'w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20'
-    const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700'
+    // Added dark mode support to inputs and labels
+    const inputClass = 'w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500'
+    const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300'
 
     if (submitted) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-slate-900 px-6">
-                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md rounded-2xl border border-white/10 bg-white/95 p-8 text-center shadow-2xl backdrop-blur-xl">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-                        <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+                {/* Added dark mode support to the success card */}
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md rounded-2xl border border-slate-200 bg-white/95 p-8 text-center shadow-2xl backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
+                        <CheckCircle2 className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
                     </div>
-                    <h1 className="text-xl font-bold text-slate-900">Application received</h1>
-                    <p className="mt-2 text-sm text-slate-600">
+                    <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Application received</h1>
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                         Our team will review your request and send a setup link to <strong>{form.adminEmail}</strong>.
                     </p>
                     <Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
@@ -63,20 +64,15 @@ export default function PublicRegisterUniversity() {
 
     return (
         <div className="relative min-h-screen bg-slate-900 flex items-center justify-center py-12 px-6 sm:px-8 lg:px-12">
-            {/* Background Image & Overlays */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <img src={BG_IMAGE} alt="University Campus Building" className="h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-slate-900/75 mix-blend-multiply" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent" />
             </div>
 
-            {/* ⬅️ REMOVED THE EXTRA LOGO CONTAINER HERE */}
             <div className="relative z-10 w-full max-w-5xl">
-                {/* ⬅️ CHANGED items-center TO items-start FOR TOP ALIGNMENT */}
                 <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16 items-start">
 
-                    {/* Left: Pitch */}
-                    {/* Added lg:pt-8 so the text aligns perfectly with the inside of the form card */}
                     <div className="text-white lg:pt-8">
                         <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-400/30 bg-brand-500/20 px-3 py-1 text-xs font-medium text-brand-200 backdrop-blur-md">
                             <Building2 className="h-3 w-3" /> For universities
@@ -89,7 +85,6 @@ export default function PublicRegisterUniversity() {
                             Set up a managed queue workspace for your university in under 24 hours. No setup fee, no engineering team required.
                         </p>
 
-                        {/* Features */}
                         <ul className="mt-8 space-y-4">
                             {[
                                 { icon: Building2, text: 'Dedicated subdomain and branded dashboard' },
@@ -109,17 +104,17 @@ export default function PublicRegisterUniversity() {
                         </ul>
                     </div>
 
-                    {/* Right: Form */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="rounded-2xl border border-white/10 bg-white/95 p-6 shadow-2xl backdrop-blur-xl sm:p-8"
+                        // Added dark mode support to the main form card
+                        className="rounded-2xl border border-slate-200 bg-white/95 p-6 shadow-2xl backdrop-blur-xl sm:p-8 dark:border-slate-700 dark:bg-slate-900/95"
                     >
-                        <h2 className="text-xl font-bold text-slate-900">Request a workspace</h2>
-                        <p className="mt-1 text-sm text-slate-500">Fill this out and our team will email you a setup link.</p>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Request a workspace</h2>
+                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Fill this out and our team will email you a setup link.</p>
 
                         {error && (
-                            <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+                            <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-400">
                                 {error}
                             </div>
                         )}
@@ -141,7 +136,7 @@ export default function PublicRegisterUniversity() {
                                 </div>
                             </div>
 
-                            <hr className="my-4 border-slate-200" />
+                            <hr className="my-4 border-slate-200 dark:border-slate-700" />
 
                             <div>
                                 <label className={labelClass}>Your full name</label>
