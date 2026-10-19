@@ -6,7 +6,7 @@ import ErrorBoundary from './components/common/ErrorBoundary'
 import ThemeProvider from './components/common/ThemeProvider'
 import ImpersonationBanner from './components/layout/ImpersonationBanner'
 import ProtectedRoute from './components/auth/ProtectedRoute'
-import ScrollToTop from './components/common/ScrollToTop' // <-- Added
+import ScrollToTop from './components/common/ScrollToTop'
 
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -27,20 +27,18 @@ import { usePrefsStore } from './store/prefsStore'
 import { useServerEvents } from './hooks/useServerEvents'
 import { useUniversityTheme } from './hooks/useUniversityTheme'
 
+// ONLY hide the navbar on these public/auth routes
 const HIDE_NAVBAR_ROUTES = [
     '/login',
     '/register',
     '/forgot-password',
     '/reset-password',
     '/verify-email',
-    '/student',
-    '/staff',
-    '/admin',
-    '/super-admin',
 ]
 
 export default function App() {
     const location = useLocation()
+    // Using startsWith to catch any nested routes
     const hideNavbar = HIDE_NAVBAR_ROUTES.some(route => location.pathname.startsWith(route))
 
     useServerEvents()
@@ -74,9 +72,12 @@ export default function App() {
         <ErrorBoundary>
             <ThemeProvider>
                 <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
-                    <ScrollToTop /> {/* <-- Added here */}
+                    <ScrollToTop />
                     <ImpersonationBanner />
+
+                    {/* The Navbar now stays on Dashboard pages too */}
                     {!hideNavbar && <Navbar />}
+
                     <main className="flex-1">
                         <Routes>
                             <Route path="/" element={<Home />} />
@@ -94,7 +95,6 @@ export default function App() {
                             <Route path="/forgot-password" element={<ForgotPassword />} />
                             <Route path="/reset-password" element={<ResetPassword />} />
                             <Route path="/verify-email" element={<VerifyEmail />} />
-
                             <Route
                                 path="/profile"
                                 element={

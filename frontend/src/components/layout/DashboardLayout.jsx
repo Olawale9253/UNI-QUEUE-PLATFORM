@@ -78,7 +78,7 @@ export default function DashboardLayout({ tabs, title, description, action, chil
     }
 
     return (
-        <div className="dashboard-shell flex min-h-[calc(100vh-4rem)] w-full">
+        <div className="flex min-h-[calc(100vh-4rem)] w-full">
             <aside
                 className={`sticky top-16 hidden h-[calc(100vh-4rem)] shrink-0 self-start border-r border-slate-200 bg-white/90 shadow-sm transition-[width] duration-300 ease-out md:flex md:flex-col dark:border-slate-800 dark:bg-slate-900/90 ${
                     sidebarCollapsed ? 'w-16' : 'w-56'
