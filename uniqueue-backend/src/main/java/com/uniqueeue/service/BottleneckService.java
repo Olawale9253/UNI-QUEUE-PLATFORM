@@ -3,9 +3,11 @@ package com.uniqueeue.service;
 import com.uniqueeue.config.BottleneckProperties;
 import com.uniqueeue.dto.response.WorkflowAnalyticsResponse;
 import com.uniqueeue.enums.Role;
+import com.uniqueeue.model.Queue;
 import com.uniqueeue.model.University;
 import com.uniqueeue.model.User;
 import com.uniqueeue.model.Workflow;
+import com.uniqueeue.repository.QueueRepository;
 import com.uniqueeue.repository.UniversityRepository;
 import com.uniqueeue.repository.UserRepository;
 import com.uniqueeue.repository.WorkflowRepository;
@@ -14,7 +16,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -29,11 +34,8 @@ public class BottleneckService {
     private final UniversityRepository universityRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final QueueRepository queueRepository;
 
-    /**
-     * Scan every active workflow and alert admins where a step is slow.
-     * Returns a summary for logging / the manual trigger endpoint.
-     */
     @Transactional(readOnly = true)
     public ScanResult scan() {
         long started = System.currentTimeMillis();
@@ -63,6 +65,15 @@ public class BottleneckService {
 
                 for (WorkflowAnalyticsResponse.StepAnalytics step : analytics.getSteps()) {
                     if (!isBottleneck(step)) continue;
+
+                    // Check if the associated Queue is actually open
+                    if (step.getQueueId() != null) {
+                        Queue queue = queueRepository.findById(step.getQueueId()).orElse(null);
+                        if (queue != null && !isQueueOpen(queue)) {
+                            log.debug("Skipping bottleneck alert for closed queue: {}", queue.getName());
+                            continue; // Skip alerting if the office is closed
+                        }
+                    }
 
                     bottlenecksFound++;
                     boolean fresh = tracker.shouldAlert(uni.getId(), workflowValue.getId(), step.getOrder());
@@ -97,8 +108,47 @@ public class BottleneckService {
 
     private boolean isBottleneck(WorkflowAnalyticsResponse.StepAnalytics step) {
         if (step.getAvgHoursOnStep() == null || step.getCurrentlyOnCount() == null) return false;
+
+        // If avg time is 0, it's a calculation glitch or brand new queue. Don't alert.
+        if (step.getAvgHoursOnStep() <= 0.0) return false;
+
         return step.getAvgHoursOnStep() >= props.getMinAvgHours()
                 && step.getCurrentlyOnCount() >= props.getMinStuck();
+    }
+
+    /**
+     * Checks if the queue is currently open based on its active status,
+     * operating days, and operating hours.
+     */
+    private boolean isQueueOpen(Queue queue) {
+        if (queue == null || !Boolean.TRUE.equals(queue.getIsActive())) {
+            return false;
+        }
+
+        // 1. Check Day of Week (1 = Monday, 7 = Sunday)
+        int today = LocalDate.now().getDayOfWeek().getValue();
+        String operatingDays = queue.getOperatingDays();
+        if (operatingDays != null && !operatingDays.isBlank()) {
+            boolean dayAllowed = Arrays.stream(operatingDays.split(","))
+                    .map(String::trim)
+                    .mapToInt(Integer::parseInt)
+                    .anyMatch(d -> d == today);
+            if (!dayAllowed) return false;
+        }
+
+        // 2. Check Time of Day
+        LocalTime now = LocalTime.now();
+        LocalTime opensAt = queue.getOpensAt();
+        LocalTime closesAt = queue.getClosesAt();
+
+        if (opensAt != null && closesAt != null) {
+            // If the current time is before opening or after closing, it's closed.
+            if (now.isBefore(opensAt) || now.isAfter(closesAt)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void notifyAdmins(University uni,
