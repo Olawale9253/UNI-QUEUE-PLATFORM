@@ -1,85 +1,62 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import {
+    LayoutDashboard,
     ListOrdered,
-    History,
-    Calendar,
-    Route as RouteIcon,
-    FileText,
-    Building2,
-    Settings,
+    Ticket,
+    Bell,
+    User,
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
-import StudentHeader from '../components/student/StudentHeader'
+
+// Import all your existing pages
 import StudentHome from './student/StudentHome'
-import QueuesTab from './student/QueuesTab'
 import OfficesTab from './student/OfficesTab'
-import HistoryTab from './student/HistoryTab'
 import AppointmentsTab from './student/AppointmentsTab'
 import WorkflowsTab from './student/WorkflowsTab'
 import MyClearancePage from './student/MyClearancePage'
 import DocumentsTab from './student/DocumentsTab'
 import StudentWorkflowProgress from './student/StudentWorkflowProgress'
 import StudentSettings from './student/StudentSettings'
-import { useUniversityStore } from '../store/universityStore'
 
-const ROUTE_SUBTITLES = {
-    '/student': "Skip the line. Join a queue from anywhere and get notified when it's your turn.",
-    '/student/queues': 'Join a queue, track your position, and manage your tickets.',
-    '/student/offices': 'Browse every office and the services it offers.',
-    '/student/history': 'Your past queue tickets and how long you waited.',
-    '/student/appointments': 'Book and manage your appointments.',
-    '/student/clearance': 'Your current progress and what to do next.',
-    '/student/workflows': 'Browse and start any clearance process open to you.',
-    '/student/documents': 'Your uploaded documents.',
-    '/student/settings': 'Manage your profile, security, and preferences.',
-}
+// Import the NEW pages we created
+import JoinQueuePage from './student/JoinQueuePage'
+import MyTicketsPage from './student/MyTicketsPage'
+import NotificationsPage from './student/NotificationsPage'
+import ProfilePage from './student/ProfilePage'
 
 export default function StudentDashboard() {
-    const { university } = useUniversityStore()
-    const location = useLocation()
-
+    // These are the EXACT 5 tabs from the image
     const tabs = [
-        { to: '/student/queues', label: 'Browse Queues', icon: ListOrdered },
-        { to: '/student/offices', label: 'Offices', icon: Building2 },
-        { to: '/student/history', label: 'History', icon: History },
+        { to: '/student', label: 'Dashboard', icon: LayoutDashboard, end: true },
+        { to: '/student/queues', label: 'Join Queue', icon: ListOrdered },
+        { to: '/student/my-tickets', label: 'My Tickets', icon: Ticket },
+        { to: '/student/notifications', label: 'Notifications', icon: Bell },
+        { to: '/student/profile', label: 'Profile', icon: User },
     ]
-
-    if (!university || university.featureAppointments !== false) {
-        tabs.push({ to: '/student/appointments', label: 'Appointments', icon: Calendar })
-    }
-    if (!university || university.featureWorkflows !== false) {
-        tabs.push({ to: '/student/clearance', label: 'My Progress', icon: RouteIcon })
-        tabs.push({ to: '/student/workflows', label: 'Workflows', icon: ListOrdered })
-    }
-    if (!university || university.featureDocuments !== false) {
-        tabs.push({ to: '/student/documents', label: 'Documents', icon: FileText })
-    }
-    tabs.push({ to: '/student/settings', label: 'Settings', icon: Settings })
-
-    const subtitle = (() => {
-        if (location.pathname === '/student/clearance') {
-            return 'Your current progress and what to do next.'
-        }
-        if (location.pathname.startsWith('/student/workflows/')) {
-            return 'Track your progress through this clearance step by step.'
-        }
-        return ROUTE_SUBTITLES[location.pathname] || 'Everything you need for today.'
-    })()
 
     return (
         <DashboardLayout tabs={tabs}>
-            <StudentHeader subtitle={subtitle} />
             <Routes>
+                {/* The main dashboard */}
                 <Route index element={<StudentHome />} />
-                <Route path="queues" element={<QueuesTab />} />
+
+                {/* ⬇️ REPLACED OLD QueuesTab WITH NEW JoinQueuePage ⬇️ */}
+                <Route path="queues" element={<JoinQueuePage />} />
+
+                {/* ⬇️ NEW ROUTES FOR THE NEW PAGES ⬇️ */}
+                <Route path="my-tickets" element={<MyTicketsPage />} />
+                <Route path="notifications" element={<NotificationsPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+
+                {/* These routes are hidden from the sidebar but still accessible if a user has a direct link */}
                 <Route path="offices" element={<OfficesTab />} />
-                <Route path="history" element={<HistoryTab />} />
                 <Route path="appointments" element={<AppointmentsTab />} />
                 <Route path="workflows" element={<WorkflowsTab />} />
                 <Route path="workflows/:id" element={<MyClearancePage />} />
                 <Route path="clearance" element={<StudentWorkflowProgress />} />
                 <Route path="documents" element={<DocumentsTab />} />
                 <Route path="settings" element={<StudentSettings />} />
+
                 <Route path="*" element={<Navigate to="/student" replace />} />
             </Routes>
         </DashboardLayout>
