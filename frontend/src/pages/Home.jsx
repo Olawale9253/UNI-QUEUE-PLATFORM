@@ -35,7 +35,7 @@ const SLIDES = [
         headline: 'Skip the line.',
         headlineAccent: 'Not the service.',
         sub: 'Join a queue from your phone, watch your position in real time, and show up exactly when it is your turn.',
-        cta: { label: 'Get started free', to: '/register' },
+        cta: { label: 'Explore campus queues', to: '/register' }, // <-- CHANGED THIS LABEL
         ctaSecondary: { label: 'Sign in', to: '/login' },
     },
     {
@@ -68,7 +68,7 @@ const SLIDES = [
         headline: 'See every queue.',
         headlineAccent: 'At a glance.',
         sub: 'Live analytics, staff performance, wait times, and feedback. So you can fix bottlenecks before students feel them.',
-        cta: { label: 'Register your university', to: '/for-universities' }, // ⬅️ UPDATED THIS LINE
+        cta: { label: 'Register your university', to: '/for-universities' },
         ctaSecondary: null,
     },
 ]
