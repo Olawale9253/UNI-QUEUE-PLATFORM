@@ -1,16 +1,5 @@
 import { useEffect, useRef } from 'react'
 
-/**
- * Smart polling hook:
- *   - Runs `callback` on an interval
- *   - Polls fast (5s) when tab is visible
- *   - Polls slow (30s) when tab is hidden
- *   - Refetches immediately when tab becomes visible again
- *   - Cleans up on unmount
- *
- * Usage:
- *   useAdaptivePoll(fetchTickets, { fastMs: 5000, slowMs: 30000 })
- */
 export function useAdaptivePoll(
     callback,
     { fastMs = 5000, slowMs = 30000, enabled = true } = {}
@@ -18,8 +7,6 @@ export function useAdaptivePoll(
     const callbackRef = useRef(callback)
     const timeoutRef = useRef(null)
 
-    // Keep the latest callback in a ref so we don't restart the timer
-    // when the caller passes a new function reference.
     useEffect(() => {
         callbackRef.current = callback
     }, [callback])
@@ -36,6 +23,13 @@ export function useAdaptivePoll(
 
             timeoutRef.current = setTimeout(async () => {
                 if (cancelled) return
+
+                // ⬇️ NEW: If the browser is offline, skip the API call completely ⬇️
+                if (typeof navigator !== 'undefined' && !navigator.onLine) {
+                    tick()
+                    return
+                }
+
                 try {
                     await callbackRef.current()
                 } catch {
@@ -48,21 +42,28 @@ export function useAdaptivePoll(
         const onVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
                 if (timeoutRef.current) clearTimeout(timeoutRef.current)
-                // Fire immediately when the tab becomes visible again
                 Promise.resolve(callbackRef.current()).catch(() => {})
                 tick()
             }
         }
 
-        document.addEventListener('visibilitychange', onVisibilityChange)
+        // Listen for network coming back online
+        const onOnline = () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current)
+            Promise.resolve(callbackRef.current()).catch(() => {})
+            tick()
+        }
 
-        // Start the loop
+        document.addEventListener('visibilitychange', onVisibilityChange)
+        window.addEventListener('online', onOnline)
+
         tick()
 
         return () => {
             cancelled = true
             if (timeoutRef.current) clearTimeout(timeoutRef.current)
             document.removeEventListener('visibilitychange', onVisibilityChange)
+            window.removeEventListener('online', onOnline)
         }
     }, [fastMs, slowMs, enabled])
 }

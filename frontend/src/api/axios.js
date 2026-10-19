@@ -2,8 +2,6 @@ import axios from 'axios'
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL || '',
-    // ⬅️ REMOVED: headers: { 'Content-Type': 'application/json' },
-    // Axios will automatically set the correct Content-Type (JSON or FormData) per request.
 })
 
 // Endpoints that should NEVER trigger an auto-logout on 401
@@ -28,7 +26,7 @@ function doRefresh() {
         .post(
             (import.meta.env.VITE_API_URL || '') + '/api/auth/refresh',
             { refreshToken },
-            { headers: { 'Content-Type': 'application/json' } } // Explicit here is fine
+            { headers: { 'Content-Type': 'application/json' } }
         )
         .then(async (res) => {
             const dataValue = res.data?.data
@@ -80,6 +78,18 @@ api.interceptors.response.use(
         const original = error.config || {}
         const url = original.url || ''
         const isPublicPath = PUBLIC_AUTH_PATHS.some((itemValue) => url.includes(itemValue))
+
+        // ⬇️ NEW: Handle Offline / Network Errors BEFORE anything else ⬇️
+        if (!error.response) {
+            if (typeof navigator !== 'undefined' && !navigator.onLine) {
+                error.friendlyMessage = 'No internet connection. Please check your network.'
+            } else {
+                error.friendlyMessage = 'Cannot reach the server. Please try again later.'
+            }
+            // Overwrite the default generic error message
+            error.message = error.friendlyMessage
+            return Promise.reject(error)
+        }
 
         if (status !== 401 || isPublicPath) {
             return Promise.reject(error)
