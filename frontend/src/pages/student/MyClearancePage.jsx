@@ -242,7 +242,8 @@ export default function MyClearancePage() {
             const res = await api.get(`/api/user/workflows/${id}/progress`)
             setProgress(res.data.data)
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to load clearance' })
+            // ⬇️ UPDATED to use err.message so offline errors show correctly
+            push({ type: 'error', message: err.message || 'Failed to load clearance' })
         } finally {
             setLoading(false)
         }
@@ -258,7 +259,8 @@ export default function MyClearancePage() {
             push({ type: 'success', message: `Joined. Ticket: ${res.data.data.ticketNumber}` })
             navigate('/student/queues')
         } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || 'Failed to join queue' })
+            // ⬇️ UPDATED to use err.message so offline errors show correctly
+            push({ type: 'error', message: err.message || 'Failed to join queue' })
         } finally {
             setJoining(false)
         }
