@@ -36,7 +36,6 @@ function describeError(err, fallback) {
     const message = body?.message || fallback
 
     if (status === 429) {
-        // Prefer body.data.retryAfterSeconds; fall back to Retry-After header.
         const fromBody = body?.data?.retryAfterSeconds
         const fromHeader = parseInt(err?.response?.headers?.['retry-after'], 10)
         const retryAfter =
@@ -84,7 +83,7 @@ if (typeof window !== 'undefined') {
             usePrefsStore.getState().reset()
             useAuthStore.setState({ user: null, token: null })
             if (!window.location.pathname.startsWith('/login')) {
-                window.location.href = '/login'
+                window.location.replace('/login')
             }
         }
     })
@@ -216,7 +215,7 @@ export const useAuthStore = create((set, get) => ({
 
             localStorage.setItem(USER_KEY, JSON.stringify(next))
             set({ user: next })
-            return { success: true, profile: p }
+            return { success: true, profile: profileData }
         } catch (err) {
             return {
                 success: false,
@@ -230,6 +229,10 @@ export const useAuthStore = create((set, get) => ({
         useUniversityStore.getState().reset()
         usePrefsStore.getState().reset()
         set({ user: null, token: null })
+
+        // Force a hard reload to the login page.
+        // This wipes the React memory and replaces the history entry.
+        window.location.replace('/login')
     },
 
     clearError: () => set({ error: null }),
