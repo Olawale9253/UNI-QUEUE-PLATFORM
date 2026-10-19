@@ -78,9 +78,18 @@ export default function Navbar() {
     }
     const dashboardHref = user ? dashboards[user.role] || '/' : '/'
 
+    // Reusable NavLink styling for desktop
+    const navLinkClass = ({ isActive }) =>
+        `relative flex items-center px-1 py-2 text-sm font-medium transition-colors ${
+            isActive
+                ? 'text-brand-600 dark:text-brand-400'
+                : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
+        }`
+
     return (
         <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/95">
             <div className="flex h-16 w-full items-center justify-between gap-2 px-3 sm:px-5 lg:px-6">
+                {/* LEFT: LOGO & BRANDING */}
                 <div className="flex min-w-0 items-center gap-2">
                     {showHamburger && (
                         <>
@@ -106,7 +115,6 @@ export default function Navbar() {
                         to={dashboardHref}
                         className="flex min-w-0 items-center gap-3 transition-opacity hover:opacity-90"
                     >
-                        {/* THE SQUIRCLE LOGO CONTAINER */}
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-slate-200 sm:h-12 sm:w-12 dark:bg-slate-800 dark:ring-slate-700">
                             {isSuperAdmin ? (
                                 <div className="flex h-full w-full items-center justify-center bg-slate-900 text-white dark:bg-slate-700">
@@ -136,7 +144,6 @@ export default function Navbar() {
                                         ? university.name
                                         : 'UniQueue'}
                             </div>
-                            {/* ⬅️ UPDATED SUBTITLE HERE */}
                             <div className="truncate text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                 {isSuperAdmin ? 'Platform Console' : 'Digital Queue System'}
                             </div>
@@ -144,38 +151,41 @@ export default function Navbar() {
                     </Link>
                 </div>
 
-                <div className="flex items-center gap-1 sm:gap-2">
-                    {!user && (
-                        <nav className="hidden items-center gap-1 lg:flex">
-                            <NavLink
-                                to="/"
-                                className={({ isActive }) =>
-                                    `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                                        isActive
-                                            ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
-                                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800'
-                                    }`
-                                }
-                            >
-                                Home
-                            </NavLink>
-                            <NavLink
-                                to="/for-universities"
-                                className={({ isActive }) =>
-                                    `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                                        isActive
-                                            ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100'
-                                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800'
-                                    }`
-                                }
-                            >
-                                For Universities
-                            </NavLink>
-                        </nav>
-                    )}
+                {/* CENTER: DESKTOP NAV LINKS */}
+                {!user && (
+                    <nav className="hidden items-center gap-8 lg:flex">
+                        <NavLink to="/" className={navLinkClass}>
+                            {({ isActive }) => (
+                                <>
+                                    Home
+                                    {isActive && (
+                                        <motion.div layoutId="nav-indicator" className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-brand-600 dark:bg-brand-400" />
+                                    )}
+                                </>
+                            )}
+                        </NavLink>
+                        <NavLink to="/for-universities" className={navLinkClass}>
+                            {({ isActive }) => (
+                                <>
+                                    For Universities
+                                    {isActive && (
+                                        <motion.div layoutId="nav-indicator" className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-brand-600 dark:bg-brand-400" />
+                                    )}
+                                </>
+                            )}
+                        </NavLink>
+                    </nav>
+                )}
 
-                    <ThemeToggle />
-                    {user && <NotificationBell />}
+                {/* RIGHT: ACTIONS & AUTH */}
+                <div className="flex items-center gap-2 sm:gap-4">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                        <ThemeToggle />
+                        {user && <NotificationBell />}
+                    </div>
+
+                    {/* Vertical Divider (Desktop only) */}
+                    {!user && <div className="hidden h-6 w-px bg-slate-200 lg:block dark:bg-slate-700" />}
 
                     {user ? (
                         <div ref={menuRef} className="relative">
@@ -246,13 +256,13 @@ export default function Navbar() {
                         <div className="flex items-center gap-1 sm:gap-2">
                             <Link
                                 to="/login"
-                                className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 sm:inline-flex dark:text-slate-400 dark:hover:bg-slate-800"
+                                className="hidden rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 sm:inline-flex dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                             >
                                 Sign in
                             </Link>
                             <Link
                                 to="/register"
-                                className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700 sm:px-4"
+                                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-700 hover:shadow"
                             >
                                 Get started
                             </Link>
@@ -261,30 +271,44 @@ export default function Navbar() {
                 </div>
             </div>
 
-            {/* MOBILE MENU SECTION */}
+            {/* MOBILE MENU SECTION (Cleaner Layout) */}
             {!user && (
-                <div className="flex items-center gap-1 border-t border-slate-100 px-3 py-2 sm:hidden dark:border-slate-800">
-                    <Link
-                        to="/"
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 dark:text-slate-400"
-                    >
-                        <Home className="h-4 w-4 text-slate-400" />
-                        Home
-                    </Link>
-                    <Link
-                        to="/for-universities"
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 dark:text-slate-400"
-                    >
-                        <Building2 className="h-4 w-4 text-slate-400" />
-                        For Universities
-                    </Link>
-                    <Link
-                        to="/login"
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 dark:text-slate-400"
-                    >
-                        <Info className="h-4 w-4 text-slate-400" />
-                        Sign in
-                    </Link>
+                <div className="border-t border-slate-100 bg-white/50 px-3 py-2 backdrop-blur-sm sm:hidden dark:border-slate-800 dark:bg-slate-900/50">
+                    <div className="flex items-center justify-between rounded-xl bg-slate-50 p-1 dark:bg-slate-800/50">
+                        <NavLink
+                            to="/"
+                            className={({ isActive }) =>
+                                `flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                                    isActive
+                                        ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-700 dark:text-brand-400'
+                                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
+                                }`
+                            }
+                        >
+                            <Home className="h-4 w-4" />
+                            Home
+                        </NavLink>
+                        <NavLink
+                            to="/for-universities"
+                            className={({ isActive }) =>
+                                `flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                                    isActive
+                                        ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-700 dark:text-brand-400'
+                                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
+                                }`
+                            }
+                        >
+                            <Building2 className="h-4 w-4" />
+                            For Unis
+                        </NavLink>
+                        <Link
+                            to="/login"
+                            className="flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                        >
+                            <Info className="h-4 w-4" />
+                            Sign in
+                        </Link>
+                    </div>
                 </div>
             )}
         </header>
