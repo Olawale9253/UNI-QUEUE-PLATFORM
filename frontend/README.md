@@ -1,16 +1,52 @@
-# React + Vite
+# UniQueue 🎓⚡
+**Smarter Queues. A Smoother Campus Life.**
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+UniQueue is a modern, multi-tenant university queue management system designed to eliminate physical waiting lines. It allows students to join queues remotely, track their real-time position, manage clearance workflows, and receive notifications when it's their turn.
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Real-time Queue Tracking:** Students can join queues and watch their position update live without standing in a physical line.
+- **Multi-Tenant Architecture:** Designed to support multiple universities on a single platform, each with its own branding, offices, and custom features.
+- **Role-Based Access Control (RBAC):** Distinct portals for Students, Staff, Admins, and Super Admins.
+- **Clearance Workflows:** Step-by-step digital clearance processes for students.
+- **Appointment Scheduling:** Book and manage appointments for specific university services.
+- **Push Notifications:** Get alerted the moment it's your turn or when your position updates.
+- **Analytics & Reporting:** Admins can track wait times, active queues, and staff performance.
+- **Document Management:** Securely upload and manage required student documents.
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**Frontend:**
+- **Framework:** React (Vite)
+- **Styling:** Tailwind CSS
+- **State Management:** Zustand
+- **Animations:** Framer Motion
+- **Icons:** Lucide React
+- **Routing:** React Router DOM
 
-## Expanding the ESLint configuration
+**Backend:**
+- **Language:** Java (Spring Boot)
+- **Database:** PostgreSQL (Hosted on Neon)
+- **Migrations:** Flyway
+- **Authentication:** JWT (JSON Web Tokens) with Refresh token rotation
+- **Deployment:** Render (Backend) & Vercel (Frontend)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 📂 Project Structure
+
+```text
+uniqueue/
+├── uniqueue-backend/          # Spring Boot Application
+│   ├── src/main/java/         # Java Source Code
+│   ├── src/main/resources/    # Application properties & Flyway migrations
+│   │   └── db/migration/      # V1__init.sql, V2__add_users.sql, etc.
+│   └── pom.xml
+└── frontend/                  # React Application
+    ├── src/
+    │   ├── api/               # Axios configuration & interceptors
+    │   ├── components/        # Reusable UI components (Layout, Cards, Forms)
+    │   ├── hooks/             # Custom React hooks (useAdaptivePoll, etc.)
+    │   ├── pages/             # Route components (Login, StudentDashboard, etc.)
+    │   ├── store/             # Zustand state stores (authStore, prefsStore)
+    │   └── main.jsx
+    ├── tailwind.config.js
+    └── package.json
