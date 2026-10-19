@@ -21,21 +21,6 @@ const dashboards = {
 
 const DEFAULT_BRAND = { name: 'UniQueue', logoUrl: null, campusImageUrl: null }
 
-// Force the default blue palette on the login page
-const DEFAULT_BRAND_STYLE = {
-    '--brand-50': '239 246 255',
-    '--brand-100': '219 234 254',
-    '--brand-200': '191 219 254',
-    '--brand-300': '147 197 253',
-    '--brand-400': '96 165 250',
-    '--brand-500': '59 130 246',
-    '--brand-600': '37 99 235',
-    '--brand-700': '29 78 216',
-    '--brand-800': '30 64 175',
-    '--brand-900': '30 58 138',
-    '--brand-950': '23 37 84',
-}
-
 const LOGIN_BACKGROUND =
     'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=1600'
 
@@ -112,11 +97,12 @@ function LeftPanel({ brand, imageError, onImageError }) {
                 className="absolute inset-0 h-full w-full object-cover object-center"
                 draggable={false}
             />
+            {/* Using hardcoded blue-900 and blue-950 here so the overlay is always blue */}
             <div
                 className="absolute inset-0"
                 style={{
                     background:
-                        'linear-gradient(160deg, rgb(var(--brand-800, 30 64 175) / 0.35) 0%, rgb(var(--brand-900, 30 58 138) / 0.55) 50%, rgb(var(--brand-950, 23 37 84) / 0.8) 100%)',
+                        'linear-gradient(160deg, rgba(30, 64, 175, 0.35) 0%, rgba(30, 58, 138, 0.55) 50%, rgba(23, 37, 84, 0.8) 100%)',
                 }}
                 aria-hidden
             />
@@ -172,7 +158,7 @@ function LeftPanel({ brand, imageError, onImageError }) {
                     </p>
 
                     <div className="mt-6 flex items-center gap-2 text-xs font-medium text-white/70">
-                        <Ticket className="h-3.5 w-3.5 text-brand-300" />
+                        <Ticket className="h-3.5 w-3.5 text-blue-300" />
                         <span>142 students currently in queues across campus</span>
                     </div>
 
@@ -291,11 +277,12 @@ export default function Login() {
         push({ type: 'error', message: res.error })
     }
 
+    // Using hardcoded blue classes instead of brand classes
     const inputClass =
-        'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500'
+        'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500'
 
     return (
-        <div className="h-screen overflow-hidden" style={DEFAULT_BRAND_STYLE}>
+        <div className="h-screen overflow-hidden">
             <div className="grid h-full grid-cols-1 lg:grid-cols-2">
                 <LeftPanel
                     brand={brand}
@@ -312,7 +299,7 @@ export default function Login() {
                         className="w-full max-w-sm"
                     >
                         <div className="mb-6 flex items-center gap-2.5 lg:hidden">
-                            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-brand-600 text-white">
+                            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-blue-600 text-white">
                                 {brand.logoUrl ? (
                                     <img
                                         src={brand.logoUrl}
@@ -400,7 +387,7 @@ export default function Login() {
                             <div className="flex justify-end">
                                 <Link
                                     to="/forgot-password"
-                                    className="text-[11px] font-medium text-brand-600 transition-colors hover:text-brand-700"
+                                    className="text-[11px] font-medium text-blue-600 transition-colors hover:text-blue-700"
                                 >
                                     Forgot password?
                                 </Link>
@@ -409,7 +396,7 @@ export default function Login() {
                             <button
                                 type="submit"
                                 disabled={loading || redirecting || isRateLimited}
-                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 {isRateLimited ? (
                                     <>
@@ -447,7 +434,7 @@ export default function Login() {
 
                             <Link
                                 to="/register"
-                                className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-brand-700 dark:hover:bg-brand-950/30 dark:hover:text-brand-400"
+                                className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-blue-700 dark:hover:bg-blue-950/30 dark:hover:text-blue-400"
                             >
                                 <UserPlus className="h-4 w-4 text-slate-400" />
                                 Create an account
