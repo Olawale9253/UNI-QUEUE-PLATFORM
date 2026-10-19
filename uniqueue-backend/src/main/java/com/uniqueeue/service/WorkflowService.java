@@ -193,11 +193,12 @@ public class WorkflowService {
                 .filter(sw -> sw.getStatus() == WorkflowStatus.ABANDONED)
                 .count();
 
+        // FIX: Use toMinutes() / 60.0 to get fractional hours instead of truncated whole hours
         double avgDays = enrollments.stream()
                 .filter(sw -> sw.getStatus() == WorkflowStatus.COMPLETED
                         && sw.getStartedAt() != null
                         && sw.getCompletedAt() != null)
-                .mapToLong(sw -> Duration.between(sw.getStartedAt(), sw.getCompletedAt()).toHours())
+                .mapToDouble(sw -> Duration.between(sw.getStartedAt(), sw.getCompletedAt()).toMinutes() / 60.0)
                 .average()
                 .orElse(0) / 24.0;
 
@@ -215,13 +216,15 @@ public class WorkflowService {
             long pending = studentWorkflowStepRepository
                     .countByWorkflowStepIdAndStatus(step.getId(), StepStatus.PENDING);
 
+            // FIX: Calculate in minutes, then convert to fractional hours
             double avgHours = 0;
             var onThisStep = studentWorkflowStepRepository
                     .findByWorkflowStepIdAndStatusAndStartedAtIsNotNullAndCompletedAtIsNotNull(
                             step.getId(), StepStatus.COMPLETED);
             if (!onThisStep.isEmpty()) {
                 avgHours = onThisStep.stream()
-                        .mapToLong(valueValue5 -> Duration.between(valueValue5.getStartedAt(), valueValue5.getCompletedAt()).toHours())
+                        .mapToDouble(valueValue5 ->
+                                Duration.between(valueValue5.getStartedAt(), valueValue5.getCompletedAt()).toMinutes() / 60.0)
                         .average()
                         .orElse(0);
             }
