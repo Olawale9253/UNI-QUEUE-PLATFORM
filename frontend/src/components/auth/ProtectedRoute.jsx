@@ -12,14 +12,15 @@ const dashboards = {
 export default function ProtectedRoute({ children, allowedRoles }) {
     const { user, token } = useAuthStore()
 
-    // 1. No session at all → login
+    // 1. No session at all → hard reload to login
     if (!token || !user) {
-        return <Navigate to="/login" replace />
+        // Use window.location.replace instead of <Navigate> to force a hard wipe
+        // of any cached React state/DOM. This stops the "Forward" button exploit.
+        window.location.replace('/login')
+        return null
     }
 
     // 2. Logged in but email not verified → verification page.
-    //    Uses strict === false so undefined (older sessions) doesn't
-    //    lock anyone out — those users are treated as verified.
     if (user.isVerified === false) {
         return (
             <Navigate
