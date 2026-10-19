@@ -14,6 +14,8 @@ import java.util.Optional;
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
+    long countByQueueId(Long queueId);
+
     // ---------- existing queries ----------
 
     /** Active = WAITING, WAITLISTED, CALLED, SERVING. */
