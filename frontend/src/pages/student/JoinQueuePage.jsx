@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search, Building2, Ticket } from 'lucide-react'
 import api from '../../api/axios'
 import { useToastStore } from '../../store/toastStore'
 
 export default function JoinQueuePage() {
     const { push } = useToastStore()
+    const navigate = useNavigate()
     const [queues, setQueues] = useState([])
     const [search, setSearch] = useState('')
     const [loading, setLoading] = useState(true)
+    const [joining, setJoining] = useState(null)
 
     useEffect(() => {
         api.get('/api/queues')
@@ -22,12 +25,16 @@ export default function JoinQueuePage() {
     )
 
     const joinQueue = async (id) => {
+        setJoining(id)
         try {
             const res = await api.post('/api/user/tickets/join', { queueId: id })
             push({ type: 'success', message: `Ticket generated: ${res.data.data.ticketNumber}` })
-            // Optional: reload or redirect
+            // Redirect to My Tickets page after joining
+            navigate('/student/my-tickets')
         } catch (err) {
             push({ type: 'error', message: err.message })
+        } finally {
+            setJoining(null)
         }
     }
 
@@ -66,10 +73,10 @@ export default function JoinQueuePage() {
                             </p>
                             <button
                                 onClick={() => joinQueue(queue.id)}
-                                disabled={queue.isOpen !== true}
-                                className="mt-4 w-full rounded-lg bg-brand-600 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
+                                disabled={queue.isOpen !== true || joining === queue.id}
+                                className="mt-4 flex w-full items-center justify-center rounded-lg bg-brand-600 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
                             >
-                                {queue.isOpen ? 'Join Queue' : 'Closed'}
+                                {joining === queue.id ? 'Joining...' : queue.isOpen ? 'Join Queue' : 'Closed'}
                             </button>
                         </div>
                     ))}

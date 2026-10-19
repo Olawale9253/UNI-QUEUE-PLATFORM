@@ -1,22 +1,32 @@
-import { useState, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import { Ticket, LogOut, CheckCircle2 } from 'lucide-react'
 import api from '../../api/axios'
 import { useToastStore } from '../../store/toastStore'
+import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 
 export default function MyTicketsPage() {
     const { push } = useToastStore()
     const [activeTicket, setActiveTicket] = useState(null)
     const [history, setHistory] = useState([])
+    const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
-        api.get('/api/user/tickets/active')
-            .then(res => setActiveTicket(res.data?.data || null))
-            .catch(() => {})
+    const loadData = useCallback(async () => {
+        try {
+            const [activeRes, historyRes] = await Promise.all([
+                api.get('/api/user/tickets/active').catch(() => ({ data: { data: null } })),
+                api.get('/api/user/tickets/history').catch(() => ({ data: { data: [] } }))
+            ])
+            setActiveTicket(activeRes.data?.data || null)
+            setHistory(historyRes.data?.data || [])
+        } catch (err) {
+            // Silent catch for polling
+        } finally {
+            setLoading(false)
+        }
+    }, [])
 
-        api.get('/api/user/tickets/history')
-            .then(res => setHistory(res.data?.data || []))
-            .catch(err => push({ type: 'error', message: err.message }))
-    }, [push])
+    // Poll every 5 seconds for live queue updates
+    useAdaptivePoll(loadData, { fastMs: 5000, slowMs: 15000 })
 
     const leaveQueue = async () => {
         if (!activeTicket) return
@@ -24,9 +34,14 @@ export default function MyTicketsPage() {
             await api.post(`/api/user/tickets/${activeTicket.id}/leave`)
             setActiveTicket(null)
             push({ type: 'success', message: 'You have left the queue' })
+            loadData()
         } catch (err) {
             push({ type: 'error', message: err.message })
         }
+    }
+
+    if (loading && !activeTicket) {
+        return <div className="p-8 text-center text-slate-500">Loading your tickets...</div>
     }
 
     return (
