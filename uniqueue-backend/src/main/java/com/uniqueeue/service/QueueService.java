@@ -149,18 +149,19 @@ public class QueueService {
         Queue queue = queueRepository.findByIdAndUniversityId(queueId, universityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Queue not found"));
 
-        // Remove staff assignments first
-        queueStaffRepository.deleteAll(queueStaffRepository.findByQueueId(queueId));
-
-        try {
-            queueRepository.delete(queue);
-            queueRepository.flush(); // Force the DB to throw a constraint error NOW if tickets exist
-        } catch (Exception ex) {
+        // ⬇️ NEW: Pre-check for existing tickets before trying to delete
+        long ticketCount = ticketRepository.countByQueueId(queueId);
+        if (ticketCount > 0) {
             throw new BadRequestException(
-                    "Cannot delete this service because it has existing tickets or appointments. " +
+                    "Cannot delete this service because it has " + ticketCount + " existing ticket(s). " +
                             "You can deactivate it instead to hide it from students."
             );
         }
+
+        // Remove staff assignments first
+        queueStaffRepository.deleteAll(queueStaffRepository.findByQueueId(queueId));
+
+        queueRepository.delete(queue);
 
         auditService.record(null, universityId,
                 AuditAction.QUEUE_DELETED, "Queue", queueId,
@@ -371,14 +372,14 @@ public class QueueService {
                 Queue queue = queueRepository.findByIdAndUniversityId(queueId, universityId)
                         .orElseThrow(() -> new ResourceNotFoundException("Queue not found"));
 
-                queueStaffRepository.deleteAll(queueStaffRepository.findByQueueId(queueId));
-
-                try {
-                    queueRepository.delete(queue);
-                    queueRepository.flush();
-                } catch (Exception dbEx) {
-                    throw new BadRequestException("Has existing ticket history. Deactivate it instead.");
+                // ⬇️ NEW: Pre-check for existing tickets before trying to delete
+                long ticketCount = ticketRepository.countByQueueId(queueId);
+                if (ticketCount > 0) {
+                    throw new BadRequestException("Has " + ticketCount + " existing ticket(s). Deactivate it instead.");
                 }
+
+                queueStaffRepository.deleteAll(queueStaffRepository.findByQueueId(queueId));
+                queueRepository.delete(queue);
 
                 auditService.record(null, universityId,
                         AuditAction.QUEUE_DELETED, "Queue", queueId,
