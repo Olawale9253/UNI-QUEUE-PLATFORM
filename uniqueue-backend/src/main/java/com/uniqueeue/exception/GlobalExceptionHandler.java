@@ -2,6 +2,7 @@ package com.uniqueeue.exception;
 
 import com.uniqueeue.dto.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -72,10 +73,20 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Turn ResponseStatusException (thrown by controllers like EventController)
-     * into a JSON body instead of Spring's default HTML error page.
-     * Without this, EventSource sees "text/html" and aborts.
+     * Catch database Foreign Key constraint violations (e.g., trying to delete
+     * a Queue that has Tickets attached). Instead of a 500 error, return a
+     * helpful 400 Bad Request so the frontend can display the exact reason.
      */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Object>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        log.warn("Database constraint violation: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(
+                        "Cannot delete this item because it is linked to other records (like tickets or history). " +
+                                "Consider deactivating it instead of deleting."
+                ));
+    }
+
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ApiResponse<Object>> handleResponseStatus(ResponseStatusException ex) {
         return ResponseEntity.status(ex.getStatusCode())

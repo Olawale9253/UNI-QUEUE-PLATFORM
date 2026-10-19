@@ -44,7 +44,7 @@ public class QueueService {
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
     private final QueueScheduleService scheduleService;
-    private final ClosedDateService closedDateService; // ⬅ NEW: Injected for closure logic
+    private final ClosedDateService closedDateService;
 
     // ────────────────────────────────────────────────────────────
     //  QUEUES / SERVICES
@@ -148,8 +148,19 @@ public class QueueService {
     public void deleteQueue(Long queueId, Long universityId) {
         Queue queue = queueRepository.findByIdAndUniversityId(queueId, universityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Queue not found"));
+
+        // Remove staff assignments first
         queueStaffRepository.deleteAll(queueStaffRepository.findByQueueId(queueId));
-        queueRepository.delete(queue);
+
+        try {
+            queueRepository.delete(queue);
+            queueRepository.flush(); // Force the DB to throw a constraint error NOW if tickets exist
+        } catch (Exception ex) {
+            throw new BadRequestException(
+                    "Cannot delete this service because it has existing tickets or appointments. " +
+                            "You can deactivate it instead to hide it from students."
+            );
+        }
 
         auditService.record(null, universityId,
                 AuditAction.QUEUE_DELETED, "Queue", queueId,
@@ -361,7 +372,13 @@ public class QueueService {
                         .orElseThrow(() -> new ResourceNotFoundException("Queue not found"));
 
                 queueStaffRepository.deleteAll(queueStaffRepository.findByQueueId(queueId));
-                queueRepository.delete(queue);
+
+                try {
+                    queueRepository.delete(queue);
+                    queueRepository.flush();
+                } catch (Exception dbEx) {
+                    throw new BadRequestException("Has existing ticket history. Deactivate it instead.");
+                }
 
                 auditService.record(null, universityId,
                         AuditAction.QUEUE_DELETED, "Queue", queueId,
@@ -384,7 +401,6 @@ public class QueueService {
     // ────────────────────────────────────────────────────────────
 
     public QueueResponse enrichWithStaff(Queue queue) {
-        // Combine the university's open status (holiday/weekend) with the queue's specific schedule
         boolean isUniversityOpen = closedDateService.isUniversityOpen(queue.getUniversity());
         boolean isWithinQueueHours = scheduleService.isWithinOperatingHours(queue);
         boolean isLive = isUniversityOpen && isWithinQueueHours;
