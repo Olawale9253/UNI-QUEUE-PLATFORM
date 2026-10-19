@@ -79,16 +79,24 @@ api.interceptors.response.use(
         const url = original.url || ''
         const isPublicPath = PUBLIC_AUTH_PATHS.some((itemValue) => url.includes(itemValue))
 
-        // ⬇️ NEW: Handle Offline / Network Errors BEFORE anything else ⬇️
+        // 1. Handle Offline / Network Errors
         if (!error.response) {
             if (typeof navigator !== 'undefined' && !navigator.onLine) {
                 error.friendlyMessage = 'No internet connection. Please check your network.'
             } else {
                 error.friendlyMessage = 'Cannot reach the server. Please try again later.'
             }
-            // Overwrite the default generic error message
             error.message = error.friendlyMessage
             return Promise.reject(error)
+        }
+
+        // 2. Handle HTTP Errors (400, 403, 404, etc.)
+        // Extract the backend message so components can just use err.message
+        const backendMessage = error.response.data?.message
+        if (backendMessage) {
+            error.message = backendMessage
+        } else if (status >= 500) {
+            error.message = 'Server error. Please try again later.'
         }
 
         if (status !== 401 || isPublicPath) {
