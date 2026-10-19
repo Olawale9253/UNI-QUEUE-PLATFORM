@@ -21,6 +21,21 @@ const dashboards = {
 
 const DEFAULT_BRAND = { name: 'UniQueue', logoUrl: null, campusImageUrl: null }
 
+// Force the default blue palette on the login page
+const DEFAULT_BRAND_STYLE = {
+    '--brand-50': '239 246 255',
+    '--brand-100': '219 234 254',
+    '--brand-200': '191 219 254',
+    '--brand-300': '147 197 253',
+    '--brand-400': '96 165 250',
+    '--brand-500': '59 130 246',
+    '--brand-600': '37 99 235',
+    '--brand-700': '29 78 216',
+    '--brand-800': '30 64 175',
+    '--brand-900': '30 58 138',
+    '--brand-950': '23 37 84',
+}
+
 const LOGIN_BACKGROUND =
     'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=1600'
 
@@ -280,7 +295,7 @@ export default function Login() {
         'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500'
 
     return (
-        <div className="h-screen overflow-hidden">
+        <div className="h-screen overflow-hidden" style={DEFAULT_BRAND_STYLE}>
             <div className="grid h-full grid-cols-1 lg:grid-cols-2">
                 <LeftPanel
                     brand={brand}
