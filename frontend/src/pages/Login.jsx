@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-    ArrowRight, LogOut, CheckCircle2, Loader2, Eye, EyeOff,
+    ArrowRight, Loader2, Eye, EyeOff,
     Ticket, Bell, ShieldCheck, Lock, UserPlus,
 } from 'lucide-react'
 import api from '../api/axios'
@@ -156,7 +156,6 @@ function LeftPanel({ brand, imageError, onImageError }) {
                         Sign in to see live wait times and pick up where you left off.
                     </p>
 
-                    {/* INLINE STATS */}
                     <div className="mt-6 flex items-center gap-2 text-xs font-medium text-white/70">
                         <Ticket className="h-3.5 w-3.5 text-brand-300" />
                         <span>142 students currently in queues across campus</span>
@@ -193,7 +192,7 @@ function LeftPanel({ brand, imageError, onImageError }) {
 
 export default function Login() {
     const navigate = useNavigate()
-    const { login, loading, user, logout } = useAuthStore()
+    const { login, loading } = useAuthStore()
     const { push } = useToastStore()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -277,16 +276,6 @@ export default function Login() {
         push({ type: 'error', message: res.error })
     }
 
-    const handleSwitchAccount = () => {
-        logout()
-        push({ type: 'info', message: 'Signed out' })
-        setEmail('')
-        setPassword('')
-        setRateLimitedUntil(null)
-    }
-
-    const showAlreadySignedInBanner = user && !redirecting
-
     const inputClass =
         'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500'
 
@@ -329,35 +318,6 @@ export default function Login() {
                                 </div>
                             </div>
                         </div>
-
-                        {showAlreadySignedInBanner && (
-                            <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900 dark:bg-emerald-950/40">
-                                <div className="flex items-start gap-2">
-                                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                                    <div className="flex-1">
-                                        <p className="text-xs font-medium text-emerald-900 dark:text-emerald-200">
-                                            Already signed in as <strong>{user.email}</strong>
-                                        </p>
-                                        <div className="mt-2 flex flex-wrap gap-2">
-                                            <Link
-                                                to={dashboards[user.role] || '/'}
-                                                className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-emerald-700"
-                                            >
-                                                Dashboard
-                                                <ArrowRight className="h-2.5 w-2.5" />
-                                            </Link>
-                                            <button
-                                                onClick={handleSwitchAccount}
-                                                className="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-white px-2.5 py-1 text-[11px] font-medium text-emerald-700 transition-colors hover:bg-emerald-50 dark:border-emerald-800 dark:bg-slate-900 dark:text-emerald-300"
-                                            >
-                                                <LogOut className="h-2.5 w-2.5" />
-                                                Switch
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
 
                         {unverified && (
                             <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
