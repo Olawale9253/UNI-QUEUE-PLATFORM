@@ -70,15 +70,7 @@ public class TicketService {
                             + ", closes at " + queue.getClosesAt() + ".");
         }
 
-        // Gate: if the student has an ACTIVE workflow and this queue is a
-        // non-current step of that workflow, reject. Plain standalone services
-        // (queues not part of the workflow) pass through untouched.
         workflowService.assertCanJoinQueue(userId, queueId);
-
-        // NOTE: auto-enrollment on queue join was intentionally removed.
-        // Students who want the full clearance must explicitly Start the
-        // workflow from /student/workflows. Joining a queue does not commit
-        // them to a multi-step chain.
 
         List<Ticket> active = ticketRepository.findActiveByUserId(userId);
         if (!active.isEmpty()) {

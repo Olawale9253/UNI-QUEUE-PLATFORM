@@ -387,7 +387,6 @@ export default function Queues() {
 
     const QueueCard = ({ q: queueValue }) => {
         const isSelected = selectedIds.has(queueValue.id)
-        // Naming Convention: isOpen dictates live status
         const isLive = queueValue.isOpen === true
 
         return (
@@ -483,13 +482,7 @@ export default function Queues() {
                         <Button size="sm" variant="secondary" icon={Pencil} onClick={() => openEdit(queueValue)} fullWidth>
                             Edit
                         </Button>
-                        <button
-                            onClick={() => setDeleteTarget(queueValue)}
-                            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
-                            aria-label="Delete service"
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </button>
+                        {/* ⬇️ REMOVED THE TRASH ICON BUTTON HERE ⬇️ */}
                     </div>
                 </Card>
             </motion.div>

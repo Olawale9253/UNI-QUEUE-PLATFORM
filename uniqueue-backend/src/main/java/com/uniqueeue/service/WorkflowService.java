@@ -9,6 +9,7 @@ import com.uniqueeue.dto.response.WorkflowResponse;
 import com.uniqueeue.enums.AuditAction;
 import com.uniqueeue.enums.NotificationType;
 import com.uniqueeue.enums.StepStatus;
+import com.uniqueeue.enums.TicketStatus;
 import com.uniqueeue.enums.WorkflowStatus;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
@@ -193,7 +194,6 @@ public class WorkflowService {
                 .filter(sw -> sw.getStatus() == WorkflowStatus.ABANDONED)
                 .count();
 
-        // FIX: Use toMinutes() / 60.0 to get fractional hours instead of truncated whole hours
         double avgDays = enrollments.stream()
                 .filter(sw -> sw.getStatus() == WorkflowStatus.COMPLETED
                         && sw.getStartedAt() != null
@@ -216,7 +216,6 @@ public class WorkflowService {
             long pending = studentWorkflowStepRepository
                     .countByWorkflowStepIdAndStatus(step.getId(), StepStatus.PENDING);
 
-            // FIX: Calculate in minutes, then convert to fractional hours
             double avgHours = 0;
             var onThisStep = studentWorkflowStepRepository
                     .findByWorkflowStepIdAndStatusAndStartedAtIsNotNullAndCompletedAtIsNotNull(
@@ -370,6 +369,18 @@ public class WorkflowService {
         }
         sw.setStatus(WorkflowStatus.ABANDONED);
         studentWorkflowRepository.save(sw);
+
+        // NEW: Cancel active tickets for this workflow
+        List<WorkflowStep> steps = stepRepository.findByWorkflowIdOrderByStepOrderAsc(sw.getWorkflow().getId());
+        List<Long> workflowQueueIds = steps.stream().map(s -> s.getQueue().getId()).toList();
+
+        List<Ticket> activeTickets = ticketRepository.findActiveByUserId(studentId);
+        for (Ticket t : activeTickets) {
+            if (workflowQueueIds.contains(t.getQueue().getId())) {
+                t.setStatus(TicketStatus.CANCELLED);
+                ticketRepository.save(t);
+            }
+        }
 
         auditService.record(studentId, sw.getWorkflow().getUniversity().getId(),
                 AuditAction.WORKFLOW_ABANDONED, "StudentWorkflow", sw.getId(), null);

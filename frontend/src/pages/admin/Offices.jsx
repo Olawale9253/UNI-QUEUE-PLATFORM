@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Building2, MapPin, Users, ListOrdered, Search, X as CloseIcon, Ticket, Pencil,
-    Plus, ArrowRight, Mail, FileText,
+    Plus, ArrowRight, Trash2, PlayCircle, PauseCircle, CheckSquare, Square
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -17,11 +17,26 @@ import OfficeFormModal from '../../components/admin/OfficeFormModal'
 import { useToastStore } from '../../store/toastStore'
 import { stagger, staggerItem } from '../../lib/motion'
 
-function OfficeCard({ office, onEdit, onOpen }) {
+function OfficeCard({ office, onEdit, onOpen, isSelected, onToggleSelect }) {
     return (
         <motion.div variants={staggerItem}>
-            <Card className="flex h-full flex-col">
-                <div className="mb-3 flex items-start justify-between gap-2">
+            <Card className={`flex h-full flex-col relative transition-all ${isSelected ? 'ring-2 ring-brand-500 border-transparent' : ''}`}>
+                {/* Selection Checkbox */}
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        onToggleSelect(office.id)
+                    }}
+                    className="absolute left-4 top-4 z-10 text-slate-400 hover:text-brand-600"
+                >
+                    {isSelected ? (
+                        <CheckSquare className="h-5 w-5 text-brand-600" />
+                    ) : (
+                        <Square className="h-5 w-5" />
+                    )}
+                </button>
+
+                <div className="mb-3 flex items-start justify-between gap-2 pl-8">
                     <button
                         onClick={onOpen}
                         className="flex min-w-0 flex-1 items-center gap-3 text-left"
@@ -54,7 +69,7 @@ function OfficeCard({ office, onEdit, onOpen }) {
                 </div>
 
                 {office.description && (
-                    <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400 pl-8">
                         {office.description}
                     </p>
                 )}
@@ -264,6 +279,10 @@ export default function Offices() {
     const [editTarget, setEditTarget] = useState(null)
     const [openOffice, setOpenOffice] = useState(null)
 
+    // Bulk selection state
+    const [selectedIds, setSelectedIds] = useState([])
+    const [bulkLoading, setBulkLoading] = useState(false)
+
     const load = async () => {
         try {
             const [office, queue] = await Promise.all([
@@ -272,6 +291,7 @@ export default function Offices() {
             ])
             setOffices(office.data?.data || [])
             setQueues(queue.data?.data || [])
+            setSelectedIds([]) // Clear selection on reload
         } catch (err) {
             push({ type: 'error', message: err.message || 'Failed to load offices' })
         } finally {
@@ -295,17 +315,45 @@ export default function Offices() {
         )
     }, [offices, search])
 
-    const openCreate = () => {
-        setEditTarget(null)
-        setShowModal(true)
+    const toggleSelect = (id) => {
+        setSelectedIds((prev) =>
+            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+        )
     }
 
-    const openEdit = (office) => {
-        setEditTarget(office)
-        setShowModal(true)
+    const toggleSelectAll = () => {
+        if (selectedIds.length === filtered.length && filtered.length > 0) {
+            setSelectedIds([])
+        } else {
+            setSelectedIds(filtered.map((o) => o.id))
+        }
     }
 
-    // Enrich for export — join service + staff info per office
+    const handleBulkAction = async (action) => {
+        if (selectedIds.length === 0) return
+        setBulkLoading(true)
+        try {
+            if (action === 'delete') {
+                await Promise.all(selectedIds.map((id) => api.delete(`/api/admin/offices/${id}`)))
+                push({ type: 'success', message: `${selectedIds.length} office(s) deleted` })
+            } else if (action === 'activate' || action === 'deactivate') {
+                const isActive = action === 'activate'
+                await Promise.all(
+                    selectedIds.map((id) => {
+                        const office = offices.find((o) => o.id === id)
+                        return api.put(`/api/admin/offices/${id}`, { ...office, isActive })
+                    })
+                )
+                push({ type: 'success', message: `${selectedIds.length} office(s) ${isActive ? 'activated' : 'deactivated'}` })
+            }
+            load()
+        } catch (err) {
+            push({ type: 'error', message: err.message || `Failed to ${action} offices` })
+        } finally {
+            setBulkLoading(false)
+        }
+    }
+
     const enrichedForExport = useMemo(() => {
         return filtered.map((item) => {
             const services = queues.filter((queue) => queue.officeId === item.id)
@@ -343,7 +391,7 @@ export default function Offices() {
                 title="Offices"
                 description="Manage the offices that host your services."
                 action={
-                    <Button icon={Plus} onClick={openCreate}>
+                    <Button icon={Plus} onClick={() => { setEditTarget(null); setShowModal(true) }}>
                         New office
                     </Button>
                 }
@@ -351,6 +399,18 @@ export default function Offices() {
 
             {offices.length > 0 && (
                 <div className="mb-5 flex flex-wrap items-center gap-3">
+                    <button
+                        onClick={toggleSelectAll}
+                        className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                    >
+                        {selectedIds.length === filtered.length && filtered.length > 0 ? (
+                            <CheckSquare className="h-4 w-4 text-brand-600" />
+                        ) : (
+                            <Square className="h-4 w-4" />
+                        )}
+                        Select All
+                    </button>
+
                     <div className="relative min-w-0 flex-1">
                         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                         <input
@@ -385,7 +445,7 @@ export default function Offices() {
                     variant="info"
                     title="No offices yet"
                     description="Create your first office, such as Bursary, Registry, or Library, then add services under it."
-                    action={<Button icon={Plus} onClick={openCreate}>Create office</Button>}
+                    action={<Button icon={Plus} onClick={() => { setEditTarget(null); setShowModal(true) }}>Create office</Button>}
                 />
             ) : filtered.length === 0 ? (
                 <EmptyState
@@ -403,18 +463,63 @@ export default function Offices() {
                     variants={stagger(0, 0.05)}
                     initial="initial"
                     animate="animate"
-                    className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                    className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 pb-24"
                 >
                     {filtered.map((item) => (
                         <OfficeCard
                             key={item.id}
                             office={item}
-                            onEdit={() => openEdit(item)}
+                            isSelected={selectedIds.includes(item.id)}
+                            onToggleSelect={toggleSelect}
+                            onEdit={() => { setEditTarget(item); setShowModal(true) }}
                             onOpen={() => setOpenOffice(item)}
                         />
                     ))}
                 </motion.div>
             )}
+
+            {/* Floating Bulk Action Bar */}
+            <AnimatePresence>
+                {selectedIds.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 50 }}
+                        className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-2xl dark:border-slate-700 dark:bg-slate-800"
+                    >
+                        <div className="px-3 text-sm font-semibold text-slate-700 dark:text-slate-200 border-r border-slate-200 dark:border-slate-700">
+                            {selectedIds.length} selected
+                        </div>
+                        <button
+                            onClick={() => handleBulkAction('activate')}
+                            disabled={bulkLoading}
+                            className="flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400"
+                        >
+                            <PlayCircle className="h-4 w-4" /> Activate
+                        </button>
+                        <button
+                            onClick={() => handleBulkAction('deactivate')}
+                            disabled={bulkLoading}
+                            className="flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400"
+                        >
+                            <PauseCircle className="h-4 w-4" /> Deactivate
+                        </button>
+                        <button
+                            onClick={() => handleBulkAction('delete')}
+                            disabled={bulkLoading}
+                            className="flex items-center gap-1.5 rounded-lg bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400"
+                        >
+                            <Trash2 className="h-4 w-4" /> Delete
+                        </button>
+                        <button
+                            onClick={() => setSelectedIds([])}
+                            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+                        >
+                            <CloseIcon className="h-4 w-4" />
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <AnimatePresence>
                 {showModal && (
