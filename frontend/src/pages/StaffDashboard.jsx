@@ -46,15 +46,12 @@ const ROUTE_SUBTITLES = {
 
 export default function StaffDashboard() {
     const location = useLocation()
-
-    // Only show header on the exact dashboard root
-    const isHome = location.pathname === '/staff' || location.pathname === '/staff/'
-
-    const subtitle = ROUTE_SUBTITLES[location.pathname] || 'Your staff workspace.'
+    const subtitle =
+        ROUTE_SUBTITLES[location.pathname] || 'Your staff workspace.'
 
     return (
         <DashboardLayout tabs={tabs}>
-            {isHome && <StaffHeader subtitle={subtitle} />}
+            <StaffHeader subtitle={subtitle} />
             <Routes>
                 <Route index element={<StaffHome />} />
                 <Route path="serving" element={<ServingQueue />} />

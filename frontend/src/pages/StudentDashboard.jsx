@@ -7,15 +7,15 @@ import {
     FileText,
     Building2,
     Settings,
-    Ticket,
-    Bell,
-    User,
-    Search,
+    Ticket,   // New
+    Bell,     // New
+    User,     // New
+    Search,   // New
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import StudentHeader from '../components/student/StudentHeader'
 
-// Existing Pages
+// --- YOUR EXISTING PAGES ---
 import StudentHome from './student/StudentHome'
 import QueuesTab from './student/QueuesTab'
 import OfficesTab from './student/OfficesTab'
@@ -27,7 +27,7 @@ import DocumentsTab from './student/DocumentsTab'
 import StudentWorkflowProgress from './student/StudentWorkflowProgress'
 import StudentSettings from './student/StudentSettings'
 
-// NEW Pages
+// --- NEW PAGES ---
 import JoinQueuePage from './student/JoinQueuePage'
 import MyTicketsPage from './student/MyTicketsPage'
 import NotificationsPage from './student/NotificationsPage'
@@ -45,6 +45,7 @@ const ROUTE_SUBTITLES = {
     '/student/workflows': 'Browse and start any clearance process open to you.',
     '/student/documents': 'Your uploaded documents.',
     '/student/settings': 'Manage your profile, security, and preferences.',
+    // New Routes
     '/student/join-queue': 'Select a service and join the queue instantly.',
     '/student/my-tickets': 'Track your live queue position and view history.',
     '/student/notifications': 'All your alerts and queue updates.',
@@ -55,19 +56,20 @@ export default function StudentDashboard() {
     const { university } = useUniversityStore()
     const location = useLocation()
 
-    // Only show header on the exact dashboard root
-    const isHome = location.pathname === '/student' || location.pathname === '/student/'
-
     const tabs = [
+        // --- YOUR EXISTING TABS ---
         { to: '/student/queues', label: 'Browse Queues', icon: ListOrdered },
         { to: '/student/offices', label: 'Offices', icon: Building2 },
         { to: '/student/history', label: 'History', icon: History },
+
+        // --- NEW TABS ADDED HERE ---
         { to: '/student/join-queue', label: 'Join Queue', icon: Search },
         { to: '/student/my-tickets', label: 'My Tickets', icon: Ticket },
         { to: '/student/notifications', label: 'Notifications', icon: Bell },
         { to: '/student/profile', label: 'Profile', icon: User },
     ]
 
+    // Keep your existing conditional logic for these tabs
     if (!university || university.featureAppointments !== false) {
         tabs.push({ to: '/student/appointments', label: 'Appointments', icon: Calendar })
     }
@@ -92,8 +94,9 @@ export default function StudentDashboard() {
 
     return (
         <DashboardLayout tabs={tabs}>
-            {isHome && <StudentHeader subtitle={subtitle} />}
+            <StudentHeader subtitle={subtitle} />
             <Routes>
+                {/* --- YOUR EXISTING ROUTES --- */}
                 <Route index element={<StudentHome />} />
                 <Route path="queues" element={<QueuesTab />} />
                 <Route path="offices" element={<OfficesTab />} />
@@ -105,6 +108,7 @@ export default function StudentDashboard() {
                 <Route path="documents" element={<DocumentsTab />} />
                 <Route path="settings" element={<StudentSettings />} />
 
+                {/* --- NEW ROUTES ADDED HERE --- */}
                 <Route path="join-queue" element={<JoinQueuePage />} />
                 <Route path="my-tickets" element={<MyTicketsPage />} />
                 <Route path="notifications" element={<NotificationsPage />} />
