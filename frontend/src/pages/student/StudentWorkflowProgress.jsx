@@ -2,14 +2,16 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
     CheckCircle2, Circle, Loader2, AlertTriangle, ArrowRight, ArrowLeft,
-    MapPin, CalendarDays, RefreshCw, PartyPopper, Route,
+    MapPin, CalendarDays, RefreshCw, PartyPopper, Route, XCircle, Trash2
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import api from '../../api/axios'
+import ConfirmDialog from '../../components/ui/ConfirmDialog'
+import { useToastStore } from '../../store/toastStore'
 
 /* ------------------------------------------------------------------ */
 
-function ProgressHeader({ data }) {
+function ProgressHeader({ data, onCancel, cancelling }) {
     return (
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
             <div className="flex items-start justify-between gap-4">
@@ -28,12 +30,28 @@ function ProgressHeader({ data }) {
                     )}
                 </div>
 
-                {data.status === 'COMPLETED' && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
-                        <PartyPopper className="h-3 w-3" />
-                        Completed
-                    </span>
-                )}
+                <div className="flex items-center gap-2">
+                    {data.status === 'COMPLETED' && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                            <PartyPopper className="h-3 w-3" />
+                            Completed
+                        </span>
+                    )}
+                    {data.status === 'IN_PROGRESS' && (
+                        <button
+                            onClick={onCancel}
+                            disabled={cancelling}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-900/60"
+                        >
+                            {cancelling ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                                <XCircle className="h-3.5 w-3.5" />
+                            )}
+                            Cancel Workflow
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="mt-4">
@@ -254,10 +272,16 @@ function EmptyState({ message }) {
 /* ------------------------------------------------------------------ */
 
 export default function StudentWorkflowProgress() {
+    const navigate = useNavigate()
+    const { push } = useToastStore()
     const [data, setData] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const [refreshing, setRefreshing] = useState(false)
+
+    // New state for cancel logic
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+    const [cancelling, setCancelling] = useState(false)
 
     const load = async (silent = false) => {
         if (!silent) setLoading(true)
@@ -280,6 +304,23 @@ export default function StudentWorkflowProgress() {
     useEffect(() => {
         load()
     }, [])
+
+    const handleCancelWorkflow = async () => {
+        if (!data?.enrollmentId) return
+        setCancelling(true)
+        try {
+            // Assumes endpoint is /api/student/workflows/{id}/abandon based on your backend code
+            await api.post(`/api/student/workflows/${data.enrollmentId}/abandon`)
+            push({ type: 'success', message: 'Workflow cancelled successfully.' })
+            setShowCancelConfirm(false)
+            // Redirect back to the workflows list
+            navigate('/student/workflows')
+        } catch (err) {
+            push({ type: 'error', message: err.message || 'Failed to cancel workflow' })
+        } finally {
+            setCancelling(false)
+        }
+    }
 
     if (loading) {
         return (
@@ -328,7 +369,12 @@ export default function StudentWorkflowProgress() {
                 Browse all workflows
             </Link>
 
-            <ProgressHeader data={data} />
+            <ProgressHeader
+                data={data}
+                onCancel={() => setShowCancelConfirm(true)}
+                cancelling={cancelling}
+            />
+
             <NextActionCard action={data.nextAction} />
 
             <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
@@ -358,6 +404,18 @@ export default function StudentWorkflowProgress() {
                     ))}
                 </div>
             </div>
+
+            {/* Confirm Cancel Dialog */}
+            <ConfirmDialog
+                open={showCancelConfirm}
+                onClose={() => !cancelling && setShowCancelConfirm(false)}
+                onConfirm={handleCancelWorkflow}
+                title="Cancel this workflow?"
+                description="Are you sure you want to stop this workflow? You will lose your current progress, and you will be removed from any active queues related to it."
+                confirmLabel="Yes, cancel workflow"
+                variant="danger"
+                loading={cancelling}
+            />
         </div>
     )
 }
