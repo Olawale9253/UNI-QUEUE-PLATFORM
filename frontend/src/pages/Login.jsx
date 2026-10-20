@@ -1,26 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     ArrowRight, Loader2, Eye, EyeOff,
-    Ticket, Bell, ShieldCheck, Lock, UserPlus,
+    ShieldCheck, Users, Zap, MapPin, Lock
 } from 'lucide-react'
 import api from '../api/axios'
 import { useAuthStore } from '../store/authStore'
 import { useToastStore } from '../store/toastStore'
-import { ease, fadeUp } from '../lib/motion'
+import { ease } from '../lib/motion'
 import Logo from '../components/ui/Logo'
 
-const dashboards = {
-    SUPER_ADMIN: '/super-admin',
-    ADMIN: '/admin',
-    STAFF: '/staff',
-    USER: '/student',
-    FRESHER: '/student',
-}
-
-const DEFAULT_BRAND = { name: 'UniQueue', logoUrl: null, campusImageUrl: null }
-
+// Using the same fallback image as the login mockup
 const LOGIN_BACKGROUND =
     'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=1600'
 
@@ -31,21 +22,116 @@ function resolveImageUrl(url) {
     return base ? `${base}${url}` : url
 }
 
-async function syncExistingPushSubscription() {
-    if (typeof window === 'undefined') return
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
-    try {
-        const reg = await navigator.serviceWorker.getRegistration('/sw.js')
-        if (!reg) return
-        const sub = await reg.pushManager.getSubscription()
-        if (!sub) return
-        const raw = sub.toJSON()
-        await api.post('/api/push/subscribe', { endpoint: raw.endpoint, keys: raw.keys })
-    } catch (err) {
-        console.debug('[push] re-sync skipped:', err?.message)
-    }
+function LeftPanel({ brand, imageError, onImageError }) {
+    const backgroundSrc =
+        brand.campusImageUrl && !imageError ? brand.campusImageUrl : LOGIN_BACKGROUND
+
+    return (
+        <div className="relative hidden h-full min-h-screen flex-col justify-between overflow-hidden bg-[#eef2ff] p-10 lg:flex">
+
+            {/* Background Image & Overlays */}
+            <div className="absolute inset-0 z-0">
+                <motion.img
+                    key={backgroundSrc}
+                    src={backgroundSrc}
+                    alt=""
+                    aria-hidden
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 1.2, ease }}
+                    onError={onImageError}
+                    className="absolute bottom-0 left-0 h-[55%] w-full object-cover object-top"
+                    draggable={false}
+                />
+
+                {/* 1. Top blend: Keeps text area solid light blue */}
+                <div className="absolute inset-0 bg-gradient-to-b from-[#eef2ff] via-[#eef2ff] to-transparent to-[75%]" />
+
+                {/* 2. Bottom darken: Makes the footer text readable */}
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#0f172a]/80 via-[#0f172a]/20 to-transparent" />
+            </div>
+
+            {/* Top: Logo */}
+            <div className="relative z-10 flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+                    {brand.logoUrl ? (
+                        <img
+                            src={brand.logoUrl}
+                            alt={brand.name}
+                            className="h-full w-full object-contain p-1"
+                            onError={(e) => { e.target.style.display = 'none' }}
+                        />
+                    ) : (
+                        <Logo size={24} variant="icon" />
+                    )}
+                </div>
+                <div>
+                    <div className="text-sm font-extrabold uppercase tracking-tight text-slate-900">
+                        {brand.name}
+                    </div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">
+                        Digital Queue System
+                    </div>
+                </div>
+            </div>
+
+            {/* Middle: Features */}
+            <div className="relative z-10 max-w-md pt-8">
+                <h2 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-[#0f172a]">
+                    Welcome back.<br />
+                    <span className="text-brand-600">Your spot is waiting.</span>
+                </h2>
+
+                <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-800">
+                    Sign in to see live wait times and pick up where you left off.
+                </p>
+
+                <ul className="mt-8 space-y-5">
+                    <li className="flex items-start gap-4">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100">
+                            <Zap className="h-5 w-5" />
+                        </span>
+                        <div>
+                            <strong className="block text-sm font-bold text-slate-900">Quick Access</strong>
+                            <span className="text-sm text-slate-700">Skip long lines and save time</span>
+                        </div>
+                    </li>
+                    <li className="flex items-start gap-4">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100">
+                            <ShieldCheck className="h-5 w-5" />
+                        </span>
+                        <div>
+                            <strong className="block text-sm font-bold text-slate-900">Secure & Reliable</strong>
+                            <span className="text-sm text-slate-700">Your data is always protected</span>
+                        </div>
+                    </li>
+                    <li className="flex items-start gap-4">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100">
+                            <Users className="h-5 w-5" />
+                        </span>
+                        <div>
+                            <strong className="block text-sm font-bold text-slate-900">Built for Students</strong>
+                            <span className="text-sm text-slate-700">Designed for a better university experience</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            {/* Bottom: Footer */}
+            <div className="relative z-10 pt-10">
+                <div className="flex items-center gap-2 text-xs font-medium text-white drop-shadow-md">
+                    <MapPin className="h-4 w-4" />
+                    {brand.name} · Digital Queue System
+                </div>
+                <div className="mt-1 text-[11px] text-white/80">
+                    © {new Date().getFullYear()} All rights reserved.
+                </div>
+            </div>
+        </div>
+    )
 }
 
+// Countdown hook for rate limiting
 function useCountdown(targetTime) {
     const computeRemaining = () =>
         targetTime ? Math.max(0, Math.ceil((targetTime - Date.now()) / 1000)) : 0
@@ -62,7 +148,6 @@ function useCountdown(targetTime) {
             setRemaining(computeRemaining())
         }, 1000)
         return () => clearInterval(interval)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [targetTime])
 
     return remaining
@@ -73,135 +158,23 @@ function formatWait(seconds) {
     if (seconds < 60) return `${seconds}s`
     const minutes = Math.floor(seconds / 60)
     const remainingSeconds = seconds % 60
-    if (minutes < 60) return remainingSeconds === 0 ? `${minutes}m` : `${minutes}m ${remainingSeconds}s`
-    const hours = Math.floor(minutes / 60)
-    const remainingMinutes = minutes % 60
-    return remainingMinutes === 0 ? `${hours}h` : `${hours}h ${remainingMinutes}m`
+    return remainingSeconds === 0 ? `${minutes}m` : `${minutes}m ${remainingSeconds}s`
 }
 
-function LeftPanel({ brand, imageError, onImageError }) {
-    const backgroundSrc =
-        brand.campusImageUrl && !imageError ? brand.campusImageUrl : LOGIN_BACKGROUND
-
-    return (
-        <div className="relative hidden h-full min-h-0 overflow-hidden bg-slate-900 lg:block">
-            <motion.img
-                key={backgroundSrc}
-                src={backgroundSrc}
-                alt=""
-                aria-hidden
-                initial={{ opacity: 0, scale: 1.05 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 1.2, ease }}
-                onError={onImageError}
-                className="absolute inset-0 h-full w-full object-cover object-center"
-                draggable={false}
-            />
-            {/* Using hardcoded blue-900 and blue-950 here so the overlay is always blue */}
-            <div
-                className="absolute inset-0"
-                style={{
-                    background:
-                        'linear-gradient(160deg, rgba(30, 64, 175, 0.35) 0%, rgba(30, 58, 138, 0.55) 50%, rgba(23, 37, 84, 0.8) 100%)',
-                }}
-                aria-hidden
-            />
-            <div
-                className="absolute inset-0 opacity-[0.04] mix-blend-overlay"
-                style={{
-                    backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
-                    backgroundSize: '48px 48px',
-                }}
-                aria-hidden
-            />
-
-            <div className="relative z-10 flex h-full flex-col justify-between p-8 xl:p-10">
-                <Link to="/" className="flex items-center gap-3 text-white">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/15 ring-1 ring-white/25 backdrop-blur-md">
-                        {brand.logoUrl ? (
-                            <img
-                                src={brand.logoUrl}
-                                alt={brand.name}
-                                className="h-full w-full object-contain p-1"
-                                onError={(event) => { event.target.style.display = 'none' }}
-                            />
-                        ) : (
-                            <Logo size={24} variant="icon" />
-                        )}
-                    </div>
-                    <div className="min-w-0">
-                        <div className="truncate text-sm font-bold uppercase tracking-tight text-white">
-                            {brand.name}
-                        </div>
-                        <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-white/60">
-                            Digital Queue System
-                        </div>
-                    </div>
-                </Link>
-
-                <div className="max-w-md">
-                    <div className="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white/95 shadow-xl shadow-black/20 ring-1 ring-white/10 backdrop-blur-xl transition-all hover:bg-white/15">
-                        <span className="relative flex h-2 w-2">
-                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-                        </span>
-                        Welcome back
-                    </div>
-
-                    <h2 className="mt-5 text-3xl font-bold leading-[1.1] tracking-tight text-white drop-shadow-lg xl:text-4xl">
-                        Your spot in line
-                        <span className="block text-white/75">is waiting.</span>
-                    </h2>
-
-                    <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/80">
-                        Sign in to see live wait times and pick up where you left off.
-                    </p>
-
-                    <div className="mt-6 flex items-center gap-2 text-xs font-medium text-white/70">
-                        <Ticket className="h-3.5 w-3.5 text-blue-300" />
-                        <span>142 students currently in queues across campus</span>
-                    </div>
-
-                    <ul className="mt-6 grid gap-2.5">
-                        <li className="flex items-center gap-2.5 text-xs text-white/85">
-                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15">
-                                <Bell className="h-2.5 w-2.5" />
-                            </span>
-                            Get notified the moment it's your turn
-                        </li>
-                        <li className="flex items-center gap-2.5 text-xs text-white/85">
-                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15">
-                                <ShieldCheck className="h-2.5 w-2.5" />
-                            </span>
-                            Verified by your university
-                        </li>
-                    </ul>
-                </div>
-
-                <div className="max-w-sm border-l-2 border-white/30 pl-3">
-                    <p className="text-xs italic leading-relaxed text-white/80">
-                        "Thirty minutes saved every morning — that's a full lecture's worth of time."
-                    </p>
-                    <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-white/50">
-                        — Registry staff, LAUTECH
-                    </p>
-                </div>
-            </div>
-        </div>
-    )
-}
+const DEFAULT_BRAND = { name: 'UniQueue', logoUrl: null, campusImageUrl: null }
 
 export default function Login() {
     const navigate = useNavigate()
     const { login, loading } = useAuthStore()
     const { push } = useToastStore()
+
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
     const [redirecting, setRedirecting] = useState(false)
+
     const [brand, setBrand] = useState(DEFAULT_BRAND)
     const [imageError, setImageError] = useState(false)
-    const [unverified, setUnverified] = useState(false)
     const [rateLimitedUntil, setRateLimitedUntil] = useState(null)
 
     const remainingSeconds = useCountdown(rateLimitedUntil)
@@ -215,6 +188,7 @@ export default function Login() {
         setEmail(next)
     }
 
+    // Dynamic University Lookup based on Email Domain
     useEffect(() => {
         const trimmed = email.trim().toLowerCase()
         const at = trimmed.indexOf('@')
@@ -249,16 +223,15 @@ export default function Login() {
         if (isRateLimited) return
 
         setRedirecting(true)
-        setUnverified(false)
 
         const res = await login(email, password)
 
         if (res.success) {
-            syncExistingPushSubscription()
             push({ type: 'success', message: 'Signed in successfully' })
             navigate(dashboards[res.role] || '/')
             return
         }
+
         setRedirecting(false)
 
         if (res.rateLimited && res.retryAfter) {
@@ -266,86 +239,63 @@ export default function Login() {
             return
         }
 
-        const msg = (res.error || '').toLowerCase()
-        if (msg.includes('not verified') || msg.includes('verification')) {
-            setUnverified(true)
-            push({ type: 'info', message: 'Your email is not verified. Redirecting…' })
-            setTimeout(() => navigate('/verify-email', { state: { email: email.trim() } }), 1200)
-            return
-        }
-
         push({ type: 'error', message: res.error })
     }
 
-    // Using hardcoded blue classes instead of brand classes
+    const dashboards = {
+        SUPER_ADMIN: '/super-admin',
+        ADMIN: '/admin',
+        STAFF: '/staff',
+        USER: '/student',
+        FRESHER: '/student',
+    }
+
     const inputClass =
-        'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500'
+        'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10'
+    const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-700'
 
     return (
-        <div className="h-screen overflow-hidden">
-            <div className="grid h-full grid-cols-1 lg:grid-cols-2">
+        <div className="min-h-screen bg-white lg:h-screen lg:overflow-hidden">
+            <div className="grid min-h-screen grid-cols-1 lg:h-full lg:min-h-0 lg:grid-cols-2">
+
                 <LeftPanel
                     brand={brand}
                     imageError={imageError}
                     onImageError={() => setImageError(true)}
                 />
 
-                <div className="flex h-full min-h-0 items-center justify-center overflow-hidden bg-white px-6 dark:bg-slate-950">
+                <div className="flex min-h-0 items-start justify-center overflow-y-auto bg-white px-6 py-10 sm:px-12 lg:h-full lg:py-12">
                     <motion.div
-                        variants={fadeUp}
-                        initial="initial"
-                        animate="animate"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, ease }}
-                        className="w-full max-w-sm"
+                        className="w-full max-w-[420px] mt-10 sm:mt-20"
                     >
-                        <div className="mb-6 flex items-center gap-2.5 lg:hidden">
-                            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-blue-600 text-white">
-                                {brand.logoUrl ? (
-                                    <img
-                                        src={brand.logoUrl}
-                                        alt={brand.name}
-                                        className="h-full w-full object-contain p-1"
-                                        onError={(event) => { event.target.style.display = 'none' }}
-                                    />
-                                ) : (
-                                    <Logo size={20} variant="icon" />
-                                )}
+
+                        {/* Mobile Logo */}
+                        <div className="mb-8 flex items-center gap-2.5 lg:hidden">
+                            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-brand-600 text-white">
+                                <Logo size={20} variant="icon" />
                             </div>
-                            <div className="min-w-0">
-                                <div className="truncate text-sm font-bold uppercase tracking-tight text-slate-900 dark:text-slate-100">
-                                    {brand.name}
-                                </div>
-                                <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                                    Digital Queue System
-                                </div>
+                            <div className="text-sm font-bold uppercase tracking-tight text-slate-900">
+                                {brand.name}
                             </div>
                         </div>
 
-                        {unverified && (
-                            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-                                <p className="font-medium">Your email isn't verified</p>
-                                <p className="mt-0.5 text-[11px] text-amber-800 dark:text-amber-300">
-                                    Redirecting you now, or{' '}
-                                    <Link to="/verify-email" state={{ email: email.trim() }} className="font-medium underline">
-                                        click here
-                                    </Link>
-                                    .
-                                </p>
-                            </div>
-                        )}
+                        {/* Header */}
+                        <div className="mb-8">
+                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                                Sign in
+                            </h1>
+                            <p className="mt-2 text-sm text-slate-500">
+                                Enter your credentials to continue.
+                            </p>
+                        </div>
 
-                        <h2 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-                            Sign in
-                        </h2>
-                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                            Enter your credentials to continue.
-                        </p>
+                        <form onSubmit={handleSubmit} className="space-y-5">
 
-                        <form onSubmit={handleSubmit} className="mt-5 space-y-3">
                             <div>
-                                <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                                    Email
-                                </label>
+                                <label className={labelClass}>Email</label>
                                 <input
                                     type="email"
                                     value={email}
@@ -359,9 +309,7 @@ export default function Login() {
                             </div>
 
                             <div>
-                                <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                                    Password
-                                </label>
+                                <label className={labelClass}>Password</label>
                                 <div className="relative">
                                     <input
                                         type={showPassword ? 'text' : 'password'}
@@ -371,23 +319,22 @@ export default function Login() {
                                         autoComplete="current-password"
                                         required
                                         disabled={redirecting || isRateLimited}
-                                        className={`${inputClass} pr-9`}
+                                        className={`${inputClass} pr-11`}
                                     />
                                     <button
                                         type="button"
-                                        onClick={() => setShowPassword((isVisible) => !isVisible)}
-                                        className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
-                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                        onClick={() => setShowPassword((v) => !v)}
+                                        className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 transition-colors hover:text-slate-600"
                                     >
-                                        {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="flex justify-end">
+                            <div className="flex justify-end pt-1">
                                 <Link
                                     to="/forgot-password"
-                                    className="text-[11px] font-medium text-blue-600 transition-colors hover:text-blue-700"
+                                    className="text-xs font-semibold text-brand-600 transition-colors hover:text-brand-700"
                                 >
                                     Forgot password?
                                 </Link>
@@ -396,7 +343,7 @@ export default function Login() {
                             <button
                                 type="submit"
                                 disabled={loading || redirecting || isRateLimited}
-                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 text-sm font-semibold text-white shadow-md shadow-brand-500/20 transition-all hover:bg-brand-700 hover:shadow-lg hover:shadow-brand-500/30 disabled:opacity-60"
                             >
                                 {isRateLimited ? (
                                     <>
@@ -411,35 +358,35 @@ export default function Login() {
                                 ) : (
                                     <>
                                         Sign in
-                                        <ArrowRight className="h-3.5 w-3.5" />
+                                        <ArrowRight className="h-4 w-4" />
                                     </>
                                 )}
                             </button>
 
                             {isRateLimited && (
-                                <p className="text-center text-[11px] text-amber-700 dark:text-amber-400">
+                                <p className="text-center text-[11px] font-medium text-rose-600">
                                     Too many attempts on this email. Sign-in is paused for security.
                                 </p>
                             )}
                         </form>
 
-                        <div className="mt-6">
-                            <div className="mb-5 flex items-center">
-                                <div className="flex-1 border-t border-slate-200 dark:border-slate-800" />
-                                <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                    New to UniQueue?
-                                </span>
-                                <div className="flex-1 border-t border-slate-200 dark:border-slate-800" />
+                        {/* Footer / Sign Up Link */}
+                        <div className="mt-8">
+                            <div className="mb-6 flex items-center">
+                                <div className="flex-1 border-t border-slate-200" />
+                                <span className="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">New to UniQueue?</span>
+                                <div className="flex-1 border-t border-slate-200" />
                             </div>
 
                             <Link
                                 to="/register"
-                                className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-blue-700 dark:hover:bg-blue-950/30 dark:hover:text-blue-400"
+                                className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white py-3.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-50"
                             >
-                                <UserPlus className="h-4 w-4 text-slate-400" />
                                 Create an account
+                                <ArrowRight className="h-4 w-4 text-brand-400" />
                             </Link>
                         </div>
+
                     </motion.div>
                 </div>
             </div>
