@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Bell, CheckCircle2, Info, AlertTriangle, Loader2 } from 'lucide-react'
+import { Bell, CheckCircle2, Info, AlertTriangle, Loader2, RefreshCw } from 'lucide-react'
 import api from '../../api/axios'
 import { useToastStore } from '../../store/toastStore'
 
@@ -7,18 +7,66 @@ export default function NotificationsPage() {
     const { push } = useToastStore()
     const [notifications, setNotifications] = useState([])
     const [loading, setLoading] = useState(true)
+    const [loadError, setLoadError] = useState('')
 
     useEffect(() => {
+        let cancelled = false
         api.get('/api/user/notifications')
-            .then(res => setNotifications(res.data?.data || []))
-            .catch(err => push({ type: 'error', message: err.message }))
-            .finally(() => setLoading(false))
+            .then(res => {
+                if (!cancelled) setNotifications(res.data?.data || [])
+            })
+            .catch(err => {
+                if (cancelled) return
+                const message = err.message || 'Failed to load notifications'
+                setLoadError(message)
+                push({ type: 'error', message })
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false)
+            })
+
+        return () => { cancelled = true }
     }, [push])
+
+    const loadNotifications = async () => {
+        setLoading(true)
+        setLoadError('')
+        try {
+            const res = await api.get('/api/user/notifications')
+            setNotifications(res.data?.data || [])
+        } catch (err) {
+            const message = err.message || 'Failed to load notifications'
+            setLoadError(message)
+            push({ type: 'error', message })
+        } finally {
+            setLoading(false)
+        }
+    }
 
     if (loading) {
         return (
             <div className="flex justify-center p-12">
                 <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
+            </div>
+        )
+    }
+
+    if (loadError) {
+        return (
+            <div className="mx-auto max-w-3xl rounded-xl border border-rose-200 bg-white p-8 text-center shadow-sm dark:border-rose-900/50 dark:bg-slate-900">
+                <AlertTriangle className="mx-auto h-8 w-8 text-rose-500" />
+                <h2 className="mt-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    Couldn’t load notifications
+                </h2>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{loadError}</p>
+                <button
+                    type="button"
+                    onClick={loadNotifications}
+                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+                >
+                    <RefreshCw className="h-4 w-4" />
+                    Try again
+                </button>
             </div>
         )
     }
