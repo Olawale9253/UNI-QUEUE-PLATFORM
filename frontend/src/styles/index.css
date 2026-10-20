@@ -4,7 +4,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Roboto', ui-sans-serif, system-ui, sans-serif;
 
     /* Brand color scale — overridden at runtime by ThemeProvider */
     --color-brand-50:  #eef2ff;
@@ -35,6 +35,7 @@ body {
     font-family: var(--font-sans);
     background-color: #f8fafc;
     color: #0f172a;
+    line-height: 1.5;
     overscroll-behavior-y: none;
     transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -316,18 +317,6 @@ input:disabled,
 .dark .dashboard-shell {
     background-color: #0f172a;
     background-image: radial-gradient(ellipse at top, rgba(99, 102, 241, 0.09), transparent 42rem);
-}
-
-.dashboard-shell h1,
-.dashboard-shell h2,
-.dashboard-shell h3 {
-    text-shadow: 0 1px 2px rgba(15, 23, 42, 0.1);
-}
-
-.dark .dashboard-shell h1,
-.dark .dashboard-shell h2,
-.dark .dashboard-shell h3 {
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
 }
 
 .dashboard-shell .rounded-xl.border {
