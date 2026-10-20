@@ -203,9 +203,10 @@ public class AdmittedStudentService {
 
         // Name match — must be exact after normalization (case + space insensitive,
         // token-order-insensitive)
-        if (req.getFullName() != null && !req.getFullName().isBlank()) {
-            String normalized = normalizeName(req.getFullName());
-            var candidates = admittedStudentRepository.findUnclaimedByName(uniId, req.getFullName().trim());
+        String fullName = req.getSubmittedFullName();
+        if (fullName != null && !fullName.isBlank()) {
+            String normalized = normalizeName(fullName);
+            var candidates = admittedStudentRepository.findUnclaimedByName(uniId, fullName.trim());
             // If exact normalized match returns nothing, do a broader scan.
             if (candidates.isEmpty()) {
                 candidates = admittedStudentRepository.findUnclaimedByName(uniId, "");

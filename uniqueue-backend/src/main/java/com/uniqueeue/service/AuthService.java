@@ -83,6 +83,10 @@ public class AuthService {
         if (email == null) {
             throw new BadRequestException("Invalid email address");
         }
+        String fullName = request.getSubmittedFullName();
+        if (fullName == null || fullName.isBlank()) {
+            throw new BadRequestException("First name and last name are required");
+        }
 
         if (userRepository.existsByEmail(email)) {
             return handleExistingRegistration(email, request);
@@ -185,7 +189,7 @@ public class AuthService {
                                 + "Please double-check it, or contact your department.");
             }
             matched = hit.get();
-            status = namesEquivalent(matched.getFullName(), request.getFullName())
+            status = namesEquivalent(matched.getFullName(), request.getSubmittedFullName())
                     ? RegistrationStatus.VERIFIED
                     : RegistrationStatus.PENDING;
 
@@ -202,7 +206,7 @@ public class AuthService {
         User user = User.builder()
                 .email(email)
                 .password(passwordEncoder.encode(request.getPassword()))
-                .fullName(request.getFullName().trim())
+                .fullName(request.getSubmittedFullName().trim())
                 .role(Role.USER)
                 .university(university)
                 .matricNumber(matric)
@@ -273,7 +277,7 @@ public class AuthService {
         User user = User.builder()
                 .email(email)
                 .password(passwordEncoder.encode(request.getPassword()))
-                .fullName(request.getFullName().trim())
+                .fullName(request.getSubmittedFullName().trim())
                 .role(Role.FRESHER)
                 .university(university)
                 .department(request.getDepartment())

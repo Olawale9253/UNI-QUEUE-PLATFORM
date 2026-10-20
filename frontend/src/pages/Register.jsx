@@ -142,7 +142,9 @@ export default function Register() {
         email: '',
         password: '',
         confirmPassword: '',
-        fullName: '',
+        firstName: '',
+        middleName: '',
+        lastName: '',
         universityId: '',
         matricNumber: '',
         jambRegNumber: '',
@@ -190,11 +192,17 @@ export default function Register() {
             push({ type: 'error', message: 'Please select your university' })
             return
         }
+        if (!form.firstName.trim() || !form.lastName.trim()) {
+            push({ type: 'error', message: 'First name and last name are required' })
+            return
+        }
 
         const payload = {
             email: form.email.trim(),
             password: form.password,
-            fullName: form.fullName.trim(),
+            firstName: form.firstName.trim(),
+            middleName: form.middleName.trim() || null,
+            lastName: form.lastName.trim(),
             universityId: Number(form.universityId),
             department: null, // ⬅️ Send null since we removed the field
             phone: null,      // ⬅️ Send null since we removed the field
@@ -243,7 +251,7 @@ export default function Register() {
     const showJamb = mode === 'fresher' && selectedUni?.requireJambReg !== false
 
     return (
-        <div className="h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 lg:h-screen lg:overflow-hidden">
             <div className="grid h-full grid-cols-1 lg:grid-cols-2">
                 <LeftPanel
                     university={selectedUni}
@@ -251,7 +259,7 @@ export default function Register() {
                     onImageError={() => setImageError(true)}
                 />
 
-                <div className="flex h-full min-h-0 items-center justify-center overflow-hidden bg-white px-6 dark:bg-slate-950">
+                <div className="flex min-h-0 items-start justify-center overflow-y-auto bg-white px-6 py-6 dark:bg-slate-950 lg:h-full lg:items-center lg:py-8">
                     <motion.div
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -284,31 +292,54 @@ export default function Register() {
                         </div>
 
                         <form onSubmit={submit} className="space-y-3">
-                            {/* University | Full name */}
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                <div>
-                                    <label className={labelClass}>University</label>
-                                    <select
-                                        value={form.universityId}
-                                        onChange={setField('universityId')}
-                                        required
-                                        disabled={loadingUnis}
-                                        className={`${inputClass} appearance-none`}
-                                    >
-                                        <option value="">{loadingUnis ? 'Loading…' : 'Select your university'}</option>
-                                        {universities.map((u) => (
-                                            <option key={u.id} value={u.id}>{u.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                            <div>
+                                <label className={labelClass}>University</label>
+                                <select
+                                    value={form.universityId}
+                                    onChange={setField('universityId')}
+                                    required
+                                    disabled={loadingUnis}
+                                    className={`${inputClass} appearance-none`}
+                                >
+                                    <option value="">{loadingUnis ? 'Loading…' : 'Select your university'}</option>
+                                    {universities.map((u) => (
+                                        <option key={u.id} value={u.id}>{u.name}</option>
+                                    ))}
+                                </select>
+                            </div>
 
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                                 <div>
-                                    <label className={labelClass}>Full name</label>
+                                    <label className={labelClass}>First name</label>
                                     <input
                                         type="text"
-                                        value={form.fullName}
-                                        onChange={setField('fullName')}
-                                        placeholder="Your full name"
+                                        autoComplete="given-name"
+                                        value={form.firstName}
+                                        onChange={setField('firstName')}
+                                        placeholder="First name"
+                                        required
+                                        className={inputClass}
+                                    />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Middle name <span className="font-normal text-slate-400">(optional)</span></label>
+                                    <input
+                                        type="text"
+                                        autoComplete="additional-name"
+                                        value={form.middleName}
+                                        onChange={setField('middleName')}
+                                        placeholder="Middle name"
+                                        className={inputClass}
+                                    />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Last name</label>
+                                    <input
+                                        type="text"
+                                        autoComplete="family-name"
+                                        value={form.lastName}
+                                        onChange={setField('lastName')}
+                                        placeholder="Last name"
                                         required
                                         className={inputClass}
                                     />
@@ -319,7 +350,7 @@ export default function Register() {
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div className={!showJamb && mode === 'fresher' ? 'sm:col-span-2' : ''}>
                                     <label className={labelClass}>
-                                        {mode === 'fresher' ? 'Personal email' : 'Email'}
+                                        Email address
                                     </label>
                                     <input
                                         type="email"
@@ -497,7 +528,7 @@ export default function Register() {
                                     className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                                 >
                                     <ArrowLeft className="h-4 w-4 text-slate-400" />
-                                    Back to Standard Registration
+                                    Back To Student Registration
                                 </button>
                             )}
                         </div>
