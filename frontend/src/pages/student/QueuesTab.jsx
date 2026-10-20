@@ -341,8 +341,8 @@ export default function QueuesTab() {
 
     return (
         <div>
-            <div className="mb-5">
-                <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-2xl font-bold tracking-tight text-[#0f172a] dark:text-white">
                     Queue Management
                 </h2>
             </div>
@@ -381,90 +381,6 @@ export default function QueuesTab() {
                             Go to profile
                             <ArrowRight className="h-3 w-3" />
                         </button>
-                    </div>
-                </motion.div>
-            )}
-
-            {activeWorkflow && (
-                <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 overflow-hidden rounded-xl border"
-                    style={{
-                        backgroundColor: withAlpha(primaryColor, 0.06),
-                        borderColor: withAlpha(primaryColor, 0.25),
-                    }}
-                >
-                    <div className="p-5 sm:p-6">
-                        <div className="mb-4 flex items-start gap-3">
-                            <div
-                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                                style={{ backgroundColor: withAlpha(primaryColor, 0.18) }}
-                            >
-                                <RouteIcon
-                                    className="h-5 w-5"
-                                    style={{ color: primaryColor }}
-                                />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    You're completing: {activeWorkflow.workflowName}
-                                </h3>
-                                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                                    This is a required {activeWorkflow.totalSteps}-step clearance.
-                                    Complete each step in order.
-                                </p>
-                            </div>
-                        </div>
-                        <ol className="space-y-2">
-                            {activeWorkflow.steps.map((step, idx) => (
-                                <li
-                                    key={step.order}
-                                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm ${
-                                        step.state === 'CURRENT'
-                                            ? 'bg-white/70 font-medium text-slate-900 dark:bg-slate-900/60 dark:text-slate-100'
-                                            : step.state === 'COMPLETED'
-                                                ? 'text-emerald-700 dark:text-emerald-400'
-                                                : 'text-slate-500 dark:text-slate-400'
-                                    }`}
-                                >
-                                    <div
-                                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                                            step.state === 'COMPLETED'
-                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
-                                                : step.state === 'CURRENT'
-                                                    ? 'text-white'
-                                                    : 'bg-slate-200 text-slate-500 dark:bg-slate-800'
-                                        }`}
-                                        style={
-                                            step.state === 'CURRENT'
-                                                ? { backgroundColor: primaryColor }
-                                                : undefined
-                                        }
-                                    >
-                                        {step.state === 'COMPLETED' ? (
-                                            <CheckCircle2 className="h-3.5 w-3.5" />
-                                        ) : step.state === 'CURRENT' ? (
-                                            idx + 1
-                                        ) : (
-                                            <Lock className="h-3 w-3" />
-                                        )}
-                                    </div>
-                                    <span className="flex-1">
-                                        <span className="font-medium">{step.queueName}</span>
-                                        {step.label && ` · ${step.label}`}
-                                    </span>
-                                    {step.state === 'CURRENT' && (
-                                        <span
-                                            className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase text-white"
-                                            style={{ backgroundColor: primaryColor }}
-                                        >
-                                            Current
-                                        </span>
-                                    )}
-                                </li>
-                            ))}
-                        </ol>
                     </div>
                 </motion.div>
             )}

@@ -1,16 +1,11 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import {
-    ListOrdered,
-    Calendar,
-    CalendarCheck,
-    Building2,
-    FileText,
-    Activity,
-    User as UserIcon,
-    Settings as SettingsIcon,
+    ListOrdered, Calendar, CalendarCheck, Building2, FileText, Activity,
+    User as UserIcon, Settings as SettingsIcon,
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
-import StaffHeader from '../components/staff/StaffHeader'
+import PageHeader from '../components/layout/PageHeader'
+
 import StaffHome from './staff/StaffHome'
 import ServingQueue from './staff/ServingQueue'
 import QueuesList from './staff/QueuesList'
@@ -32,26 +27,18 @@ const tabs = [
     { to: '/staff/settings', label: 'Settings', icon: SettingsIcon },
 ]
 
-const ROUTE_SUBTITLES = {
-    '/staff': "A live view of today's office operations.",
-    '/staff/serving': 'Call the next ticket and serve students.',
-    '/staff/queues': 'Browse every service assigned to you, grouped by office.',
-    '/staff/slots': 'Set your bookable time slots.',
-    '/staff/appointments': 'Appointments students booked with you.',
-    '/staff/documents': 'Review and process document requests.',
-    '/staff/activity': 'Your service history and productivity.',
-    '/staff/profile': 'Your account details and preferences.',
-    '/staff/settings': 'Personal preferences for your workspace.',
-}
-
 export default function StaffDashboard() {
     const location = useLocation()
-    const subtitle =
-        ROUTE_SUBTITLES[location.pathname] || 'Your staff workspace.'
+    const isHome = location.pathname === '/staff' || location.pathname === '/staff/'
 
     return (
         <DashboardLayout tabs={tabs}>
-            <StaffHeader subtitle={subtitle} />
+            {isHome && (
+                <PageHeader
+                    workspace="Staff Workspace"
+                    description="A live view of today's office operations."
+                />
+            )}
             <Routes>
                 <Route index element={<StaffHome />} />
                 <Route path="serving" element={<ServingQueue />} />
