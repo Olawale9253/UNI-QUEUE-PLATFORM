@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-    ArrowRight, ArrowLeft, Loader2, AlertCircle, Eye, EyeOff,
-    Ticket, ShieldCheck, Building2, Users, GraduationCap,
+    ArrowRight, ArrowLeft, Loader2, Eye, EyeOff,
+    ShieldCheck, Users, GraduationCap, Zap, MapPin,
 } from 'lucide-react'
 import api from '../api/axios'
 import { useAuthStore } from '../store/authStore'
@@ -31,7 +31,7 @@ function LeftPanel({ university, imageError, onImageError }) {
     const brandName = university?.name || 'UniQueue'
 
     return (
-        <div className="relative hidden h-full min-h-0 overflow-hidden bg-slate-900 lg:block">
+        <div className="relative hidden h-full min-h-0 overflow-hidden bg-blue-200 lg:block">
             <motion.img
                 key={backgroundSrc}
                 src={backgroundSrc}
@@ -48,12 +48,12 @@ function LeftPanel({ university, imageError, onImageError }) {
                 className="absolute inset-0"
                 style={{
                     background:
-                        'linear-gradient(160deg, rgb(var(--brand-800, 30 64 175) / 0.35) 0%, rgb(var(--brand-900, 30 58 138) / 0.55) 50%, rgb(var(--brand-950, 23 37 84) / 0.8) 100%)',
+                        'linear-gradient(180deg, rgba(232, 239, 255, 0.95) 0%, rgba(211, 225, 255, 0.76) 38%, rgba(85, 119, 196, 0.42) 66%, rgba(20, 34, 79, 0.94) 100%)',
                 }}
                 aria-hidden
             />
             <div
-                className="absolute inset-0 opacity-[0.04] mix-blend-overlay"
+                className="absolute inset-0 opacity-[0.025] mix-blend-overlay"
                 style={{
                     backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
                     backgroundSize: '48px 48px',
@@ -62,8 +62,8 @@ function LeftPanel({ university, imageError, onImageError }) {
             />
 
             <div className="relative z-10 flex h-full flex-col justify-between p-8 xl:p-10">
-                <Link to="/" className="flex items-center gap-3 text-white">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/15 ring-1 ring-white/25 backdrop-blur-md">
+                <Link to="/" className="flex items-center gap-3 text-slate-900">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-white/70">
                         {logoUrl ? (
                             <img
                                 src={logoUrl}
@@ -76,48 +76,48 @@ function LeftPanel({ university, imageError, onImageError }) {
                         )}
                     </div>
                     <div className="min-w-0">
-                        <div className="truncate text-sm font-bold uppercase tracking-tight text-white">
+                        <div className="truncate text-sm font-extrabold uppercase tracking-tight text-slate-900">
                             {brandName}
                         </div>
-                        <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-white/60">
+                        <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-600">
                             Digital Queue System
                         </div>
                     </div>
                 </Link>
 
-                <div className="max-w-md">
-                    <h2 className="text-3xl font-bold leading-[1.1] tracking-tight text-white drop-shadow-lg xl:text-4xl">
-                        Register once.
-                        <span className="block text-white/75">Join every queue.</span>
+                <div className="max-w-md pb-8">
+                    <h2 className="text-3xl font-extrabold leading-[1.12] tracking-tight text-[#14254c] xl:text-4xl">
+                        Your University
+                        <span className="block text-brand-700">Queue, Made Simple</span>
                     </h2>
-                    <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/80">
-                        One account for every service at your university — Bursary,
-                        Registry, Library, Health Center, and more.
+                    <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-700">
+                        Join the university community and enjoy a faster, easier and more organized queue experience.
                     </p>
-                    <ul className="mt-6 grid gap-2.5">
-                        <li className="flex items-center gap-2.5 text-xs text-white/85">
-                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15">
-                                <Users className="h-2.5 w-2.5" />
+                    <ul className="mt-7 grid gap-3.5">
+                        <li className="flex items-center gap-3 text-xs text-slate-800">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/75 text-brand-600 shadow-sm ring-1 ring-white/80">
+                                <Zap className="h-4 w-4" />
                             </span>
-                            Built for both new and returning students
+                            <span><strong className="block text-sm font-semibold">Quick Access</strong><span className="text-slate-600">Skip long lines and save time</span></span>
                         </li>
-                        <li className="flex items-center gap-2.5 text-xs text-white/85">
-                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15">
-                                <Ticket className="h-2.5 w-2.5" />
+                        <li className="flex items-center gap-3 text-xs text-slate-800">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/75 text-brand-600 shadow-sm ring-1 ring-white/80">
+                                <ShieldCheck className="h-4 w-4" />
                             </span>
-                            Virtual tickets with live position updates
+                            <span><strong className="block text-sm font-semibold">Secure &amp; Reliable</strong><span className="text-slate-600">Your data is always protected</span></span>
                         </li>
-                        <li className="flex items-center gap-2.5 text-xs text-white/85">
-                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15">
-                                <ShieldCheck className="h-2.5 w-2.5" />
+                        <li className="flex items-center gap-3 text-xs text-slate-800">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/75 text-brand-600 shadow-sm ring-1 ring-white/80">
+                                <Users className="h-4 w-4" />
                             </span>
-                            Verified by your university
+                            <span><strong className="block text-sm font-semibold">Built for Students</strong><span className="text-slate-600">Designed for a better university experience</span></span>
                         </li>
                     </ul>
                 </div>
 
-                <div className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/40">
-                    © {new Date().getFullYear()} UniQueue
+                <div className="text-[10px] text-white/80">
+                    <div className="flex items-center gap-2 font-medium"><MapPin className="h-3.5 w-3.5" />{brandName} · Digital Queue System</div>
+                    <div className="mt-2 text-white/55">© {new Date().getFullYear()} All rights reserved.</div>
                 </div>
             </div>
         </div>
@@ -244,70 +244,71 @@ export default function Register() {
     }
 
     const inputClass =
-        'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 disabled:opacity-50'
+        'w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/15 disabled:opacity-50'
 
-    const labelClass = 'mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300'
+    const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-700'
 
     const showJamb = mode === 'fresher' && selectedUni?.requireJambReg !== false
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 lg:h-screen lg:overflow-hidden">
-            <div className="grid h-full grid-cols-1 lg:grid-cols-2">
+        <div className="registration-page min-h-screen bg-white lg:h-screen lg:overflow-hidden">
+            <div className="grid min-h-screen grid-cols-1 lg:h-full lg:min-h-0 lg:grid-cols-[36.7fr_63.3fr]">
                 <LeftPanel
                     university={selectedUni}
                     imageError={imageError}
                     onImageError={() => setImageError(true)}
                 />
 
-                <div className="flex min-h-0 items-start justify-center overflow-y-auto bg-white px-6 py-6 dark:bg-slate-950 lg:h-full lg:items-center lg:py-8">
+                <div className="flex min-h-0 items-start justify-center overflow-y-auto bg-white px-6 py-7 sm:px-10 lg:h-full lg:py-8 xl:px-[5.4vw]">
                     <motion.div
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, ease }}
-                        className="w-full max-w-lg"
+                        className="w-full max-w-[760px]"
                     >
-                        <div className="mb-5 flex items-center gap-2.5 lg:hidden">
-                            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-brand-600 text-xs font-bold text-white">
+                        <div className="mb-7 flex items-center justify-between">
+                            <div className="flex items-center gap-2.5 lg:hidden">
+                                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-brand-600 text-xs font-bold text-white">
                                 <Logo size={20} variant="icon" />
-                            </div>
-                            <div className="min-w-0">
-                                <div className="truncate text-sm font-bold uppercase tracking-tight text-slate-900 dark:text-slate-100">
-                                    {selectedUni?.name || 'UniQueue'}
                                 </div>
-                                <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                                    Digital Queue System
+                                <div className="min-w-0">
+                                    <div className="truncate text-sm font-bold uppercase tracking-tight text-slate-900">
+                                        {selectedUni?.name || 'UniQueue'}
+                                    </div>
+                                    <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                        Digital Queue System
+                                    </div>
                                 </div>
                             </div>
+                            <p className="ml-auto whitespace-nowrap text-xs text-slate-600">
+                                <span className="hidden sm:inline">Already have an account? </span>
+                                <Link to="/login" className="font-semibold text-brand-600 hover:text-brand-700">Sign in <ArrowRight className="inline h-3 w-3" /></Link>
+                            </p>
                         </div>
 
-                        <div className="mb-5">
-                            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                        <div className="mb-7 flex items-start gap-4">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
+                                <GraduationCap className="h-6 w-6" />
+                            </div>
+                            <div>
+                            <h1 className="text-2xl font-extrabold tracking-tight text-[#14254c] sm:text-[28px]">
                                 Create your account
                             </h1>
-                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            <p className="mt-1.5 text-sm text-slate-500">
                                 {mode === 'fresher'
                                     ? 'For new students registering before receiving their matric number.'
                                     : 'For students with an active matric number.'}
                             </p>
+                            </div>
                         </div>
 
-                        <form onSubmit={submit} className="space-y-3">
-                            <div>
-                                <label className={labelClass}>University</label>
-                                <select
-                                    value={form.universityId}
-                                    onChange={setField('universityId')}
-                                    required
-                                    disabled={loadingUnis}
-                                    className={`${inputClass} appearance-none`}
-                                >
-                                    <option value="">{loadingUnis ? 'Loading…' : 'Select your university'}</option>
-                                    {universities.map((u) => (
-                                        <option key={u.id} value={u.id}>{u.name}</option>
-                                    ))}
-                                </select>
+                        <form onSubmit={submit} className="space-y-6">
+                            <section>
+                            <div className="mb-3 flex items-center gap-3">
+                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white shadow-sm">1</span>
+                                <h2 className="shrink-0 text-sm font-bold text-[#14254c]">Personal Information</h2>
+                                <div className="h-px flex-1 bg-slate-200" />
                             </div>
-
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                                 <div>
                                     <label className={labelClass}>First name</label>
@@ -345,21 +346,25 @@ export default function Register() {
                                     />
                                 </div>
                             </div>
+                            </section>
 
-                            {/* Email | (Matric or JAMB) */}
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                <div className={!showJamb && mode === 'fresher' ? 'sm:col-span-2' : ''}>
-                                    <label className={labelClass}>
-                                        Email address
-                                    </label>
-                                    <input
-                                        type="email"
-                                        value={form.email}
-                                        onChange={setField('email')}
-                                        placeholder="you@example.com"
-                                        required
-                                        className={inputClass}
-                                    />
+                            <section>
+                            <div className="mb-3 flex items-center gap-3">
+                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white shadow-sm">2</span>
+                                <h2 className="shrink-0 text-sm font-bold text-[#14254c]">Account Details</h2>
+                                <div className="h-px flex-1 bg-slate-200" />
+                            </div>
+                            <div className="grid grid-cols-1 gap-x-5 gap-y-3 sm:grid-cols-2">
+                                <div>
+                                    <label className={labelClass}>Email address</label>
+                                    <input type="email" autoComplete="email" value={form.email} onChange={setField('email')} placeholder="you@example.com" required className={inputClass} />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>University</label>
+                                    <select value={form.universityId} onChange={setField('universityId')} required disabled={loadingUnis} className={`${inputClass} appearance-none`}>
+                                        <option value="">{loadingUnis ? 'Loading…' : 'Select your university'}</option>
+                                        {universities.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                                    </select>
                                 </div>
 
                                 {mode === 'student' ? (
@@ -389,47 +394,21 @@ export default function Register() {
                                         />
                                     </div>
                                 ) : null}
-                            </div>
 
-                            {/* Fresher extras */}
-                            {mode === 'fresher' && selectedUni &&
-                                (selectedUni.requireAdmissionRef || selectedUni.requireApplicationNumber) && (
-                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                        {selectedUni.requireAdmissionRef && (
-                                            <div>
-                                                <label className={labelClass}>
-                                                    {selectedUni.admissionRefDescription || 'Admission reference'}
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={form.admissionRef}
-                                                    onChange={setField('admissionRef')}
-                                                    placeholder={selectedUni.admissionRefExample || 'Enter admission reference'}
-                                                    className={inputClass}
-                                                />
-                                            </div>
-                                        )}
-                                        {selectedUni.requireApplicationNumber && (
-                                            <div>
-                                                <label className={labelClass}>
-                                                    {selectedUni.applicationNumberDescription || 'Application number'}
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={form.applicationNumber}
-                                                    onChange={setField('applicationNumber')}
-                                                    placeholder={selectedUni.applicationNumberExample || 'Enter application number'}
-                                                    className={inputClass}
-                                                />
-                                            </div>
-                                        )}
+                                {mode === 'fresher' && selectedUni?.requireAdmissionRef && (
+                                    <div>
+                                        <label className={labelClass}>{selectedUni.admissionRefDescription || 'Admission reference'}</label>
+                                        <input type="text" value={form.admissionRef} onChange={setField('admissionRef')} placeholder={selectedUni.admissionRefExample || 'Enter admission reference'} className={inputClass} />
+                                    </div>
+                                )}
+                                {mode === 'fresher' && selectedUni?.requireApplicationNumber && (
+                                    <div>
+                                        <label className={labelClass}>{selectedUni.applicationNumberDescription || 'Application number'}</label>
+                                        <input type="text" value={form.applicationNumber} onChange={setField('applicationNumber')} placeholder={selectedUni.applicationNumberExample || 'Enter application number'} className={inputClass} />
                                     </div>
                                 )}
 
-                            {/* ⬅️ REMOVED THE DEPARTMENT / PHONE ROW HERE */}
-
                             {/* Password | Confirm */}
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
                                     <label className={labelClass}>Password</label>
                                     <div className="relative">
@@ -473,11 +452,12 @@ export default function Register() {
                                     </div>
                                 </div>
                             </div>
+                            </section>
 
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="!mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-60"
+                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 disabled:opacity-60"
                             >
                                 {loading ? (
                                     <>
@@ -493,27 +473,18 @@ export default function Register() {
                             </button>
                         </form>
 
-                        <div className="mt-6">
-                            <p className="text-center text-sm text-slate-600 dark:text-slate-400">
-                                Already have an account?{' '}
-                                <Link to="/login" className="font-semibold text-brand-600 hover:text-brand-700 hover:underline">
-                                    Sign in
-                                </Link>
-                            </p>
-
-                            <div className="my-5 flex items-center">
-                                <div className="flex-1 border-t border-slate-200 dark:border-slate-800" />
-                                <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                    Or
-                                </span>
-                                <div className="flex-1 border-t border-slate-200 dark:border-slate-800" />
+                        <div className="mt-5">
+                            <div className="my-4 flex items-center">
+                                <div className="flex-1 border-t border-slate-200" />
+                                <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Or</span>
+                                <div className="flex-1 border-t border-slate-200" />
                             </div>
 
                             {mode === 'student' && fresherEnabled && (
                                 <button
                                     type="button"
                                     onClick={() => setMode('fresher')}
-                                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-brand-700 dark:hover:bg-brand-950/30 dark:hover:text-brand-400"
+                                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-brand-200 bg-white py-3 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-400 hover:bg-brand-50"
                                 >
                                     <GraduationCap className="h-4 w-4 text-slate-400" />
                                     Register as a Fresher
@@ -525,7 +496,7 @@ export default function Register() {
                                 <button
                                     type="button"
                                     onClick={() => setMode('student')}
-                                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-brand-200 bg-white py-3 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-400 hover:bg-brand-50"
                                 >
                                     <ArrowLeft className="h-4 w-4 text-slate-400" />
                                     Back To Student Registration

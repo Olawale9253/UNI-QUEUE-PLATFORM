@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     User, Mail, Phone, Building2, GraduationCap, Lock, Bell, Volume2,
@@ -600,11 +601,12 @@ function AppearanceSection() {
 
 function AccountSection() {
     const { user, logout } = useAuthStore()
+    const navigate = useNavigate()
     const [confirming, setConfirming] = useState(false)
 
     const doLogout = () => {
         logout()
-        window.location.href = '/login'
+        navigate('/login', { replace: true })
     }
 
     return (

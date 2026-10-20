@@ -229,10 +229,6 @@ export const useAuthStore = create((set, get) => ({
         useUniversityStore.getState().reset()
         usePrefsStore.getState().reset()
         set({ user: null, token: null })
-
-        // Force a hard reload to the login page.
-        // This wipes the React memory and replaces the history entry.
-        window.location.replace('/login')
     },
 
     clearError: () => set({ error: null }),

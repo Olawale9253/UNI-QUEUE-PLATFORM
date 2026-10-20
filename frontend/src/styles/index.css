@@ -279,6 +279,51 @@ input:disabled,
     color: #7dd3fc;
 }
 
+/* Registration keeps the bright, high-contrast appearance of its public form. */
+.dark .registration-page {
+    color-scheme: light;
+    background-color: #fff;
+    color: #0f172a;
+}
+.dark .registration-page .bg-white {
+    background-color: #fff;
+}
+.dark .registration-page .bg-brand-100 {
+    background-color: #e0e7ff;
+}
+.dark .registration-page .text-slate-900 {
+    color: #0f172a;
+}
+.dark .registration-page .text-slate-800 {
+    color: #1e293b;
+}
+.dark .registration-page .text-slate-700 {
+    color: #334155;
+}
+.dark .registration-page .text-slate-600 {
+    color: #475569;
+}
+.dark .registration-page .text-slate-500 {
+    color: #64748b;
+}
+.dark .registration-page .text-slate-400 {
+    color: #94a3b8;
+}
+.dark .registration-page .border-slate-200 {
+    border-color: #e2e8f0;
+}
+.dark .registration-page input,
+.dark .registration-page select,
+.dark .registration-page textarea {
+    background-color: #fff;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+.dark .registration-page input::placeholder,
+.dark .registration-page textarea::placeholder {
+    color: #94a3b8;
+}
+
 .dark .border-emerald-200 {
     border-color: rgba(5, 150, 105, 0.4);
 }

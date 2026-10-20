@@ -27,7 +27,7 @@ export default function SignOutAllButton({ variant = 'default' }) {
             })
             // Clear local session — our token is dead too
             logout()
-            setTimeout(() => navigate('/login'), 400)
+            navigate('/login', { replace: true })
         } catch (err) {
             push({
                 type: 'error',
