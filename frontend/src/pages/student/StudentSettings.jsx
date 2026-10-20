@@ -10,6 +10,7 @@ import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import ThemeToggle from '../../components/ui/ThemeToggle'
+import PageHeader from '../../components/layout/PageHeader'
 import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../store/toastStore'
 import { usePrefsStore } from '../../store/prefsStore'
@@ -25,23 +26,6 @@ function SettingsPage({ children }) {
         <div className="mx-auto w-full max-w-3xl space-y-6">
             {children}
         </div>
-    )
-}
-
-function PageHeader() {
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-        >
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                Settings
-            </h1>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Manage your profile, security, and preferences.
-            </p>
-        </motion.div>
     )
 }
 
@@ -708,7 +692,10 @@ export default function StudentSettings() {
 
     return (
         <SettingsPage>
-            <PageHeader />
+            <PageHeader
+                workspace="Student Workspace"
+                description="Manage your profile, security, and preferences."
+            />
 
             <ProfileSection
                 profile={profile}
