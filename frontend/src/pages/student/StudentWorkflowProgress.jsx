@@ -9,8 +9,6 @@ import api from '../../api/axios'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import { useToastStore } from '../../store/toastStore'
 
-/* ------------------------------------------------------------------ */
-
 function ProgressHeader({ data, onCancel, cancelling }) {
     return (
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
@@ -120,8 +118,6 @@ function NextActionCard({ action }) {
         </motion.div>
     )
 }
-
-/* ------------------------------------------------------------------ */
 
 const STEP_ICONS = {
     COMPLETED: CheckCircle2,
@@ -234,8 +230,6 @@ function StepRow({ step, isLast }) {
     )
 }
 
-/* ------------------------------------------------------------------ */
-
 function Skeleton() {
     return (
         <div className="space-y-4">
@@ -269,8 +263,6 @@ function EmptyState({ message }) {
     )
 }
 
-/* ------------------------------------------------------------------ */
-
 export default function StudentWorkflowProgress() {
     const navigate = useNavigate()
     const { push } = useToastStore()
@@ -279,7 +271,6 @@ export default function StudentWorkflowProgress() {
     const [error, setError] = useState(null)
     const [refreshing, setRefreshing] = useState(false)
 
-    // New state for cancel logic
     const [showCancelConfirm, setShowCancelConfirm] = useState(false)
     const [cancelling, setCancelling] = useState(false)
 
@@ -309,11 +300,9 @@ export default function StudentWorkflowProgress() {
         if (!data?.enrollmentId) return
         setCancelling(true)
         try {
-            // Assumes endpoint is /api/student/workflows/{id}/abandon based on your backend code
             await api.post(`/api/student/workflows/${data.enrollmentId}/abandon`)
             push({ type: 'success', message: 'Workflow cancelled successfully.' })
             setShowCancelConfirm(false)
-            // Redirect back to the workflows list
             navigate('/student/workflows')
         } catch (err) {
             push({ type: 'error', message: err.message || 'Failed to cancel workflow' })
@@ -360,7 +349,6 @@ export default function StudentWorkflowProgress() {
 
     return (
         <div className="mx-auto w-full max-w-2xl space-y-4 px-4 py-6 sm:px-6">
-            {/* Back to all workflows */}
             <Link
                 to="/student/workflows"
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400"
@@ -405,7 +393,6 @@ export default function StudentWorkflowProgress() {
                 </div>
             </div>
 
-            {/* Confirm Cancel Dialog */}
             <ConfirmDialog
                 open={showCancelConfirm}
                 onClose={() => !cancelling && setShowCancelConfirm(false)}

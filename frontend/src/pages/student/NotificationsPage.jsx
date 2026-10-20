@@ -39,7 +39,6 @@ export default function NotificationsPage() {
                         </div>
                     ) : (
                         notifications.map(n => {
-                            // Default to 'info' if type is missing
                             const type = n.type?.toLowerCase() || 'info'
                             const Icon = type === 'success' ? CheckCircle2 : type === 'warning' ? AlertTriangle : type === 'info' ? Info : Bell
                             const color = type === 'success' ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : type === 'warning' ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/30' : 'text-brand-500 bg-brand-50 dark:bg-brand-950/30'
@@ -51,7 +50,7 @@ export default function NotificationsPage() {
                                     </div>
                                     <div className="flex-1">
                                         <p className={`text-sm ${!n.isRead ? 'font-bold text-slate-900 dark:text-white' : 'font-medium text-slate-700 dark:text-slate-300'}`}>
-                                            {n.title}
+                                            {n.title || 'Notification'}
                                         </p>
                                         <p className="mt-1 text-xs text-slate-500">{n.message}</p>
                                     </div>

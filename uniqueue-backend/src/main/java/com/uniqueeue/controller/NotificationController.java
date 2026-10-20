@@ -7,7 +7,9 @@ import com.uniqueeue.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -21,11 +23,8 @@ public class NotificationController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<Notification>>> getMyNotifications(
             @AuthenticationPrincipal UserPrincipal principal) {
-
-        // Fetch notifications for the logged-in user, ordered by newest first
         List<Notification> notifications = notificationRepository
                 .findByUserIdOrderByCreatedAtDesc(principal.getId());
-
         return ResponseEntity.ok(ApiResponse.success("Notifications fetched", notifications));
     }
 }

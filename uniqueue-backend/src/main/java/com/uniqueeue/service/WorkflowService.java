@@ -370,16 +370,23 @@ public class WorkflowService {
         sw.setStatus(WorkflowStatus.ABANDONED);
         studentWorkflowRepository.save(sw);
 
-        // NEW: Cancel active tickets for this workflow
-        List<WorkflowStep> steps = stepRepository.findByWorkflowIdOrderByStepOrderAsc(sw.getWorkflow().getId());
-        List<Long> workflowQueueIds = steps.stream().map(s -> s.getQueue().getId()).toList();
+        // Safe cancellation of active tickets for this workflow
+        try {
+            List<WorkflowStep> steps = stepRepository.findByWorkflowIdOrderByStepOrderAsc(sw.getWorkflow().getId());
+            List<Long> workflowQueueIds = steps.stream()
+                    .filter(s -> s.getQueue() != null)
+                    .map(s -> s.getQueue().getId())
+                    .toList();
 
-        List<Ticket> activeTickets = ticketRepository.findActiveByUserId(studentId);
-        for (Ticket t : activeTickets) {
-            if (workflowQueueIds.contains(t.getQueue().getId())) {
-                t.setStatus(TicketStatus.CANCELLED);
-                ticketRepository.save(t);
+            List<Ticket> activeTickets = ticketRepository.findActiveByUserId(studentId);
+            for (Ticket t : activeTickets) {
+                if (t.getQueue() != null && workflowQueueIds.contains(t.getQueue().getId())) {
+                    t.setStatus(TicketStatus.CANCELLED);
+                    ticketRepository.save(t);
+                }
             }
+        } catch (Exception e) {
+            log.error("Failed to cancel tickets during workflow abandon: {}", e.getMessage());
         }
 
         auditService.record(studentId, sw.getWorkflow().getUniversity().getId(),
