@@ -12,7 +12,7 @@ import { ease } from '../lib/motion'
 import Logo from '../components/ui/Logo'
 
 const REGISTER_BACKGROUND =
-    'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=1600'
+    'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&q=80&w=1600'
 
 function resolveImageUrl(url) {
     if (!url) return null
@@ -31,8 +31,9 @@ function LeftPanel({ university, imageError, onImageError }) {
     const brandName = university?.name || 'UniQueue'
 
     return (
-        <div className="relative hidden h-full min-h-0 flex-col justify-between overflow-hidden bg-[#eef2ff] p-10 lg:flex">
-            {/* Background Image - Positioned at the bottom */}
+        <div className="relative hidden h-full min-h-screen flex-col justify-between overflow-hidden bg-[#eef2ff] p-10 lg:flex">
+
+            {/* Background Image & Overlays */}
             <div className="absolute inset-0 z-0">
                 <motion.img
                     key={backgroundSrc}
@@ -43,15 +44,19 @@ function LeftPanel({ university, imageError, onImageError }) {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 1.2, ease }}
                     onError={onImageError}
-                    className="absolute bottom-0 left-0 h-[60%] w-full object-cover object-top"
+                    className="absolute bottom-0 left-0 h-[70%] w-full object-cover object-top"
                     draggable={false}
                 />
-                {/* Gradient overlay to blend image into the blue background */}
-                <div className="absolute inset-0 bg-gradient-to-b from-[#eef2ff] via-[#eef2ff]/80 to-transparent to-60%" />
+
+                {/* 1. Top blend: Keeps text area solid light blue, fades to transparent at 75% */}
+                <div className="absolute inset-0 bg-gradient-to-b from-[#eef2ff] via-[#eef2ff]/95 to-transparent to-[75%]" />
+
+                {/* 2. Bottom darken: Makes the footer text readable over the image */}
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#0f172a]/80 via-[#0f172a]/20 to-transparent" />
             </div>
 
             {/* Top: Logo */}
-            <div className="relative z-10 flex items-center gap-3 text-slate-900">
+            <div className="relative z-10 flex items-center gap-3 text-slate-900 drop-shadow-sm">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
                     {logoUrl ? (
                         <img
@@ -76,11 +81,11 @@ function LeftPanel({ university, imageError, onImageError }) {
 
             {/* Middle: Features */}
             <div className="relative z-10 max-w-md pt-8">
-                <h2 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-[#0f172a]">
+                <h2 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-[#0f172a] drop-shadow-sm">
                     Your University<br />
-                    <span className="text-brand-600">Queue, Made Simple</span>
+                    <span className="text-brand-600 drop-shadow-sm">Queue, Made Simple</span>
                 </h2>
-                <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-600">
+                <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-700 drop-shadow-sm">
                     Join the university community and enjoy a faster, easier and more organized queue experience.
                 </p>
                 <ul className="mt-8 space-y-5">
@@ -89,8 +94,8 @@ function LeftPanel({ university, imageError, onImageError }) {
                             <Zap className="h-5 w-5" />
                         </span>
                         <div>
-                            <strong className="block text-sm font-bold text-slate-900">Quick Access</strong>
-                            <span className="text-sm text-slate-600">Skip long lines and save time</span>
+                            <strong className="block text-sm font-bold text-slate-900 drop-shadow-sm">Quick Access</strong>
+                            <span className="text-sm text-slate-700 drop-shadow-sm">Skip long lines and save time</span>
                         </div>
                     </li>
                     <li className="flex items-start gap-4">
@@ -98,8 +103,8 @@ function LeftPanel({ university, imageError, onImageError }) {
                             <ShieldCheck className="h-5 w-5" />
                         </span>
                         <div>
-                            <strong className="block text-sm font-bold text-slate-900">Secure & Reliable</strong>
-                            <span className="text-sm text-slate-600">Your data is always protected</span>
+                            <strong className="block text-sm font-bold text-slate-900 drop-shadow-sm">Secure & Reliable</strong>
+                            <span className="text-sm text-slate-700 drop-shadow-sm">Your data is always protected</span>
                         </div>
                     </li>
                     <li className="flex items-start gap-4">
@@ -107,8 +112,8 @@ function LeftPanel({ university, imageError, onImageError }) {
                             <Users className="h-5 w-5" />
                         </span>
                         <div>
-                            <strong className="block text-sm font-bold text-slate-900">Built for Students</strong>
-                            <span className="text-sm text-slate-600">Designed for a better university experience</span>
+                            <strong className="block text-sm font-bold text-slate-900 drop-shadow-sm">Built for Students</strong>
+                            <span className="text-sm text-slate-700 drop-shadow-sm">Designed for a better university experience</span>
                         </div>
                     </li>
                 </ul>
@@ -120,7 +125,7 @@ function LeftPanel({ university, imageError, onImageError }) {
                     <MapPin className="h-4 w-4" />
                     {brandName} · Digital Queue System
                 </div>
-                <div className="mt-1 text-[11px] text-white/70">
+                <div className="mt-1 text-[11px] text-white/80">
                     © {new Date().getFullYear()} All rights reserved.
                 </div>
             </div>
@@ -245,7 +250,6 @@ export default function Register() {
         }
     }
 
-    // Reusable styling
     const inputClass =
         'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10'
     const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-700'
@@ -257,14 +261,12 @@ export default function Register() {
         <div className="min-h-screen bg-white lg:h-screen lg:overflow-hidden">
             <div className="grid min-h-screen grid-cols-1 lg:h-full lg:min-h-0 lg:grid-cols-2">
 
-                {/* Left Panel */}
                 <LeftPanel
                     university={selectedUni}
                     imageError={imageError}
                     onImageError={() => setImageError(true)}
                 />
 
-                {/* Right Panel Form */}
                 <div className="flex min-h-0 items-start justify-center overflow-y-auto bg-white px-6 py-10 sm:px-12 lg:h-full lg:py-12">
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
@@ -272,7 +274,6 @@ export default function Register() {
                         transition={{ duration: 0.5, ease }}
                         className="w-full max-w-[600px]"
                     >
-                        {/* Header */}
                         <div className="mb-8 flex items-center justify-between">
                             <div className="flex items-center gap-2.5 lg:hidden">
                                 <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-brand-600 text-white">
@@ -290,7 +291,6 @@ export default function Register() {
                             </p>
                         </div>
 
-                        {/* Title */}
                         <div className="mb-8">
                             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
                                 <GraduationCap className="h-6 w-6" />
@@ -307,7 +307,6 @@ export default function Register() {
 
                         <form onSubmit={submit} className="space-y-8">
 
-                            {/* Section 1: Personal Information */}
                             <section>
                                 <div className={sectionTitleClass}>
                                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
@@ -355,7 +354,6 @@ export default function Register() {
                                 </div>
                             </section>
 
-                            {/* Section 2: Account Details */}
                             <section>
                                 <div className={sectionTitleClass}>
                                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
@@ -480,7 +478,6 @@ export default function Register() {
                             </button>
                         </form>
 
-                        {/* Footer / Mode Toggle */}
                         <div className="mt-8">
                             <div className="mb-6 flex items-center">
                                 <div className="flex-1 border-t border-slate-200" />
