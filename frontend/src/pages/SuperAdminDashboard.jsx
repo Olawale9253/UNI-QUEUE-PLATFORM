@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import {
-    LayoutDashboard, Building2, Users, Activity, Settings, Shield, FileText
+    LayoutDashboard, Building2, Users, Activity,
+    Settings as SettingsIcon,   // <-- Renamed to avoid clash
+    Shield, FileText,
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import PageHeader from '../components/layout/PageHeader'
@@ -9,7 +11,7 @@ import SuperAdminHome from './super-admin/SuperAdminHome'
 import Universities from './super-admin/Universities'
 import Admins from './super-admin/Admins'
 import SystemAnalytics from './super-admin/SystemAnalytics'
-import Settings from './super-admin/Settings'
+import Settings from './super-admin/Settings'   // <-- This is the page component
 import AuditLogs from './super-admin/AuditLogs'
 import TiersAndFeatures from './super-admin/TiersAndFeatures'
 
@@ -19,7 +21,7 @@ const tabs = [
     { to: '/super-admin/analytics', label: 'System Analytics', icon: Activity },
     { to: '/super-admin/tiers', label: 'Tiers & Features', icon: Shield },
     { to: '/super-admin/audit-logs', label: 'Audit Logs', icon: FileText },
-    { to: '/super-admin/settings', label: 'Settings', icon: Settings },
+    { to: '/super-admin/settings', label: 'Settings', icon: SettingsIcon },   // <-- Uses the renamed icon
 ]
 
 export default function SuperAdminDashboard() {
