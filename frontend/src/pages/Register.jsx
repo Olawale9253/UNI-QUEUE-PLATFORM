@@ -11,8 +11,9 @@ import { useToastStore } from '../store/toastStore'
 import { ease } from '../lib/motion'
 import Logo from '../components/ui/Logo'
 
+// Reverted to the graduation background
 const REGISTER_BACKGROUND =
-    'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&q=80&w=1600'
+    'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=1600'
 
 function resolveImageUrl(url) {
     if (!url) return null
@@ -44,19 +45,20 @@ function LeftPanel({ university, imageError, onImageError }) {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 1.2, ease }}
                     onError={onImageError}
-                    className="absolute bottom-0 left-0 h-[70%] w-full object-cover object-top"
+                    // Reduced image height to keep it below the text
+                    className="absolute bottom-0 left-0 h-[55%] w-full object-cover object-top"
                     draggable={false}
                 />
 
-                {/* 1. Top blend: Keeps text area solid light blue, fades to transparent at 75% */}
-                <div className="absolute inset-0 bg-gradient-to-b from-[#eef2ff] via-[#eef2ff]/95 to-transparent to-[75%]" />
+                {/* 1. Top blend: Keeps text area solid light blue, fades to transparent only at the very bottom */}
+                <div className="absolute inset-0 bg-gradient-to-b from-[#eef2ff] via-[#eef2ff] to-transparent to-[75%]" />
 
                 {/* 2. Bottom darken: Makes the footer text readable over the image */}
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#0f172a]/80 via-[#0f172a]/20 to-transparent" />
             </div>
 
             {/* Top: Logo */}
-            <div className="relative z-10 flex items-center gap-3 text-slate-900 drop-shadow-sm">
+            <div className="relative z-10 flex items-center gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
                     {logoUrl ? (
                         <img
@@ -81,21 +83,24 @@ function LeftPanel({ university, imageError, onImageError }) {
 
             {/* Middle: Features */}
             <div className="relative z-10 max-w-md pt-8">
-                <h2 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-[#0f172a] drop-shadow-sm">
+                <h2 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-[#0f172a]">
                     Your University<br />
-                    <span className="text-brand-600 drop-shadow-sm">Queue, Made Simple</span>
+                    <span className="text-brand-600">Queue, Made Simple</span>
                 </h2>
-                <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-700 drop-shadow-sm">
+
+                {/* Changed text to slate-800 for better readability */}
+                <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-800">
                     Join the university community and enjoy a faster, easier and more organized queue experience.
                 </p>
+
                 <ul className="mt-8 space-y-5">
                     <li className="flex items-start gap-4">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100">
                             <Zap className="h-5 w-5" />
                         </span>
                         <div>
-                            <strong className="block text-sm font-bold text-slate-900 drop-shadow-sm">Quick Access</strong>
-                            <span className="text-sm text-slate-700 drop-shadow-sm">Skip long lines and save time</span>
+                            <strong className="block text-sm font-bold text-slate-900">Quick Access</strong>
+                            <span className="text-sm text-slate-700">Skip long lines and save time</span>
                         </div>
                     </li>
                     <li className="flex items-start gap-4">
@@ -103,8 +108,8 @@ function LeftPanel({ university, imageError, onImageError }) {
                             <ShieldCheck className="h-5 w-5" />
                         </span>
                         <div>
-                            <strong className="block text-sm font-bold text-slate-900 drop-shadow-sm">Secure & Reliable</strong>
-                            <span className="text-sm text-slate-700 drop-shadow-sm">Your data is always protected</span>
+                            <strong className="block text-sm font-bold text-slate-900">Secure & Reliable</strong>
+                            <span className="text-sm text-slate-700">Your data is always protected</span>
                         </div>
                     </li>
                     <li className="flex items-start gap-4">
@@ -112,8 +117,8 @@ function LeftPanel({ university, imageError, onImageError }) {
                             <Users className="h-5 w-5" />
                         </span>
                         <div>
-                            <strong className="block text-sm font-bold text-slate-900 drop-shadow-sm">Built for Students</strong>
-                            <span className="text-sm text-slate-700 drop-shadow-sm">Designed for a better university experience</span>
+                            <strong className="block text-sm font-bold text-slate-900">Built for Students</strong>
+                            <span className="text-sm text-slate-700">Designed for a better university experience</span>
                         </div>
                     </li>
                 </ul>
