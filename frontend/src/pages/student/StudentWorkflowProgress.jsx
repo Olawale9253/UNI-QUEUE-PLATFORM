@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
     CheckCircle2, Circle, Loader2, AlertTriangle, ArrowRight, ArrowLeft,
-    MapPin, CalendarDays, RefreshCw, PartyPopper, Route, XCircle, Trash2
+    MapPin, CalendarDays, RefreshCw, PartyPopper, Route, XCircle
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../../api/axios'
@@ -300,7 +300,8 @@ export default function StudentWorkflowProgress() {
         if (!data?.enrollmentId) return
         setCancelling(true)
         try {
-            await api.post(`/api/student/workflows/${data.enrollmentId}/abandon`)
+            // FIXED: Correct endpoint is /api/user/workflows/{id}/abandon
+            await api.post(`/api/user/workflows/${data.enrollmentId}/abandon`)
             push({ type: 'success', message: 'Workflow cancelled successfully.' })
             setShowCancelConfirm(false)
             navigate('/student/workflows')
