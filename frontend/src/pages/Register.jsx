@@ -11,7 +11,6 @@ import { useToastStore } from '../store/toastStore'
 import { ease } from '../lib/motion'
 import Logo from '../components/ui/Logo'
 
-// Reverted to the graduation background
 const REGISTER_BACKGROUND =
     'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=1600'
 
@@ -32,9 +31,8 @@ function LeftPanel({ university, imageError, onImageError }) {
     const brandName = university?.name || 'UniQueue'
 
     return (
-        <div className="relative hidden h-full min-h-screen flex-col justify-between overflow-hidden bg-[#eef2ff] p-10 lg:flex">
+        <div className="relative hidden h-full min-h-screen flex-col justify-between overflow-hidden bg-[#eef2ff] p-10 dark:bg-slate-950 lg:flex">
 
-            {/* Background Image & Overlays */}
             <div className="absolute inset-0 z-0">
                 <motion.img
                     key={backgroundSrc}
@@ -45,21 +43,17 @@ function LeftPanel({ university, imageError, onImageError }) {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 1.2, ease }}
                     onError={onImageError}
-                    // Reduced image height to keep it below the text
                     className="absolute bottom-0 left-0 h-[55%] w-full object-cover object-top"
                     draggable={false}
                 />
 
-                {/* 1. Top blend: Keeps text area solid light blue, fades to transparent only at the very bottom */}
-                <div className="absolute inset-0 bg-gradient-to-b from-[#eef2ff] via-[#eef2ff] to-transparent to-[75%]" />
+                <div className="absolute inset-0 bg-gradient-to-b from-[#eef2ff] via-[#eef2ff] to-transparent to-[75%] dark:from-slate-950 dark:via-slate-950" />
 
-                {/* 2. Bottom darken: Makes the footer text readable over the image */}
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#0f172a]/80 via-[#0f172a]/20 to-transparent" />
             </div>
 
-            {/* Top: Logo */}
             <div className="relative z-10 flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
                     {logoUrl ? (
                         <img
                             src={logoUrl}
@@ -72,59 +66,56 @@ function LeftPanel({ university, imageError, onImageError }) {
                     )}
                 </div>
                 <div>
-                    <div className="text-sm font-extrabold uppercase tracking-tight text-slate-900">
+                    <div className="text-sm font-extrabold uppercase tracking-tight text-slate-900 dark:text-white">
                         {brandName}
                     </div>
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600 dark:text-slate-400">
                         Digital Queue System
                     </div>
                 </div>
             </div>
 
-            {/* Middle: Features */}
             <div className="relative z-10 max-w-md pt-8">
-                <h2 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-[#0f172a]">
+                <h2 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-[#0f172a] dark:text-white">
                     Your University<br />
-                    <span className="text-brand-600">Queue, Made Simple</span>
+                    <span className="text-brand-600 dark:text-brand-400">Queue, Made Simple</span>
                 </h2>
 
-                {/* Changed text to slate-800 for better readability */}
-                <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-800">
+                <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-800 dark:text-slate-300">
                     Join the university community and enjoy a faster, easier and more organized queue experience.
                 </p>
 
                 <ul className="mt-8 space-y-5">
                     <li className="flex items-start gap-4">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100 dark:bg-slate-800 dark:ring-slate-700 dark:text-brand-400">
                             <Zap className="h-5 w-5" />
                         </span>
                         <div>
-                            <strong className="block text-sm font-bold text-slate-900">Quick Access</strong>
-                            <span className="text-sm text-slate-700">Skip long lines and save time</span>
+                            <strong className="block text-sm font-bold text-slate-900 dark:text-white">Quick Access</strong>
+                            <span className="text-sm text-slate-700 dark:text-slate-400">Skip long lines and save time</span>
                         </div>
                     </li>
                     <li className="flex items-start gap-4">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100 dark:bg-slate-800 dark:ring-slate-700 dark:text-brand-400">
                             <ShieldCheck className="h-5 w-5" />
                         </span>
                         <div>
-                            <strong className="block text-sm font-bold text-slate-900">Secure & Reliable</strong>
-                            <span className="text-sm text-slate-700">Your data is always protected</span>
+                            <strong className="block text-sm font-bold text-slate-900 dark:text-white">Secure & Reliable</strong>
+                            <span className="text-sm text-slate-700 dark:text-slate-400">Your data is always protected</span>
                         </div>
                     </li>
                     <li className="flex items-start gap-4">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100 dark:bg-slate-800 dark:ring-slate-700 dark:text-brand-400">
                             <Users className="h-5 w-5" />
                         </span>
                         <div>
-                            <strong className="block text-sm font-bold text-slate-900">Built for Students</strong>
-                            <span className="text-sm text-slate-700">Designed for a better university experience</span>
+                            <strong className="block text-sm font-bold text-slate-900 dark:text-white">Built for Students</strong>
+                            <span className="text-sm text-slate-700 dark:text-slate-400">Designed for a better university experience</span>
                         </div>
                     </li>
                 </ul>
             </div>
 
-            {/* Bottom: Footer */}
             <div className="relative z-10 pt-10">
                 <div className="flex items-center gap-2 text-xs font-medium text-white drop-shadow-md">
                     <MapPin className="h-4 w-4" />
@@ -256,14 +247,14 @@ export default function Register() {
     }
 
     const inputClass =
-        'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10'
-    const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-700'
+        'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500'
+    const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300'
     const sectionTitleClass = 'flex items-center gap-3 mb-4'
 
     const showJamb = mode === 'fresher' && selectedUni?.requireJambReg !== false
 
     return (
-        <div className="min-h-screen bg-white lg:h-screen lg:overflow-hidden">
+        <div className="min-h-screen bg-white dark:bg-slate-950 lg:h-screen lg:overflow-hidden">
             <div className="grid min-h-screen grid-cols-1 lg:h-full lg:min-h-0 lg:grid-cols-2">
 
                 <LeftPanel
@@ -272,7 +263,7 @@ export default function Register() {
                     onImageError={() => setImageError(true)}
                 />
 
-                <div className="flex min-h-0 items-start justify-center overflow-y-auto bg-white px-6 py-10 sm:px-12 lg:h-full lg:py-12">
+                <div className="flex min-h-0 items-start justify-center overflow-y-auto bg-white px-6 py-10 dark:bg-slate-950 sm:px-12 lg:h-full lg:py-12">
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -284,26 +275,26 @@ export default function Register() {
                                 <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-brand-600 text-white">
                                     <Logo size={20} variant="icon" />
                                 </div>
-                                <div className="text-sm font-bold uppercase tracking-tight text-slate-900">
+                                <div className="text-sm font-bold uppercase tracking-tight text-slate-900 dark:text-white">
                                     {selectedUni?.name || 'UniQueue'}
                                 </div>
                             </div>
-                            <p className="ml-auto text-sm text-slate-500">
+                            <p className="ml-auto text-sm text-slate-500 dark:text-slate-400">
                                 Already have an account?{' '}
-                                <Link to="/login" className="font-semibold text-brand-600 hover:text-brand-700">
+                                <Link to="/login" className="font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400">
                                     Sign in <ArrowRight className="inline h-3.5 w-3.5" />
                                 </Link>
                             </p>
                         </div>
 
                         <div className="mb-8">
-                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
                                 <GraduationCap className="h-6 w-6" />
                             </div>
-                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
                                 Create your account
                             </h1>
-                            <p className="mt-2 text-sm text-slate-500">
+                            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                                 {mode === 'fresher'
                                     ? 'For new students registering before receiving their matric number.'
                                     : 'Fill in the details below to register and get started.'}
@@ -317,8 +308,8 @@ export default function Register() {
                                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
                                         1
                                     </span>
-                                    <h2 className="text-base font-bold text-slate-900">Personal Information</h2>
-                                    <div className="h-px flex-1 bg-slate-100" />
+                                    <h2 className="text-base font-bold text-slate-900 dark:text-white">Personal Information</h2>
+                                    <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
                                 </div>
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                     <div>
@@ -334,7 +325,7 @@ export default function Register() {
                                         />
                                     </div>
                                     <div>
-                                        <label className={labelClass}>Middle name <span className="font-normal text-slate-400">(optional)</span></label>
+                                        <label className={labelClass}>Middle name <span className="font-normal text-slate-400 dark:text-slate-500">(optional)</span></label>
                                         <input
                                             type="text"
                                             autoComplete="additional-name"
@@ -364,8 +355,8 @@ export default function Register() {
                                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
                                         2
                                     </span>
-                                    <h2 className="text-base font-bold text-slate-900">Account Details</h2>
-                                    <div className="h-px flex-1 bg-slate-100" />
+                                    <h2 className="text-base font-bold text-slate-900 dark:text-white">Account Details</h2>
+                                    <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
                                 </div>
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div>
@@ -435,7 +426,7 @@ export default function Register() {
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword((v) => !v)}
-                                                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 transition-colors hover:text-slate-600"
+                                                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
                                             >
                                                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                             </button>
@@ -455,7 +446,7 @@ export default function Register() {
                                             <button
                                                 type="button"
                                                 onClick={() => setShowConfirm((v) => !v)}
-                                                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 transition-colors hover:text-slate-600"
+                                                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
                                             >
                                                 {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                             </button>
@@ -485,16 +476,16 @@ export default function Register() {
 
                         <div className="mt-8">
                             <div className="mb-6 flex items-center">
-                                <div className="flex-1 border-t border-slate-200" />
-                                <span className="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">Or</span>
-                                <div className="flex-1 border-t border-slate-200" />
+                                <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
+                                <span className="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Or</span>
+                                <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
                             </div>
 
                             {mode === 'student' && fresherEnabled && (
                                 <button
                                     type="button"
                                     onClick={() => setMode('fresher')}
-                                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white py-3.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-50"
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white py-3.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:text-brand-400 dark:hover:bg-slate-700"
                                 >
                                     Register as a Fresher
                                     <ArrowRight className="h-4 w-4 text-brand-400" />
@@ -505,7 +496,7 @@ export default function Register() {
                                 <button
                                     type="button"
                                     onClick={() => setMode('student')}
-                                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white py-3.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-50"
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white py-3.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:text-brand-400 dark:hover:bg-slate-700"
                                 >
                                     <ArrowLeft className="h-4 w-4 text-brand-400" />
                                     Back to Student Registration

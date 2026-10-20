@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -11,7 +11,6 @@ import { useToastStore } from '../store/toastStore'
 import { ease } from '../lib/motion'
 import Logo from '../components/ui/Logo'
 
-// Using the same fallback image as the login mockup
 const LOGIN_BACKGROUND =
     'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=1600'
 
@@ -27,7 +26,7 @@ function LeftPanel({ brand, imageError, onImageError }) {
         brand.campusImageUrl && !imageError ? brand.campusImageUrl : LOGIN_BACKGROUND
 
     return (
-        <div className="relative hidden h-full min-h-screen flex-col justify-between overflow-hidden bg-[#eef2ff] p-10 lg:flex">
+        <div className="relative hidden h-full min-h-screen flex-col justify-between overflow-hidden bg-[#eef2ff] p-10 dark:bg-slate-950 lg:flex">
 
             {/* Background Image & Overlays */}
             <div className="absolute inset-0 z-0">
@@ -44,8 +43,8 @@ function LeftPanel({ brand, imageError, onImageError }) {
                     draggable={false}
                 />
 
-                {/* 1. Top blend: Keeps text area solid light blue */}
-                <div className="absolute inset-0 bg-gradient-to-b from-[#eef2ff] via-[#eef2ff] to-transparent to-[75%]" />
+                {/* 1. Top blend: Keeps text area solid light blue (or dark slate), fades to transparent */}
+                <div className="absolute inset-0 bg-gradient-to-b from-[#eef2ff] via-[#eef2ff] to-transparent to-[75%] dark:from-slate-950 dark:via-slate-950" />
 
                 {/* 2. Bottom darken: Makes the footer text readable */}
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#0f172a]/80 via-[#0f172a]/20 to-transparent" />
@@ -53,7 +52,7 @@ function LeftPanel({ brand, imageError, onImageError }) {
 
             {/* Top: Logo */}
             <div className="relative z-10 flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
                     {brand.logoUrl ? (
                         <img
                             src={brand.logoUrl}
@@ -66,10 +65,10 @@ function LeftPanel({ brand, imageError, onImageError }) {
                     )}
                 </div>
                 <div>
-                    <div className="text-sm font-extrabold uppercase tracking-tight text-slate-900">
+                    <div className="text-sm font-extrabold uppercase tracking-tight text-slate-900 dark:text-white">
                         {brand.name}
                     </div>
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600 dark:text-slate-400">
                         Digital Queue System
                     </div>
                 </div>
@@ -77,41 +76,41 @@ function LeftPanel({ brand, imageError, onImageError }) {
 
             {/* Middle: Features */}
             <div className="relative z-10 max-w-md pt-8">
-                <h2 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-[#0f172a]">
+                <h2 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-[#0f172a] dark:text-white">
                     Welcome back.<br />
-                    <span className="text-brand-600">Your spot is waiting.</span>
+                    <span className="text-brand-600 dark:text-brand-400">Your spot is waiting.</span>
                 </h2>
 
-                <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-800">
+                <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-800 dark:text-slate-300">
                     Sign in to see live wait times and pick up where you left off.
                 </p>
 
                 <ul className="mt-8 space-y-5">
                     <li className="flex items-start gap-4">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100 dark:bg-slate-800 dark:ring-slate-700 dark:text-brand-400">
                             <Zap className="h-5 w-5" />
                         </span>
                         <div>
-                            <strong className="block text-sm font-bold text-slate-900">Quick Access</strong>
-                            <span className="text-sm text-slate-700">Skip long lines and save time</span>
+                            <strong className="block text-sm font-bold text-slate-900 dark:text-white">Quick Access</strong>
+                            <span className="text-sm text-slate-700 dark:text-slate-400">Skip long lines and save time</span>
                         </div>
                     </li>
                     <li className="flex items-start gap-4">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100 dark:bg-slate-800 dark:ring-slate-700 dark:text-brand-400">
                             <ShieldCheck className="h-5 w-5" />
                         </span>
                         <div>
-                            <strong className="block text-sm font-bold text-slate-900">Secure & Reliable</strong>
-                            <span className="text-sm text-slate-700">Your data is always protected</span>
+                            <strong className="block text-sm font-bold text-slate-900 dark:text-white">Secure & Reliable</strong>
+                            <span className="text-sm text-slate-700 dark:text-slate-400">Your data is always protected</span>
                         </div>
                     </li>
                     <li className="flex items-start gap-4">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100 dark:bg-slate-800 dark:ring-slate-700 dark:text-brand-400">
                             <Users className="h-5 w-5" />
                         </span>
                         <div>
-                            <strong className="block text-sm font-bold text-slate-900">Built for Students</strong>
-                            <span className="text-sm text-slate-700">Designed for a better university experience</span>
+                            <strong className="block text-sm font-bold text-slate-900 dark:text-white">Built for Students</strong>
+                            <span className="text-sm text-slate-700 dark:text-slate-400">Designed for a better university experience</span>
                         </div>
                     </li>
                 </ul>
@@ -131,7 +130,6 @@ function LeftPanel({ brand, imageError, onImageError }) {
     )
 }
 
-// Countdown hook for rate limiting
 function useCountdown(targetTime) {
     const computeRemaining = () =>
         targetTime ? Math.max(0, Math.ceil((targetTime - Date.now()) / 1000)) : 0
@@ -188,7 +186,6 @@ export default function Login() {
         setEmail(next)
     }
 
-    // Dynamic University Lookup based on Email Domain
     useEffect(() => {
         const trimmed = email.trim().toLowerCase()
         const at = trimmed.indexOf('@')
@@ -251,11 +248,11 @@ export default function Login() {
     }
 
     const inputClass =
-        'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10'
-    const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-700'
+        'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500'
+    const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300'
 
     return (
-        <div className="min-h-screen bg-white lg:h-screen lg:overflow-hidden">
+        <div className="min-h-screen bg-white dark:bg-slate-950 lg:h-screen lg:overflow-hidden">
             <div className="grid min-h-screen grid-cols-1 lg:h-full lg:min-h-0 lg:grid-cols-2">
 
                 <LeftPanel
@@ -264,7 +261,7 @@ export default function Login() {
                     onImageError={() => setImageError(true)}
                 />
 
-                <div className="flex min-h-0 items-start justify-center overflow-y-auto bg-white px-6 py-10 sm:px-12 lg:h-full lg:py-12">
+                <div className="flex min-h-0 items-start justify-center overflow-y-auto bg-white px-6 py-10 dark:bg-slate-950 sm:px-12 lg:h-full lg:py-12">
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -272,22 +269,20 @@ export default function Login() {
                         className="w-full max-w-[420px] mt-10 sm:mt-20"
                     >
 
-                        {/* Mobile Logo */}
                         <div className="mb-8 flex items-center gap-2.5 lg:hidden">
                             <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-brand-600 text-white">
                                 <Logo size={20} variant="icon" />
                             </div>
-                            <div className="text-sm font-bold uppercase tracking-tight text-slate-900">
+                            <div className="text-sm font-bold uppercase tracking-tight text-slate-900 dark:text-white">
                                 {brand.name}
                             </div>
                         </div>
 
-                        {/* Header */}
                         <div className="mb-8">
-                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
                                 Sign in
                             </h1>
-                            <p className="mt-2 text-sm text-slate-500">
+                            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                                 Enter your credentials to continue.
                             </p>
                         </div>
@@ -324,7 +319,7 @@ export default function Login() {
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword((v) => !v)}
-                                        className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 transition-colors hover:text-slate-600"
+                                        className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
                                     >
                                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
@@ -334,7 +329,7 @@ export default function Login() {
                             <div className="flex justify-end pt-1">
                                 <Link
                                     to="/forgot-password"
-                                    className="text-xs font-semibold text-brand-600 transition-colors hover:text-brand-700"
+                                    className="text-xs font-semibold text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400"
                                 >
                                     Forgot password?
                                 </Link>
@@ -364,23 +359,22 @@ export default function Login() {
                             </button>
 
                             {isRateLimited && (
-                                <p className="text-center text-[11px] font-medium text-rose-600">
+                                <p className="text-center text-[11px] font-medium text-rose-600 dark:text-rose-400">
                                     Too many attempts on this email. Sign-in is paused for security.
                                 </p>
                             )}
                         </form>
 
-                        {/* Footer / Sign Up Link */}
                         <div className="mt-8">
                             <div className="mb-6 flex items-center">
-                                <div className="flex-1 border-t border-slate-200" />
-                                <span className="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">New to UniQueue?</span>
-                                <div className="flex-1 border-t border-slate-200" />
+                                <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
+                                <span className="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">New to UniQueue?</span>
+                                <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
                             </div>
 
                             <Link
                                 to="/register"
-                                className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white py-3.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-50"
+                                className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white py-3.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:text-brand-400 dark:hover:bg-slate-700"
                             >
                                 Create an account
                                 <ArrowRight className="h-4 w-4 text-brand-400" />
