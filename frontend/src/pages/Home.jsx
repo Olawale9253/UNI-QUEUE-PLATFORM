@@ -2,23 +2,9 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
-    ArrowRight,
-    ChevronLeft,
-    ChevronRight,
-    Sparkles,
-    Users,
-    Building2,
-    ShieldCheck,
-    Bell,
-    LineChart,
-    Route as RouteIcon,
-    Ticket,
-    GraduationCap,
-    CheckCircle2,
-    Activity,
-    UserPlus,
-    ClipboardList,
-    BadgeCheck,
+    ArrowRight, ChevronLeft, ChevronRight, Sparkles, Users, Building2,
+    ShieldCheck, Bell, LineChart, Route as RouteIcon, Ticket,
+    GraduationCap, CheckCircle2, Activity, UserPlus, ClipboardList, BadgeCheck,
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 
@@ -35,7 +21,7 @@ const SLIDES = [
         headline: 'Skip the line.',
         headlineAccent: 'Not the service.',
         sub: 'Join a queue from your phone, watch your position in real time, and show up exactly when it is your turn.',
-        cta: { label: 'Explore campus queues', to: '/register' }, // <-- CHANGED THIS LABEL
+        cta: { label: 'Explore campus queues', to: '/register' },
         ctaSecondary: { label: 'Sign in', to: '/login' },
     },
     {
@@ -151,7 +137,6 @@ function HeroCarousel() {
                 })
             }
         })
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     useEffect(() => {
@@ -166,7 +151,7 @@ function HeroCarousel() {
     return (
         <section
             ref={sectionRef}
-            className="relative isolate h-[92vh] min-h-[600px] w-full overflow-hidden bg-slate-900"
+            className="relative isolate h-[85vh] min-h-[600px] w-full overflow-hidden bg-slate-900"
             aria-roledescription="carousel"
             aria-label="Product highlights"
         >
@@ -226,46 +211,45 @@ function HeroCarousel() {
                                 className="pointer-events-none absolute inset-0"
                                 style={{
                                     background:
-                                        'linear-gradient(to right, rgba(2,6,23,0.90) 0%, rgba(2,6,23,0.76) 28%, rgba(2,6,23,0.40) 50%, rgba(2,6,23,0.08) 72%, rgba(2,6,23,0) 100%)',
+                                        'linear-gradient(to right, rgba(15,23,42,0.95) 0%, rgba(15,23,42,0.80) 30%, rgba(15,23,42,0.40) 55%, rgba(15,23,42,0.05) 80%, rgba(15,23,42,0) 100%)',
                                 }}
                             />
-                            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950/75 via-slate-950/25 to-transparent" />
+                            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
 
                             <div className="absolute inset-0 z-10 mx-auto flex max-w-7xl flex-col justify-center px-6 sm:px-8 lg:px-12">
                                 <div className="max-w-2xl">
-                                    <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/[0.06] py-1.5 pl-1.5 pr-4 shadow-xl shadow-black/25 backdrop-blur-xl">
-                                        <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 shadow-md shadow-brand-600/40">
-                                            <span className="absolute inset-0 animate-ping rounded-full bg-brand-400/40" />
+                                    <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 py-1.5 pl-1.5 pr-4 shadow-xl shadow-black/25 backdrop-blur-md">
+                                        <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 shadow-md">
                                             <item.eyebrow.icon className="relative h-3.5 w-3.5 text-white" />
                                         </span>
-                                        <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-white">
+                                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">
                                             {item.eyebrow.label}
                                         </span>
                                     </div>
 
-                                    <h1 className="text-4xl font-bold leading-[1.05] tracking-tight text-white drop-shadow-2xl sm:text-6xl lg:text-7xl">
+                                    <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-white drop-shadow-xl sm:text-6xl lg:text-7xl">
                                         {item.headline}
-                                        <span className="block bg-gradient-to-r from-brand-300 via-brand-400 to-brand-200 bg-clip-text text-transparent">
+                                        <span className="block text-brand-300">
                                             {item.headlineAccent}
                                         </span>
                                     </h1>
 
-                                    <p className="mt-6 max-w-xl text-base leading-relaxed text-white/90 drop-shadow-lg sm:text-lg">
+                                    <p className="mt-6 max-w-xl text-base leading-relaxed text-slate-200 drop-shadow-md sm:text-lg">
                                         {item.sub}
                                     </p>
 
-                                    <div className="mt-9 flex flex-wrap items-center gap-3">
+                                    <div className="mt-9 flex flex-wrap items-center gap-4">
                                         <Link
                                             to={dashboardHref || item.cta.to}
-                                            className="group inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 shadow-lg shadow-black/25 transition-all hover:bg-slate-100 hover:shadow-xl"
+                                            className="group inline-flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 text-sm font-bold text-slate-900 shadow-xl transition-all hover:bg-slate-50 hover:scale-105"
                                         >
                                             {dashboardHref ? 'Go to dashboard' : item.cta.label}
-                                            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                                            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                                         </Link>
                                         {item.ctaSecondary && (
                                             <Link
                                                 to={item.ctaSecondary.to}
-                                                className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur-md transition-colors hover:border-white/50 hover:bg-white/20"
+                                                className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-7 py-3.5 text-sm font-bold text-white backdrop-blur-md transition-all hover:bg-white/20"
                                             >
                                                 {item.ctaSecondary.label}
                                             </Link>
@@ -282,7 +266,7 @@ function HeroCarousel() {
                 type="button"
                 onClick={prev}
                 aria-label="Previous slide"
-                className="group absolute left-3 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-white/10 p-3 text-white backdrop-blur-md transition-all hover:border-white/50 hover:bg-white/20 lg:flex"
+                className="group absolute left-4 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-white/10 p-3 text-white backdrop-blur-md transition-all hover:bg-white/20 lg:flex"
             >
                 <ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
             </button>
@@ -290,7 +274,7 @@ function HeroCarousel() {
                 type="button"
                 onClick={next}
                 aria-label="Next slide"
-                className="group absolute right-3 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-white/10 p-3 text-white backdrop-blur-md transition-all hover:border-white/50 hover:bg-white/20 lg:flex"
+                className="group absolute right-4 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-white/10 p-3 text-white backdrop-blur-md transition-all hover:bg-white/20 lg:flex"
             >
                 <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
             </button>
@@ -322,15 +306,12 @@ function HeroCarousel() {
                                             duration: AUTO_ADVANCE_MS / 1000,
                                             ease: 'linear',
                                         }}
-                                        className="absolute inset-0 origin-left rounded-full bg-brand-300"
+                                        className="absolute inset-0 origin-left rounded-full bg-brand-400"
                                     />
                                 )}
                             </button>
                         )
                     })}
-                </div>
-                <div className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/50">
-                    {String(index + 1).padStart(2, '0')} / {String(SLIDE_COUNT).padStart(2, '0')}
                 </div>
             </div>
         </section>
@@ -376,19 +357,18 @@ const FEATURES = [
 
 function Features() {
     return (
-        <section id="features" className="relative bg-white py-24 sm:py-32 dark:bg-slate-950">
+        <section id="features" className="relative bg-[#f8fafc] py-24 sm:py-32">
             <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
                 <div className="mx-auto max-w-2xl text-center">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 dark:border-brand-900 dark:bg-brand-950/40 dark:text-brand-300">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-700">
                         <Sparkles className="h-3 w-3" />
                         Everything you need
                     </span>
-                    <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-slate-100">
+                    <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-[#0f172a] sm:text-4xl">
                         Built for how universities actually work
                     </h2>
-                    <p className="mt-4 text-base text-slate-600 dark:text-slate-400">
-                        One platform for students, staff, and administrators, with the tools
-                        each role needs without the clutter.
+                    <p className="mt-4 text-base text-slate-600">
+                        One platform for students, staff, and administrators, with the tools each role needs without the clutter.
                     </p>
                 </div>
 
@@ -402,15 +382,15 @@ function Features() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true, margin: '-80px' }}
                                 transition={{ duration: 0.5, delay: index * 0.05 }}
-                                className="group relative rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:-translate-y-1 hover:border-brand-300 hover:shadow-xl hover:shadow-brand-500/5 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-brand-800"
+                                className="group relative rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition-all hover:-translate-y-1 hover:border-brand-300 hover:shadow-xl"
                             >
-                                <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-600 group-hover:text-white dark:bg-brand-950/40 dark:text-brand-400 dark:group-hover:bg-brand-600 dark:group-hover:text-white">
-                                    <Icon className="h-5 w-5" />
+                                <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-600 group-hover:text-white">
+                                    <Icon className="h-6 w-6" />
                                 </div>
-                                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                                <h3 className="text-lg font-bold text-[#0f172a]">
                                     {item.title}
                                 </h3>
-                                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                <p className="mt-2 text-sm leading-relaxed text-slate-600">
                                     {item.body}
                                 </p>
                             </motion.div>
@@ -445,7 +425,7 @@ const STEPS = [
     {
         icon: Bell,
         title: 'Get notified',
-        body: "We ring a chime and push a notification when it is your turn.",
+        body: 'We ring a chime and push a notification when it is your turn.',
     },
     {
         icon: BadgeCheck,
@@ -456,38 +436,27 @@ const STEPS = [
 
 function HowItWorks() {
     return (
-        <section
-            id="how-it-works"
-            className="relative overflow-hidden bg-slate-50 py-24 sm:py-32 dark:bg-slate-900"
-        >
-            <div className="pointer-events-none absolute -top-40 right-0 h-96 w-96 rounded-full bg-brand-500/10 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-40 left-0 h-96 w-96 rounded-full bg-brand-500/10 blur-3xl" />
+        <section id="how-it-works" className="relative overflow-hidden bg-white py-24 sm:py-32">
+            <div className="pointer-events-none absolute -top-40 right-0 h-96 w-96 rounded-full bg-brand-500/5 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-40 left-0 h-96 w-96 rounded-full bg-brand-500/5 blur-3xl" />
 
             <div className="relative mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
-                <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: '-80px' }}
-                    transition={{ duration: 0.5 }}
-                    className="mx-auto max-w-2xl text-center"
-                >
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-brand-300">
+                <div className="mx-auto max-w-2xl text-center">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-brand-700">
                         <ClipboardList className="h-3 w-3" />
                         Simple process
                     </span>
-                    <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-slate-100">
+                    <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-[#0f172a] sm:text-4xl">
                         How UniQueue works
                     </h2>
-                    <p className="mt-4 text-base text-slate-600 dark:text-slate-400">
+                    <p className="mt-4 text-base text-slate-600">
                         Five simple steps from your phone to the front of the line.
                     </p>
-                </motion.div>
+                </div>
 
-                <div className="mt-16 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+                <div className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
                     {STEPS.map((step, index) => {
                         const Icon = step.icon
-                        const isFirst = index === 0
-
                         return (
                             <motion.div
                                 key={step.title}
@@ -495,37 +464,18 @@ function HowItWorks() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true, margin: '-60px' }}
                                 transition={{ duration: 0.45, delay: index * 0.08 }}
-                                className={`group relative flex flex-col items-center rounded-2xl border-2 p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
-                                    isFirst
-                                        ? 'border-brand-300 bg-brand-50/60 shadow-sm dark:border-brand-700 dark:bg-brand-950/30'
-                                        : 'border-slate-200 bg-white hover:border-brand-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-brand-700'
-                                }`}
+                                className="relative flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
                             >
-                                <div
-                                    className={`flex h-14 w-14 items-center justify-center rounded-full transition-colors ${
-                                        isFirst
-                                            ? 'bg-brand-600 text-white shadow-md shadow-brand-600/25'
-                                            : 'bg-brand-100 text-brand-700 group-hover:bg-brand-600 group-hover:text-white dark:bg-brand-950/60 dark:text-brand-300 dark:group-hover:bg-brand-600 dark:group-hover:text-white'
-                                    }`}
-                                >
-                                    <Icon className="h-6 w-6" strokeWidth={2.2} />
+                                <div className="absolute -top-4 flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white shadow-md">
+                                    {index + 1}
                                 </div>
-
-                                <div
-                                    className={`mt-4 text-[10px] font-bold uppercase tracking-[0.18em] ${
-                                        isFirst
-                                            ? 'text-brand-700 dark:text-brand-300'
-                                            : 'text-slate-400 dark:text-slate-500'
-                                    }`}
-                                >
-                                    Step {index + 1}
+                                <div className="mt-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+                                    <Icon className="h-6 w-6" />
                                 </div>
-
-                                <h3 className="mt-1.5 text-base font-bold leading-snug text-slate-900 dark:text-slate-100">
+                                <h3 className="mt-5 text-base font-bold text-[#0f172a]">
                                     {step.title}
                                 </h3>
-
-                                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                <p className="mt-2 text-sm leading-relaxed text-slate-600">
                                     {step.body}
                                 </p>
                             </motion.div>
@@ -553,37 +503,36 @@ function FinalCTA() {
     const dashboardHref = user ? dashboards[user.role] || '/' : null
 
     return (
-        <section className="relative overflow-hidden bg-slate-950 py-24 sm:py-32">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-brand-900/40 via-slate-950 to-slate-950" />
+        <section className="relative overflow-hidden bg-[#0f172a] py-24 sm:py-32">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-brand-900/40 via-[#0f172a] to-[#0f172a]" />
             <div className="relative mx-auto max-w-4xl px-6 text-center sm:px-8">
-                <div className="mx-auto mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 shadow-lg shadow-brand-500/30">
-                    <Building2 className="h-7 w-7 text-white" />
+                <div className="mx-auto mb-8 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 shadow-lg shadow-brand-500/30">
+                    <Building2 className="h-8 w-8 text-white" />
                 </div>
-                <h2 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">
+                <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
                     Ready to end the queue?
                 </h2>
-                <p className="mx-auto mt-5 max-w-xl text-base text-slate-300 sm:text-lg">
-                    Join the universities using UniQueue to serve students faster, cut
-                    waiting-room chaos, and see every desk in real time.
+                <p className="mx-auto mt-6 max-w-xl text-base text-slate-300 sm:text-lg">
+                    Join the universities using UniQueue to serve students faster, cut waiting-room chaos, and see every desk in real time.
                 </p>
 
-                <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+                <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
                     <Link
                         to={dashboardHref || '/register'}
-                        className="group inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/30 transition-all hover:bg-brand-700 hover:shadow-xl"
+                        className="group inline-flex items-center gap-2 rounded-xl bg-brand-600 px-8 py-4 text-sm font-bold text-white shadow-lg shadow-brand-600/30 transition-all hover:bg-brand-700 hover:scale-105"
                     >
                         {dashboardHref ? 'Go to dashboard' : 'Get started free'}
-                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </Link>
                     <Link
                         to="/login"
-                        className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur-md transition-colors hover:border-white/40 hover:bg-white/10"
+                        className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-8 py-4 text-sm font-bold text-white backdrop-blur-md transition-colors hover:bg-white/10"
                     >
                         Sign in
                     </Link>
                 </div>
 
-                <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-xs text-slate-400">
+                <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm font-medium text-slate-400">
                     {['No credit card required', 'Free tier for small universities', 'Set up in under 10 minutes'].map(
                         (item) => (
                             <span key={item} className="inline-flex items-center gap-2">
@@ -604,7 +553,7 @@ function FinalCTA() {
 
 export default function Home() {
     return (
-        <div className="bg-white dark:bg-slate-950">
+        <div className="bg-white">
             <HeroCarousel />
             <Features />
             <HowItWorks />
