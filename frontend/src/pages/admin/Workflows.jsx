@@ -511,11 +511,7 @@ export default function Workflows() {
 
     return (
         <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-            <PageHeaderBlock
-                onCreate={() => setCreateOpen(true)}
-                onRefresh={() => load(true)}
-                refreshing={refreshing}
-            />
+            
 
             {loading ? (
                 <SkeletonQueueGrid count={6} />

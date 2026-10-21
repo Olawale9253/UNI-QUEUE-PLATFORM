@@ -12,7 +12,6 @@ import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import ExportButton from '../../components/ui/ExportButton'
-import PageHeader from '../../components/layout/PageHeader'
 import { SkeletonQueueGrid } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { stagger, staggerItem, expand } from '../../lib/motion'
@@ -379,7 +378,7 @@ export default function Queues() {
     if (loading) {
         return (
             <>
-                <PageHeader title="Services" description="Create and manage the services students can join." />
+                
                 <SkeletonQueueGrid count={6} />
             </>
         )
@@ -491,19 +490,7 @@ export default function Queues() {
 
     return (
         <>
-            <PageHeader
-                title="Services"
-                description="Create and manage the services students can join."
-                action={
-                    <Button
-                        icon={Plus}
-                        onClick={() => (showForm ? closeForm() : openCreate())}
-                        variant={showForm ? 'secondary' : 'primary'}
-                    >
-                        {showForm ? 'Cancel' : 'New service'}
-                    </Button>
-                }
-            />
+            
 
             <AnimatePresence>
                 {showForm && (

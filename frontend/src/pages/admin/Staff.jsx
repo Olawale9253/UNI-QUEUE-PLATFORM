@@ -20,7 +20,6 @@ import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import ExportButton from '../../components/ui/ExportButton'
-import PageHeader from '../../components/layout/PageHeader'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { stagger, staggerItem, expand } from '../../lib/motion'
@@ -263,19 +262,7 @@ export default function Staff() {
 
     return (
         <>
-            <PageHeader
-                title="Staff Management"
-                description="Add staff members and assign them to queues so they can serve students."
-                action={
-                    <Button
-                        icon={Plus}
-                        onClick={() => setShowCreate((itemValue2) => !itemValue2)}
-                        variant={showCreate ? 'secondary' : 'primary'}
-                    >
-                        {showCreate ? 'Cancel' : 'Add staff'}
-                    </Button>
-                }
-            />
+            
 
             <AnimatePresence>
                 {showCreate && (

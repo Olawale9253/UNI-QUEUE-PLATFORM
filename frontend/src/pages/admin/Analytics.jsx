@@ -27,7 +27,6 @@ import {
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
 import EmptyState from '../../components/ui/EmptyState'
-import PageHeader from '../../components/layout/PageHeader'
 import ExportButton from '../../components/ui/ExportButton'
 import { SkeletonStats, SkeletonCard } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
@@ -213,26 +212,7 @@ export default function Analytics() {
 
     return (
         <>
-            <PageHeader
-                title="Analytics"
-                description="Operational insights for your university."
-                action={
-                    <ExportButton
-                        rows={analytics.queues || []}
-                        columns={[
-                            { key: 'queueName', label: 'Queue' },
-                            { key: 'department', label: 'Department' },
-                            { key: 'ticketsToday', label: 'Tickets Today' },
-                            { key: 'servedToday', label: 'Served Today' },
-                            { key: 'waitingNow', label: 'Waiting Now' },
-                            { key: 'avgWaitMinutes', label: 'Avg Wait (min)' },
-                            { key: 'avgServiceMinutes', label: 'Avg Service (min)' },
-                            { key: 'noShowRate', label: 'No-show Rate (%)' },
-                            { key: 'avgRating', label: 'Avg Rating' },
-                        ]}
-                        filename="uniqueue-analytics-queues"
-                        label="Export queues"
-                    />
+            
                 }
             />
 

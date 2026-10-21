@@ -9,7 +9,6 @@ import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import EmptyState from '../../components/ui/EmptyState'
-import PageHeader from '../../components/layout/PageHeader'
 import { SkeletonRow } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
@@ -95,7 +94,7 @@ export default function Appointments() {
     if (loading) {
         return (
             <>
-                <PageHeader title="Appointments" description="Every appointment across your university." />
+                
                 <Card padded={false}>
                     {Array.from({ length: 5 }).map((unusedValue, index) => <SkeletonRow key={index} />)}
                 </Card>
@@ -105,10 +104,7 @@ export default function Appointments() {
 
     return (
         <>
-            <PageHeader
-                title="Appointments"
-                description="Every appointment students have booked across your university."
-            />
+            
 
             {/* Stat tiles */}
             {stats && (

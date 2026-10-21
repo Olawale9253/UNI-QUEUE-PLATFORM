@@ -6,7 +6,6 @@ import Card from '../../components/ui/Card'
 import Input from '../../components/ui/Input'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
-import PageHeader from '../../components/layout/PageHeader'
 import ExportButton from '../../components/ui/ExportButton'
 import { SkeletonRow } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
@@ -70,22 +69,7 @@ export default function Feedback() {
 
     return (
         <>
-            <PageHeader
-                title="Student Feedback"
-                description="What students say about your service."
-                action={
-                    <ExportButton
-                        rows={feedback}
-                        columns={[
-                            { key: 'ticketNumber', label: 'Ticket' },
-                            { key: 'userFullName', label: 'Student' },
-                            { key: 'rating', label: 'Rating' },
-                            { key: 'comment', label: 'Comment' },
-                            { key: 'createdAt', label: 'Submitted' },
-                        ]}
-                        filename="uniqueue-feedback"
-                        label="Export feedback"
-                    />
+            
                 }
             />
 

@@ -19,7 +19,6 @@ import Select from '../../components/ui/Select'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
-import PageHeader from '../../components/layout/PageHeader'
 import ChangeRoleButton from '../../components/users/ChangeRoleButton'
 import { useToastStore } from '../../store/toastStore'
 import { formatDate } from '../../lib/format'
@@ -145,24 +144,7 @@ export default function Students() {
 
     return (
         <>
-            <PageHeader
-                title="Students & Staff"
-                description="Everyone registered at your university."
-                action={
-                    <Button
-                        variant={showFilters ? 'secondary' : 'primary'}
-                        icon={Filter}
-                        onClick={() => setShowFilters((areFiltersVisible) => !areFiltersVisible)}
-                    >
-                        Filters
-                        {activeFilterCount > 0 && (
-                            <span className="ml-1.5 rounded-full bg-brand-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                                {activeFilterCount}
-                            </span>
-                        )}
-                    </Button>
-                }
-            />
+            
 
             <div className="mb-4">
                 <Input

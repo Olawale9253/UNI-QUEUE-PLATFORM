@@ -9,7 +9,6 @@ import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import ExportButton from '../../components/ui/ExportButton'
-import PageHeader from '../../components/layout/PageHeader'
 import { SkeletonBox, SkeletonSettingsCard } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
@@ -299,10 +298,7 @@ export default function Workload() {
     if (loading) {
         return (
             <>
-                <PageHeader
-                    title="Workload"
-                    description="See where students are piling up vs how many staff serve them."
-                />
+                
                 <WorkloadSkeleton />
             </>
         )
@@ -311,10 +307,7 @@ export default function Workload() {
     if (error || !data) {
         return (
             <>
-                <PageHeader
-                    title="Workload"
-                    description="See where students are piling up vs how many staff serve them."
-                />
+                
                 <EmptyState
                     icon={AlertTriangle}
                     variant="danger"
@@ -338,17 +331,7 @@ export default function Workload() {
 
     return (
         <>
-            <PageHeader
-                title="Workload"
-                description="See where students are piling up vs how many staff serve them."
-                action={
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => load(true)}
-                            disabled={refreshing}
-                            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                        >
-                            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            
                             Refresh
                         </button>
                         <ExportButton

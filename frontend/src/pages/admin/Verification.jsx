@@ -6,7 +6,6 @@ import {
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
-import PageHeader from '../../components/layout/PageHeader'
 import { useToastStore } from '../../store/toastStore'
 
 /* ───────────────────────────────────────────────────────── */
@@ -216,10 +215,7 @@ export default function Verification() {
 
     return (
         <div className="mx-auto max-w-5xl">
-            <PageHeader
-                title="Verifications"
-                description="Upload student lists and review pending registrations."
-            />
+            
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-3">

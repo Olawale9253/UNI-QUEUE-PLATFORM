@@ -10,7 +10,6 @@ import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
-import PageHeader from '../../components/layout/PageHeader'
 import ExportButton from '../../components/ui/ExportButton'
 import { useToastStore } from '../../store/toastStore'
 import { formatDateTime } from '../../lib/format'
@@ -103,25 +102,7 @@ export default function AuditLog() {
 
     return (
         <>
-            <PageHeader
-                title="Audit Logs"
-                description="Every meaningful action recorded at your university."
-                action={
-                    <div className="flex items-center gap-2">
-                        <ExportButton
-                            rows={logs}
-                            columns={[
-                                { key: 'createdAt', label: 'Date & Time' },
-                                { key: 'action', label: 'Activity' },
-                                { key: 'entityType', label: 'Target Type' },
-                                { key: 'entityId', label: 'Target ID' },
-                                { key: 'userId', label: 'User ID' },
-                                { key: 'ipAddress', label: 'IP Address' },
-                                { key: 'details', label: 'Details (JSON)' },
-                            ]}
-                            filename="uniqueue-audit-logs"
-                            label="Export CSV"
-                        />
+            
                         <Button
                             variant={showFilters ? 'secondary' : 'primary'}
                             icon={Filter}

@@ -11,7 +11,6 @@ import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import ExportButton from '../../components/ui/ExportButton'
-import PageHeader from '../../components/layout/PageHeader'
 import { SkeletonQueueGrid } from '../../components/ui/Skeleton'
 import OfficeFormModal from '../../components/admin/OfficeFormModal'
 import { useToastStore } from '../../store/toastStore'
@@ -380,7 +379,7 @@ export default function Offices() {
     if (loading) {
         return (
             <>
-                <PageHeader title="Offices" description="Manage your university's offices." />
+                
                 <SkeletonQueueGrid count={6} />
             </>
         )
@@ -388,15 +387,7 @@ export default function Offices() {
 
     return (
         <>
-            <PageHeader
-                title="Offices"
-                description="Manage the offices that host your services."
-                action={
-                    <Button icon={Plus} onClick={() => { setEditTarget(null); setShowModal(true) }}>
-                        New office
-                    </Button>
-                }
-            />
+            
 
             {offices.length > 0 && (
                 <div className="mb-5 flex flex-wrap items-center gap-3">

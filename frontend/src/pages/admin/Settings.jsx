@@ -8,7 +8,6 @@ import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import ImageUrlInput from '../../components/ui/ImageUrlInput'
-import PageHeader from '../../components/layout/PageHeader'
 import ClosedDatesPanel from '../../components/admin/ClosedDatesPanel'
 import { useToastStore } from '../../store/toastStore'
 import { useUniversityStore } from '../../store/universityStore'
@@ -145,10 +144,7 @@ export default function Settings() {
 
     return (
         <div className="mx-auto max-w-4xl">
-            <PageHeader
-                title="University Settings"
-                description="Manage branding, registration rules, and fresher verification."
-            />
+            
 
             <form onSubmit={save} className="space-y-6">
                 {/* BRANDING */}

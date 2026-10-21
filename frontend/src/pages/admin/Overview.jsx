@@ -17,7 +17,6 @@ import Input from '../../components/ui/Input'
 import Badge from '../../components/ui/Badge'
 import StatCard from '../../components/ui/StatCard'
 import EmptyState from '../../components/ui/EmptyState'
-import PageHeader from '../../components/layout/PageHeader'
 import { SkeletonStats, SkeletonQueueGrid } from '../../components/ui/Skeleton'
 import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../store/toastStore'
@@ -147,19 +146,7 @@ export default function Overview() {
 
     return (
         <>
-            <PageHeader
-                title="Administration"
-                description={`Managing operations for ${user?.fullName}'s university`}
-                action={
-                    <Button
-                        icon={Plus}
-                        onClick={() => setShowCreate((item) => !item)}
-                        variant={showCreate ? 'secondary' : 'primary'}
-                    >
-                        {showCreate ? 'Cancel' : 'New queue'}
-                    </Button>
-                }
-            />
+            
 
 
             <AnimatePresence>
