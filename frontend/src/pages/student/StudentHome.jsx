@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
+import Button from '../../components/ui/Button' // 🔧 ADDED: Import Button component
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { groupQueuesByOffice } from '../../lib/groupQueues'
 
@@ -48,7 +49,6 @@ function StatTile({ label, value, icon: Icon, accent, valueColor, to, ctaLabel, 
 
 function LiveQueueCard({ office }) {
     const hasQueue = office.queue != null
-    // isOpen is determined by the backend (checks weekends, holidays, and operating hours)
     const isOpen = hasQueue && office.queue?.isOpen === true
     const waitingCount = office.queue?.waitingCount ?? 0
     const currentlyServing = office.queue?.currentlyServing || 'None'
@@ -110,16 +110,17 @@ function LiveQueueCard({ office }) {
                 </div>
             </div>
 
-            <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800">
-                <Link
-                    to="/student/queues"
-                    className={`inline-flex items-center gap-1 text-xs font-medium transition-colors ${
-                        isOpen
-                            ? 'text-brand-600 hover:text-brand-700 dark:text-brand-400'
-                            : 'text-slate-400 hover:text-slate-500'
-                    }`}
-                >
-                    {isOpen ? 'Join this queue →' : 'View service details →'}
+            {/* 🔧 FIX: Replaced text link with a professional, full-width Button inside a Link wrapper */}
+            <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800">
+                <Link to="/student/queues" className="block w-full">
+                    <Button
+                        variant={isOpen ? 'primary' : 'secondary'}
+                        size="sm"
+                        className="w-full justify-center gap-2"
+                    >
+                        {isOpen ? 'Join this queue' : 'View service details'}
+                        <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
                 </Link>
             </div>
         </Card>
@@ -359,15 +360,15 @@ export default function StudentHome() {
                 transition={{ delay: 0.2 }}
             >
                 <div className="mb-4 flex items-center justify-between">
-                    {/* Changed from "Live Queues" to "Campus Queues" */}
                     <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                         Campus Queues
                     </h2>
-                    <Link
-                        to="/student/queues"
-                        className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
-                    >
-                        View my queues →
+                    {/* 🔧 FIX: Replaced text link with a professional Button */}
+                    <Link to="/student/queues">
+                        <Button variant="secondary" size="sm" className="gap-2">
+                            View my queues
+                            <ArrowRight className="h-3.5 w-3.5" />
+                        </Button>
                     </Link>
                 </div>
 
