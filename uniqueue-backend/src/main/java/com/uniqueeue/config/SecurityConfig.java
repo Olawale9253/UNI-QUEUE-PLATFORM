@@ -2,6 +2,10 @@ package com.uniqueeue.config;
 
 import com.uniqueeue.security.CustomUserDetailsService;
 import com.uniqueeue.security.JwtAuthenticationFilter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -23,6 +27,9 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
 
 @Configuration
 @EnableMethodSecurity
@@ -120,27 +127,19 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
+                // 🔧 FIX: Add SSE Token filter BEFORE the JWT filter
+                .addFilterBefore(new SseTokenFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
                 // ─── SECURITY HEADERS ───
                 .headers(headers -> headers
-                        // X-Content-Type-Options: nosniff — blocks MIME sniffing
                         .contentTypeOptions(Customizer.withDefaults())
-
-                        // X-Frame-Options: SAMEORIGIN — blocks clickjacking, allows H2 console
                         .frameOptions(frame -> frame.sameOrigin())
-
-                        // Strict-Transport-Security — force HTTPS for a year
                         .httpStrictTransportSecurity(hsts -> hsts
                                 .includeSubDomains(true)
                                 .maxAgeInSeconds(31_536_000))
-
-                        // Referrer-Policy: no-referrer — never leak URLs to third parties
                         .referrerPolicy(r -> r.policy(
                                 ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
-
-                        // Content-Security-Policy — the big one. Blocks inline/remote
-                        // script injection on any response the backend serves.
                         .contentSecurityPolicy(csp -> csp.policyDirectives(
                                 "default-src 'none'; " +
                                         "script-src 'self'; " +
@@ -156,5 +155,38 @@ public class SecurityConfig {
                 );
 
         return http.build();
+    }
+
+    // 🔧 NEW: Custom Filter to handle EventSource token authentication
+    public static class SseTokenFilter extends OncePerRequestFilter {
+        @Override
+        protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+                throws ServletException, IOException {
+
+            String path = request.getRequestURI();
+
+            // Check if it's an SSE request and there's no Authorization header
+            if (path.startsWith("/api/events/") && request.getHeader("Authorization") == null) {
+                String token = request.getParameter("token");
+
+                if (token != null && !token.isEmpty()) {
+                    // Wrap the request to inject the Authorization header
+                    HttpServletRequestWrapper wrappedRequest = new HttpServletRequestWrapper(request) {
+                        @Override
+                        public String getHeader(String name) {
+                            if ("Authorization".equalsIgnoreCase(name)) {
+                                return "Bearer " + token;
+                            }
+                            return super.getHeader(name);
+                        }
+                    };
+
+                    filterChain.doFilter(wrappedRequest, response);
+                    return;
+                }
+            }
+
+            filterChain.doFilter(request, response);
+        }
     }
 }
