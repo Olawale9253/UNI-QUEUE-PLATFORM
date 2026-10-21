@@ -298,7 +298,6 @@ export default function Workload() {
     if (loading) {
         return (
             <>
-                
                 <WorkloadSkeleton />
             </>
         )
@@ -307,7 +306,6 @@ export default function Workload() {
     if (error || !data) {
         return (
             <>
-                
                 <EmptyState
                     icon={AlertTriangle}
                     variant="danger"
@@ -331,36 +329,40 @@ export default function Workload() {
 
     return (
         <>
-            
-                            Refresh
-                        </button>
-                        <ExportButton
-                            rows={(data?.offices || []).map((office) => ({
-                                officeId: office.officeId,
-                                officeName: office.officeName,
-                                queueCount: office.queueCount,
-                                waitingCount: office.waitingCount,
-                                staffCount: office.staffCount,
-                                ratio: office.ratio,
-                                estWaitMinutes: office.estWaitMinutes,
-                                level: office.level,
-                            }))}
-                            columns={[
-                                { key: 'officeId', label: 'Office ID' },
-                                { key: 'officeName', label: 'Office' },
-                                { key: 'queueCount', label: 'Services' },
-                                { key: 'waitingCount', label: 'Waiting' },
-                                { key: 'staffCount', label: 'Staff' },
-                                { key: 'ratio', label: 'Ratio (students / staff)' },
-                                { key: 'estWaitMinutes', label: 'Est. Wait (min)' },
-                                { key: 'level', label: 'Load Level' },
-                            ]}
-                            filename="uniqueue-workload"
-                            label="Export"
-                        />
-                    </div>
-                }
-            />
+            <div className="mb-5 flex items-center justify-end gap-3">
+                <button
+                    onClick={() => load(true)}
+                    disabled={refreshing}
+                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                >
+                    <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                    Refresh
+                </button>
+                <ExportButton
+                    rows={(data?.offices || []).map((office) => ({
+                        officeId: office.officeId,
+                        officeName: office.officeName,
+                        queueCount: office.queueCount,
+                        waitingCount: office.waitingCount,
+                        staffCount: office.staffCount,
+                        ratio: office.ratio,
+                        estWaitMinutes: office.estWaitMinutes,
+                        level: office.level,
+                    }))}
+                    columns={[
+                        { key: 'officeId', label: 'Office ID' },
+                        { key: 'officeName', label: 'Office' },
+                        { key: 'queueCount', label: 'Services' },
+                        { key: 'waitingCount', label: 'Waiting' },
+                        { key: 'staffCount', label: 'Staff' },
+                        { key: 'ratio', label: 'Ratio (students / staff)' },
+                        { key: 'estWaitMinutes', label: 'Est. Wait (min)' },
+                        { key: 'level', label: 'Load Level' },
+                    ]}
+                    filename="uniqueue-workload"
+                    label="Export"
+                />
+            </div>
 
             <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
                 <SummaryTile

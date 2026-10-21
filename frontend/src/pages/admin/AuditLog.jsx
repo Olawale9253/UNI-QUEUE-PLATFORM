@@ -102,22 +102,20 @@ export default function AuditLog() {
 
     return (
         <>
-            
-                        <Button
-                            variant={showFilters ? 'secondary' : 'primary'}
-                            icon={Filter}
-                            onClick={() => setShowFilters((v) => !v)}
-                        >
-                            Filters
-                            {activeFilterCount > 0 && (
-                                <span className="ml-1.5 rounded-full bg-brand-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                                    {activeFilterCount}
-                                </span>
-                            )}
-                        </Button>
-                    </div>
-                }
-            />
+            <div className="mb-6 flex justify-end">
+                <Button
+                    variant={showFilters ? 'secondary' : 'primary'}
+                    icon={Filter}
+                    onClick={() => setShowFilters((v) => !v)}
+                >
+                    Filters
+                    {activeFilterCount > 0 && (
+                        <span className="ml-1.5 rounded-full bg-brand-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                            {activeFilterCount}
+                        </span>
+                    )}
+                </Button>
+            </div>
 
             <AnimatePresence>
                 {showFilters && (

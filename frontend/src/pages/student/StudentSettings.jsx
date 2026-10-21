@@ -10,7 +10,6 @@ import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import ThemeToggle from '../../components/ui/ThemeToggle'
-import PageHeader from '../../components/layout/PageHeader'
 import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../store/toastStore'
 import { usePrefsStore } from '../../store/prefsStore'
@@ -20,14 +19,6 @@ import { useWebPush } from '../../hooks/useWebPush'
 /* ------------------------------------------------------------------ */
 /*  Layout primitives                                                  */
 /* ------------------------------------------------------------------ */
-
-function SettingsPage({ children }) {
-    return (
-        <div className="mx-auto w-full max-w-3xl space-y-6">
-            {children}
-        </div>
-    )
-}
 
 function SectionCard({ icon: Icon, title, description, danger = false, children }) {
     return (
@@ -665,38 +656,31 @@ export default function StudentSettings() {
 
     if (loading) {
         return (
-            <SettingsPage>
+            <div className="space-y-6">
                 <div className="h-16 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
                 <div className="h-64 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
                 <div className="h-56 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
                 <div className="h-32 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
-            </SettingsPage>
+            </div>
         )
     }
 
     if (error) {
         return (
-            <SettingsPage>
-                <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-8 text-center dark:border-rose-900 dark:bg-rose-950/20">
-                    <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-rose-500" />
-                    <p className="text-sm font-medium text-rose-800 dark:text-rose-300">
-                        {error}
-                    </p>
-                    <Button onClick={load} className="mt-4">
-                        Try again
-                    </Button>
-                </div>
-            </SettingsPage>
+            <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-8 text-center dark:border-rose-900 dark:bg-rose-950/20">
+                <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-rose-500" />
+                <p className="text-sm font-medium text-rose-800 dark:text-rose-300">
+                    {error}
+                </p>
+                <Button onClick={load} className="mt-4">
+                    Try again
+                </Button>
+            </div>
         )
     }
 
     return (
-        <SettingsPage>
-            <PageHeader
-                workspace="Student Workspace"
-                description="Manage your profile, security, and preferences."
-            />
-
+        <div className="space-y-6">
             <ProfileSection
                 profile={profile}
                 onSaved={setProfile}
@@ -709,6 +693,6 @@ export default function StudentSettings() {
             <NotificationsSection />
             <AppearanceSection />
             <AccountSection />
-        </SettingsPage>
+        </div>
     )
 }
