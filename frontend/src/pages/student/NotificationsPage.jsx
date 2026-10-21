@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Bell, CheckCircle2, Info, AlertTriangle, Loader2, RefreshCw } from 'lucide-react'
+import { Bell, CheckCircle2, Info, AlertTriangle, Loader2 } from 'lucide-react'
 import api from '../../api/axios'
 import { useToastStore } from '../../store/toastStore'
 
@@ -7,41 +7,24 @@ export default function NotificationsPage() {
     const { push } = useToastStore()
     const [notifications, setNotifications] = useState([])
     const [loading, setLoading] = useState(true)
-    const [loadError, setLoadError] = useState('')
+    const [error, setError] = useState(null)
 
     useEffect(() => {
-        let cancelled = false
-        api.get('/api/user/notifications')
+        api.get('/api/notifications')
             .then(res => {
-                if (!cancelled) setNotifications(res.data?.data || [])
+                setNotifications(res.data?.data || [])
+                setError(null)
             })
             .catch(err => {
-                if (cancelled) return
-                const message = err.message || 'Failed to load notifications'
-                setLoadError(message)
-                push({ type: 'error', message })
+                console.error('[Notifications] load failed:', {
+                    status: err.response?.status,
+                    message: err.response?.data?.message,
+                    fullError: err.response?.data,
+                })
+                setError(err.response?.data?.message || err.message || 'Failed to load notifications')
             })
-            .finally(() => {
-                if (!cancelled) setLoading(false)
-            })
-
-        return () => { cancelled = true }
-    }, [push])
-
-    const loadNotifications = async () => {
-        setLoading(true)
-        setLoadError('')
-        try {
-            const res = await api.get('/api/user/notifications')
-            setNotifications(res.data?.data || [])
-        } catch (err) {
-            const message = err.message || 'Failed to load notifications'
-            setLoadError(message)
-            push({ type: 'error', message })
-        } finally {
-            setLoading(false)
-        }
-    }
+            .finally(() => setLoading(false))
+    }, [])
 
     if (loading) {
         return (
@@ -51,22 +34,16 @@ export default function NotificationsPage() {
         )
     }
 
-    if (loadError) {
+    if (error) {
         return (
-            <div className="mx-auto max-w-3xl rounded-xl border border-rose-200 bg-white p-8 text-center shadow-sm dark:border-rose-900/50 dark:bg-slate-900">
-                <AlertTriangle className="mx-auto h-8 w-8 text-rose-500" />
-                <h2 className="mt-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    Couldn’t load notifications
-                </h2>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{loadError}</p>
-                <button
-                    type="button"
-                    onClick={loadNotifications}
-                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
-                >
-                    <RefreshCw className="h-4 w-4" />
-                    Try again
-                </button>
+            <div className="mx-auto max-w-3xl">
+                <div className="rounded-xl border border-rose-200 bg-rose-50 p-8 text-center dark:border-rose-900 dark:bg-rose-950/20">
+                    <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-rose-500" />
+                    <h2 className="text-base font-bold text-rose-800 dark:text-rose-300">
+                        Couldn't load notifications
+                    </h2>
+                    <p className="mt-1 text-sm text-rose-600 dark:text-rose-400">{error}</p>
+                </div>
             </div>
         )
     }
@@ -87,9 +64,15 @@ export default function NotificationsPage() {
                         </div>
                     ) : (
                         notifications.map(n => {
-                            const type = n.type?.toLowerCase() || 'info'
-                            const Icon = type === 'success' ? CheckCircle2 : type === 'warning' ? AlertTriangle : type === 'info' ? Info : Bell
-                            const color = type === 'success' ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : type === 'warning' ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/30' : 'text-brand-500 bg-brand-50 dark:bg-brand-950/30'
+                            const type = (n.type || 'SYSTEM').toLowerCase()
+                            const Icon = type.includes('success') ? CheckCircle2 :
+                                type.includes('warn') ? AlertTriangle :
+                                    type.includes('info') ? Info : Bell
+                            const color = type.includes('success')
+                                ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/30'
+                                : type.includes('warn')
+                                    ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/30'
+                                    : 'text-brand-500 bg-brand-50 dark:bg-brand-950/30'
 
                             return (
                                 <div key={n.id} className={`flex gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 ${!n.isRead ? 'bg-brand-50/30 dark:bg-brand-950/10' : ''}`}>
@@ -103,7 +86,7 @@ export default function NotificationsPage() {
                                         <p className="mt-1 text-xs text-slate-500">{n.message}</p>
                                     </div>
                                     <div className="text-xs text-slate-400 whitespace-nowrap">
-                                        {new Date(n.createdAt).toLocaleDateString()}
+                                        {n.createdAt ? new Date(n.createdAt).toLocaleDateString() : ''}
                                     </div>
                                 </div>
                             )
@@ -111,6 +94,6 @@ export default function NotificationsPage() {
                     )}
                 </div>
             </div>
-        </div>
+        </div>  
     )
 }
