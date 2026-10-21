@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
     X as CloseIcon, Building2, MapPin, AlertCircle, Trash2, Clock,
+    Type, FileText, Sparkles
 } from 'lucide-react'
 import api from '../../api/axios'
 import Button from '../ui/Button'
@@ -19,6 +20,38 @@ const ICON_OPTIONS = [
     { value: 'shield', label: 'Security' },
     { value: 'users', label: 'Services' },
 ]
+
+function Field({ label, icon: Icon, hint, error, children }) {
+    return (
+        <div className="space-y-1.5">
+            <label className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
+                {Icon && <Icon className="h-3.5 w-3.5" />}
+                {label}
+            </label>
+            {children}
+            {hint && !error && <p className="text-[11px] leading-relaxed text-slate-400">{hint}</p>}
+            {error && <p className="text-[11px] leading-relaxed text-rose-600 dark:text-rose-400">{error}</p>}
+        </div>
+    )
+}
+
+function Toggle({ checked, onChange }) {
+    return (
+        <button
+            type="button"
+            role="switch"
+            aria-checked={checked}
+            onClick={() => onChange(!checked)}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${
+                checked ? 'bg-brand-600 hover:bg-brand-700' : 'bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600'
+            }`}
+        >
+            <span className={`inline-flex h-4 w-4 transform items-center justify-center rounded-full bg-white shadow transition-transform duration-200 ${
+                checked ? 'translate-x-6' : 'translate-x-1'
+            }`} />
+        </button>
+    )
+}
 
 export default function OfficeFormModal({ office, onClose, onSaved, onDeleted }) {
     const { push } = useToastStore()
@@ -107,11 +140,9 @@ export default function OfficeFormModal({ office, onClose, onSaved, onDeleted })
         }
     }
 
+    // Premium input styling
     const inputClass =
-        'w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500'
-
-    const labelClass =
-        'mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300'
+        'w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition-all placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500'
 
     return (
         <>
@@ -122,114 +153,106 @@ export default function OfficeFormModal({ office, onClose, onSaved, onDeleted })
                 onClick={() => !saving && !deleting && onClose()}
                 className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm"
             />
-            <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4">
+            <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 py-8 sm:py-12">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.96, y: 12 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.96, y: 12 }}
                     transition={{ duration: 0.2 }}
                     onClick={(eventValue) => eventValue.stopPropagation()}
-                    className="relative my-8 w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+                    className="relative w-full max-w-xl rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
                 >
-                    <button
-                        onClick={() => !saving && !deleting && onClose()}
-                        className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
-                        aria-label="Close"
-                    >
-                        <CloseIcon className="h-4 w-4" />
-                    </button>
-
-                    <div className="mb-5 flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-950/40">
-                            <Building2 className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+                    {/* Modal Header */}
+                    <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5 dark:border-slate-800">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
+                                <Building2 className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                                    {isEdit ? `Edit ${office.name}` : 'Create office'}
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    {isEdit ? 'Update the office details and working hours' : 'An office groups the services students see'}
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                                {isEdit ? `Edit ${office.name}` : 'Create office'}
-                            </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {isEdit ? 'Update the office details' : 'An office groups the services students see'}
-                            </p>
-                        </div>
+                        <button
+                            onClick={() => !saving && !deleting && onClose()}
+                            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                        >
+                            <CloseIcon className="h-5 w-5" />
+                        </button>
                     </div>
 
-                    <form onSubmit={save} className="space-y-4">
-                        <div>
-                            <label className={labelClass}>Office name</label>
-                            <input
-                                type="text"
-                                value={form.name}
-                                onChange={setField('name')}
-                                placeholder="Enter office name"
-                                required
-                                autoFocus
-                                className={inputClass}
-                            />
-                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                Examples: Bursary, Registry, Library, Health Centre
-                            </p>
-                        </div>
-
-                        <div>
-                            <label className={labelClass}>Location (optional)</label>
-                            <div className="relative">
-                                <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <form onSubmit={save} className="space-y-6 p-6">
+                        {/* Basic Info Section */}
+                        <div className="space-y-4">
+                            <Field label="Office name" icon={Type} hint="Examples: Bursary, Registry, Library, Health Centre">
                                 <input
                                     type="text"
-                                    value={form.location}
-                                    onChange={setField('location')}
-                                    placeholder="Enter office location"
-                                    className={`${inputClass} pl-9`}
+                                    value={form.name}
+                                    onChange={setField('name')}
+                                    placeholder="Enter office name"
+                                    required
+                                    autoFocus
+                                    className={inputClass}
                                 />
-                            </div>
+                            </Field>
+
+                            <Field label="Location" icon={MapPin}>
+                                <div className="relative">
+                                    <MapPin className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        value={form.location}
+                                        onChange={setField('location')}
+                                        placeholder="e.g. Admin Block, 2nd Floor"
+                                        className={`${inputClass} pl-10`}
+                                    />
+                                </div>
+                            </Field>
+
+                            <Field label="Description" icon={FileText} hint="A brief summary of what this office handles">
+                                <textarea
+                                    value={form.description}
+                                    onChange={setField('description')}
+                                    placeholder="What does this office do?"
+                                    rows={3}
+                                    className={`${inputClass} resize-none`}
+                                />
+                            </Field>
                         </div>
 
-                        <div>
-                            <label className={labelClass}>Description (optional)</label>
-                            <textarea
-                                value={form.description}
-                                onChange={setField('description')}
-                                placeholder="What does this office do?"
-                                rows={3}
-                                className={`${inputClass} resize-none`}
-                            />
-                        </div>
-
-                        {/* Working hours + slot duration */}
-                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
-                            <div className="mb-3 flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-slate-500" />
-                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Working hours & appointments
-                </span>
+                        {/* Working Hours & Appointments Section */}
+                        <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-5 dark:border-slate-800 dark:bg-slate-900/50">
+                            <div className="mb-4 flex items-center gap-2">
+                                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
+                                    <Clock className="h-3.5 w-3.5 text-brand-600 dark:text-brand-400" />
+                                </div>
+                                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                                    Working hours & appointments
+                                </h4>
                             </div>
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                                <div>
-                                    <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
-                                        Opens at
-                                    </label>
+
+                            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                                <Field label="Opens at">
                                     <input
                                         type="time"
                                         value={form.openingTime}
                                         onChange={setField('openingTime')}
                                         className={inputClass}
                                     />
-                                </div>
-                                <div>
-                                    <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
-                                        Closes at
-                                    </label>
+                                </Field>
+                                <Field label="Closes at">
                                     <input
                                         type="time"
                                         value={form.closingTime}
                                         onChange={setField('closingTime')}
                                         className={inputClass}
                                     />
-                                </div>
-                                <div>
-                                    <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
-                                        Slot duration (min)
-                                    </label>
+                                </Field>
+                                <Field label="Slot duration" hint="In minutes">
                                     <input
                                         type="number"
                                         min="5"
@@ -238,50 +261,57 @@ export default function OfficeFormModal({ office, onClose, onSaved, onDeleted })
                                         onChange={setField('slotDurationMinutes')}
                                         className={inputClass}
                                     />
-                                </div>
+                                </Field>
                             </div>
                         </div>
 
-                        <div>
-                            <label className={labelClass}>Icon</label>
-                            <select
-                                value={form.icon}
-                                onChange={setField('icon')}
-                                className={inputClass}
-                            >
-                                {ICON_OPTIONS.map((item) => (
-                                    <option key={item.value} value={item.value}>
-                                        {item.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 p-4 dark:border-slate-700">
-                            <div>
-                                <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                    Active
-                                </div>
-                                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                                    Students can find and join services from this office
-                                </p>
+                        {/* Icon & Status */}
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+                            <div className="flex-1">
+                                <Field label="Icon" icon={Sparkles}>
+                                    <select
+                                        value={form.icon}
+                                        onChange={setField('icon')}
+                                        className={inputClass}
+                                    >
+                                        {ICON_OPTIONS.map((item) => (
+                                            <option key={item.value} value={item.value}>
+                                                {item.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </Field>
                             </div>
-                            <input
-                                type="checkbox"
-                                checked={form.isActive}
-                                onChange={(eventValue2) => setForm({ ...form, isActive: eventValue2.target.checked })}
-                                className="h-5 w-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                            />
-                        </label>
+
+                            <div className="flex-1">
+                                <Field label="Status">
+                                    <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 dark:border-slate-700 dark:bg-slate-800">
+                                        <div>
+                                            <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                                Active
+                                            </div>
+                                            <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                                                Accepting students
+                                            </div>
+                                        </div>
+                                        <Toggle
+                                            checked={form.isActive}
+                                            onChange={(val) => setForm({ ...form, isActive: val })}
+                                        />
+                                    </div>
+                                </Field>
+                            </div>
+                        </div>
 
                         {error && (
-                            <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
-                                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                            <div className="flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/20 dark:text-rose-400">
+                                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                                 <span>{error}</span>
                             </div>
                         )}
 
-                        <div className="flex items-center justify-between gap-2 pt-2">
+                        {/* Modal Footer */}
+                        <div className="flex items-center justify-between border-t border-slate-100 pt-5 dark:border-slate-800">
                             {isEdit && (
                                 confirmDelete ? (
                                     <div className="flex items-center gap-2">
@@ -299,9 +329,9 @@ export default function OfficeFormModal({ office, onClose, onSaved, onDeleted })
                                             size="sm"
                                             onClick={destroy}
                                             loading={deleting}
-                                            className="bg-rose-600 hover:bg-rose-700"
+                                            className="bg-rose-600 hover:bg-rose-700 text-white"
                                         >
-                                            Yes, delete
+                                            Confirm delete
                                         </Button>
                                     </div>
                                 ) : (
@@ -309,13 +339,14 @@ export default function OfficeFormModal({ office, onClose, onSaved, onDeleted })
                                         type="button"
                                         onClick={() => setConfirmDelete(true)}
                                         disabled={saving || deleting}
-                                        className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-rose-600 transition-colors hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                                        className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-50 dark:hover:bg-rose-950/40"
                                     >
                                         <Trash2 className="h-3.5 w-3.5" />
                                         Delete office
                                     </button>
                                 )
                             )}
+
                             <div className="ml-auto flex gap-2">
                                 <Button type="button" variant="secondary" onClick={onClose} disabled={saving || deleting}>
                                     Cancel

@@ -285,9 +285,10 @@ export default function Offices() {
 
     const load = async () => {
         try {
+            // 🔧 FIX: Added ?t=timestamp to bust the cache and force a fresh fetch
             const [office, queue] = await Promise.all([
-                api.get('/api/admin/offices'),
-                api.get('/api/admin/queues'),
+                api.get(`/api/admin/offices?t=${Date.now()}`),
+                api.get(`/api/admin/queues?t=${Date.now()}`),
             ])
             setOffices(office.data?.data || [])
             setQueues(queue.data?.data || [])
