@@ -67,7 +67,8 @@ public class EmailService {
             mailSender.send(message);
             log.info("📧 Sent email to {} · {}", to, subject);
         } catch (Exception ex) {
-            log.error("📧 Failed to send email to {} — {}", to, ex.getMessage());
+            // 🔧 FIX: Added `ex` at the end so the console prints the full stack trace
+            log.error("📧 Failed to send email to {} — {}", to, ex.getMessage(), ex);
         }
     }
 
@@ -484,3 +485,4 @@ public class EmailService {
                 .replace("'", "&#39;");
     }
 }
+
