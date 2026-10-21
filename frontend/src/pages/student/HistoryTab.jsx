@@ -188,9 +188,8 @@ export default function HistoryTab() {
 
     return (
         <div>
-            {/* ═══ Sticky top: title + search + filters ═══ */}
-            {/* 🔧 FIX: top-16 (aligns below 64px navbar), opaque bg, no blur */}
-            <div className="sticky top-16 z-20 -mx-3 mb-4 bg-slate-50 px-3 pb-3 pt-2 dark:bg-slate-950 sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8">
+            {/* 🔧 FIX: top-0 and negative margins to stick flush to the top of the new scrolling <main> container */}
+            <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-4 bg-slate-50 px-3 pb-3 pt-4 dark:bg-slate-950 sm:-mx-5 sm:-mt-6 sm:px-5 sm:pt-6 lg:-mx-8 lg:-mt-8 lg:px-8 lg:pt-8">
                 <div className="mb-4">
                     <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                         History

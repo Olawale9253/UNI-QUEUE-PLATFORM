@@ -49,11 +49,7 @@ function SidebarLink({ item, collapsed, onClick }) {
 }
 
 export default function DashboardLayout({ tabs, title, description, action, children }) {
-    const {
-        sidebarCollapsed,
-        mobileSidebarOpen,
-        closeMobileSidebar,
-    } = useUIStore()
+    const { sidebarCollapsed, mobileSidebarOpen, closeMobileSidebar } = useUIStore()
     const { user } = useAuthStore()
     const location = useLocation()
 
@@ -78,9 +74,10 @@ export default function DashboardLayout({ tabs, title, description, action, chil
     }
 
     return (
-        <div className="flex min-h-[calc(100vh-4rem)] w-full">
+        // 🔧 FIX: h-[calc(100vh-4rem)] and overflow-hidden makes this an "App Shell"
+        <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-slate-50 dark:bg-slate-950">
             <aside
-                className={`sticky top-16 hidden h-[calc(100vh-4rem)] shrink-0 self-start border-r border-slate-200 bg-white/90 shadow-sm transition-[width] duration-300 ease-out md:flex md:flex-col dark:border-slate-800 dark:bg-slate-900/90 ${
+                className={`hidden h-full shrink-0 border-r border-slate-200 bg-white/90 shadow-sm transition-[width] duration-300 ease-out md:flex md:flex-col dark:border-slate-800 dark:bg-slate-900/90 ${
                     sidebarCollapsed ? 'w-16' : 'w-56'
                 }`}
             >
@@ -167,7 +164,8 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                 )}
             </AnimatePresence>
 
-            <main className="min-w-0 flex-1">
+            {/* 🔧 FIX: overflow-y-auto makes this the ONLY scrolling area */}
+            <main className="min-w-0 flex-1 overflow-y-auto">
                 <div className="mx-auto w-full max-w-[1680px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
                     {title && (
                         <PageHeader title={title} description={description} action={action} />
