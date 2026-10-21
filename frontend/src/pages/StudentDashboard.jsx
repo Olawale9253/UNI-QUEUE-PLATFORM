@@ -53,10 +53,13 @@ export default function StudentDashboard() {
     return (
         <DashboardLayout tabs={tabs}>
             {isHome && (
-                <PageHeader
-                    workspace="Student Workspace"
-                    description="Join a queue, track your position, and manage your tickets."
-                />
+                // 🔧 FIX: Sticky wrapper so the greeting & holiday banner lock to the top
+                <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-4 bg-slate-50 px-3 pb-3 pt-4 dark:bg-slate-950 sm:-mx-5 sm:-mt-6 sm:px-5 sm:pt-6 lg:-mx-8 lg:-mt-8 lg:px-8 lg:pt-8">
+                    <PageHeader
+                        workspace="Student Workspace"
+                        description="Join a queue, track your position, and manage your tickets."
+                    />
+                </div>
             )}
             <Routes>
                 <Route index element={<StudentHome />} />
