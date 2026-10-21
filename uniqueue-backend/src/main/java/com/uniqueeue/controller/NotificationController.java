@@ -19,7 +19,6 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
-    /** Badge count for the bell. */
     @GetMapping("/unread/count")
     public ResponseEntity<ApiResponse<Map<String, Long>>> unreadCount(
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -27,7 +26,6 @@ public class NotificationController {
         return ResponseEntity.ok(ApiResponse.success("Unread count", Map.of("count", count)));
     }
 
-    /** List all notifications (newest first). */
     @GetMapping
     public ResponseEntity<ApiResponse<List<NotificationResponse>>> list(
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -35,7 +33,6 @@ public class NotificationController {
         return ResponseEntity.ok(ApiResponse.success("Notifications fetched", list));
     }
 
-    /** Mark a single notification as read. */
     @PostMapping("/{id}/read")
     public ResponseEntity<ApiResponse<Void>> markRead(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -44,7 +41,6 @@ public class NotificationController {
         return ResponseEntity.ok(ApiResponse.success("Marked as read", null));
     }
 
-    /** Mark every unread notification as read. */
     @PostMapping("/read-all")
     public ResponseEntity<ApiResponse<Void>> markAllRead(
             @AuthenticationPrincipal UserPrincipal principal) {

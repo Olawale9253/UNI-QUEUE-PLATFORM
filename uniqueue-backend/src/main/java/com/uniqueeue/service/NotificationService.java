@@ -35,7 +35,7 @@ public class NotificationService {
         try {
             Notification notificationValue = Notification.builder()
                     .user(user)
-                    .type(type)
+                    .type(type.name())         // ← stored as String now
                     .title(title)
                     .message(message)
                     .link(link)

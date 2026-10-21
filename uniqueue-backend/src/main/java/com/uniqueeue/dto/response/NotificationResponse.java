@@ -19,7 +19,7 @@ public class NotificationResponse {
     public static NotificationResponse from(Notification notification) {
         return NotificationResponse.builder()
                 .id(notification.getId())
-                .type(notification.getType() != null ? notification.getType().name() : "SYSTEM")
+                .type(notification.getType() != null ? notification.getType() : "SYSTEM")
                 .title(notification.getTitle())
                 .message(notification.getMessage())
                 .link(notification.getLink())
