@@ -90,7 +90,6 @@ export default function VerifyEmail() {
             setLoading(false)
         }
     }
-
     const resend = async () => {
         if (!email.trim()) {
             setError('Enter your email to resend the code')
@@ -99,9 +98,11 @@ export default function VerifyEmail() {
         setResending(true)
         setError(null)
         try {
+            // 🔧 FIX: Added 15-second timeout so it doesn't spin forever
             await api.post('/api/auth/resend-verification', {
                 email: email.trim(),
-            })
+            }, { timeout: 15000 })
+
             setResendIn(30)
             push({
                 type: 'success',
@@ -109,7 +110,14 @@ export default function VerifyEmail() {
             })
             codeInputRef.current?.focus()
         } catch (err) {
-            setError(err.message || 'Failed to resend code')
+            // 🔧 FIX: Better error handling
+            if (err.code === 'ECONNABORTED') {
+                setError('The server took too long to respond. Please try again later.')
+            } else if (err.response?.status === 500) {
+                setError('The email server is currently down. Please check your backend SMTP settings.')
+            } else {
+                setError(err.response?.data?.message || err.message || 'Failed to resend code')
+            }
         } finally {
             setResending(false)
         }
