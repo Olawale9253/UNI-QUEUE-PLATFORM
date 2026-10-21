@@ -189,7 +189,8 @@ export default function HistoryTab() {
     return (
         <div>
             {/* ═══ Sticky top: title + search + filters ═══ */}
-            <div className="sticky top-[120px] z-20 -mx-3 mb-4 bg-slate-50/95 px-3 pb-3 pt-2 backdrop-blur-sm dark:bg-slate-950/95 sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8">
+            {/* 🔧 FIX: top-16 (aligns below 64px navbar), opaque bg, no blur */}
+            <div className="sticky top-16 z-20 -mx-3 mb-4 bg-slate-50 px-3 pb-3 pt-2 dark:bg-slate-950 sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8">
                 <div className="mb-4">
                     <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                         History
