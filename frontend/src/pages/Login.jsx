@@ -236,6 +236,21 @@ export default function Login() {
             return
         }
 
+        // 🔧 FIX: Check if the error is related to an unverified account
+        const msg = (res.error || '').toLowerCase()
+        if (
+            msg.includes('not verified') ||
+            msg.includes('unverified') ||
+            msg.includes('verify') ||
+            msg.includes('verification') ||
+            msg.includes('activate')
+        ) {
+            push({ type: 'info', message: 'Please verify your email to continue.' })
+            // Redirect immediately to the verification page, passing the email
+            navigate('/verify-email', { state: { email: email.trim() } })
+            return
+        }
+
         push({ type: 'error', message: res.error })
     }
 
