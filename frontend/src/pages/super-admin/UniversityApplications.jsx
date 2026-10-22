@@ -6,7 +6,6 @@ import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
-import PageHeader from '../../components/layout/PageHeader'
 import { useToastStore } from '../../store/toastStore'
 
 export default function UniversityApplications() {
@@ -58,12 +57,15 @@ export default function UniversityApplications() {
     }
 
     return (
-        <>
-            <PageHeader title="University Applications" description="Review requests from universities wanting to join UniQueue." />
+        <div className="space-y-6 pb-12">
             {loading ? (
-                <div className="py-12 text-center text-slate-500">Loading applications...</div>
+                <div className="py-12 text-center text-slate-500 dark:text-slate-400">Loading applications...</div>
             ) : apps.length === 0 ? (
-                <EmptyState icon={Inbox} title="No pending applications" description="When a university requests access via the public site, it will appear here." />
+                <EmptyState
+                    icon={Inbox}
+                    title="No pending applications"
+                    description="When a university requests access via the public site, it will appear here."
+                />
             ) : (
                 <div className="space-y-4">
                     {apps.map((app) => (
@@ -100,10 +102,18 @@ export default function UniversityApplications() {
                                         )}
                                     </div>
                                     <div className="flex shrink-0 items-center gap-2">
-                                        <Button onClick={() => handleApprove(app)} disabled={actionId === app.id} className="bg-emerald-600 hover:bg-emerald-700">
+                                        <Button
+                                            onClick={() => handleApprove(app)}
+                                            disabled={actionId === app.id}
+                                            className="bg-emerald-600 hover:bg-emerald-700"
+                                        >
                                             <CheckCircle2 className="mr-1.5 h-4 w-4" /> Approve
                                         </Button>
-                                        <Button variant="secondary" onClick={() => handleReject(app)} disabled={actionId === app.id}>
+                                        <Button
+                                            variant="secondary"
+                                            onClick={() => handleReject(app)}
+                                            disabled={actionId === app.id}
+                                        >
                                             <XCircle className="mr-1.5 h-4 w-4" /> Reject
                                         </Button>
                                     </div>
@@ -113,6 +123,6 @@ export default function UniversityApplications() {
                     ))}
                 </div>
             )}
-        </>
+        </div>
     )
 }
