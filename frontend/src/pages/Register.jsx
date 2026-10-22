@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     ArrowRight, ArrowLeft, Loader2, Eye, EyeOff,
-    ShieldCheck, Users, GraduationCap, Zap, MapPin,
+    ShieldCheck, Users, GraduationCap, Zap, MapPin, Search, Check
 } from 'lucide-react'
 import api from '../api/axios'
 import { useAuthStore } from '../store/authStore'
@@ -32,7 +32,6 @@ function LeftPanel({ university, imageError, onImageError }) {
 
     return (
         <div className="relative hidden h-full min-h-screen flex-col justify-between overflow-hidden bg-[#eef2ff] p-10 dark:bg-slate-950 lg:flex">
-
             <div className="absolute inset-0 z-0">
                 <motion.img
                     key={backgroundSrc}
@@ -46,21 +45,14 @@ function LeftPanel({ university, imageError, onImageError }) {
                     className="absolute bottom-0 left-0 h-[55%] w-full object-cover object-top"
                     draggable={false}
                 />
-
                 <div className="absolute inset-0 bg-gradient-to-b from-[#eef2ff] via-[#eef2ff] to-transparent to-[75%] dark:from-slate-950 dark:via-slate-950" />
-
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#0f172a]/80 via-[#0f172a]/20 to-transparent" />
             </div>
 
             <div className="relative z-10 flex items-center gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
                     {logoUrl ? (
-                        <img
-                            src={logoUrl}
-                            alt={brandName}
-                            className="h-full w-full object-contain p-1"
-                            onError={(e) => { e.target.style.display = 'none' }}
-                        />
+                        <img src={logoUrl} alt={brandName} className="h-full w-full object-contain p-1" onError={(e) => { e.target.style.display = 'none' }} />
                     ) : (
                         <Logo size={24} variant="icon" />
                     )}
@@ -80,11 +72,9 @@ function LeftPanel({ university, imageError, onImageError }) {
                     Your University<br />
                     <span className="text-brand-600 dark:text-brand-400">Queue, Made Simple</span>
                 </h2>
-
                 <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-800 dark:text-slate-300">
                     Join the university community and enjoy a faster, easier and more organized queue experience.
                 </p>
-
                 <ul className="mt-8 space-y-5">
                     <li className="flex items-start gap-4">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100 dark:bg-slate-800 dark:ring-slate-700 dark:text-brand-400">
@@ -104,26 +94,7 @@ function LeftPanel({ university, imageError, onImageError }) {
                             <span className="text-sm text-slate-700 dark:text-slate-400">Your data is always protected</span>
                         </div>
                     </li>
-                    <li className="flex items-start gap-4">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100 dark:bg-slate-800 dark:ring-slate-700 dark:text-brand-400">
-                            <Users className="h-5 w-5" />
-                        </span>
-                        <div>
-                            <strong className="block text-sm font-bold text-slate-900 dark:text-white">Built for Students</strong>
-                            <span className="text-sm text-slate-700 dark:text-slate-400">Designed for a better university experience</span>
-                        </div>
-                    </li>
                 </ul>
-            </div>
-
-            <div className="relative z-10 pt-10">
-                <div className="flex items-center gap-2 text-xs font-medium text-white drop-shadow-md">
-                    <MapPin className="h-4 w-4" />
-                    {brandName} · Digital Queue System
-                </div>
-                <div className="mt-1 text-[11px] text-white/80">
-                    © {new Date().getFullYear()} All rights reserved.
-                </div>
             </div>
         </div>
     )
@@ -140,6 +111,11 @@ export default function Register() {
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
     const [imageError, setImageError] = useState(false)
+
+    // University search state
+    const [uniSearch, setUniSearch] = useState('')
+    const [uniDropdownOpen, setUniDropdownOpen] = useState(false)
+    const uniRef = useRef(null)
 
     const [form, setForm] = useState({
         email: '',
@@ -167,12 +143,33 @@ export default function Register() {
         return () => { cancelled = true }
     }, [push])
 
+    // Close university dropdown on click outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (uniRef.current && !uniRef.current.contains(event.target)) {
+                setUniDropdownOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    const filteredUniversities = useMemo(() => {
+        if (!uniSearch.trim()) return universities
+        return universities.filter(u => u.name.toLowerCase().includes(uniSearch.toLowerCase()))
+    }, [universities, uniSearch])
+
     const selectedUni = useMemo(
         () => universities.find((u) => String(u.id) === String(form.universityId)) || null,
         [universities, form.universityId]
     )
 
-    useEffect(() => { setImageError(false) }, [form.universityId])
+    const handleSelectUni = (uni) => {
+        setForm((prev) => ({ ...prev, universityId: uni.id }))
+        setUniSearch(uni.name)
+        setUniDropdownOpen(false)
+        setImageError(false)
+    }
 
     const fresherEnabled = selectedUni?.fresherRegistrationEnabled !== false
 
@@ -183,6 +180,10 @@ export default function Register() {
     const submit = async (event) => {
         event.preventDefault()
 
+        if (!form.firstName.trim() || !form.middleName.trim() || !form.lastName.trim()) {
+            push({ type: 'error', message: 'First name, middle name, and last name are all required.' })
+            return
+        }
         if (form.password.length < 8) {
             push({ type: 'error', message: 'Password must be at least 8 characters' })
             return
@@ -195,16 +196,12 @@ export default function Register() {
             push({ type: 'error', message: 'Please select your university' })
             return
         }
-        if (!form.firstName.trim() || !form.lastName.trim()) {
-            push({ type: 'error', message: 'First name and last name are required' })
-            return
-        }
 
         const payload = {
             email: form.email.trim(),
             password: form.password,
             firstName: form.firstName.trim(),
-            middleName: form.middleName.trim() || null,
+            middleName: form.middleName.trim(),
             lastName: form.lastName.trim(),
             universityId: Number(form.universityId),
             department: null,
@@ -236,10 +233,7 @@ export default function Register() {
                     : 'Account created. Check your email for the code.',
             })
             navigate('/verify-email', {
-                state: {
-                    email: form.email.trim(),
-                    registrationStatus: status,
-                },
+                state: { email: form.email.trim(), registrationStatus: status },
             })
         } else {
             push({ type: 'error', message: res.error })
@@ -256,29 +250,12 @@ export default function Register() {
     return (
         <div className="min-h-screen bg-white dark:bg-slate-950 lg:h-screen lg:overflow-hidden">
             <div className="grid min-h-screen grid-cols-1 lg:h-full lg:min-h-0 lg:grid-cols-2">
-
-                <LeftPanel
-                    university={selectedUni}
-                    imageError={imageError}
-                    onImageError={() => setImageError(true)}
-                />
+                <LeftPanel university={selectedUni} imageError={imageError} onImageError={() => setImageError(true)} />
 
                 <div className="flex min-h-0 items-start justify-center overflow-y-auto bg-white px-6 py-10 dark:bg-slate-950 sm:px-12 lg:h-full lg:py-12">
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, ease }}
-                        className="w-full max-w-[600px]"
-                    >
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }} className="w-full max-w-[600px]">
+
                         <div className="mb-8 flex items-center justify-between">
-                            <div className="flex items-center gap-2.5 lg:hidden">
-                                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-brand-600 text-white">
-                                    <Logo size={20} variant="icon" />
-                                </div>
-                                <div className="text-sm font-bold uppercase tracking-tight text-slate-900 dark:text-white">
-                                    {selectedUni?.name || 'UniQueue'}
-                                </div>
-                            </div>
                             <p className="ml-auto text-sm text-slate-500 dark:text-slate-400">
                                 Already have an account?{' '}
                                 <Link to="/login" className="font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400">
@@ -291,70 +268,39 @@ export default function Register() {
                             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
                                 <GraduationCap className="h-6 w-6" />
                             </div>
-                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-                                Create your account
-                            </h1>
+                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Create your account</h1>
                             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                                {mode === 'fresher'
-                                    ? 'For new students registering before receiving their matric number.'
-                                    : 'Fill in the details below to register and get started.'}
+                                {mode === 'fresher' ? 'For new students registering before receiving their matric number.' : 'Fill in the details below to register and get started.'}
                             </p>
                         </div>
 
                         <form onSubmit={submit} className="space-y-8">
-
                             <section>
                                 <div className={sectionTitleClass}>
-                                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
-                                        1
-                                    </span>
+                                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">1</span>
                                     <h2 className="text-base font-bold text-slate-900 dark:text-white">Personal Information</h2>
                                     <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
                                 </div>
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                     <div>
                                         <label className={labelClass}>First name</label>
-                                        <input
-                                            type="text"
-                                            autoComplete="given-name"
-                                            value={form.firstName}
-                                            onChange={setField('firstName')}
-                                            placeholder="Enter first name"
-                                            required
-                                            className={inputClass}
-                                        />
+                                        <input type="text" autoComplete="given-name" value={form.firstName} onChange={setField('firstName')} placeholder="Enter first name" required className={inputClass} />
                                     </div>
                                     <div>
-                                        <label className={labelClass}>Middle name <span className="font-normal text-slate-400 dark:text-slate-500">(optional)</span></label>
-                                        <input
-                                            type="text"
-                                            autoComplete="additional-name"
-                                            value={form.middleName}
-                                            onChange={setField('middleName')}
-                                            placeholder="Enter middle name"
-                                            className={inputClass}
-                                        />
+                                        {/* 🔧 FIX: Removed (optional) and added required */}
+                                        <label className={labelClass}>Middle name</label>
+                                        <input type="text" autoComplete="additional-name" value={form.middleName} onChange={setField('middleName')} placeholder="Enter middle name" required className={inputClass} />
                                     </div>
                                     <div>
                                         <label className={labelClass}>Last name</label>
-                                        <input
-                                            type="text"
-                                            autoComplete="family-name"
-                                            value={form.lastName}
-                                            onChange={setField('lastName')}
-                                            placeholder="Enter last name"
-                                            required
-                                            className={inputClass}
-                                        />
+                                        <input type="text" autoComplete="family-name" value={form.lastName} onChange={setField('lastName')} placeholder="Enter last name" required className={inputClass} />
                                     </div>
                                 </div>
                             </section>
 
                             <section>
                                 <div className={sectionTitleClass}>
-                                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
-                                        2
-                                    </span>
+                                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">2</span>
                                     <h2 className="text-base font-bold text-slate-900 dark:text-white">Account Details</h2>
                                     <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
                                 </div>
@@ -363,71 +309,67 @@ export default function Register() {
                                         <label className={labelClass}>Email address</label>
                                         <input type="email" autoComplete="email" value={form.email} onChange={setField('email')} placeholder="you@example.com" required className={inputClass} />
                                     </div>
-                                    <div>
+
+                                    {/* 🔧 FIX: Autocomplete University Search */}
+                                    <div className="relative" ref={uniRef}>
                                         <label className={labelClass}>University</label>
-                                        <select value={form.universityId} onChange={setField('universityId')} required disabled={loadingUnis} className={`${inputClass} appearance-none`}>
-                                            <option value="">{loadingUnis ? 'Loading…' : 'Select your university'}</option>
-                                            {universities.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-                                        </select>
+                                        <div className="relative">
+                                            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                            <input
+                                                type="text"
+                                                placeholder="Search for your university..."
+                                                value={uniSearch}
+                                                onChange={(e) => {
+                                                    setUniSearch(e.target.value)
+                                                    setUniDropdownOpen(true)
+                                                    if (form.universityId) setForm(prev => ({ ...prev, universityId: '' }))
+                                                }}
+                                                onFocus={() => setUniDropdownOpen(true)}
+                                                required={!form.universityId}
+                                                className={`${inputClass} pl-10`}
+                                            />
+                                        </div>
+
+                                        {uniDropdownOpen && (
+                                            <div className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-xl dark:border-slate-700 dark:bg-slate-800">
+                                                {loadingUnis ? (
+                                                    <div className="px-4 py-3 text-sm text-slate-500">Loading universities...</div>
+                                                ) : filteredUniversities.length === 0 ? (
+                                                    <div className="px-4 py-3 text-sm text-slate-500">No universities found.</div>
+                                                ) : (
+                                                    filteredUniversities.map((uni) => (
+                                                        <button
+                                                            key={uni.id}
+                                                            type="button"
+                                                            onClick={() => handleSelectUni(uni)}
+                                                            className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
+                                                        >
+                                                            <span>{uni.name}</span>
+                                                            {form.universityId === uni.id && <Check className="h-4 w-4 text-brand-600" />}
+                                                        </button>
+                                                    ))
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
 
                                     {mode === 'student' ? (
                                         <div>
                                             <label className={labelClass}>Matric number</label>
-                                            <input
-                                                type="text"
-                                                value={form.matricNumber}
-                                                onChange={setField('matricNumber')}
-                                                placeholder={selectedUni?.matricExample || 'Enter your matric number'}
-                                                required
-                                                className={inputClass}
-                                            />
+                                            <input type="text" value={form.matricNumber} onChange={setField('matricNumber')} placeholder={selectedUni?.matricExample || 'Enter your matric number'} required className={inputClass} />
                                         </div>
                                     ) : showJamb ? (
                                         <div>
-                                            <label className={labelClass}>
-                                                {selectedUni?.jambRegDescription || 'JAMB registration number'}
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={form.jambRegNumber}
-                                                onChange={setField('jambRegNumber')}
-                                                placeholder={selectedUni?.jambRegExample || 'Enter JAMB registration number'}
-                                                required
-                                                className={inputClass}
-                                            />
+                                            <label className={labelClass}>{selectedUni?.jambRegDescription || 'JAMB registration number'}</label>
+                                            <input type="text" value={form.jambRegNumber} onChange={setField('jambRegNumber')} placeholder={selectedUni?.jambRegExample || 'Enter JAMB registration number'} required className={inputClass} />
                                         </div>
                                     ) : null}
-
-                                    {mode === 'fresher' && selectedUni?.requireAdmissionRef && (
-                                        <div>
-                                            <label className={labelClass}>{selectedUni.admissionRefDescription || 'Admission reference'}</label>
-                                            <input type="text" value={form.admissionRef} onChange={setField('admissionRef')} placeholder={selectedUni.admissionRefExample || 'Enter admission reference'} className={inputClass} />
-                                        </div>
-                                    )}
-                                    {mode === 'fresher' && selectedUni?.requireApplicationNumber && (
-                                        <div>
-                                            <label className={labelClass}>{selectedUni.applicationNumberDescription || 'Application number'}</label>
-                                            <input type="text" value={form.applicationNumber} onChange={setField('applicationNumber')} placeholder={selectedUni.applicationNumberExample || 'Enter application number'} className={inputClass} />
-                                        </div>
-                                    )}
 
                                     <div>
                                         <label className={labelClass}>Password</label>
                                         <div className="relative">
-                                            <input
-                                                type={showPassword ? 'text' : 'password'}
-                                                value={form.password}
-                                                onChange={setField('password')}
-                                                placeholder="At least 8 characters"
-                                                required
-                                                className={`${inputClass} pr-11`}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword((v) => !v)}
-                                                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
-                                            >
+                                            <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={setField('password')} placeholder="At least 8 characters" required className={`${inputClass} pr-11`} />
+                                            <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300">
                                                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                             </button>
                                         </div>
@@ -435,19 +377,8 @@ export default function Register() {
                                     <div>
                                         <label className={labelClass}>Confirm password</label>
                                         <div className="relative">
-                                            <input
-                                                type={showConfirm ? 'text' : 'password'}
-                                                value={form.confirmPassword}
-                                                onChange={setField('confirmPassword')}
-                                                placeholder="Re-enter password"
-                                                required
-                                                className={`${inputClass} pr-11`}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowConfirm((v) => !v)}
-                                                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
-                                            >
+                                            <input type={showConfirm ? 'text' : 'password'} value={form.confirmPassword} onChange={setField('confirmPassword')} placeholder="Re-enter password" required className={`${inputClass} pr-11`} />
+                                            <button type="button" onClick={() => setShowConfirm((v) => !v)} className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300">
                                                 {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                             </button>
                                         </div>
@@ -455,11 +386,7 @@ export default function Register() {
                                 </div>
                             </section>
 
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 text-sm font-semibold text-white shadow-md shadow-brand-500/20 transition-all hover:bg-brand-700 hover:shadow-lg hover:shadow-brand-500/30 disabled:opacity-60"
-                            >
+                            <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 text-sm font-semibold text-white shadow-md shadow-brand-500/20 transition-all hover:bg-brand-700 hover:shadow-lg hover:shadow-brand-500/30 disabled:opacity-60">
                                 {loading ? (
                                     <>
                                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -473,36 +400,6 @@ export default function Register() {
                                 )}
                             </button>
                         </form>
-
-                        <div className="mt-8">
-                            <div className="mb-6 flex items-center">
-                                <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
-                                <span className="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Or</span>
-                                <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
-                            </div>
-
-                            {mode === 'student' && fresherEnabled && (
-                                <button
-                                    type="button"
-                                    onClick={() => setMode('fresher')}
-                                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white py-3.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:text-brand-400 dark:hover:bg-slate-700"
-                                >
-                                    Register as a Fresher
-                                    <ArrowRight className="h-4 w-4 text-brand-400" />
-                                </button>
-                            )}
-
-                            {mode === 'fresher' && (
-                                <button
-                                    type="button"
-                                    onClick={() => setMode('student')}
-                                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white py-3.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:text-brand-400 dark:hover:bg-slate-700"
-                                >
-                                    <ArrowLeft className="h-4 w-4 text-brand-400" />
-                                    Back to Student Registration
-                                </button>
-                            )}
-                        </div>
                     </motion.div>
                 </div>
             </div>
