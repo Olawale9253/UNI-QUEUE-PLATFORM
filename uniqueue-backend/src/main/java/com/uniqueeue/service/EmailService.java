@@ -4,23 +4,28 @@ import com.uniqueeue.dto.response.WorkflowAnalyticsResponse;
 import com.uniqueeue.model.Queue;
 import com.uniqueeue.model.Ticket;
 import com.uniqueeue.model.User;
-import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    // 🔧 Replaced JavaMailSender with RestTemplate for HTTP API
+    private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${app.email.enabled:false}")
     private boolean emailEnabled;
@@ -34,48 +39,62 @@ public class EmailService {
     @Value("${app.email.base-url:http://localhost:5173}")
     private String baseUrl;
 
+    @Value("${app.email.brevo-api-key:}")
+    private String brevoApiKey;
+
+    private static final String BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
     // ============================================================
     //  Low-level send — runs inside the caller's async thread.
-    //  Not annotated @Async itself: annotating it would be a no-op
-    //  for self-invocations (Spring proxies don't intercept same-class
-    //  method calls). The public methods below carry @Async instead.
     // ============================================================
 
     private void sendHtml(String to, String subject, String htmlBody) {
         if (to == null || to.isBlank()) return;
 
-        if (!emailEnabled) {
-            log.info("📧 [EMAIL DISABLED] to={} subject={}", to, subject);
+        if (!emailEnabled || brevoApiKey == null || brevoApiKey.isEmpty()) {
+            log.info("📧 [EMAIL DISABLED OR NO API KEY] to={} subject={}", to, subject);
             log.debug("📧 [EMAIL BODY]\n{}", htmlBody);
             return;
         }
 
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom(fromAddress);
-            if (replyTo != null && !replyTo.isBlank()) {
-                helper.setReplyTo(replyTo);
+            // Parse sender name and email from the "From" address
+            String senderEmail = fromAddress;
+            String senderName = "UniQueue";
+            if (fromAddress.contains("<") && fromAddress.contains(">")) {
+                senderName = fromAddress.substring(0, fromAddress.indexOf("<")).trim();
+                senderEmail = fromAddress.substring(fromAddress.indexOf("<") + 1, fromAddress.indexOf(">")).trim();
             }
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlBody, true);
 
-            mailSender.send(message);
-            log.info("📧 Sent email to {} · {}", to, subject);
+            // Build the JSON payload for the Brevo API
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("sender", Map.of("name", senderName, "email", senderEmail));
+            payload.put("to", List.of(Map.of("email", to)));
+            payload.put("subject", subject);
+            payload.put("htmlContent", htmlBody);
+
+            if (replyTo != null && !replyTo.isBlank()) {
+                payload.put("replyTo", Map.of("email", replyTo));
+            }
+
+            // Set HTTP headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("api-key", brevoApiKey);
+            headers.set("accept", "application/json");
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+
+            // Send the HTTP POST request
+            restTemplate.postForEntity(BREVO_API_URL, request, String.class);
+            log.info("📧 Sent email via HTTP API to {} · {}", to, subject);
+
         } catch (Exception ex) {
-            // 🔧 FIX: Added `ex` at the end so the console prints the full stack trace
             log.error("📧 Failed to send email to {} — {}", to, ex.getMessage(), ex);
         }
     }
 
-    /**
-     * Transactional emails (verification, password reset) always send.
-     * Ticket notifications honour the user's `ticketEmailsEnabled` preference.
-     */
     private boolean wantsTicketEmails(User user) {
         if (user == null) return false;
         return !Boolean.FALSE.equals(user.getTicketEmailsEnabled());
@@ -211,7 +230,6 @@ public class EmailService {
     //  Transactional emails — @Async so registration returns instantly
     // ============================================================
 
-    /** @Async — returns immediately; SMTP happens in the background. */
     @Async
     public void sendVerificationCode(User user, String code) {
         try {
@@ -237,7 +255,6 @@ public class EmailService {
         }
     }
 
-    /** @Async — returns immediately; SMTP happens in the background. */
     @Async
     public void sendPasswordReset(User user, String token) {
         try {
@@ -264,7 +281,6 @@ public class EmailService {
         }
     }
 
-    /** Admin-facing — @Async so bottleneck scans don't block the scheduler. */
     @Async
     public void sendBottleneckAlert(
             User admin,
@@ -485,4 +501,3 @@ public class EmailService {
                 .replace("'", "&#39;");
     }
 }
-
