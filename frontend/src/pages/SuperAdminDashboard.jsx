@@ -18,7 +18,6 @@ import Settings from './super-admin/Settings'
 import Broadcast from './super-admin/Broadcast'
 import Plans from './super-admin/Plans'
 
-// 🔧 These are the correct Super Admin tabs
 const tabs = [
     { to: '/super-admin/universities', label: 'Universities', icon: Building2 },
     { to: '/super-admin/pending-requests', label: 'Pending Requests', icon: Clock },
