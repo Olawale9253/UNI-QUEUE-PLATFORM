@@ -37,7 +37,8 @@ export default function SuperAdminDashboard() {
     return (
         <DashboardLayout tabs={tabs}>
             {isHome && (
-                <div className="sticky top-0 z-20 -mx-3 -mt-3 mb-3 bg-white px-3 pb-3 pt-3 dark:bg-slate-900 sm:-mx-5 sm:-mt-4 sm:px-5 sm:pt-4 lg:-mx-8 lg:-mt-5 lg:px-8 lg:pt-5">
+                // 🔧 FIX: Matched negative margins to the layout padding (-mt-4, sm:-mt-6, lg:-mt-8) to remove the gap
+                <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-4 bg-white px-3 pb-4 pt-4 dark:bg-slate-900 sm:-mx-5 sm:-mt-6 sm:px-5 sm:pt-6 sm:pb-5 lg:-mx-8 lg:-mt-8 lg:px-8 lg:pt-8 lg:pb-6">
                     <PageHeader
                         workspace="Platform Console"
                         description="Manage the entire UniQueue multi-tenant platform."
