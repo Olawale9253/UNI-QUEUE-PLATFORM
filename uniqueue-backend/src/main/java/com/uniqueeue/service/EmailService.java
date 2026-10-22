@@ -4,6 +4,7 @@ import com.uniqueeue.dto.response.WorkflowAnalyticsResponse;
 import com.uniqueeue.model.Queue;
 import com.uniqueeue.model.Ticket;
 import com.uniqueeue.model.User;
+import com.uniqueeue.repository.UserRepository; // 🔧 Added import
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,9 +13,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // 🔧 Added import
 import org.springframework.web.client.RestTemplate;
 
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,8 +25,8 @@ import java.util.Map;
 @Slf4j
 public class EmailService {
 
-    // 🔧 Replaced JavaMailSender with RestTemplate for HTTP API
     private final RestTemplate restTemplate = new RestTemplate();
+    private final UserRepository userRepository; // 🔧 Added to re-fetch user
 
     @Value("${app.email.enabled:false}")
     private boolean emailEnabled;
@@ -43,23 +44,16 @@ public class EmailService {
     private String brevoApiKey;
 
     private static final String BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
-    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
-
-    // ============================================================
-    //  Low-level send — runs inside the caller's async thread.
-    // ============================================================
 
     private void sendHtml(String to, String subject, String htmlBody) {
         if (to == null || to.isBlank()) return;
 
         if (!emailEnabled || brevoApiKey == null || brevoApiKey.isEmpty()) {
             log.info("📧 [EMAIL DISABLED OR NO API KEY] to={} subject={}", to, subject);
-            log.debug("📧 [EMAIL BODY]\n{}", htmlBody);
             return;
         }
 
         try {
-            // Parse sender name and email from the "From" address
             String senderEmail = fromAddress;
             String senderName = "UniQueue";
             if (fromAddress.contains("<") && fromAddress.contains(">")) {
@@ -67,7 +61,6 @@ public class EmailService {
                 senderEmail = fromAddress.substring(fromAddress.indexOf("<") + 1, fromAddress.indexOf(">")).trim();
             }
 
-            // Build the JSON payload for the Brevo API
             Map<String, Object> payload = new HashMap<>();
             payload.put("sender", Map.of("name", senderName, "email", senderEmail));
             payload.put("to", List.of(Map.of("email", to)));
@@ -78,15 +71,12 @@ public class EmailService {
                 payload.put("replyTo", Map.of("email", replyTo));
             }
 
-            // Set HTTP headers
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("api-key", brevoApiKey);
             headers.set("accept", "application/json");
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
-
-            // Send the HTTP POST request
             restTemplate.postForEntity(BREVO_API_URL, request, String.class);
             log.info("📧 Sent email via HTTP API to {} · {}", to, subject);
 
@@ -100,226 +90,139 @@ public class EmailService {
         return !Boolean.FALSE.equals(user.getTicketEmailsEnabled());
     }
 
-    // ============================================================
-    //  Ticket notifications — all @Async so nothing blocks the request
-    // ============================================================
-
+    // 🔧 FIX: Re-fetch user in a new transaction to prevent "Statement has been closed"
     @Async
+    @Transactional(readOnly = true)
     public void sendTicketCalled(User user, Ticket ticket, Queue queue) {
         try {
             if (user == null || ticket == null) return;
-            if (!wantsTicketEmails(user)) {
-                log.debug("Skipping ticket-called email — user {} disabled ticket emails", user.getId());
-                return;
-            }
+            User freshUser = userRepository.findById(user.getId()).orElse(user);
+            if (!wantsTicketEmails(freshUser)) return;
 
             String subject = "🎫 It's your turn — Ticket " + ticket.getTicketNumber();
+            String html = wrap(freshUser, queue, "It's your turn",
+                    "Hi " + firstName(freshUser) + ",<br><br>Your ticket is being called at <strong>" + escape(queue.getName()) + "</strong>. Please head to the service desk now.",
+                    calloutBlock("Ticket number", ticket.getTicketNumber(), queue.getLocation() != null ? "Location: " + queue.getLocation() : null),
+                    "Open my queue", baseUrl + "/student/queues");
 
-            String html = wrap(
-                    user,
-                    queue,
-                    "It's your turn",
-                    "Hi " + firstName(user) + ",<br><br>" +
-                            "Your ticket is being called at <strong>" + escape(queue.getName()) + "</strong>. " +
-                            "Please head to the service desk now.",
-                    calloutBlock(
-                            "Ticket number",
-                            ticket.getTicketNumber(),
-                            queue.getLocation() != null
-                                    ? "Location: " + queue.getLocation()
-                                    : null
-                    ),
-                    "Open my queue",
-                    baseUrl + "/student/queues"
-            );
-
-            sendHtml(user.getEmail(), subject, html);
+            sendHtml(freshUser.getEmail(), subject, html);
         } catch (Exception ex) {
             log.error("sendTicketCalled failed: {}", ex.getMessage());
         }
     }
 
     @Async
+    @Transactional(readOnly = true)
     public void sendTicketCompleted(User user, Ticket ticket, Queue queue) {
         try {
             if (user == null || ticket == null) return;
-            if (!wantsTicketEmails(user)) {
-                log.debug("Skipping ticket-completed email — user {} disabled ticket emails", user.getId());
-                return;
-            }
+            User freshUser = userRepository.findById(user.getId()).orElse(user);
+            if (!wantsTicketEmails(freshUser)) return;
 
             String subject = "✅ Service complete — Ticket " + ticket.getTicketNumber();
+            String html = wrap(freshUser, queue, "All done",
+                    "Hi " + firstName(freshUser) + ",<br><br>Your service at <strong>" + escape(queue.getName()) + "</strong> is complete. If you have a moment, please rate your experience.",
+                    null, "Rate your experience", baseUrl + "/student/history");
 
-            String html = wrap(
-                    user,
-                    queue,
-                    "All done",
-                    "Hi " + firstName(user) + ",<br><br>" +
-                            "Your service at <strong>" + escape(queue.getName()) + "</strong> is complete. " +
-                            "If you have a moment, please rate your experience.",
-                    null,
-                    "Rate your experience",
-                    baseUrl + "/student/history"
-            );
-
-            sendHtml(user.getEmail(), subject, html);
+            sendHtml(freshUser.getEmail(), subject, html);
         } catch (Exception ex) {
             log.error("sendTicketCompleted failed: {}", ex.getMessage());
         }
     }
 
     @Async
+    @Transactional(readOnly = true)
     public void sendTicketNoShow(User user, Ticket ticket, Queue queue) {
         try {
             if (user == null || ticket == null) return;
-            if (!wantsTicketEmails(user)) {
-                log.debug("Skipping ticket-no-show email — user {} disabled ticket emails", user.getId());
-                return;
-            }
+            User freshUser = userRepository.findById(user.getId()).orElse(user);
+            if (!wantsTicketEmails(freshUser)) return;
 
             String subject = "⚠️ You missed your turn — Ticket " + ticket.getTicketNumber();
+            String html = wrap(freshUser, queue, "You missed your turn",
+                    "Hi " + firstName(freshUser) + ",<br><br>Your ticket <strong>" + escape(ticket.getTicketNumber()) + "</strong> was marked as no-show. You can join the queue again whenever you're ready.",
+                    null, "Rejoin the queue", baseUrl + "/student/queues");
 
-            String html = wrap(
-                    user,
-                    queue,
-                    "You missed your turn",
-                    "Hi " + firstName(user) + ",<br><br>" +
-                            "Your ticket <strong>" + escape(ticket.getTicketNumber()) + "</strong> was marked as no-show " +
-                            "because it wasn't served in time. You can join the queue again whenever you're ready.",
-                    null,
-                    "Rejoin the queue",
-                    baseUrl + "/student/queues"
-            );
-
-            sendHtml(user.getEmail(), subject, html);
+            sendHtml(freshUser.getEmail(), subject, html);
         } catch (Exception ex) {
             log.error("sendTicketNoShow failed: {}", ex.getMessage());
         }
     }
 
     @Async
+    @Transactional(readOnly = true)
     public void sendQueueClosed(User user, Ticket ticket, Queue queue) {
         try {
             if (user == null || ticket == null) return;
-            if (!wantsTicketEmails(user)) {
-                log.debug("Skipping queue-closed email — user {} disabled ticket emails", user.getId());
-                return;
-            }
+            User freshUser = userRepository.findById(user.getId()).orElse(user);
+            if (!wantsTicketEmails(freshUser)) return;
 
             String subject = "🔒 Queue closed — Ticket " + ticket.getTicketNumber();
+            String html = wrap(freshUser, queue, "The queue has closed",
+                    "Hi " + firstName(freshUser) + ",<br><br><strong>" + escape(queue.getName()) + "</strong> closed for the day, so your waiting ticket was cancelled.",
+                    null, "Browse services", baseUrl + "/student/queues");
 
-            String html = wrap(
-                    user,
-                    queue,
-                    "The queue has closed",
-                    "Hi " + firstName(user) + ",<br><br>" +
-                            "<strong>" + escape(queue.getName()) + "</strong> closed for the day, " +
-                            "so your waiting ticket was cancelled. You can rejoin when it reopens.",
-                    null,
-                    "Browse services",
-                    baseUrl + "/student/queues"
-            );
-
-            sendHtml(user.getEmail(), subject, html);
+            sendHtml(freshUser.getEmail(), subject, html);
         } catch (Exception ex) {
             log.error("sendQueueClosed failed: {}", ex.getMessage());
         }
     }
 
-    // ============================================================
-    //  Transactional emails — @Async so registration returns instantly
-    // ============================================================
-
+    // 🔧 FIX: This is the one that was failing in your logs
     @Async
+    @Transactional(readOnly = true)
     public void sendVerificationCode(User user, String code) {
         try {
             if (user == null) return;
+            User freshUser = userRepository.findById(user.getId()).orElse(user);
 
             String subject = "Your UniQueue verification code";
+            String html = wrap(freshUser, null, "Verify your email",
+                    "Hi " + firstName(freshUser) + ",<br><br>Enter this 6-digit code to activate your UniQueue account. It expires in 24 hours.",
+                    codeBlock(code), null, null);
 
-            String html = wrap(
-                    user,
-                    null,
-                    "Verify your email",
-                    "Hi " + firstName(user) + ",<br><br>" +
-                            "Enter this 6-digit code to activate your UniQueue account. " +
-                            "It expires in 24 hours.",
-                    codeBlock(code),
-                    null,
-                    null
-            );
-
-            sendHtml(user.getEmail(), subject, html);
+            sendHtml(freshUser.getEmail(), subject, html);
         } catch (Exception ex) {
             log.error("sendVerificationCode failed: {}", ex.getMessage());
         }
     }
 
     @Async
+    @Transactional(readOnly = true)
     public void sendPasswordReset(User user, String token) {
         try {
             if (user == null) return;
+            User freshUser = userRepository.findById(user.getId()).orElse(user);
 
             String resetUrl = baseUrl + "/reset-password?token=" + token;
             String subject = "Reset your UniQueue password";
+            String html = wrap(freshUser, null, "Reset your password",
+                    "Hi " + firstName(freshUser) + ",<br><br>Click the button below to choose a new password. This link expires in 30 minutes.",
+                    null, "Reset password", resetUrl);
 
-            String html = wrap(
-                    user,
-                    null,
-                    "Reset your password",
-                    "Hi " + firstName(user) + ",<br><br>" +
-                            "We received a request to reset your password. Click the button below to choose a new one. " +
-                            "This link expires in 30 minutes. If you didn't request it, you can ignore this email.",
-                    null,
-                    "Reset password",
-                    resetUrl
-            );
-
-            sendHtml(user.getEmail(), subject, html);
+            sendHtml(freshUser.getEmail(), subject, html);
         } catch (Exception ex) {
             log.error("sendPasswordReset failed: {}", ex.getMessage());
         }
     }
 
     @Async
-    public void sendBottleneckAlert(
-            User admin,
-            WorkflowAnalyticsResponse analytics,
-            WorkflowAnalyticsResponse.StepAnalytics step) {
-
+    @Transactional(readOnly = true)
+    public void sendBottleneckAlert(User admin, WorkflowAnalyticsResponse analytics, WorkflowAnalyticsResponse.StepAnalytics step) {
         try {
             if (admin == null || analytics == null || step == null) return;
+            User freshAdmin = userRepository.findById(admin.getId()).orElse(admin);
 
-            String workflowName = analytics.getWorkflowName() != null
-                    ? analytics.getWorkflowName()
-                    : "Workflow";
-
+            String workflowName = analytics.getWorkflowName() != null ? analytics.getWorkflowName() : "Workflow";
             String subject = "⚠️ Bottleneck alert — " + workflowName;
+            String stepLabel = step.getLabel() != null && !step.getLabel().isBlank() ? step.getLabel() : (step.getQueueName() != null ? step.getQueueName() : "Step " + step.getOrder());
 
-            String stepLabel = step.getLabel() != null && !step.getLabel().isBlank()
-                    ? step.getLabel()
-                    : (step.getQueueName() != null ? step.getQueueName() : "Step " + step.getOrder());
-
-            String body = "Hi " + firstName(admin) + ",<br><br>" +
-                    "We detected a bottleneck in <strong>" + escape(workflowName) + "</strong>. " +
-                    "Students are spending significantly longer than usual at one step, " +
-                    "and a growing number are currently waiting there.";
-
+            String body = "Hi " + firstName(freshAdmin) + ",<br><br>We detected a bottleneck in <strong>" + escape(workflowName) + "</strong>.";
             String table = bottleneckTable(analytics, step, stepLabel);
-
             String analyticsUrl = baseUrl + "/admin/workflows/" + analytics.getWorkflowId() + "/analytics";
 
-            String html = wrap(
-                    admin,
-                    null,
-                    "Bottleneck detected",
-                    body,
-                    table,
-                    "View analytics",
-                    analyticsUrl
-            );
-
-            sendHtml(admin.getEmail(), subject, html);
+            String html = wrap(freshAdmin, null, "Bottleneck detected", body, table, "View analytics", analyticsUrl);
+            sendHtml(freshAdmin.getEmail(), subject, html);
         } catch (Exception ex) {
             log.error("sendBottleneckAlert failed: {}", ex.getMessage());
         }
@@ -328,22 +231,11 @@ public class EmailService {
     // ============================================================
     //  HTML builders — unchanged
     // ============================================================
-
     private String wrap(User user, Queue queue, String heading, String body, String callout, String ctaLabel, String ctaUrl) {
-        String uniName = user != null
-                && user.getUniversity() != null
-                && user.getUniversity().getName() != null
-                ? user.getUniversity().getName()
-                : "UniQueue";
-
-        String accent = user != null
-                && user.getUniversity() != null
-                && user.getUniversity().getPrimaryColor() != null
-                ? user.getUniversity().getPrimaryColor()
-                : "#4f46e5";
+        String uniName = user != null && user.getUniversity() != null && user.getUniversity().getName() != null ? user.getUniversity().getName() : "UniQueue";
+        String accent = user != null && user.getUniversity() != null && user.getUniversity().getPrimaryColor() != null ? user.getUniversity().getPrimaryColor() : "#4f46e5";
 
         StringBuilder sb = new StringBuilder(2048);
-
         sb.append("<!DOCTYPE html><html><head><meta charset=\"utf-8\">")
                 .append("<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">")
                 .append("<title>").append(escape(heading)).append("</title></head>")
@@ -357,7 +249,6 @@ public class EmailService {
                 .append("box-shadow:0 1px 3px rgba(15,23,42,0.06),0 10px 30px rgba(15,23,42,0.04);\">");
 
         sb.append("<tr><td style=\"height:4px;background:").append(accent).append(";\"></td></tr>");
-
         sb.append("<tr><td style=\"padding:28px 32px 0 32px;\">")
                 .append("<div style=\"font-size:11px;font-weight:700;letter-spacing:2px;")
                 .append("text-transform:uppercase;color:").append(accent).append(";\">")
@@ -386,14 +277,11 @@ public class EmailService {
         }
 
         sb.append("<tr><td style=\"padding:32px 0 0 0;\"></td></tr>");
-
         sb.append("<tr><td style=\"padding:20px 32px 28px 32px;border-top:1px solid #e2e8f0;")
                 .append("font-size:11px;line-height:1.5;color:#94a3b8;\">")
                 .append("You're receiving this because you have a UniQueue account at ")
-                .append(escape(uniName)).append(". If this wasn't you, please contact support.")
-                .append("</td></tr>");
-
-        sb.append("</table></td></tr></table></body></html>");
+                .append(escape(uniName)).append(".")
+                .append("</td></tr></table></td></tr></table></body></html>");
 
         return sb.toString();
     }
@@ -429,21 +317,13 @@ public class EmailService {
         return sb.toString();
     }
 
-    private String bottleneckTable(
-            WorkflowAnalyticsResponse analytics,
-            WorkflowAnalyticsResponse.StepAnalytics step,
-            String stepLabel) {
-
-        String sessionSuffix = analytics.getSession() != null
-                ? " (" + escape(analytics.getSession()) + ")"
-                : "";
-
+    private String bottleneckTable(WorkflowAnalyticsResponse analytics, WorkflowAnalyticsResponse.StepAnalytics step, String stepLabel) {
+        String sessionSuffix = analytics.getSession() != null ? " (" + escape(analytics.getSession()) + ")" : "";
         double avgHours = step.getAvgHoursOnStep() != null ? step.getAvgHoursOnStep() : 0;
         long stuck = step.getCurrentlyOnCount() != null ? step.getCurrentlyOnCount() : 0;
         long completed = step.getCompletedCount() != null ? step.getCompletedCount() : 0;
 
         StringBuilder sb = new StringBuilder(1024);
-
         sb.append("<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" ")
                 .append("style=\"background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;\">")
                 .append("<tr><td style=\"padding:16px 18px;\">")
@@ -454,36 +334,26 @@ public class EmailService {
                 .append(rowHighlighted("Avg time per student", formatHours(avgHours)))
                 .append(row("Already completed", String.valueOf(completed)))
                 .append("</td></tr></table>");
-
         return sb.toString();
     }
 
     private String row(String label, String value) {
-        return "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" " +
-                "style=\"margin:0 0 10px 0;\"><tr>" +
-                "<td style=\"width:45%;padding:2px 0;font-size:12px;color:#64748b;vertical-align:top;\">"
-                + escape(label) + "</td>" +
-                "<td style=\"padding:2px 0;font-size:13px;font-weight:600;color:#0f172a;vertical-align:top;\">"
-                + value + "</td>" +
+        return "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin:0 0 10px 0;\"><tr>" +
+                "<td style=\"width:45%;padding:2px 0;font-size:12px;color:#64748b;vertical-align:top;\">" + escape(label) + "</td>" +
+                "<td style=\"padding:2px 0;font-size:13px;font-weight:600;color:#0f172a;vertical-align:top;\">" + value + "</td>" +
                 "</tr></table>";
     }
 
     private String rowHighlighted(String label, String value) {
-        return "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" " +
-                "style=\"margin:0 0 10px 0;\"><tr>" +
-                "<td style=\"width:45%;padding:2px 0;font-size:12px;color:#64748b;vertical-align:top;\">"
-                + escape(label) + "</td>" +
-                "<td style=\"padding:2px 0;font-size:15px;font-weight:700;color:#dc2626;vertical-align:top;\">"
-                + value + "</td>" +
+        return "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin:0 0 10px 0;\"><tr>" +
+                "<td style=\"width:45%;padding:2px 0;font-size:12px;color:#64748b;vertical-align:top;\">" + escape(label) + "</td>" +
+                "<td style=\"padding:2px 0;font-size:15px;font-weight:700;color:#dc2626;vertical-align:top;\">" + value + "</td>" +
                 "</tr></table>";
     }
 
     private String formatHours(double hours) {
-        if (hours < 48) {
-            return String.format("%.1f hours", hours);
-        }
-        double days = hours / 24.0;
-        return String.format("%.1f days", days);
+        if (hours < 48) return String.format("%.1f hours", hours);
+        return String.format("%.1f days", hours / 24.0);
     }
 
     private String firstName(User user) {
@@ -494,10 +364,6 @@ public class EmailService {
 
     private String escape(String s) {
         if (s == null) return "";
-        return s.replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&#39;");
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;");
     }
 }
