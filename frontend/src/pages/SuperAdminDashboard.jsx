@@ -2,7 +2,8 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import {
     Building2, Users as UsersIcon, Activity,
     Settings as SettingsIcon,
-    Shield, FileText, Megaphone, CreditCard, Clock
+    Shield, FileText, Megaphone, CreditCard, Clock,
+    MessageSquare // 🔧 Added for Feedback
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import PageHeader from '../components/layout/PageHeader'
@@ -17,11 +18,13 @@ import AuditLogs from './super-admin/AuditLogs'
 import Settings from './super-admin/Settings'
 import Broadcast from './super-admin/Broadcast'
 import Plans from './super-admin/Plans'
+import Feedback from './super-admin/Feedback' // 🔧 Imported the Feedback page
 
 const tabs = [
     { to: '/super-admin/universities', label: 'Universities', icon: Building2 },
     { to: '/super-admin/pending-requests', label: 'Pending Requests', icon: Clock },
     { to: '/super-admin/users', label: 'Users', icon: UsersIcon },
+    { to: '/super-admin/feedback', label: 'Feedback', icon: MessageSquare }, // 🔧 Added the tab here
     { to: '/super-admin/analytics', label: 'System Analytics', icon: Activity },
     { to: '/super-admin/tiers', label: 'Tiers & Features', icon: Shield },
     { to: '/super-admin/plans', label: 'Plans', icon: CreditCard },
@@ -37,8 +40,7 @@ export default function SuperAdminDashboard() {
     return (
         <DashboardLayout tabs={tabs}>
             {isHome && (
-                // 🔧 FIX: Matched negative margins to the layout padding (-mt-4, sm:-mt-6, lg:-mt-8) to remove the gap
-                <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-4 bg-white px-3 pb-4 pt-4 dark:bg-slate-900 sm:-mx-5 sm:-mt-6 sm:px-5 sm:pt-6 sm:pb-5 lg:-mx-8 lg:-mt-8 lg:px-8 lg:pt-8 lg:pb-6">
+                <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-4 bg-white px-3 pb-3 pt-4 dark:bg-slate-900 sm:-mx-5 sm:-mt-6 sm:px-5 sm:pt-6 sm:pb-4 lg:-mx-8 lg:-mt-8 lg:px-8 lg:pt-8 lg:pb-4">
                     <PageHeader
                         workspace="Platform Console"
                         description="Manage the entire UniQueue multi-tenant platform."
@@ -50,6 +52,7 @@ export default function SuperAdminDashboard() {
                 <Route path="universities" element={<Universities />} />
                 <Route path="pending-requests" element={<UniversityApplications />} />
                 <Route path="users" element={<Users />} />
+                <Route path="feedback" element={<Feedback />} /> {/* 🔧 Added the route */}
                 <Route path="analytics" element={<SystemAnalytics />} />
                 <Route path="tiers" element={<TiersAndFeatures />} />
                 <Route path="plans" element={<Plans />} />
