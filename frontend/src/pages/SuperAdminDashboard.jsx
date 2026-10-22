@@ -37,7 +37,7 @@ export default function SuperAdminDashboard() {
     return (
         <DashboardLayout tabs={tabs}>
             {isHome && (
-                <div className="sticky top-0 z-20 -mx-3 -mt-3 mb-3 bg-white border-b border-slate-200 px-3 pb-3 pt-3 dark:border-slate-800 dark:bg-slate-900 sm:-mx-5 sm:-mt-4 sm:px-5 sm:pt-4 lg:-mx-8 lg:-mt-5 lg:px-8 lg:pt-5">
+                <div className="sticky top-0 z-20 -mx-3 -mt-3 mb-3 bg-white px-3 pb-3 pt-3 dark:bg-slate-900 sm:-mx-5 sm:-mt-4 sm:px-5 sm:pt-4 lg:-mx-8 lg:-mt-5 lg:px-8 lg:pt-5">
                     <PageHeader
                         workspace="Platform Console"
                         description="Manage the entire UniQueue multi-tenant platform."
