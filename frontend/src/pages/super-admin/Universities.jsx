@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Building2, Search, Pencil, CheckCircle2, XCircle } from 'lucide-react'
+import { Building2, Search, Pencil, CheckCircle2, XCircle, ExternalLink } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
 import Input from '../../components/ui/Input'
@@ -8,14 +8,14 @@ import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import { SkeletonRow } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
-import UniversityDetailsModal from './UniversityDetailsModal' // 🔧 Import the new modal
+import UniversityDetailsModal from './UniversityDetailsModal'
 
 export default function Universities() {
     const { push } = useToastStore()
     const [universities, setUniversities] = useState([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
-    const [editingUni, setEditingUni] = useState(null) // 🔧 State for the modal
+    const [editingUni, setEditingUni] = useState(null)
 
     const load = async () => {
         try {
@@ -52,6 +52,7 @@ export default function Universities() {
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Manage all registered institutions on the platform.</p>
             </div>
 
+            {/* Stats Cards */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 {STATS.map((stat, i) => (
                     <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
@@ -68,6 +69,7 @@ export default function Universities() {
                 ))}
             </div>
 
+            {/* Table Card */}
             <Card padded={false}>
                 <div className="border-b border-slate-100 p-4 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
                     <div className="w-full max-w-sm">
@@ -82,34 +84,56 @@ export default function Universities() {
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
-                            <thead className="bg-slate-50 dark:bg-slate-900/50">
+                            {/* Premium Table Header */}
+                            <thead className="bg-slate-50/80 dark:bg-slate-900/50">
                             <tr>
-                                <th className="px-6 py-4 font-semibold text-slate-500 dark:text-slate-400">Institution</th>
-                                <th className="px-6 py-4 font-semibold text-slate-500 dark:text-slate-400">Code</th>
-                                <th className="px-6 py-4 font-semibold text-slate-500 dark:text-slate-400">Plan</th>
-                                <th className="px-6 py-4 font-semibold text-slate-500 dark:text-slate-400">Status</th>
-                                <th className="px-6 py-4 font-semibold text-slate-500 dark:text-slate-400 text-right">Actions</th>
+                                <th className="whitespace-nowrap px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Institution</th>
+                                <th className="whitespace-nowrap px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Code</th>
+                                <th className="whitespace-nowrap px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Plan</th>
+                                <th className="whitespace-nowrap px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Status</th>
+                                <th className="whitespace-nowrap px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">Actions</th>
                             </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {filtered.map((uni) => (
-                                <tr key={uni.id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                                <tr key={uni.id} className="group transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/20">
+                                    {/* Premium Institution Cell */}
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                                                {uni.logoUrl ? <img src={uni.logoUrl} alt={uni.name} className="h-full w-full rounded-lg object-contain p-1" /> : <Building2 className="h-5 w-5" />}
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-slate-200 shadow-sm dark:bg-slate-800 dark:ring-slate-700">
+                                                {uni.logoUrl ? (
+                                                    <img src={uni.logoUrl} alt={uni.name} className="h-full w-full object-contain p-1" />
+                                                ) : (
+                                                    <Building2 className="h-5 w-5 text-slate-400" />
+                                                )}
                                             </div>
-                                            <span className="font-semibold text-slate-900 dark:text-slate-100">{uni.name}</span>
+                                            <div className="min-w-0">
+                                                <div className="truncate font-semibold text-slate-900 dark:text-slate-100">
+                                                    {uni.name}
+                                                </div>
+                                                <div className="truncate text-xs text-slate-500 dark:text-slate-400">
+                                                    {uni.emailDomain ? `@${uni.emailDomain}` : 'No domain restriction'}
+                                                </div>
+                                            </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-slate-500 dark:text-slate-400 font-mono text-xs">{uni.code || '—'}</td>
-                                    <td className="px-6 py-4"><Badge variant="default">{uni.plan || 'FREE'}</Badge></td>
-                                    <td className="px-6 py-4"><Badge variant={uni.isActive ? 'success' : 'danger'}>{uni.isActive ? 'Active' : 'Inactive'}</Badge></td>
+                                    <td className="px-6 py-4">
+                                            <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 font-mono text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                {uni.code || '—'}
+                                            </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <Badge variant="default">{uni.plan || 'FREE'}</Badge>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <Badge variant={uni.isActive ? 'success' : 'danger'}>
+                                            {uni.isActive ? 'Active' : 'Inactive'}
+                                        </Badge>
+                                    </td>
                                     <td className="px-6 py-4 text-right">
-                                        {/* 🔧 FIX: Open the Modal instead of a Link */}
                                         <button
                                             onClick={() => setEditingUni(uni)}
-                                            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-600 transition-colors hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40"
+                                            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition-all hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-brand-700 dark:hover:bg-brand-950/30 dark:hover:text-brand-400"
                                         >
                                             Manage <Pencil className="h-3.5 w-3.5" />
                                         </button>
@@ -122,7 +146,7 @@ export default function Universities() {
                 )}
             </Card>
 
-            {/* 🔧 Render the Modal */}
+            {/* Modal */}
             <AnimatePresence>
                 {editingUni && (
                     <UniversityDetailsModal
