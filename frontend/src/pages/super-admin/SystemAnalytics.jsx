@@ -28,7 +28,6 @@ import api from '../../api/axios'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
-import PageHeader from '../../components/layout/PageHeader'
 import ExportButton from '../../components/ui/ExportButton'
 import { SkeletonStats, SkeletonCard } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
@@ -173,25 +172,7 @@ export default function SystemAnalytics() {
 
     return (
         <>
-            <PageHeader
-                title="System Analytics"
-                description="Platform-wide metrics across every university."
-                action={
-                    <ExportButton
-                        rows={analytics.universities || []}
-                        columns={[
-                            { key: 'code', label: 'Code' },
-                            { key: 'name', label: 'Name' },
-                            { key: 'users', label: 'Users' },
-                            { key: 'staff', label: 'Staff' },
-                            { key: 'queues', label: 'Queues' },
-                            { key: 'ticketsToday', label: 'Tickets Today' },
-                            { key: 'ticketsAllTime', label: 'Tickets All-Time' },
-                        ]}
-                        filename="uniqueue-system-analytics"
-                        label="Export universities"
-                    />
-                }
+            }
             />
 
             {/* ─── KPI ROW ─── */}

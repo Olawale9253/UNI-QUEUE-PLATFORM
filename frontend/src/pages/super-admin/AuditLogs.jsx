@@ -17,7 +17,6 @@ import Input from '../../components/ui/Input'
 import Select from '../../components/ui/Select'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
-import PageHeader from '../../components/layout/PageHeader'
 import ExportButton from '../../components/ui/ExportButton'
 import { useToastStore } from '../../store/toastStore'
 import { formatDateTime, formatTimeAgo } from '../../lib/format'
@@ -190,25 +189,6 @@ export default function AuditLogs() {
 
     return (
         <>
-            <PageHeader
-                title="Audit Logs"
-                description="Every meaningful action recorded across the platform."
-                action={
-                    <Button
-                        variant={showFilters ? 'secondary' : 'primary'}
-                        icon={Filter}
-                        onClick={() => setShowFilters((setShowFilter) => !setShowFilter)}
-                    >
-                        Filters
-                        {activeFilterCount > 0 && (
-                            <span className="ml-1.5 rounded-full bg-brand-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                {activeFilterCount}
-              </span>
-                        )}
-                    </Button>
-                }
-            />
-
             {showFilters && (
                 <motion.div
                     initial={{ opacity: 0, height: 0 }}

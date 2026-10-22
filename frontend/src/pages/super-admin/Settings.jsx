@@ -4,7 +4,6 @@ import api from '../../api/axios'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
-import PageHeader from '../../components/layout/PageHeader'
 import { useToastStore } from '../../store/toastStore'
 
 export default function Settings() {
@@ -43,11 +42,6 @@ export default function Settings() {
 
     return (
         <div className="mx-auto max-w-3xl">
-            <PageHeader
-                title="Platform Settings"
-                description="Manage global configuration for the entire application."
-            />
-
             <form onSubmit={save} className="space-y-6">
                 <Card>
                     <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">

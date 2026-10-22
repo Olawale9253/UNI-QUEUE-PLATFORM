@@ -14,7 +14,6 @@ import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import Select from '../../components/ui/Select'
 import Badge from '../../components/ui/Badge'
-import PageHeader from '../../components/layout/PageHeader'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import { useToastStore } from '../../store/toastStore'
 
@@ -122,11 +121,6 @@ export default function Broadcast() {
 
     return (
         <>
-            <PageHeader
-                title="Broadcast"
-                description="Send announcements to users across the platform. They'll appear in their notification bell."
-            />
-
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 {/* Compose form */}
                 <div className="lg:col-span-2">

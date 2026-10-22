@@ -6,7 +6,6 @@ import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
-import PageHeader from '../../components/layout/PageHeader'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { stagger, staggerItem } from '../../lib/motion'
@@ -80,11 +79,6 @@ export default function Plans() {
 
     return (
         <>
-            <PageHeader
-                title="Plans & Pricing"
-                description="Set prices and limits for each subscription tier. Changes apply immediately to new assignments."
-            />
-
             <div className="mb-6 flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
                 <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
                 <div>

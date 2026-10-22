@@ -8,7 +8,6 @@ import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
-import PageHeader from '../../components/layout/PageHeader'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { stagger, staggerItem } from '../../lib/motion'
@@ -107,11 +106,6 @@ export default function TiersAndFeatures() {
 
     return (
         <>
-            <PageHeader
-                title="Tiers & Features"
-                description="Control billing plans and enable/disable platform features per university."
-            />
-
             <Card className="mb-6">
                 <div className="mb-3 flex items-center gap-2">
                     <DollarSign className="h-4 w-4 text-brand-600" />
