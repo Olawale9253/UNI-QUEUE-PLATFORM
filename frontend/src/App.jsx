@@ -27,7 +27,6 @@ import { usePrefsStore } from './store/prefsStore'
 import { useServerEvents } from './hooks/useServerEvents'
 import { useUniversityTheme } from './hooks/useUniversityTheme'
 
-// ONLY hide the navbar on these public/auth routes
 const HIDE_NAVBAR_ROUTES = [
     '/login',
     '/register',
@@ -38,7 +37,6 @@ const HIDE_NAVBAR_ROUTES = [
 
 export default function App() {
     const location = useLocation()
-    // Using startsWith to catch any nested routes
     const hideNavbar = HIDE_NAVBAR_ROUTES.some(route => location.pathname.startsWith(route))
 
     useServerEvents()
@@ -75,7 +73,6 @@ export default function App() {
                     <ScrollToTop />
                     <ImpersonationBanner />
 
-                    {/* The Navbar now stays on Dashboard pages too */}
                     {!hideNavbar && <Navbar />}
 
                     <main className="flex-1">
