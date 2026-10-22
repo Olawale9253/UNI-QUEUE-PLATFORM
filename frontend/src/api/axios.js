@@ -4,7 +4,7 @@ const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL || '',
 })
 
-// Endpoints that should NEVER trigger an auto-logout on 401
+// Endpoints that should NEVER trigger an auto-logout/refresh on 401/400
 const PUBLIC_AUTH_PATHS = [
     '/api/auth/login',
     '/api/auth/register',
@@ -12,6 +12,8 @@ const PUBLIC_AUTH_PATHS = [
     '/api/auth/reset-password',
     '/api/auth/refresh',
     '/api/auth/universities',
+    '/api/auth/verify-email',         // 🔧 ADDED
+    '/api/auth/resend-verification',  // 🔧 ADDED
 ]
 
 let refreshPromise = null
@@ -99,6 +101,7 @@ api.interceptors.response.use(
             error.message = 'Server error. Please try again later.'
         }
 
+        // 🔧 FIX: Only try to refresh on 401 Unauthorized, and NOT on public paths
         if (status !== 401 || isPublicPath) {
             return Promise.reject(error)
         }
