@@ -22,7 +22,7 @@ export default function Plans() {
     const [plans, setPlans] = useState([])
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState({})
-    const [rate, setRate] = useState(1500) // ⬅️ NEW
+    const [rate, setRate] = useState(1500)
 
     const load = useCallback(async () => {
         try {
@@ -70,7 +70,7 @@ export default function Plans() {
 
     if (loading) {
         return (
-            <div className="space-y-4">
+            <div className="space-y-6 pb-12">
                 <SkeletonCard />
                 <SkeletonCard />
             </div>
@@ -78,12 +78,12 @@ export default function Plans() {
     }
 
     return (
-        <>
-            <div className="mb-6 flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
-                <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
+        <div className="space-y-6 pb-12">
+            <div className="mb-6 flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900 dark:border-sky-900/50 dark:bg-sky-950/20 dark:text-sky-200">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-600 dark:text-sky-400" />
                 <div>
                     <p className="font-medium">How pricing works</p>
-                    <p className="mt-1 text-xs text-sky-800">
+                    <p className="mt-1 text-xs text-sky-800 dark:text-sky-300">
                         Prices are for display only. Naira equivalents are calculated using the Exchange Rate in Platform Settings (currently 1 USD = ₦{Number(rate).toLocaleString()}).
                     </p>
                 </div>
@@ -110,21 +110,21 @@ export default function Plans() {
                         return (
                             <motion.div key={plan.id} variants={staggerItem}>
                                 <Card>
-                                    <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
+                                    <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <h3 className="text-base font-semibold text-slate-900">
+                                                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                                                     {plan.label}
                                                 </h3>
                                                 <Badge variant={color}>{plan.code}</Badge>
                                                 {!plan.isActive && <Badge variant="default">Inactive</Badge>}
                                             </div>
-                                            <p className="mt-0.5 text-xs text-slate-500">
+                                            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                                                 Currently at <strong>${plan.priceUsd}</strong> / <strong>₦{ngnPrice.toLocaleString()}</strong> /month
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-2xl font-bold text-slate-900">
+                                            <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                                                 ${plan.priceUsd}
                                             </div>
                                             <div className="text-[10px] uppercase tracking-wide text-slate-500">
@@ -133,9 +133,8 @@ export default function Plans() {
                                         </div>
                                     </div>
 
-                                    {/* Price */}
                                     <div className="mb-4">
-                                        <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                                        <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
                                             Monthly price (USD)
                                         </label>
                                         <div className="relative">
@@ -148,15 +147,14 @@ export default function Plans() {
                                                 step="1"
                                                 value={plan.priceUsd}
                                                 onChange={(event) => updateLocal(plan.id, 'priceUsd', event.target.value)}
-                                                className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-7 pr-3 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                                                className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-7 pr-3 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                             />
                                         </div>
                                     </div>
 
-                                    {/* Limits */}
                                     <div className="space-y-3">
                                         <div>
-                                            <label className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-700">
+                                            <label className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
                                                 <Layers className="h-3.5 w-3.5 text-slate-400" />
                                                 Max queues
                                             </label>
@@ -165,12 +163,12 @@ export default function Plans() {
                                                 min="1"
                                                 value={plan.maxQueues}
                                                 onChange={(event) => updateLocal(plan.id, 'maxQueues', event.target.value)}
-                                                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                                                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-700">
+                                            <label className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
                                                 <Users className="h-3.5 w-3.5 text-slate-400" />
                                                 Max staff members
                                             </label>
@@ -179,12 +177,12 @@ export default function Plans() {
                                                 min="1"
                                                 value={plan.maxStaff}
                                                 onChange={(event) => updateLocal(plan.id, 'maxStaff', event.target.value)}
-                                                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                                                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-700">
+                                            <label className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
                                                 <Ticket className="h-3.5 w-3.5 text-slate-400" />
                                                 Max tickets per day
                                             </label>
@@ -193,11 +191,11 @@ export default function Plans() {
                                                 min="1"
                                                 value={plan.maxTicketsPerDay}
                                                 onChange={(event) => updateLocal(plan.id, 'maxTicketsPerDay', event.target.value)}
-                                                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                                                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                             />
                                         </div>
 
-                                        <label className="flex items-center gap-2 pt-1 text-sm text-slate-700">
+                                        <label className="flex items-center gap-2 pt-1 text-sm text-slate-700 dark:text-slate-300">
                                             <input
                                                 type="checkbox"
                                                 checked={plan.isActive}
@@ -208,7 +206,7 @@ export default function Plans() {
                                         </label>
                                     </div>
 
-                                    <div className="mt-5 flex justify-end border-t border-slate-100 pt-4">
+                                    <div className="mt-5 flex justify-end border-t border-slate-100 pt-4 dark:border-slate-800">
                                         <Button
                                             size="sm"
                                             icon={Save}
@@ -225,6 +223,6 @@ export default function Plans() {
                     })}
                 </motion.div>
             )}
-        </>
+        </div>
     )
 }

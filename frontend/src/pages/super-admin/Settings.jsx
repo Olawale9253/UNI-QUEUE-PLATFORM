@@ -38,10 +38,10 @@ export default function Settings() {
         }
     }
 
-    if (loading) return <div className="p-8 text-center text-slate-500">Loading settings…</div>
+    if (loading) return <div className="p-8 text-center text-slate-500 dark:text-slate-400">Loading settings…</div>
 
     return (
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-3xl space-y-6 pb-12">
             <form onSubmit={save} className="space-y-6">
                 <Card>
                     <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">

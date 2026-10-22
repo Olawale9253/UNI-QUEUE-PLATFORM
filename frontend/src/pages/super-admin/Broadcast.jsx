@@ -52,7 +52,6 @@ export default function Broadcast() {
         loadUniversities()
     }, [loadUniversities])
 
-    // Preview recipient count when filters change
     useEffect(() => {
         const fetchCount = async () => {
             setCountLoading(true)
@@ -120,18 +119,17 @@ export default function Broadcast() {
     ].join(' ')
 
     return (
-        <>
+        <div className="space-y-6 pb-12">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                {/* Compose form */}
                 <div className="lg:col-span-2">
                     <Card>
-                        <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50">
-                                <Megaphone className="h-4 w-4 text-brand-600" />
+                        <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40">
+                                <Megaphone className="h-4 w-4 text-brand-600 dark:text-brand-400" />
                             </div>
                             <div>
-                                <h2 className="text-base font-semibold text-slate-900">Compose message</h2>
-                                <p className="text-xs text-slate-500">
+                                <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Compose message</h2>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
                                     Only users with active accounts will receive it.
                                 </p>
                             </div>
@@ -139,7 +137,7 @@ export default function Broadcast() {
 
                         <form onSubmit={handleSendClick} className="space-y-4">
                             <div>
-                                <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                                <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
                                     Title <span className="text-rose-500">*</span>
                                 </label>
                                 <input
@@ -148,13 +146,13 @@ export default function Broadcast() {
                                     onChange={setField('title')}
                                     placeholder="e.g. Scheduled maintenance this weekend"
                                     maxLength={255}
-                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20"
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                     required
                                 />
                             </div>
 
                             <div>
-                                <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                                <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
                                     Message <span className="text-rose-500">*</span>
                                 </label>
                                 <textarea
@@ -163,11 +161,11 @@ export default function Broadcast() {
                                     onChange={setField('message')}
                                     placeholder="Write your announcement here. Keep it short and clear."
                                     maxLength={2000}
-                                    className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20"
+                                    className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                     required
                                 />
                                 <div className="mt-1 flex justify-end">
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
                     {form.message.length} / 2000
                   </span>
                                 </div>
@@ -202,38 +200,37 @@ export default function Broadcast() {
                     </Card>
                 </div>
 
-                {/* Preview panel */}
                 <div className="space-y-4">
                     <Card>
                         <div className="mb-3 flex items-center gap-2">
                             <Users className="h-4 w-4 text-brand-600" />
-                            <h3 className="text-sm font-semibold text-slate-900">Audience</h3>
+                            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Audience</h3>
                         </div>
 
                         <div className="space-y-3">
-                            <div className="rounded-lg bg-slate-50 px-3 py-2.5">
-                                <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                            <div className="rounded-lg bg-slate-50 px-3 py-2.5 dark:bg-slate-900/50">
+                                <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                     Recipients
                                 </div>
                                 <div className="mt-1 flex items-center gap-2">
                                     {countLoading ? (
-                                        <span className="text-sm text-slate-500">Calculating…</span>
+                                        <span className="text-sm text-slate-500 dark:text-slate-400">Calculating…</span>
                                     ) : (
                                         <>
-                      <span className="text-2xl font-semibold text-slate-900">
+                      <span className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
                         {recipientCount ?? '—'}
                       </span>
-                                            <span className="text-sm text-slate-500">users</span>
+                                            <span className="text-sm text-slate-500 dark:text-slate-400">users</span>
                                         </>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="rounded-lg border border-slate-200 px-3 py-2.5">
-                                <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                            <div className="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-800">
+                                <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                     Scope
                                 </div>
-                                <div className="mt-1 text-sm font-medium text-slate-900">
+                                <div className="mt-1 text-sm font-medium text-slate-900 dark:text-slate-100">
                                     {audienceLabel}
                                 </div>
                             </div>
@@ -243,9 +240,9 @@ export default function Broadcast() {
                     <Card>
                         <div className="mb-3 flex items-center gap-2">
                             <AlertCircle className="h-4 w-4 text-amber-600" />
-                            <h3 className="text-sm font-semibold text-slate-900">Good to know</h3>
+                            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Good to know</h3>
                         </div>
-                        <ul className="space-y-2 text-xs text-slate-600">
+                        <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
                             <li className="flex gap-2">
                                 <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
                                 <span>Broadcasts appear in the recipient's notification bell instantly.</span>
@@ -277,6 +274,6 @@ export default function Broadcast() {
                 variant="info"
                 loading={sending}
             />
-        </>
+        </div>
     )
 }

@@ -23,85 +23,21 @@ import { formatDateTime, formatTimeAgo } from '../../lib/format'
 import { stagger, staggerItem } from '../../lib/motion'
 
 const ACTION_GROUPS = [
-    {
-        label: 'Authentication',
-        actions: ['USER_REGISTERED', 'USER_LOGIN', 'USER_LOGIN_FAILED'],
-    },
-    {
-        label: 'Tickets',
-        actions: [
-            'TICKET_JOINED',
-            'TICKET_WAITLISTED',
-            'TICKET_WAITLIST_PROMOTED',
-            'TICKET_CALLED',
-            'TICKET_SERVED',
-            'TICKET_COMPLETED',
-            'TICKET_NO_SHOW',
-            'TICKET_TRANSFERRED',
-            'TICKET_CANCELLED',
-            'TICKET_PRIORITY_CHANGED',
-        ],
-    },
-    {
-        label: 'Queues',
-        actions: ['QUEUE_CREATED', 'QUEUE_UPDATED', 'QUEUE_DELETED'],
-    },
-    {
-        label: 'Staff',
-        actions: ['STAFF_CREATED', 'STAFF_ASSIGNED', 'STAFF_UNASSIGNED'],
-    },
-    {
-        label: 'Universities',
-        actions: [
-            'UNIVERSITY_CREATED',
-            'UNIVERSITY_UPDATED',
-            'UNIVERSITY_DEACTIVATED',
-            'UNIVERSITY_REACTIVATED',
-            'ADMIN_CREATED',
-        ],
-    },
+    { label: 'Authentication', actions: ['USER_REGISTERED', 'USER_LOGIN', 'USER_LOGIN_FAILED'] },
+    { label: 'Tickets', actions: ['TICKET_JOINED', 'TICKET_WAITLISTED', 'TICKET_WAITLIST_PROMOTED', 'TICKET_CALLED', 'TICKET_SERVED', 'TICKET_COMPLETED', 'TICKET_NO_SHOW', 'TICKET_TRANSFERRED', 'TICKET_CANCELLED', 'TICKET_PRIORITY_CHANGED'] },
+    { label: 'Queues', actions: ['QUEUE_CREATED', 'QUEUE_UPDATED', 'QUEUE_DELETED'] },
+    { label: 'Staff', actions: ['STAFF_CREATED', 'STAFF_ASSIGNED', 'STAFF_UNASSIGNED'] },
+    { label: 'Universities', actions: ['UNIVERSITY_CREATED', 'UNIVERSITY_UPDATED', 'UNIVERSITY_DEACTIVATED', 'UNIVERSITY_REACTIVATED', 'ADMIN_CREATED'] },
     { label: 'Feedback', actions: ['FEEDBACK_SUBMITTED'] },
     { label: 'Documents', actions: ['DOCUMENT_UPLOADED', 'DOCUMENT_DELETED'] },
-    {
-        label: 'Appointments',
-        actions: [
-            'APPOINTMENT_SLOT_CREATED',
-            'APPOINTMENT_SLOT_UPDATED',
-            'APPOINTMENT_SLOT_DELETED',
-            'APPOINTMENT_BOOKED',
-            'APPOINTMENT_CANCELLED',
-            'APPOINTMENT_COMPLETED',
-            'APPOINTMENT_NO_SHOW',
-        ],
-    },
-    {
-        label: 'Workflows',
-        actions: [
-            'WORKFLOW_CREATED',
-            'WORKFLOW_UPDATED',
-            'WORKFLOW_DELETED',
-            'WORKFLOW_STARTED',
-            'WORKFLOW_STEP_COMPLETED',
-            'WORKFLOW_COMPLETED',
-            'WORKFLOW_ABANDONED',
-        ],
-    },
+    { label: 'Appointments', actions: ['APPOINTMENT_SLOT_CREATED', 'APPOINTMENT_SLOT_UPDATED', 'APPOINTMENT_SLOT_DELETED', 'APPOINTMENT_BOOKED', 'APPOINTMENT_CANCELLED', 'APPOINTMENT_COMPLETED', 'APPOINTMENT_NO_SHOW'] },
+    { label: 'Workflows', actions: ['WORKFLOW_CREATED', 'WORKFLOW_UPDATED', 'WORKFLOW_DELETED', 'WORKFLOW_STARTED', 'WORKFLOW_STEP_COMPLETED', 'WORKFLOW_COMPLETED', 'WORKFLOW_ABANDONED'] },
 ]
 
 function actionVariant(action) {
     if (!action) return 'default'
-    if (
-        action.includes('FAILED') ||
-        action.includes('DEACTIVATED') ||
-        action.includes('DELETED')
-    )
-        return 'danger'
-    if (
-        action.includes('COMPLETED') ||
-        action.includes('CREATED') ||
-        action.includes('LOGIN')
-    )
-        return 'success'
+    if (action.includes('FAILED') || action.includes('DEACTIVATED') || action.includes('DELETED')) return 'danger'
+    if (action.includes('COMPLETED') || action.includes('CREATED') || action.includes('LOGIN')) return 'success'
     if (action.startsWith('TICKET') || action.startsWith('WORKFLOW')) return 'indigo'
     if (action.startsWith('UNIVERSITY') || action.startsWith('ADMIN')) return 'warning'
     return 'default'
@@ -154,10 +90,7 @@ export default function AuditLogs() {
                 setTotalElements(data.totalElements || 0)
                 setPage(pageToLoad)
             } catch (err) {
-                push({
-                    type: 'error',
-                    message: err.message || 'Failed to load audit logs',
-                })
+                push({ type: 'error', message: err.message || 'Failed to load audit logs' })
             } finally {
                 setLoading(false)
             }
@@ -165,18 +98,10 @@ export default function AuditLogs() {
         [filters, push]
     )
 
-    useEffect(() => {
-        loadUniversities()
-    }, [loadUniversities])
+    useEffect(() => { loadUniversities() }, [loadUniversities])
+    useEffect(() => { loadLogs(0) }, [loadLogs])
 
-    useEffect(() => {
-        loadLogs(0)
-    }, [loadLogs])
-
-    const clearFilters = () => {
-        setFilters({ universityId: '', action: '', from: '', to: '' })
-    }
-
+    const clearFilters = () => setFilters({ universityId: '', action: '', from: '', to: '' })
     const setFilter = (field) => (event) => setFilters({ ...filters, [field]: event.target.value })
 
     const universityOptions = universities.map((university) => ({
@@ -188,212 +113,115 @@ export default function AuditLogs() {
     const universityById = new Map(universities.map((universityValue) => [universityValue.id, universityValue]))
 
     return (
-        <>
+        <div className="space-y-6 pb-12">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-slate-500" />
+                    <span className="text-sm text-slate-500 dark:text-slate-400">
+                        {loading ? 'Loading…' : (
+                            <>
+                                <strong className="text-slate-900 dark:text-slate-100">{totalElements}</strong>{' '}
+                                {totalElements === 1 ? 'entry' : 'entries'}
+                                {activeFilterCount > 0 && ' (filtered)'}
+                            </>
+                        )}
+                    </span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <ExportButton
+                        rows={logs}
+                        columns={[
+                            { key: 'id', label: 'ID' }, { key: 'action', label: 'Action' }, { key: 'entityType', label: 'Entity Type' }, { key: 'entityId', label: 'Entity ID' }, { key: 'userId', label: 'User ID' }, { key: 'universityId', label: 'University ID' }, { key: 'ipAddress', label: 'IP Address' }, { key: 'details', label: 'Details' }, { key: 'createdAt', label: 'Timestamp' },
+                        ]}
+                        filename="uniqueue-audit-logs"
+                        label="Export"
+                    />
+                    <Button
+                        variant={showFilters ? 'secondary' : 'primary'}
+                        icon={Filter}
+                        onClick={() => setShowFilters((prev) => !prev)}
+                    >
+                        Filters
+                        {activeFilterCount > 0 && (
+                            <span className="ml-1.5 rounded-full bg-brand-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                                {activeFilterCount}
+                            </span>
+                        )}
+                    </Button>
+                </div>
+            </div>
+
             {showFilters && (
-                <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    className="mb-6 overflow-hidden"
-                >
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="overflow-hidden">
                     <Card>
                         <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-slate-900">Filter logs</h3>
+                            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Filter logs</h3>
                             {activeFilterCount > 0 && (
-                                <button
-                                    onClick={clearFilters}
-                                    className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700"
-                                >
-                                    <CloseIcon className="h-3.5 w-3.5" />
-                                    Clear all
+                                <button onClick={clearFilters} className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700">
+                                    <CloseIcon className="h-3.5 w-3.5" /> Clear all
                                 </button>
                             )}
                         </div>
-
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            <Select
-                                label="University"
-                                value={filters.universityId}
-                                onChange={setFilter('universityId')}
-                                options={universityOptions}
-                                placeholder="All universities"
-                            />
-
+                            <Select label="University" value={filters.universityId} onChange={setFilter('universityId')} options={universityOptions} placeholder="All universities" />
                             <div className="mb-4">
-                                <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                                    Action
-                                </label>
-                                <select
-                                    value={filters.action}
-                                    onChange={setFilter('action')}
-                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20"
-                                >
+                                <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Action</label>
+                                <select value={filters.action} onChange={setFilter('action')} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
                                     <option value="">All actions</option>
                                     {ACTION_GROUPS.map((item) => (
                                         <optgroup key={item.label} label={item.label}>
-                                            {item.actions.map((itemValue) => (
-                                                <option key={itemValue} value={itemValue}>
-                                                    {itemValue.replace(/_/g, ' ')}
-                                                </option>
-                                            ))}
+                                            {item.actions.map((itemValue) => (<option key={itemValue} value={itemValue}>{itemValue.replace(/_/g, ' ')}</option>))}
                                         </optgroup>
                                     ))}
                                 </select>
                             </div>
-
-                            <Input
-                                label="From"
-                                type="datetime-local"
-                                value={filters.from}
-                                onChange={setFilter('from')}
-                            />
-                            <Input
-                                label="To"
-                                type="datetime-local"
-                                value={filters.to}
-                                onChange={setFilter('to')}
-                            />
+                            <Input label="From" type="datetime-local" value={filters.from} onChange={setFilter('from')} />
+                            <Input label="To" type="datetime-local" value={filters.to} onChange={setFilter('to')} />
                         </div>
                     </Card>
                 </motion.div>
             )}
 
-            <div className="mb-4 flex items-center justify-between text-sm text-slate-500">
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                        <Activity className="h-4 w-4" />
-                        <span>
-              {loading ? (
-                  'Loading…'
-              ) : (
-                  <>
-                      <strong className="text-slate-900">{totalElements}</strong>{' '}
-                      {totalElements === 1 ? 'entry' : 'entries'}
-                      {activeFilterCount > 0 && ' (filtered)'}
-                  </>
-              )}
-            </span>
-                    </div>
-                    <ExportButton
-                        rows={logs}
-                        columns={[
-                            { key: 'id', label: 'ID' },
-                            { key: 'action', label: 'Action' },
-                            { key: 'entityType', label: 'Entity Type' },
-                            { key: 'entityId', label: 'Entity ID' },
-                            { key: 'userId', label: 'User ID' },
-                            { key: 'universityId', label: 'University ID' },
-                            { key: 'ipAddress', label: 'IP Address' },
-                            { key: 'details', label: 'Details' },
-                            { key: 'createdAt', label: 'Timestamp' },
-                        ]}
-                        filename="uniqueue-audit-logs"
-                        label="Export page"
-                    />
-                </div>
-                {totalPages > 1 && (
-                    <div className="flex items-center gap-2">
-            <span>
-              Page {page + 1} of {totalPages}
-            </span>
-                    </div>
-                )}
-            </div>
-
             {loading ? (
                 <Card padded={false}>
                     {Array.from({ length: 8 }).map((unusedValue, index) => (
-                        <div
-                            key={index}
-                            className="flex items-center gap-4 border-b border-slate-100 px-6 py-4"
-                        >
-                            <div className="h-10 w-10 animate-pulse rounded-lg bg-slate-100" />
+                        <div key={index} className="flex items-center gap-4 border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+                            <div className="h-10 w-10 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />
                             <div className="flex-1 space-y-2">
-                                <div className="h-3 w-1/3 animate-pulse rounded bg-slate-100" />
-                                <div className="h-3 w-1/2 animate-pulse rounded bg-slate-100" />
+                                <div className="h-3 w-1/3 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+                                <div className="h-3 w-1/2 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
                             </div>
                         </div>
                     ))}
                 </Card>
             ) : logs.length === 0 ? (
-                <EmptyState
-                    icon={History}
-                    title="No audit logs found"
-                    description={
-                        activeFilterCount > 0
-                            ? 'Try adjusting or clearing your filters.'
-                            : 'Once users perform actions, they will appear here.'
-                    }
-                    action={
-                        activeFilterCount > 0 ? (
-                            <Button variant="secondary" onClick={clearFilters}>
-                                Clear filters
-                            </Button>
-                        ) : undefined
-                    }
-                />
+                <EmptyState icon={History} title="No audit logs found" description={activeFilterCount > 0 ? 'Try adjusting or clearing your filters.' : 'Once users perform actions, they will appear here.'} action={activeFilterCount > 0 ? <Button variant="secondary" onClick={clearFilters}>Clear filters</Button> : undefined} />
             ) : (
                 <Card padded={false}>
-                    <motion.ul
-                        variants={stagger(0, 0.02)}
-                        initial="initial"
-                        animate="animate"
-                        className="divide-y divide-slate-100"
-                    >
+                    <motion.ul variants={stagger(0, 0.02)} initial="initial" animate="animate" className="divide-y divide-slate-100 dark:divide-slate-800">
                         {logs.map((log) => {
                             const uni = log.universityId ? universityById.get(log.universityId) : null
                             return (
-                                <motion.li
-                                    key={log.id}
-                                    variants={staggerItem}
-                                    className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6"
-                                >
+                                <motion.li key={log.id} variants={staggerItem} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
                                     <div className="flex min-w-0 flex-1 items-start gap-3">
-                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">
-                                            <Activity className="h-4 w-4 text-slate-500" />
+                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
+                                            <Activity className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="flex flex-wrap items-center gap-2">
-                                                <Badge variant={actionVariant(log.action)}>
-                                                    {String(log.action).replace(/_/g, ' ')}
-                                                </Badge>
-                                                {log.entityType && (
-                                                    <span className="text-xs text-slate-500">
-                            {log.entityType}
-                                                        {log.entityId ? ` #${log.entityId}` : ''}
-                          </span>
-                                                )}
+                                                <Badge variant={actionVariant(log.action)}>{String(log.action).replace(/_/g, ' ')}</Badge>
+                                                {log.entityType && <span className="text-xs text-slate-500 dark:text-slate-400">{log.entityType}{log.entityId ? ` #${log.entityId}` : ''}</span>}
                                             </div>
-
-                                            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                                                {log.userId && (
-                                                    <span className="flex items-center gap-1">
-                            <UserIcon className="h-3 w-3" />
-                            User #{log.userId}
-                          </span>
-                                                )}
-                                                {uni && (
-                                                    <span className="flex items-center gap-1">
-                            <Building2 className="h-3 w-3" />
-                                                        {uni.code}
-                          </span>
-                                                )}
-                                                {log.ipAddress && (
-                                                    <span className="font-mono">{log.ipAddress}</span>
-                                                )}
+                                            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                                                {log.userId && <span className="flex items-center gap-1"><UserIcon className="h-3 w-3" />User #{log.userId}</span>}
+                                                {uni && <span className="flex items-center gap-1"><Building2 className="h-3 w-3" />{uni.code}</span>}
+                                                {log.ipAddress && <span className="font-mono">{log.ipAddress}</span>}
                                             </div>
-
-                                            {log.details && (
-                                                <div className="mt-1.5 truncate rounded bg-slate-50 px-2 py-1 font-mono text-xs text-slate-600">
-                                                    {log.details}
-                                                </div>
-                                            )}
+                                            {log.details && <div className="mt-1.5 truncate rounded bg-slate-50 px-2 py-1 font-mono text-xs text-slate-600 dark:bg-slate-900/50 dark:text-slate-400">{log.details}</div>}
                                         </div>
                                     </div>
-
-                                    <div className="ml-12 shrink-0 text-xs text-slate-500 sm:ml-0 sm:text-right">
-                                        <div className="font-medium text-slate-700">
-                                            {formatTimeAgo(log.createdAt)}
-                                        </div>
+                                    <div className="ml-12 shrink-0 text-xs text-slate-500 dark:text-slate-400 sm:ml-0 sm:text-right">
+                                        <div className="font-medium text-slate-700 dark:text-slate-300">{formatTimeAgo(log.createdAt)}</div>
                                         <div>{formatDateTime(log.createdAt)}</div>
                                     </div>
                                 </motion.li>
@@ -405,29 +233,11 @@ export default function AuditLogs() {
 
             {totalPages > 1 && (
                 <div className="mt-6 flex items-center justify-between">
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        icon={ChevronLeft}
-                        onClick={() => loadLogs(page - 1)}
-                        disabled={page === 0 || loading}
-                    >
-                        Previous
-                    </Button>
-                    <span className="text-sm text-slate-600">
-            Page {page + 1} of {totalPages}
-          </span>
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => loadLogs(page + 1)}
-                        disabled={page >= totalPages - 1 || loading}
-                    >
-                        Next
-                        <ChevronRight className="h-4 w-4" />
-                    </Button>
+                    <Button variant="secondary" size="sm" icon={ChevronLeft} onClick={() => loadLogs(page - 1)} disabled={page === 0 || loading}>Previous</Button>
+                    <span className="text-sm text-slate-600 dark:text-slate-400">Page {page + 1} of {totalPages}</span>
+                    <Button variant="secondary" size="sm" onClick={() => loadLogs(page + 1)} disabled={page >= totalPages - 1 || loading}>Next <ChevronRight className="h-4 w-4" /></Button>
                 </div>
             )}
-        </>
+        </div>
     )
 }

@@ -31,7 +31,7 @@ export default function TiersAndFeatures() {
     const [universities, setUniversities] = useState([])
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState({})
-    const [rate, setRate] = useState(1500) // ⬅️ NEW
+    const [rate, setRate] = useState(1500)
 
     const load = useCallback(async () => {
         try {
@@ -96,7 +96,7 @@ export default function TiersAndFeatures() {
 
     if (loading) {
         return (
-            <div className="space-y-4">
+            <div className="space-y-6 pb-12">
                 <SkeletonCard />
                 <SkeletonCard />
                 <SkeletonCard />
@@ -105,24 +105,24 @@ export default function TiersAndFeatures() {
     }
 
     return (
-        <>
-            <Card className="mb-6">
+        <div className="space-y-6 pb-12">
+            <Card>
                 <div className="mb-3 flex items-center gap-2">
                     <DollarSign className="h-4 w-4 text-brand-600" />
-                    <h3 className="text-sm font-semibold text-slate-900">Available plans</h3>
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Available plans</h3>
                 </div>
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                     {Object.entries(PLANS).map(([key, plan]) => {
                         const ngnPrice = plan.price * rate
                         return (
-                            <div key={key} className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                            <div key={key} className="rounded-lg border border-slate-200 bg-slate-50/50 p-3 dark:border-slate-800 dark:bg-slate-900/50">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm font-semibold text-slate-900">{plan.label}</span>
+                                    <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{plan.label}</span>
                                     <Badge variant={plan.color}>
                                         {plan.price === 0 ? 'Free' : `$${plan.price} / ₦${ngnPrice.toLocaleString()}`}
                                     </Badge>
                                 </div>
-                                <div className="mt-2 space-y-0.5 text-xs text-slate-500">
+                                <div className="mt-2 space-y-0.5 text-xs text-slate-500 dark:text-slate-400">
                                     <div>{plan.maxQueues} queues</div>
                                     <div>{plan.maxStaff} staff</div>
                                     <div>{plan.maxTicketsPerDay.toLocaleString()} tickets/day</div>
@@ -146,18 +146,18 @@ export default function TiersAndFeatures() {
                         return (
                             <motion.div key={uni.id} variants={staggerItem}>
                                 <Card>
-                                    <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
+                                    <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
                                         <div className="flex items-center gap-3">
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white dark:bg-slate-700">
                                                 {uni.code?.slice(0, 2)}
                                             </div>
                                             <div>
                                                 <div className="flex flex-wrap items-center gap-2">
-                                                    <span className="text-base font-semibold text-slate-900">{uni.name}</span>
+                                                    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">{uni.name}</span>
                                                     <Badge variant={planMeta.color}>{planMeta.label}</Badge>
                                                     <Badge variant={uni.isActive ? 'success' : 'default'}>{uni.isActive ? 'Active' : 'Inactive'}</Badge>
                                                 </div>
-                                                <div className="mt-0.5 text-xs text-slate-500">
+                                                <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                                                     Code: {uni.code} · {uni.queueCount || 0} queues · {uni.staffCount || 0} staff
                                                 </div>
                                             </div>
@@ -166,7 +166,7 @@ export default function TiersAndFeatures() {
 
                                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                                         <div>
-                                            <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
+                                            <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
                                                 <Layers className="h-4 w-4 text-brand-600" />
                                                 Billing plan
                                             </h4>
@@ -174,7 +174,7 @@ export default function TiersAndFeatures() {
                                                 <select
                                                     value={uni.plan || 'FREE'}
                                                     onChange={(event) => updateLocal(uni.id, 'plan', event.target.value)}
-                                                    className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20"
+                                                    className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                                 >
                                                     {Object.entries(PLANS).map(([key, parameter]) => (
                                                         <option key={key} value={key}>
@@ -186,15 +186,15 @@ export default function TiersAndFeatures() {
                                                     Save
                                                 </Button>
                                             </div>
-                                            <div className="mt-3 grid grid-cols-3 gap-2 rounded-lg bg-slate-50 p-3 text-xs">
-                                                <div><div className="text-slate-500">Max queues</div><div className="mt-0.5 text-sm font-semibold text-slate-900">{uni.maxQueues}</div></div>
-                                                <div><div className="text-slate-500">Max staff</div><div className="mt-0.5 text-sm font-semibold text-slate-900">{uni.maxStaff}</div></div>
-                                                <div><div className="text-slate-500">Max tickets/day</div><div className="mt-0.5 text-sm font-semibold text-slate-900">{(uni.maxTicketsPerDay || 0).toLocaleString()}</div></div>
+                                            <div className="mt-3 grid grid-cols-3 gap-2 rounded-lg bg-slate-50 p-3 text-xs dark:bg-slate-900/50">
+                                                <div><div className="text-slate-500 dark:text-slate-400">Max queues</div><div className="mt-0.5 text-sm font-semibold text-slate-900 dark:text-slate-100">{uni.maxQueues}</div></div>
+                                                <div><div className="text-slate-500 dark:text-slate-400">Max staff</div><div className="mt-0.5 text-sm font-semibold text-slate-900 dark:text-slate-100">{uni.maxStaff}</div></div>
+                                                <div><div className="text-slate-500 dark:text-slate-400">Max tickets/day</div><div className="mt-0.5 text-sm font-semibold text-slate-900 dark:text-slate-100">{(uni.maxTicketsPerDay || 0).toLocaleString()}</div></div>
                                             </div>
                                         </div>
 
                                         <div>
-                                            <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
+                                            <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
                                                 <Sparkles className="h-4 w-4 text-brand-600" />
                                                 Feature access
                                             </h4>
@@ -206,16 +206,16 @@ export default function TiersAndFeatures() {
                                                             key={item.key}
                                                             type="button"
                                                             onClick={() => updateLocal(uni.id, item.key, !enabled)}
-                                                            className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition-colors ${enabled ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-50'}`}
+                                                            className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition-colors ${enabled ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-950/20' : 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/50'}`}
                                                         >
                                                             <div className="min-w-0">
                                                                 <div className="flex items-center gap-2">
-                                                                    {enabled ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" /> : <XCircle className="h-4 w-4 shrink-0 text-slate-400" />}
-                                                                    <span className={`text-sm font-medium ${enabled ? 'text-emerald-900' : 'text-slate-600'}`}>{item.label}</span>
+                                                                    {enabled ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" /> : <XCircle className="h-4 w-4 shrink-0 text-slate-400" />}
+                                                                    <span className={`text-sm font-medium ${enabled ? 'text-emerald-900 dark:text-emerald-100' : 'text-slate-600 dark:text-slate-300'}`}>{item.label}</span>
                                                                 </div>
-                                                                <div className={`ml-6 text-xs ${enabled ? 'text-emerald-700' : 'text-slate-500'}`}>{item.description}</div>
+                                                                <div className={`ml-6 text-xs ${enabled ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{item.description}</div>
                                                             </div>
-                                                            <div className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${enabled ? 'bg-emerald-600' : 'bg-slate-300'}`}>
+                                                            <div className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${enabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'}`}>
                                                                 <div className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform" style={{ transform: enabled ? 'translateX(20px)' : 'translateX(0)', left: '2px' }} />
                                                             </div>
                                                         </button>
@@ -235,6 +235,6 @@ export default function TiersAndFeatures() {
                     })}
                 </motion.div>
             )}
-        </>
+        </div>
     )
 }
