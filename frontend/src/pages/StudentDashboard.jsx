@@ -53,8 +53,8 @@ export default function StudentDashboard() {
     return (
         <DashboardLayout tabs={tabs}>
             {isHome && (
-                // 🔧 FIX: Sticky wrapper so the greeting & holiday banner lock to the top
-                <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-4 bg-slate-50 px-3 pb-3 pt-4 dark:bg-slate-950 sm:-mx-5 sm:-mt-6 sm:px-5 sm:pt-6 lg:-mx-8 lg:-mt-8 lg:px-8 lg:pt-8">
+                // 🔧 FIX: Changed bg-slate-50 to bg-white to match the navbar, added border-b
+                <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-4 bg-white border-b border-slate-200 px-3 pb-4 pt-5 dark:border-slate-800 dark:bg-slate-900 sm:-mx-5 sm:-mt-6 sm:px-5 sm:pt-7 lg:-mx-8 lg:-mt-8 lg:px-8 lg:pt-9">
                     <PageHeader
                         workspace="Student Workspace"
                         description="Join a queue, track your position, and manage your tickets."

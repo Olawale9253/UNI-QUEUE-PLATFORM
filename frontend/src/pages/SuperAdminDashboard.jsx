@@ -19,7 +19,6 @@ import Broadcast from './super-admin/Broadcast'
 import Plans from './super-admin/Plans'
 
 const tabs = [
-    // 🔧 Removed the "Home" tab here because DashboardLayout automatically adds it for the ROLE_HOME path
     { to: '/super-admin/universities', label: 'Universities', icon: Building2 },
     { to: '/super-admin/pending-requests', label: 'Pending Requests', icon: Clock },
     { to: '/super-admin/users', label: 'Users', icon: UsersIcon },
@@ -33,13 +32,14 @@ const tabs = [
 
 export default function SuperAdminDashboard() {
     const location = useLocation()
+    // 🔧 Ensures the header ONLY shows on the exact Home route
     const isHome = location.pathname === '/super-admin' || location.pathname === '/super-admin/'
 
     return (
         <DashboardLayout tabs={tabs}>
             {isHome && (
-                // 🔧 FIX: Sticky wrapper for the greeting header
-                <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-4 bg-slate-50 px-3 pb-3 pt-4 dark:bg-slate-950 sm:-mx-5 sm:-mt-6 sm:px-5 sm:pt-6 lg:-mx-8 lg:-mt-8 lg:px-8 lg:pt-8">
+                // 🔧 FIX: Changed bg-slate-50 to bg-white to match the navbar, added border-b
+                <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-4 bg-white border-b border-slate-200 px-3 pb-4 pt-5 dark:border-slate-800 dark:bg-slate-900 sm:-mx-5 sm:-mt-6 sm:px-5 sm:pt-7 lg:-mx-8 lg:-mt-8 lg:px-8 lg:pt-9">
                     <PageHeader
                         workspace="Platform Console"
                         description="Manage the entire UniQueue multi-tenant platform."
