@@ -68,6 +68,13 @@ public class FeedbackService {
                 .map(FeedbackResponse::from).toList();
     }
 
+    // 🔧 NEW: Super Admin fetches all feedback across the platform
+    @Transactional(readOnly = true)
+    public List<FeedbackResponse> listAll() {
+        return feedbackRepository.findAll().stream()
+                .map(FeedbackResponse::from).toList();
+    }
+
     @Transactional(readOnly = true)
     public Double avgRatingForUniversity(Long universityId) {
         Double avg = feedbackRepository.avgRatingByUniversityId(universityId);

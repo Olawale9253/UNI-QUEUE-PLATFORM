@@ -50,4 +50,12 @@ public class FeedbackController {
         return ResponseEntity.ok(ApiResponse.success(
                 "My feedback", feedbackService.listForStaff(principal.getId())));
     }
+
+    /** 🔧 NEW: Super Admin views all feedback across the platform. */
+    @GetMapping("/super-admin/feedback")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<List<FeedbackResponse>>> listAll() {
+        return ResponseEntity.ok(ApiResponse.success(
+                "All platform feedback", feedbackService.listAll()));
+    }
 }
