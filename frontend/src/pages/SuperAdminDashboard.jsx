@@ -2,12 +2,13 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import {
     Building2, Users as UsersIcon, Activity,
     Settings as SettingsIcon,
-    Shield, FileText, Megaphone, CreditCard,
+    Shield, FileText, Megaphone, CreditCard, Home, Clock
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import PageHeader from '../components/layout/PageHeader'
 
-// Actual files you have in src/pages/super-admin/
+import SuperAdminHome from './super-admin/SuperAdminHome' // 🔧 New
+import Universities from './super-admin/Universities' // 🔧 New
 import UniversityApplications from './super-admin/UniversityApplications'
 import Users from './super-admin/Users'
 import SystemAnalytics from './super-admin/SystemAnalytics'
@@ -18,7 +19,9 @@ import Broadcast from './super-admin/Broadcast'
 import Plans from './super-admin/Plans'
 
 const tabs = [
+    { to: '/super-admin', label: 'Home', icon: Home, end: true }, // 🔧 Added Home tab
     { to: '/super-admin/universities', label: 'Universities', icon: Building2 },
+    { to: '/super-admin/pending-requests', label: 'Pending Requests', icon: Clock }, // 🔧 New Tab
     { to: '/super-admin/users', label: 'Users', icon: UsersIcon },
     { to: '/super-admin/analytics', label: 'System Analytics', icon: Activity },
     { to: '/super-admin/tiers', label: 'Tiers & Features', icon: Shield },
@@ -41,8 +44,15 @@ export default function SuperAdminDashboard() {
                 />
             )}
             <Routes>
-                <Route index element={<Navigate to="/super-admin/analytics" replace />} />
-                <Route path="universities" element={<UniversityApplications />} />
+                {/* 🔧 FIX: Index now loads the Home component instead of redirecting to Analytics */}
+                <Route index element={<SuperAdminHome />} />
+
+                {/* 🔧 FIX: Universities loads the new full list */}
+                <Route path="universities" element={<Universities />} />
+
+                {/* 🔧 FIX: Pending requests loads the old Applications component */}
+                <Route path="pending-requests" element={<UniversityApplications />} />
+
                 <Route path="users" element={<Users />} />
                 <Route path="analytics" element={<SystemAnalytics />} />
                 <Route path="tiers" element={<TiersAndFeatures />} />
@@ -50,7 +60,9 @@ export default function SuperAdminDashboard() {
                 <Route path="broadcast" element={<Broadcast />} />
                 <Route path="audit-logs" element={<AuditLogs />} />
                 <Route path="settings" element={<Settings />} />
-                <Route path="*" element={<Navigate to="/super-admin/analytics" replace />} />
+
+                {/* Catch-all redirects to Home now */}
+                <Route path="*" element={<Navigate to="/super-admin" replace />} />
             </Routes>
         </DashboardLayout>
     )
