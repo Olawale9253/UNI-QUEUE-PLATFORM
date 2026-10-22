@@ -34,10 +34,13 @@ export default function StaffDashboard() {
     return (
         <DashboardLayout tabs={tabs}>
             {isHome && (
-                <PageHeader
-                    workspace="Staff Workspace"
-                    description="A live view of today's office operations."
-                />
+                // 🔧 FIX: Added the premium sticky header wrapper
+                <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-4 bg-white px-3 pb-4 pt-4 dark:bg-slate-900 sm:-mx-5 sm:-mt-6 sm:px-5 sm:pt-6 sm:pb-5 lg:-mx-8 lg:-mt-8 lg:px-8 lg:pt-8 lg:pb-6">
+                    <PageHeader
+                        workspace="Staff Workspace"
+                        description="A live view of today's office operations."
+                    />
+                </div>
             )}
             <Routes>
                 <Route index element={<StaffHome />} />
