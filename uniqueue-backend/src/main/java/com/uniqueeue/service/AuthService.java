@@ -61,15 +61,6 @@ public class AuthService {
     private final StudentRegistryService studentRegistryService;
     private final EmailService emailService;
 
-    /**
-     * Dev-only switch.
-     * When TRUE:  verification codes / reset links are logged + returned in
-     *             the AuthResponse body for local testing.
-     * When FALSE: codes only leave the server via email; nothing hits logs
-     *             and nothing hits the response body.
-     *
-     * Set to false in prod (already false by default).
-     */
     @Value("${app.security.log-verification-codes:false}")
     private boolean logVerificationCodes;
 
@@ -146,11 +137,7 @@ public class AuthService {
         return university;
     }
 
-    // ─── Continuing student path ───
-
     private AuthResponse registerStudent(RegisterRequest request, String email, University university) {
-
-        // 1. Email domain check
         if (university.getEmailDomain() != null && !university.getEmailDomain().isBlank()) {
             String domain = university.getEmailDomain().startsWith("@")
                     ? university.getEmailDomain()
@@ -160,12 +147,10 @@ public class AuthService {
             }
         }
 
-        // 2. Matric present?
         if (request.getMatricNumber() == null || request.getMatricNumber().isBlank()) {
             throw new BadRequestException("Matric number is required");
         }
 
-        // 3. Pattern check
         matricValidationService.validate(request.getMatricNumber(), university);
 
         String matric = request.getMatricNumber().trim();
@@ -173,7 +158,6 @@ public class AuthService {
             throw new BadRequestException("Matric number already registered at this university");
         }
 
-        // 4. Registry cross-check (mode-dependent)
         String mode = university.getMatricVerificationMode() == null
                 ? "PATTERN"
                 : university.getMatricVerificationMode().toUpperCase();
@@ -197,7 +181,6 @@ public class AuthService {
             status = RegistrationStatus.VERIFIED;
 
         } else {
-            // PATTERN — no registry check, queue for review
             status = RegistrationStatus.PENDING;
         }
 
@@ -236,8 +219,6 @@ public class AuthService {
         logCodeForDev("Verification code (status=" + status + ")", saved.getEmail(), code);
         return buildAuthResponse(saved, code);
     }
-
-    // ─── Fresher path ───
 
     private AuthResponse registerFresher(RegisterRequest request, String email, University university) {
         if (Boolean.FALSE.equals(university.getFresherRegistrationEnabled())) {
@@ -352,7 +333,6 @@ public class AuthService {
         return value == null ? null : (value.isBlank() ? null : value.trim());
     }
 
-    /** Name equality after normalisation: lowercase, sorted tokens. */
     private boolean namesEquivalent(String firstName, String secondName) {
         if (firstName == null || secondName == null) return false;
         return normalizeName(firstName).equals(normalizeName(secondName));
@@ -400,7 +380,8 @@ public class AuthService {
         }
 
         if (!Boolean.TRUE.equals(user.getIsVerified())) {
-            throw new UnauthorizedException(
+            // 🔧 FIX: Changed from UnauthorizedException to BadRequestException
+            throw new BadRequestException(
                     "Your email is not verified. Please enter the 6-digit code sent to your email, "
                             + "or request a new one from the verification page.");
         }
@@ -623,10 +604,6 @@ public class AuthService {
     //  SIGN OUT ALL DEVICES
     // ============================================================
 
-    /**
-     * Revokes every JWT ever issued for this user by bumping tokenVersion.
-     * Current sessions die immediately; the user must sign in again everywhere.
-     */
     @Transactional
     public void signOutAllDevices(Long userId) {
         User user = userRepository.findById(userId)
@@ -643,10 +620,6 @@ public class AuthService {
     //  HELPERS
     // ============================================================
 
-    /**
-     * Logs the verification code ONLY in dev mode.
-     * In prod (logVerificationCodes=false) this is a no-op.
-     */
     private void logCodeForDev(String label, String email, String code) {
         if (logVerificationCodes) {
             log.info("🔐 [DEV-ONLY] {} for {}: {}", label, email, code);

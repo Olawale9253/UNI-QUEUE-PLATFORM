@@ -4,16 +4,16 @@ import com.uniqueeue.dto.response.WorkflowAnalyticsResponse;
 import com.uniqueeue.model.Queue;
 import com.uniqueeue.model.Ticket;
 import com.uniqueeue.model.User;
-import com.uniqueeue.repository.UserRepository; // 🔧 Added import
-import lombok.RequiredArgsConstructor;
+import com.uniqueeue.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; // 🔧 Added import
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -21,12 +21,20 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final UserRepository userRepository; // 🔧 Added to re-fetch user
+    private final RestTemplate restTemplate;
+    private final UserRepository userRepository;
+
+    // 🔧 FIX: Added custom constructor for RestTemplate timeouts
+    public EmailService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(10000); // 10 seconds
+        factory.setReadTimeout(10000);    // 10 seconds
+        this.restTemplate = new RestTemplate(factory);
+    }
 
     @Value("${app.email.enabled:false}")
     private boolean emailEnabled;
@@ -90,7 +98,6 @@ public class EmailService {
         return !Boolean.FALSE.equals(user.getTicketEmailsEnabled());
     }
 
-    // 🔧 FIX: Re-fetch user in a new transaction to prevent "Statement has been closed"
     @Async
     @Transactional(readOnly = true)
     public void sendTicketCalled(User user, Ticket ticket, Queue queue) {
@@ -168,7 +175,6 @@ public class EmailService {
         }
     }
 
-    // 🔧 FIX: This is the one that was failing in your logs
     @Async
     @Transactional(readOnly = true)
     public void sendVerificationCode(User user, String code) {
@@ -229,7 +235,7 @@ public class EmailService {
     }
 
     // ============================================================
-    //  HTML builders — unchanged
+    //  HTML builders
     // ============================================================
     private String wrap(User user, Queue queue, String heading, String body, String callout, String ctaLabel, String ctaUrl) {
         String uniName = user != null && user.getUniversity() != null && user.getUniversity().getName() != null ? user.getUniversity().getName() : "UniQueue";
