@@ -53,8 +53,8 @@ export default function StudentDashboard() {
     return (
         <DashboardLayout tabs={tabs}>
             {isHome && (
-                // 🔧 FIX: Changed bg-slate-50 to bg-white to match the navbar, added border-b
-                <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-4 bg-white border-b border-slate-200 px-3 pb-4 pt-5 dark:border-slate-800 dark:bg-slate-900 sm:-mx-5 sm:-mt-6 sm:px-5 sm:pt-7 lg:-mx-8 lg:-mt-8 lg:px-8 lg:pt-9">
+                // 🔧 FIX: Reduced pt, pb, and negative margins to make the header compact
+                <div className="sticky top-0 z-20 -mx-3 -mt-3 mb-3 bg-white border-b border-slate-200 px-3 pb-3 pt-3 dark:border-slate-800 dark:bg-slate-900 sm:-mx-5 sm:-mt-4 sm:px-5 sm:pt-4 lg:-mx-8 lg:-mt-5 lg:px-8 lg:pt-5">
                     <PageHeader
                         workspace="Student Workspace"
                         description="Join a queue, track your position, and manage your tickets."
