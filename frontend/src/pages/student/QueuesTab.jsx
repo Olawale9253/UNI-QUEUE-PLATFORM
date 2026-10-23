@@ -332,19 +332,26 @@ export default function QueuesTab() {
 
     if (loading) {
         return (
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[360px_1fr]">
-                <div className="h-96 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
-                <div className="h-96 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
+            <div className="space-y-6 pb-12">
+                <div className="h-10 w-1/3 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[360px_1fr]">
+                    <div className="h-96 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+                    <div className="h-96 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+                </div>
             </div>
         )
     }
 
     return (
-        <div>
-            <div className="mb-6 flex items-center justify-between">
-                <h2 className="text-2xl font-bold tracking-tight text-[#0f172a] dark:text-white">
+        <div className="space-y-6 pb-12">
+            {/* Premium Header */}
+            <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                     Queue Management
-                </h2>
+                </h1>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    Join a service and track your live position.
+                </p>
             </div>
 
             {showPushPrompt && <EnablePushPrompt className="mb-6" />}
@@ -386,9 +393,9 @@ export default function QueuesTab() {
             )}
 
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[360px_1fr]">
-                <div className="lg:sticky lg:top-[150px]">
+                <div className="lg:sticky lg:top-24">
                     <Card className="h-fit">
-                        <h3 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">
+                        <h3 className="mb-4 text-base font-bold text-slate-900 dark:text-slate-100">
                             Join Queue
                         </h3>
 
@@ -401,13 +408,13 @@ export default function QueuesTab() {
                         ) : (
                             <div className="space-y-3">
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                                    <label className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300">
                                         Office
                                     </label>
                                     <select
                                         value={selectedOfficeId}
                                         onChange={(event) => setSelectedOfficeId(event.target.value)}
-                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                     >
                                         {officeGroups.map((officeGroupValue) => (
                                             <option key={officeGroupValue.key} value={String(officeGroupValue.officeId ?? officeGroupValue.key)}>
@@ -418,13 +425,13 @@ export default function QueuesTab() {
                                 </div>
 
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                                    <label className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300">
                                         Service
                                     </label>
                                     <select
                                         value={selectedServiceId}
                                         onChange={(eventValue) => setSelectedServiceId(eventValue.target.value)}
-                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                     >
                                         <option value="">Select Service</option>
                                         {servicesInOffice.map((itemValue) => {
@@ -582,7 +589,7 @@ export default function QueuesTab() {
                                 </Button>
 
                                 {activeTicket && (
-                                    <p className="text-center text-xs text-amber-600 dark:text-amber-400">
+                                    <p className="text-center text-xs font-medium text-amber-600 dark:text-amber-400">
                                         Complete your current queue turn before joining another queue.
                                     </p>
                                 )}
@@ -591,9 +598,9 @@ export default function QueuesTab() {
                     </Card>
                 </div>
 
-                <Card>
+                <Card className="min-w-0">
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                        <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
                             My Queue Tickets
                         </h3>
                         <div className="flex flex-wrap items-center gap-2">
@@ -604,13 +611,13 @@ export default function QueuesTab() {
                                     value={ticketSearch}
                                     onChange={(eventValue2) => setTicketSearch(eventValue2.target.value)}
                                     placeholder="Search ticket ID"
-                                    className="w-40 rounded-lg border border-slate-200 bg-white py-1.5 pl-8 pr-2 text-xs text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                                    className="w-40 rounded-lg border border-slate-200 bg-white py-1.5 pl-8 pr-2 text-xs font-medium text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                                 />
                             </div>
                             <select
                                 value={statusFilter}
                                 onChange={(eventValue3) => setStatusFilter(eventValue3.target.value)}
-                                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                             >
                                 {STATUS_FILTERS.map((itemValue2) => (
                                     <option key={itemValue2.value} value={itemValue2.value}>
@@ -626,14 +633,14 @@ export default function QueuesTab() {
                             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
                                 <Ticket className="h-6 w-6 text-slate-400" />
                             </div>
-                            <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
                                 {ticketSearch.trim()
                                     ? 'No tickets match your search'
                                     : statusFilter === 'ALL'
                                         ? 'No queue tickets yet'
                                         : `No ${STATUS_LABELS[statusFilter]?.toLowerCase() || ''} tickets`}
                             </p>
-                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
                                 {ticketSearch.trim()
                                     ? 'Check the ticket ID and try again.'
                                     : statusFilter === 'ALL'
@@ -652,23 +659,23 @@ export default function QueuesTab() {
                                             key={token.id}
                                             initial={{ opacity: 0, y: 4 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            className={`rounded-lg border p-4 transition-colors ${
+                                            className={`rounded-xl border p-4 transition-colors ${
                                                 isActive
-                                                    ? 'bg-white dark:bg-slate-900'
+                                                    ? 'bg-white shadow-sm dark:bg-slate-900'
                                                     : 'border-slate-200 dark:border-slate-800'
                                             }`}
                                             style={
                                                 isActive
                                                     ? {
                                                         borderColor: withAlpha(primaryColor, 0.4),
-                                                        backgroundColor: withAlpha(primaryColor, 0.05),
+                                                        backgroundColor: withAlpha(primaryColor, 0.03),
                                                     }
                                                     : undefined
                                             }
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="min-w-0 flex-1">
-                                                    <h4 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+                                                    <h4 className="truncate text-base font-bold text-slate-900 dark:text-slate-100">
                                                         {token.queueName || token.officeName || 'Service'}
                                                     </h4>
                                                 </div>
@@ -678,37 +685,37 @@ export default function QueuesTab() {
                                             </div>
 
                                             <div className="mt-2 flex items-center gap-1.5 text-sm">
-                                                <span className="text-slate-500 dark:text-slate-400">Ticket:</span>
-                                                <span className="font-mono font-semibold text-slate-900 dark:text-slate-100">
+                                                <span className="font-medium text-slate-500 dark:text-slate-400">Ticket:</span>
+                                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
                                                     {token.ticketNumber}
                                                 </span>
                                                 <CopyButton text={token.ticketNumber} />
                                             </div>
 
                                             {token.position != null && (
-                                                <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                                                <div className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-400">
                                                     <span className="text-slate-500">Position:</span>{' '}
-                                                    <span className="font-medium text-slate-900 dark:text-slate-100">
+                                                    <span className="font-bold text-slate-900 dark:text-slate-100">
                                                         {token.position}
                                                     </span>
                                                 </div>
                                             )}
 
                                             {token.estimatedMinutesRemaining != null && (
-                                                <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                                                <div className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-400">
                                                     <span className="text-slate-500">Est. Wait:</span>{' '}
-                                                    <span className="font-medium text-slate-900 dark:text-slate-100">
+                                                    <span className="font-bold text-slate-900 dark:text-slate-100">
                                                         {token.estimatedMinutesRemaining} min
                                                     </span>
                                                 </div>
                                             )}
 
                                             {isActive && isActionable && (
-                                                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-200 pt-3 text-xs dark:border-slate-700">
+                                                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-200 pt-3 text-xs font-semibold dark:border-slate-700">
                                                     <button
                                                         onClick={() => rescheduleTurn(token)}
                                                         disabled={acting === `reschedule-${token.id}`}
-                                                        className="font-medium transition-colors disabled:opacity-50"
+                                                        className="transition-opacity disabled:opacity-50"
                                                         style={{ color: primaryColor }}
                                                     >
                                                         {acting === `reschedule-${token.id}` ? 'Rescheduling…' : 'Reschedule turn'}
@@ -716,13 +723,13 @@ export default function QueuesTab() {
                                                     <button
                                                         onClick={() => skipTurn(token)}
                                                         disabled={acting === `skip-${token.id}`}
-                                                        className="font-medium text-rose-600 transition-colors hover:text-rose-700 disabled:opacity-50 dark:text-rose-400"
+                                                        className="text-rose-600 transition-colors hover:text-rose-700 disabled:opacity-50 dark:text-rose-400"
                                                     >
                                                         {acting === `skip-${token.id}` ? 'Skipping…' : 'Skip'}
                                                     </button>
                                                     <button
                                                         onClick={() => setConfirmLeave(true)}
-                                                        className="font-medium text-slate-500 transition-colors hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                                                        className="text-slate-500 transition-colors hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
                                                     >
                                                         Leave queue
                                                     </button>
@@ -730,7 +737,7 @@ export default function QueuesTab() {
                                             )}
 
                                             {isActive && !isActionable && (
-                                                <div className="mt-3 border-t border-slate-200 pt-3 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                                                <div className="mt-3 border-t border-slate-200 pt-3 text-xs font-medium text-slate-500 dark:border-slate-700 dark:text-slate-400">
                                                     {token.status === 'SERVING'
                                                         ? 'You are being served.'
                                                         : 'No actions available for this ticket.'}

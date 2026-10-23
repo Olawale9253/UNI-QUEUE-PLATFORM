@@ -136,26 +136,20 @@ export default function OfficesTab() {
 
     if (loading) {
         return (
-            <div>
-                <div className="mb-5">
-                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                        Offices
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        Browse offices on campus and the services they offer.
-                    </p>
-                </div>
+            <div className="space-y-6 pb-12">
+                <div className="h-10 w-1/3 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
                 <OfficesSkeleton />
             </div>
         )
     }
 
     return (
-        <div>
-            <div className="mb-5">
-                <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                    Offices
-                </h2>
+        <div className="space-y-6 pb-12">
+            {/* Premium Header */}
+            <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    Campus Offices
+                </h1>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     Browse offices on campus and the services they offer.
                 </p>
@@ -206,19 +200,19 @@ export default function OfficesTab() {
                     action={
                         <button
                             onClick={() => navigate('/student')}
-                            className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                            className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
                             style={{ backgroundColor: primaryColor }}
                         >
                             Back to home
-                            <ArrowRight className="h-3.5 w-3.5" />
+                            <ArrowRight className="h-4 w-4" />
                         </button>
                     }
                 />
             ) : (
                 <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[320px_1fr]">
-                    <div className="lg:sticky lg:top-[150px]">
+                    <div className="lg:sticky lg:top-24">
                         <Card className="h-fit">
-                            <h3 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">
+                            <h3 className="mb-4 text-base font-bold text-slate-900 dark:text-slate-100">
                                 All Offices
                             </h3>
 
@@ -229,17 +223,17 @@ export default function OfficesTab() {
                                     value={search}
                                     onChange={(event) => setSearch(event.target.value)}
                                     placeholder="Search offices"
-                                    className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                                    className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm font-medium text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                                 />
                             </div>
 
                             {filtered.length === 0 ? (
                                 <div className="rounded-lg border border-dashed border-slate-300 px-4 py-8 text-center dark:border-slate-700">
                                     <Search className="mx-auto mb-2 h-5 w-5 text-slate-400" />
-                                    <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
                                         No offices match
                                     </p>
-                                    <p className="mt-0.5 text-[11px] text-slate-400">
+                                    <p className="mt-0.5 text-[11px] font-medium text-slate-400">
                                         Try a different search term.
                                     </p>
                                 </div>
@@ -255,8 +249,8 @@ export default function OfficesTab() {
                                                     onClick={() => setSelectedOfficeId(id)}
                                                     className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
                                                         isSelected
-                                                            ? 'font-medium'
-                                                            : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
+                                                            ? 'font-bold'
+                                                            : 'font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
                                                     }`}
                                                     style={
                                                         isSelected
@@ -309,7 +303,7 @@ export default function OfficesTab() {
                                             {selected.office.name}
                                         </h3>
                                         {selected.office.location && (
-                                            <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+                                            <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400">
                                                 <MapPin className="h-3.5 w-3.5 shrink-0" />
                                                 {selected.office.location}
                                             </p>
@@ -322,14 +316,14 @@ export default function OfficesTab() {
                             </div>
 
                             {selected.office.description && (
-                                <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
+                                <p className="mt-4 text-sm text-slate-600 dark:text-slate-400 font-medium">
                                     {selected.office.description}
                                 </p>
                             )}
 
                             <div className="mt-5 grid grid-cols-2 gap-4">
-                                <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-                                    <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
+                                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                         Working hours
                                     </div>
                                     <div className="mt-1 flex items-center gap-1.5 text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -340,14 +334,14 @@ export default function OfficesTab() {
                                                 {formatTime(selected.office.closingTime)}
                                             </>
                                         ) : (
-                                            <span className="font-normal italic text-slate-400 dark:text-slate-500">
+                                            <span className="font-medium italic text-slate-400 dark:text-slate-500">
                                                 Not set
                                             </span>
                                         )}
                                     </div>
                                 </div>
-                                <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-                                    <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
+                                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                         Slot duration
                                     </div>
                                     <div className="mt-1 flex items-center gap-1.5 text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -355,7 +349,7 @@ export default function OfficesTab() {
                                         {selected.office.slotDurationMinutes ? (
                                             <>{selected.office.slotDurationMinutes} minutes</>
                                         ) : (
-                                            <span className="font-normal italic text-slate-400 dark:text-slate-500">
+                                            <span className="font-medium italic text-slate-400 dark:text-slate-500">
                                                 Not set
                                             </span>
                                         )}
@@ -363,42 +357,42 @@ export default function OfficesTab() {
                                 </div>
                             </div>
 
-                            <div className="mt-5 grid grid-cols-3 gap-4">
-                                <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-                                    <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            <div className="mt-4 grid grid-cols-3 gap-4">
+                                <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+                                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                         <ListOrdered className="h-3 w-3" />
                                         Services
                                     </div>
                                     <div
-                                        className="mt-1 text-xl font-bold"
+                                        className="mt-1 text-2xl font-bold"
                                         style={{ color: primaryColor }}
                                     >
                                         {selected.services.length}
                                     </div>
                                 </div>
-                                <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-                                    <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+                                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                         <Users className="h-3 w-3" />
                                         Staff
                                     </div>
-                                    <div className="mt-1 text-xl font-bold text-sky-600 dark:text-sky-400">
+                                    <div className="mt-1 text-2xl font-bold text-sky-600 dark:text-sky-400">
                                         {selected.staff.length}
                                     </div>
                                 </div>
-                                <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-                                    <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+                                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                         <Ticket className="h-3 w-3" />
                                         Waiting
                                     </div>
-                                    <div className="mt-1 text-xl font-bold text-amber-600 dark:text-amber-400">
+                                    <div className="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">
                                         {selected.waitingTotal}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="mt-6">
-                                <h4 className="mb-3 text-base font-semibold text-slate-900 dark:text-slate-100">
-                                    Services
+                            <div className="mt-8">
+                                <h4 className="mb-4 text-base font-bold text-slate-900 dark:text-slate-100">
+                                    Services in this Office
                                 </h4>
 
                                 {selected.services.length === 0 ? (
@@ -410,19 +404,16 @@ export default function OfficesTab() {
                                     />
                                 ) : (
                                     <div className="max-h-[420px] overflow-y-auto pr-1">
-                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                             {selected.services.map((itemValue2) => {
                                                 const isLive = itemValue2.isOpen === true
                                                 return (
                                                     <div
                                                         key={itemValue2.id}
-                                                        className="rounded-lg border border-slate-200 p-4 transition-colors dark:border-slate-700"
-                                                        style={{
-                                                            borderColor: withAlpha(primaryColor, 0.2),
-                                                        }}
+                                                        className="rounded-xl border border-slate-200 p-4 transition-colors dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-700"
                                                     >
                                                         <div className="flex items-start justify-between gap-2">
-                                                            <h5 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                            <h5 className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">
                                                                 {itemValue2.name}
                                                             </h5>
                                                             <div className="flex gap-1.5">
@@ -432,18 +423,18 @@ export default function OfficesTab() {
                                                                         title="Matric number required"
                                                                     />
                                                                 )}
-                                                                <Badge variant={isLive ? 'success' : 'warning'} className="text-[10px] px-1.5 py-0">
+                                                                <Badge variant={isLive ? 'success' : 'default'} className="text-[10px] px-1.5 py-0">
                                                                     {isLive ? 'Live' : 'Closed'}
                                                                 </Badge>
                                                             </div>
                                                         </div>
 
                                                         {itemValue2.description ? (
-                                                            <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                                                            <p className="mt-1 line-clamp-2 text-xs font-medium text-slate-500 dark:text-slate-400">
                                                                 {itemValue2.description}
                                                             </p>
                                                         ) : (
-                                                            <p className="mt-1 text-xs italic text-slate-400 dark:text-slate-500">
+                                                            <p className="mt-1 text-xs font-medium italic text-slate-400 dark:text-slate-500">
                                                                 No description
                                                             </p>
                                                         )}
@@ -465,14 +456,14 @@ export default function OfficesTab() {
                                                         {isLive ? (
                                                             <button
                                                                 onClick={() => navigate('/student/queues')}
-                                                                className="mt-3 inline-flex items-center gap-1 text-xs font-medium transition-opacity hover:opacity-80"
+                                                                className="mt-3 inline-flex items-center gap-1 text-xs font-bold transition-opacity hover:opacity-80"
                                                                 style={{ color: primaryColor }}
                                                             >
                                                                 Join this service
                                                                 <ArrowRight className="h-3 w-3" />
                                                             </button>
                                                         ) : (
-                                                            <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-slate-400">
+                                                            <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-slate-400">
                                                                 Closed
                                                             </span>
                                                         )}
@@ -485,8 +476,8 @@ export default function OfficesTab() {
                             </div>
 
                             {selected.staff.length > 0 && (
-                                <div className="mt-6">
-                                    <h4 className="mb-3 text-base font-semibold text-slate-900 dark:text-slate-100">
+                                <div className="mt-8">
+                                    <h4 className="mb-4 text-base font-bold text-slate-900 dark:text-slate-100">
                                         Staff serving this office
                                     </h4>
                                     <div className="max-h-[280px] overflow-y-auto pr-1">
@@ -494,7 +485,7 @@ export default function OfficesTab() {
                                             {selected.staff.map((itemValue3) => (
                                                 <div
                                                     key={itemValue3.id}
-                                                    className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700"
+                                                    className="flex items-center gap-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700"
                                                 >
                                                     <div
                                                         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
@@ -505,10 +496,9 @@ export default function OfficesTab() {
                                                         )}
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                        <div className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">
                                                             {itemValue3.fullName}
                                                         </div>
-                                                        {/* ⬅️ Email removed to prevent students from bypassing the queue */}
                                                     </div>
                                                 </div>
                                             ))}
