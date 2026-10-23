@@ -3,7 +3,9 @@ package com.uniqueeue.service;
 import com.uniqueeue.dto.response.WorkflowAnalyticsResponse;
 import com.uniqueeue.model.Queue;
 import com.uniqueeue.model.Ticket;
+import com.uniqueeue.model.University;
 import com.uniqueeue.model.User;
+import com.uniqueeue.repository.UniversityRepository;
 import com.uniqueeue.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,9 +28,11 @@ public class EmailService {
 
     private final RestTemplate restTemplate;
     private final UserRepository userRepository;
+    private final UniversityRepository universityRepository;
 
-    public EmailService(UserRepository userRepository) {
+    public EmailService(UserRepository userRepository, UniversityRepository universityRepository) {
         this.userRepository = userRepository;
+        this.universityRepository = universityRepository;
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(10000);
         factory.setReadTimeout(10000);
@@ -213,8 +217,11 @@ public class EmailService {
         }
     }
 
-    // 🔧 FIX: SYNCHRONOUS send — no @Async, no @Transactional
-    // This ensures the error surfaces immediately and the user IS visible
+    /**
+     * 🔧 BULLETPROOF FIX: Explicitly load university via ID (safe on Hibernate proxies).
+     * This avoids LazyInitializationException regardless of transaction state.
+     */
+    @Transactional(readOnly = true)
     public void sendAdminSetupEmail(User admin, String token) {
         log.info("🔍 [SETUP EMAIL] START — admin={}, email={}, hasToken={}",
                 admin != null ? admin.getId() : "NULL",
@@ -222,26 +229,56 @@ public class EmailService {
                 token != null && !token.isBlank());
 
         if (admin == null) {
-            log.error("❌ [SETUP EMAIL] admin is null — aborting");
             throw new IllegalArgumentException("Admin user cannot be null");
         }
         if (token == null || token.isBlank()) {
-            log.error("❌ [SETUP EMAIL] token is null/empty for {}", admin.getEmail());
             throw new IllegalArgumentException("Setup token cannot be empty");
         }
 
         try {
+            User freshAdmin = admin.getId() != null
+                    ? userRepository.findById(admin.getId()).orElse(admin)
+                    : admin;
+
+            // 🔧 Resolve university details explicitly to avoid lazy-loading crash
+            String uniName = "UniQueue";
+            String primaryColor = "#4f46e5";
+
+            try {
+                // getId() is safe on Hibernate proxies (returns ID without hitting DB)
+                Long uniId = freshAdmin.getUniversity() != null
+                        ? freshAdmin.getUniversity().getId()
+                        : null;
+
+                if (uniId != null) {
+                    // Explicit fetch — this has its own transaction/session
+                    University uni = universityRepository.findById(uniId).orElse(null);
+                    if (uni != null) {
+                        if (uni.getName() != null && !uni.getName().isBlank()) {
+                            uniName = uni.getName();
+                        }
+                        if (uni.getPrimaryColor() != null && !uni.getPrimaryColor().isBlank()) {
+                            primaryColor = uni.getPrimaryColor();
+                        }
+                        log.info("🔍 [SETUP EMAIL] Resolved university: name='{}', color={}", uniName, primaryColor);
+                    }
+                } else {
+                    log.warn("⚠️ [SETUP EMAIL] No university linked to admin {}", freshAdmin.getEmail());
+                }
+            } catch (Exception ex) {
+                log.warn("⚠️ [SETUP EMAIL] Could not resolve university, using defaults: {}", ex.getMessage());
+            }
+
             String setupUrl = baseUrl + "/setup-account?token=" + token;
             log.info("🔍 [SETUP EMAIL] setupUrl={}", setupUrl);
             log.info("🔍 [SETUP EMAIL] emailEnabled={}, hasBrevoKey={}", emailEnabled, brevoApiKey != null && !brevoApiKey.isEmpty());
-            log.info("🔍 [SETUP EMAIL] fromAddress={}", fromAddress);
 
             String subject = "Welcome to UniQueue - Set up your Admin Account";
-            String html = wrap(
-                    admin,
-                    null,
+            String html = wrapWithBrand(
+                    uniName,
+                    primaryColor,
                     "Welcome to UniQueue!",
-                    "Hi " + firstName(admin) + ",<br><br>" +
+                    "Hi " + firstName(freshAdmin) + ",<br><br>" +
                             "Your university has been approved and your administrator account has been created. " +
                             "Please click the button below to set up your password and access your dashboard.",
                     null,
@@ -249,9 +286,9 @@ public class EmailService {
                     setupUrl
             );
 
-            log.info("🔍 [SETUP EMAIL] Calling sendHtml for {}", admin.getEmail());
-            sendHtml(admin.getEmail(), subject, html);
-            log.info("✅ [SETUP EMAIL] DONE — no exception thrown for {}", admin.getEmail());
+            log.info("🔍 [SETUP EMAIL] Calling sendHtml for {}", freshAdmin.getEmail());
+            sendHtml(freshAdmin.getEmail(), subject, html);
+            log.info("✅ [SETUP EMAIL] DONE — no exception thrown for {}", freshAdmin.getEmail());
         } catch (Exception ex) {
             log.error("❌ [SETUP EMAIL] FAILED for {} — {}", admin.getEmail(), ex.getMessage(), ex);
             throw new RuntimeException("Failed to send setup email: " + ex.getMessage(), ex);
@@ -280,9 +317,39 @@ public class EmailService {
         }
     }
 
+    /**
+     * 🔧 Existing wrap() — resolves university via lazy loading.
+     * Wrapped in try/catch so it never crashes if university is a proxy without a session.
+     */
     private String wrap(User user, Queue queue, String heading, String body, String callout, String ctaLabel, String ctaUrl) {
-        String uniName = user != null && user.getUniversity() != null && user.getUniversity().getName() != null ? user.getUniversity().getName() : "UniQueue";
-        String accent = user != null && user.getUniversity() != null && user.getUniversity().getPrimaryColor() != null ? user.getUniversity().getPrimaryColor() : "#4f46e5";
+        String uniName = "UniQueue";
+        String accent = "#4f46e5";
+
+        if (user != null) {
+            try {
+                if (user.getUniversity() != null) {
+                    String name = user.getUniversity().getName();
+                    if (name != null && !name.isBlank()) uniName = name;
+
+                    String pc = user.getUniversity().getPrimaryColor();
+                    if (pc != null && !pc.isBlank()) accent = pc;
+                }
+            } catch (Exception ex) {
+                log.debug("Could not resolve university from user (using defaults): {}", ex.getMessage());
+            }
+        }
+
+        return wrapWithBrand(uniName, accent, heading, body, callout, ctaLabel, ctaUrl);
+    }
+
+    /**
+     * 🔧 NEW: Build HTML with explicit university name and color (no lazy loading).
+     */
+    private String wrapWithBrand(String uniName, String accent,
+                                 String heading, String body, String callout,
+                                 String ctaLabel, String ctaUrl) {
+        if (uniName == null || uniName.isBlank()) uniName = "UniQueue";
+        if (accent == null || accent.isBlank()) accent = "#4f46e5";
 
         StringBuilder sb = new StringBuilder(2048);
         sb.append("<!DOCTYPE html><html><head><meta charset=\"utf-8\">")
