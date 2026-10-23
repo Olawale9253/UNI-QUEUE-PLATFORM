@@ -18,7 +18,16 @@ const QUICK_ACTIONS = [
 
 export default function AdminHome() {
     return (
-        <>
+        <div className="space-y-8 pb-12">
+            <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    Admin Dashboard
+                </h1>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    Welcome back! Here is a quick overview of your university.
+                </p>
+            </div>
+
             <AdminStatsCards />
 
             <motion.div
@@ -26,8 +35,8 @@ export default function AdminHome() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
             >
-                <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    Quick actions
+                <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
+                    Quick Actions
                 </h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {QUICK_ACTIONS.map((item, index) => {
@@ -39,19 +48,19 @@ export default function AdminHome() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.15 + index * 0.05 }}
                             >
-                                <Link to={item.to} className="group block">
-                                    <Card className="flex h-full items-start gap-4 transition-transform hover:-translate-y-0.5">
-                                        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${item.accent}`}>
+                                <Link to={item.to} className="group block h-full">
+                                    <Card className="flex h-full items-start gap-4 transition-all duration-200 hover:border-brand-300 hover:shadow-md dark:hover:border-brand-700">
+                                        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${item.accent} transition-transform group-hover:scale-105`}>
                                             <Icon className="h-6 w-6" />
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-1.5">
-                                                <h3 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                <h3 className="truncate text-base font-bold text-slate-900 dark:text-slate-100">
                                                     {item.label}
                                                 </h3>
-                                                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-600" />
+                                                <ArrowRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-brand-600" />
                                             </div>
-                                            <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                                            <p className="mt-1 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                                                 {item.description}
                                             </p>
                                         </div>
@@ -62,6 +71,6 @@ export default function AdminHome() {
                     })}
                 </div>
             </motion.div>
-        </>
+        </div>
     )
 }

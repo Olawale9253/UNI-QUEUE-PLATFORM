@@ -23,7 +23,6 @@ import Verification from './admin/Verification'
 import Students from './admin/Students'
 
 const tabs = [
-    // 🔧 Renamed for clearer UI
     { to: '/admin/overview', label: 'Live Overview', icon: LayoutGrid },
     { to: '/admin/analytics', label: 'Reports & Trends', icon: BarChart3 },
     { to: '/admin/appointments', label: 'Appointments', icon: CalendarCheck },
