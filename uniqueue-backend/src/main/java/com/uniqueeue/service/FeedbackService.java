@@ -68,7 +68,7 @@ public class FeedbackService {
                 .map(FeedbackResponse::from).toList();
     }
 
-    // 🔧 NEW: Super Admin fetches all feedback across the platform
+    // Super Admin fetches all feedback across the platform
     @Transactional(readOnly = true)
     public List<FeedbackResponse> listAll() {
         return feedbackRepository.findAll().stream()
