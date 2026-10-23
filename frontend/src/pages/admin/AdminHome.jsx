@@ -18,15 +18,10 @@ const QUICK_ACTIONS = [
 
 export default function AdminHome() {
     return (
-        <div className="space-y-8 pb-12">
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                    Admin Dashboard
-                </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Welcome back! Here is a quick overview of your university.
-                </p>
-            </div>
+        // Changed spacing to make it tighter since the header is gone
+        <div className="space-y-6 pb-12 mt-2">
+
+            {/* 🔧 Removed the redundant header block here */}
 
             <AdminStatsCards />
 

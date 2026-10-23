@@ -1,14 +1,13 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom' // 🔧 Added useNavigate
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Bell, CheckCircle2, Info, AlertTriangle, Loader2,
-    CheckCheck, ArrowRight, Ticket, Megaphone, User
+    CheckCheck, ArrowRight, Ticket, Megaphone, ArrowLeft // 🔧 Added ArrowLeft
 } from 'lucide-react'
 import api from '../api/axios'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
-import Badge from '../components/ui/Badge'
 import EmptyState from '../components/ui/EmptyState'
 import { useToastStore } from '../store/toastStore'
 import { formatTimeAgo } from '../lib/format'
@@ -20,6 +19,7 @@ const TABS = [
 ]
 
 export default function Notifications() {
+    const navigate = useNavigate() // 🔧 Added
     const { push } = useToastStore()
     const [notifications, setNotifications] = useState([])
     const [loading, setLoading] = useState(true)
@@ -84,7 +84,7 @@ export default function Notifications() {
 
     if (error) {
         return (
-            <div className="mx-auto max-w-3xl space-y-6 pb-12">
+            <div className="mx-auto max-w-3xl space-y-6 pb-12 pt-8">
                 <div className="rounded-xl border border-rose-200 bg-rose-50 p-8 text-center dark:border-rose-900 dark:bg-rose-950/20">
                     <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-rose-500" />
                     <h2 className="text-base font-bold text-rose-800 dark:text-rose-300">Couldn't load notifications</h2>
@@ -96,7 +96,18 @@ export default function Notifications() {
     }
 
     return (
-        <div className="mx-auto max-w-4xl space-y-6 pb-12">
+        // 🔧 Added pt-6 sm:pt-8 for better spacing from navbar
+        <div className="mx-auto max-w-4xl space-y-6 pb-12 pt-6 sm:pt-8">
+
+            {/* Back Button */}
+            <button
+                onClick={() => navigate(-1)}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+            >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+            </button>
+
             {/* Header */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
@@ -171,7 +182,6 @@ export default function Notifications() {
                                 const isUnread = !n.isRead
                                 const type = (n.type || 'SYSTEM').toUpperCase()
 
-                                // Determine Icon and Color based on type
                                 let Icon = Bell
                                 let colorClass = 'text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400'
 
