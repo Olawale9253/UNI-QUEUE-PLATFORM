@@ -27,12 +27,11 @@ public class EmailService {
     private final RestTemplate restTemplate;
     private final UserRepository userRepository;
 
-    // 🔧 FIX: Added custom constructor for RestTemplate timeouts
     public EmailService(UserRepository userRepository) {
         this.userRepository = userRepository;
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(10000); // 10 seconds
-        factory.setReadTimeout(10000);    // 10 seconds
+        factory.setConnectTimeout(10000);
+        factory.setReadTimeout(10000);
         this.restTemplate = new RestTemplate(factory);
     }
 
@@ -212,6 +211,35 @@ public class EmailService {
         }
     }
 
+    // 🔧 NEW: Email for Admin Setup
+    @Async
+    @Transactional(readOnly = true)
+    public void sendAdminSetupEmail(User admin, String token) {
+        try {
+            if (admin == null) return;
+            User freshAdmin = userRepository.findById(admin.getId()).orElse(admin);
+
+            String setupUrl = baseUrl + "/setup-account?token=" + token;
+            String subject = "Welcome to UniQueue - Set up your Admin Account";
+
+            String html = wrap(
+                    freshAdmin,
+                    null,
+                    "Welcome to UniQueue!",
+                    "Hi " + firstName(freshAdmin) + ",<br><br>" +
+                            "Your university has been approved and your administrator account has been created. " +
+                            "Please click the button below to set up your password and access your dashboard.",
+                    null,
+                    "Set up account",
+                    setupUrl
+            );
+
+            sendHtml(freshAdmin.getEmail(), subject, html);
+        } catch (Exception ex) {
+            log.error("sendAdminSetupEmail failed: {}", ex.getMessage());
+        }
+    }
+
     @Async
     @Transactional(readOnly = true)
     public void sendBottleneckAlert(User admin, WorkflowAnalyticsResponse analytics, WorkflowAnalyticsResponse.StepAnalytics step) {
@@ -234,9 +262,6 @@ public class EmailService {
         }
     }
 
-    // ============================================================
-    //  HTML builders
-    // ============================================================
     private String wrap(User user, Queue queue, String heading, String body, String callout, String ctaLabel, String ctaUrl) {
         String uniName = user != null && user.getUniversity() != null && user.getUniversity().getName() != null ? user.getUniversity().getName() : "UniQueue";
         String accent = user != null && user.getUniversity() != null && user.getUniversity().getPrimaryColor() != null ? user.getUniversity().getPrimaryColor() : "#4f46e5";

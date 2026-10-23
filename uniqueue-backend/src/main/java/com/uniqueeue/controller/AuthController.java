@@ -33,75 +33,61 @@ public class AuthController {
 
     private final AuthService authService;
     private final UniversityRepository universityRepository;
-    private final UserRepository userRepository;   // ⬅ NEW
+    private final UserRepository userRepository;
 
     // ─────────────────────────────────────────────────────────────
-    //  REGISTER — 3 attempts per IP per hour
+    //  REGISTER
     // ─────────────────────────────────────────────────────────────
     @PostMapping("/register")
-    @RateLimited(limit = 3, windowSeconds = 3600,
-            keyType = RateKeyType.IP, name = "register")
+    @RateLimited(limit = 3, windowSeconds = 3600, keyType = RateKeyType.IP, name = "register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(
-                        "Registration successful. Check your email for a verification code.",
-                        response));
+                .body(ApiResponse.success("Registration successful. Check your email for a verification code.", response));
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  LOGIN — 5 attempts per email per 15 minutes
+    //  LOGIN
     // ─────────────────────────────────────────────────────────────
     @PostMapping("/login")
-    @RateLimited(limit = 5, windowSeconds = 900,
-            keyType = RateKeyType.EMAIL, keyField = "email", name = "login")
+    @RateLimited(limit = 5, windowSeconds = 900, keyType = RateKeyType.EMAIL, keyField = "email", name = "login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  VERIFY EMAIL — 5 attempts per email per 15 minutes
+    //  VERIFY EMAIL
     // ─────────────────────────────────────────────────────────────
     @PostMapping("/verify-email")
-    @RateLimited(limit = 5, windowSeconds = 900,
-            keyType = RateKeyType.EMAIL, keyField = "email", name = "verify")
-    public ResponseEntity<ApiResponse<AuthResponse>> verifyEmail(
-            @Valid @RequestBody VerifyEmailRequest request) {
+    @RateLimited(limit = 5, windowSeconds = 900, keyType = RateKeyType.EMAIL, keyField = "email", name = "verify")
+    public ResponseEntity<ApiResponse<AuthResponse>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
         AuthResponse response = authService.verifyEmail(request.getEmail(), request.getCode());
         return ResponseEntity.ok(ApiResponse.success("Email verified successfully", response));
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  RESEND VERIFICATION — 3 per email per hour
+    //  RESEND VERIFICATION
     // ─────────────────────────────────────────────────────────────
     @PostMapping("/resend-verification")
-    @RateLimited(limit = 3, windowSeconds = 3600,
-            keyType = RateKeyType.EMAIL, keyField = "email", name = "resend")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> resendVerification(
-            @Valid @RequestBody ResendVerificationRequest request) {
+    @RateLimited(limit = 3, windowSeconds = 3600, keyType = RateKeyType.EMAIL, keyField = "email", name = "resend")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
         String code = authService.resendVerification(request.getEmail());
         Map<String, Object> data = new HashMap<>();
         data.put("message", "A new verification code has been sent to your email.");
-        if (code != null) {
-            data.put("devVerificationCode", code);
-        }
+        if (code != null) data.put("devVerificationCode", code);
         return ResponseEntity.ok(ApiResponse.success("Verification code resent", data));
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  FORGOT PASSWORD — 3 per email per hour
+    //  FORGOT PASSWORD
     // ─────────────────────────────────────────────────────────────
     @PostMapping("/forgot-password")
-    @RateLimited(limit = 3, windowSeconds = 3600,
-            keyType = RateKeyType.EMAIL, keyField = "email", name = "forgot")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> forgotPassword(
-            @Valid @RequestBody ForgotPasswordRequest request) {
+    @RateLimited(limit = 3, windowSeconds = 3600, keyType = RateKeyType.EMAIL, keyField = "email", name = "forgot")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         String token = authService.requestPasswordReset(request.getEmail());
-
         Map<String, Object> data = new HashMap<>();
-        data.put("message",
-                "If an account exists with that email, a reset link has been sent.");
+        data.put("message", "If an account exists with that email, a reset link has been sent.");
         if (token != null) {
             data.put("resetToken", token);
             data.put("resetUrl", "/reset-password?token=" + token);
@@ -110,22 +96,28 @@ public class AuthController {
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  RESET PASSWORD — no rate limit (token itself is single-use)
+    //  RESET PASSWORD
     // ─────────────────────────────────────────────────────────────
     @PostMapping("/reset-password")
-    public ResponseEntity<ApiResponse<Object>> resetPassword(
-            @Valid @RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<ApiResponse<Object>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request.getToken(), request.getNewPassword());
-        return ResponseEntity.ok(ApiResponse.success(
-                "Password reset successful. You can now sign in.", null));
+        return ResponseEntity.ok(ApiResponse.success("Password reset successful. You can now sign in.", null));
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  SETUP ACCOUNT (New Admin Invitation)
+    // ─────────────────────────────────────────────────────────────
+    @PostMapping("/setup-account")
+    public ResponseEntity<ApiResponse<Object>> setupAccount(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.setupAccount(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok(ApiResponse.success("Account setup complete. You can now sign in.", null));
     }
 
     // ─────────────────────────────────────────────────────────────
     //  CURRENT USER
     // ─────────────────────────────────────────────────────────────
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> me(
-            @AuthenticationPrincipal UserPrincipal principal) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> me(@AuthenticationPrincipal UserPrincipal principal) {
         Map<String, Object> data = new HashMap<>();
         data.put("userId", principal.getId());
         data.put("email", principal.getEmail());
@@ -136,13 +128,10 @@ public class AuthController {
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  MY VERIFICATION STATUS  ⬅ NEW
-    //  Used by PendingVerification.jsx to poll for approval/rejection.
+    //  MY VERIFICATION STATUS
     // ─────────────────────────────────────────────────────────────
     @GetMapping("/me/verification-status")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> myVerificationStatus(
-            @AuthenticationPrincipal UserPrincipal principal) {
-
+    public ResponseEntity<ApiResponse<Map<String, Object>>> myVerificationStatus(@AuthenticationPrincipal UserPrincipal principal) {
         var userOpt = userRepository.findById(principal.getId());
         if (userOpt.isEmpty()) {
             Map<String, Object> empty = new HashMap<>();
@@ -150,52 +139,41 @@ public class AuthController {
             empty.put("reason", null);
             return ResponseEntity.ok(ApiResponse.success("Not found", empty));
         }
-
         var user = userOpt.get();
         Map<String, Object> data = new HashMap<>();
-        data.put("status", user.getRegistrationStatus() != null
-                ? user.getRegistrationStatus().name()
-                : "VERIFIED");
+        data.put("status", user.getRegistrationStatus() != null ? user.getRegistrationStatus().name() : "VERIFIED");
         data.put("reason", user.getRejectionReason());
-        data.put("verifiedAt", user.getVerifiedAt() != null
-                ? user.getVerifiedAt().toString()
-                : null);
+        data.put("verifiedAt", user.getVerifiedAt() != null ? user.getVerifiedAt().toString() : null);
         return ResponseEntity.ok(ApiResponse.success("Verification status", data));
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  UNIVERSITIES — public list used by Register.jsx
+    //  UNIVERSITIES
     // ─────────────────────────────────────────────────────────────
     @GetMapping("/universities")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> universities() {
         List<Map<String, Object>> list = universityRepository.findAll().stream()
                 .filter(university -> Boolean.TRUE.equals(university.getIsActive()))
                 .map(university -> {
-                    Map<String, Object> universityData = new HashMap<>();
-                    universityData.put("id", university.getId());
-                    universityData.put("name", university.getName());
-                    universityData.put("code", university.getCode());
-                    universityData.put("emailDomain", university.getEmailDomain());
-                    universityData.put("matricExample", university.getMatricExample());
-                    universityData.put("matricDescription", university.getMatricDescription());
-
-                    // Fresher config
-                    universityData.put("fresherRegistrationEnabled", university.getFresherRegistrationEnabled());
-                    universityData.put("fresherVerificationMode", university.getFresherVerificationMode());
-
-                    universityData.put("requireJambReg", university.getRequireJambReg());
-                    universityData.put("jambRegExample", university.getJambRegExample());
-                    universityData.put("jambRegDescription", university.getJambRegDescription());
-
-                    universityData.put("requireAdmissionRef", university.getRequireAdmissionRef());
-                    universityData.put("admissionRefExample", university.getAdmissionRefExample());
-                    universityData.put("admissionRefDescription", university.getAdmissionRefDescription());
-
-                    universityData.put("requireApplicationNumber", university.getRequireApplicationNumber());
-                    universityData.put("applicationNumberExample", university.getApplicationNumberExample());
-                    universityData.put("applicationNumberDescription", university.getApplicationNumberDescription());
-
-                    return universityData;
+                    Map<String, Object> u = new HashMap<>();
+                    u.put("id", university.getId());
+                    u.put("name", university.getName());
+                    u.put("code", university.getCode());
+                    u.put("emailDomain", university.getEmailDomain());
+                    u.put("matricExample", university.getMatricExample());
+                    u.put("matricDescription", university.getMatricDescription());
+                    u.put("fresherRegistrationEnabled", university.getFresherRegistrationEnabled());
+                    u.put("fresherVerificationMode", university.getFresherVerificationMode());
+                    u.put("requireJambReg", university.getRequireJambReg());
+                    u.put("jambRegExample", university.getJambRegExample());
+                    u.put("jambRegDescription", university.getJambRegDescription());
+                    u.put("requireAdmissionRef", university.getRequireAdmissionRef());
+                    u.put("admissionRefExample", university.getAdmissionRefExample());
+                    u.put("admissionRefDescription", university.getAdmissionRefDescription());
+                    u.put("requireApplicationNumber", university.getRequireApplicationNumber());
+                    u.put("applicationNumberExample", university.getApplicationNumberExample());
+                    u.put("applicationNumberDescription", university.getApplicationNumberDescription());
+                    return u;
                 })
                 .toList();
         return ResponseEntity.ok(ApiResponse.success("Universities", list));
@@ -205,44 +183,29 @@ public class AuthController {
     //  REFRESH
     // ─────────────────────────────────────────────────────────────
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<AuthResponse>> refresh(
-            @RequestBody Map<String, String> body) {
+    public ResponseEntity<ApiResponse<AuthResponse>> refresh(@RequestBody Map<String, String> body) {
         String refreshToken = body.get("refreshToken");
         if (refreshToken == null || refreshToken.isBlank()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("Missing refresh token"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Missing refresh token"));
         }
         AuthResponse response = authService.refresh(refreshToken);
         return ResponseEntity.ok(ApiResponse.success("Session refreshed", response));
     }
 
-    /**
-     * Revokes every JWT issued to the caller — all devices, all browsers.
-     * Also invalidates the caller's current token, so they'll be forced
-     * to sign in again immediately.
-     */
     @PostMapping("/sign-out-all")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> signOutAll(
-            @AuthenticationPrincipal UserPrincipal principal) {
-
+    public ResponseEntity<ApiResponse<Map<String, Object>>> signOutAll(@AuthenticationPrincipal UserPrincipal principal) {
         authService.signOutAllDevices(principal.getId());
-
         Map<String, Object> data = new HashMap<>();
         data.put("signedOut", true);
-        return ResponseEntity.ok(ApiResponse.success(
-                "Signed out on all devices. Please sign in again.", data));
+        return ResponseEntity.ok(ApiResponse.success("Signed out on all devices. Please sign in again.", data));
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  UNIVERSITY LOOKUP BY EMAIL DOMAIN — used by Login.jsx branding
+    //  UNIVERSITY LOOKUP BY EMAIL DOMAIN
     // ─────────────────────────────────────────────────────────────
     @GetMapping("/universities/lookup")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> lookupUniversity(
-            @RequestParam(value = "domain", required = false) String domain) {
-
-        if (domain == null || domain.isBlank()) {
-            return ResponseEntity.ok(ApiResponse.success("No domain provided", null));
-        }
+    public ResponseEntity<ApiResponse<Map<String, Object>>> lookupUniversity(@RequestParam(value = "domain", required = false) String domain) {
+        if (domain == null || domain.isBlank()) return ResponseEntity.ok(ApiResponse.success("No domain provided", null));
 
         String normalized = domain.trim().toLowerCase();
         if (normalized.startsWith("@")) normalized = normalized.substring(1);
@@ -260,9 +223,7 @@ public class AuthController {
                 .findFirst()
                 .orElse(null);
 
-        if (uni == null) {
-            return ResponseEntity.ok(ApiResponse.success("Not found", null));
-        }
+        if (uni == null) return ResponseEntity.ok(ApiResponse.success("Not found", null));
 
         Map<String, Object> data = new HashMap<>();
         data.put("id", uni.getId());
@@ -272,7 +233,6 @@ public class AuthController {
         data.put("campusImageUrl", uni.getCampusImageUrl());
         data.put("tagline", uni.getTagline());
         data.put("primaryColor", uni.getPrimaryColor());
-
         return ResponseEntity.ok(ApiResponse.success("University", data));
     }
 }

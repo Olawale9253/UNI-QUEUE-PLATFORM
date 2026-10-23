@@ -18,7 +18,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +39,10 @@ public class UniversityService {
     private final PlanConfigRepository planConfigRepository;
     private final UniversityStarterPackService starterPackService;
 
-    // Repositories needed for the cascade delete
+    // 🔧 Added missing repositories for setup flow
+    private final EmailService emailService;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+
     private final OfficeRepository officeRepository;
     private final UniversityClosedDateRepository closedDateRepository;
     private final AdmittedStudentRepository admittedStudentRepository;
@@ -79,9 +84,7 @@ public class UniversityService {
                 .logoUrl(request.getLogoUrl())
                 .campusImageUrl(request.getCampusImageUrl())
                 .tagline(request.getTagline())
-                .primaryColor(request.getPrimaryColor() != null
-                        ? request.getPrimaryColor()
-                        : "#1e3a8a")
+                .primaryColor(request.getPrimaryColor() != null ? request.getPrimaryColor() : "#1e3a8a")
                 .plan(request.getPlan() != null ? request.getPlan() : "FREE")
                 .maxStaff(request.getMaxStaff() != null ? request.getMaxStaff() : 10)
                 .maxQueues(request.getMaxQueues() != null ? request.getMaxQueues() : 5)
@@ -90,9 +93,10 @@ public class UniversityService {
 
         university = universityRepository.save(university);
 
+        // 🔧 FIX: Use a random placeholder password instead of a hardcoded one
         User admin = User.builder()
                 .email(request.getAdminEmail().toLowerCase())
-                .password(passwordEncoder.encode(request.getAdminPassword()))
+                .password(passwordEncoder.encode(UUID.randomUUID().toString())) // Random placeholder
                 .fullName(request.getAdminFullName())
                 .role(Role.ADMIN)
                 .university(university)
@@ -101,18 +105,26 @@ public class UniversityService {
                 .build();
         userRepository.save(admin);
 
+        // 🔧 FIX: Generate setup token
+        String token = UUID.randomUUID().toString().replace("-", "")
+                + UUID.randomUUID().toString().replace("-", "");
+
+        PasswordResetToken setupToken = PasswordResetToken.builder()
+                .token(token)
+                .user(admin)
+                .expiresAt(LocalDateTime.now().plusHours(48)) // 48 hours to setup
+                .build();
+        passwordResetTokenRepository.save(setupToken);
+
+        // 🔧 FIX: Send the setup email
+        emailService.sendAdminSetupEmail(admin, token);
+
         auditService.record(null, university.getId(),
                 AuditAction.UNIVERSITY_CREATED, "University", university.getId(),
                 "{\"code\":\"" + code + "\",\"adminEmail\":\"" + request.getAdminEmail() + "\"}");
 
         try {
-            var result = starterPackService.seed(
-                    university.getId(),
-                    admin.getId(),
-                    true,
-                    true,
-                    true
-            );
+            var result = starterPackService.seed(university.getId(), admin.getId(), true, true, true);
             log.info("Starter pack auto-seeded for university {} — offices={}, services={}, workflows={}",
                     code, result.officesCreated(), result.servicesCreated(), result.workflowsCreated());
         } catch (Exception exceptionValue13) {
@@ -140,16 +152,13 @@ public class UniversityService {
         if (request.getCampusImageUrl() != null) universityValue13.setCampusImageUrl(request.getCampusImageUrl());
         if (request.getTagline() != null) universityValue13.setTagline(request.getTagline());
         if (request.getPrimaryColor() != null) universityValue13.setPrimaryColor(request.getPrimaryColor());
-        if (request.getTimezone() != null) {
-            universityValue13.setTimezone(request.getTimezone().trim());
-        }
+        if (request.getTimezone() != null) universityValue13.setTimezone(request.getTimezone().trim());
         if (request.getPlan() != null) universityValue13.setPlan(request.getPlan());
         if (request.getMaxStaff() != null) universityValue13.setMaxStaff(request.getMaxStaff());
         if (request.getMaxQueues() != null) universityValue13.setMaxQueues(request.getMaxQueues());
         if (request.getIsActive() != null) universityValue13.setIsActive(request.getIsActive());
 
         University saved = universityRepository.save(universityValue13);
-
         auditService.record(null, id, AuditAction.UNIVERSITY_UPDATED, "University", id, null);
         return enrich(saved);
     }
@@ -164,10 +173,7 @@ public class UniversityService {
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
         universityValue14.setIsActive(false);
         University saved = universityRepository.save(universityValue14);
-
-        auditService.record(null, id, AuditAction.UNIVERSITY_DEACTIVATED, "University", id,
-                "{\"code\":\"" + universityValue14.getCode() + "\"}");
-
+        auditService.record(null, id, AuditAction.UNIVERSITY_DEACTIVATED, "University", id, "{\"code\":\"" + universityValue14.getCode() + "\"}");
         return enrich(saved);
     }
 
@@ -177,13 +183,12 @@ public class UniversityService {
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
         universityValue15.setIsActive(true);
         University saved = universityRepository.save(universityValue15);
-
         auditService.record(null, id, AuditAction.UNIVERSITY_REACTIVATED, "University", id, null);
         return enrich(saved);
     }
 
     // ============================================================
-    //  DELETE — destructive, cascades all data
+    //  DELETE
     // ============================================================
 
     @Transactional
@@ -194,7 +199,6 @@ public class UniversityService {
         String code = universityValue16.getCode();
         String name = universityValue16.getName();
 
-        // 1. Delete Queues & Dependencies
         List<Queue> queues = queueRepository.findByUniversityId(id);
         for (Queue queueValue5 : queues) {
             List<Ticket> tickets = ticketRepository.findByQueueId(queueValue5.getId());
@@ -206,19 +210,16 @@ public class UniversityService {
         }
         queueRepository.deleteAll(queues);
 
-        // 2. Delete Offices
         List<Office> offices = officeRepository.findAll().stream()
                 .filter(o -> o.getUniversity() != null && o.getUniversity().getId().equals(id))
                 .toList();
         officeRepository.deleteAll(offices);
 
-        // 3. Delete Closed Dates
         List<UniversityClosedDate> closedDates = closedDateRepository.findAll().stream()
                 .filter(c -> c.getUniversity() != null && c.getUniversity().getId().equals(id))
                 .toList();
         closedDateRepository.deleteAll(closedDates);
 
-        // 4. Delete Registries
         List<AdmittedStudent> admittedStudents = admittedStudentRepository.findAll().stream()
                 .filter(a -> a.getUniversity() != null && a.getUniversity().getId().equals(id))
                 .toList();
@@ -229,20 +230,15 @@ public class UniversityService {
                 .toList();
         studentRegistryRepository.deleteAll(studentRegistries);
 
-        // 5. Delete Users & Notifications
         List<User> users = userRepository.findByUniversityId(id);
         for (User user : users) {
             notificationRepository.deleteAll(notificationRepository.findByUserId(user.getId()));
         }
         userRepository.deleteAll(users);
 
-        // 6. Delete the University
         universityRepository.delete(universityValue16);
 
-        auditService.record(null, null, AuditAction.UNIVERSITY_DELETED,
-                "University", id,
-                "{\"code\":\"" + code + "\",\"name\":\"" + name + "\"}");
-
+        auditService.record(null, null, AuditAction.UNIVERSITY_DELETED, "University", id, "{\"code\":\"" + code + "\",\"name\":\"" + name + "\"}");
         log.info("Deleted university {} ({}) and all associated data", code, id);
     }
 
@@ -261,11 +257,7 @@ public class UniversityService {
         if (request.getFeatureDocuments() != null) universityValue17.setFeatureDocuments(request.getFeatureDocuments());
 
         University saved = universityRepository.save(universityValue17);
-        auditService.record(null, id,
-                AuditAction.UNIVERSITY_UPDATED,
-                "University", id,
-                "{\"source\":\"super-admin-features\"}");
-
+        auditService.record(null, id, AuditAction.UNIVERSITY_UPDATED, "University", id, "{\"source\":\"super-admin-features\"}");
         return enrich(saved);
     }
 
@@ -279,7 +271,6 @@ public class UniversityService {
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
 
         String plan = request.getPlan().toUpperCase();
-
         PlanConfig config = planConfigRepository.findByCode(plan)
                 .orElseThrow(() -> new BadRequestException("Unknown plan: " + plan));
 
@@ -289,12 +280,7 @@ public class UniversityService {
         universityValue18.setMaxTicketsPerDay(config.getMaxTicketsPerDay());
 
         University saved = universityRepository.save(universityValue18);
-
-        auditService.record(null, id,
-                AuditAction.UNIVERSITY_UPDATED,
-                "University", id,
-                "{\"source\":\"super-admin-plan\",\"plan\":\"" + plan + "\"}");
-
+        auditService.record(null, id, AuditAction.UNIVERSITY_UPDATED, "University", id, "{\"source\":\"super-admin-plan\",\"plan\":\"" + plan + "\"}");
         return enrich(saved);
     }
 
@@ -334,10 +320,7 @@ public class UniversityService {
                 .isVerified(true)
                 .build();
         userRepository.save(admin);
-
-        auditService.record(null, universityId, AuditAction.ADMIN_CREATED, "User", admin.getId(),
-                "{\"email\":\"" + request.getEmail() + "\"}");
-
+        auditService.record(null, universityId, AuditAction.ADMIN_CREATED, "User", admin.getId(), "{\"email\":\"" + request.getEmail() + "\"}");
         return enrich(university);
     }
 
