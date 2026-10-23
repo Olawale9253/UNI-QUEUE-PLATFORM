@@ -40,11 +40,9 @@ public class UniversityApplicationService {
         if (universityRepository.existsByCode(code)) {
             throw new BadRequestException("A university with code '" + code + "' already exists.");
         }
-
         if (applicationRepository.existsByUniversityCodeAndStatus(code, UniversityApplication.Status.PENDING)) {
             throw new BadRequestException("We already have a pending application for '" + code + "'.");
         }
-
         if (applicationRepository.findByAdminEmailAndStatus(adminEmail, UniversityApplication.Status.PENDING).isPresent()) {
             throw new BadRequestException("You already have a pending application. We'll be in touch.");
         }
@@ -97,15 +95,18 @@ public class UniversityApplicationService {
         try {
             var response = universityService.create(createReq);
             created = universityRepository.findById(response.getId()).orElse(null);
+            log.info("✅ University '{}' created. Setup email triggered inside create().", app.getUniversityCode());
         } catch (Exception ex) {
-            log.error("Failed to create university from application {}: {}", id, ex.getMessage());
+            log.error("❌ Failed to create university from application {}: {}", id, ex.getMessage(), ex);
             throw new BadRequestException("Could not create university: " + ex.getMessage());
         }
 
+        // Backup: send password reset email if the setup email failed
         try {
             authService.requestPasswordReset(app.getAdminEmail());
+            log.info("📧 Backup password reset email also sent to {}", app.getAdminEmail());
         } catch (Exception ex) {
-            log.warn("Admin welcome email failed for {}: {}", app.getAdminEmail(), ex.getMessage());
+            log.warn("⚠️ Backup email failed for {}: {}", app.getAdminEmail(), ex.getMessage());
         }
 
         app.setStatus(UniversityApplication.Status.APPROVED);

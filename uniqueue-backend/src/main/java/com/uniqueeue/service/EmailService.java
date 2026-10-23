@@ -216,12 +216,22 @@ public class EmailService {
     @Transactional(readOnly = true)
     public void sendAdminSetupEmail(User admin, String token) {
         try {
-            if (admin == null) return;
+            if (admin == null) {
+                log.warn("❌ sendAdminSetupEmail called with null admin");
+                return;
+            }
+
+            log.info("📧 [SETUP EMAIL] Attempting to send setup email to: {}", admin.getEmail());
+
             User freshAdmin = userRepository.findById(admin.getId()).orElse(admin);
-
             String setupUrl = baseUrl + "/setup-account?token=" + token;
-            String subject = "Welcome to UniQueue - Set up your Admin Account";
 
+            log.info("📧 [SETUP EMAIL] URL: {}", setupUrl);
+            log.info("📧 [SETUP EMAIL] From: {}", fromAddress);
+            log.info("📧 [SETUP EMAIL] Brevo API Key configured: {}", (brevoApiKey != null && !brevoApiKey.isEmpty()));
+            log.info("📧 [SETUP EMAIL] Email enabled: {}", emailEnabled);
+
+            String subject = "Welcome to UniQueue - Set up your Admin Account";
             String html = wrap(
                     freshAdmin,
                     null,
@@ -235,8 +245,9 @@ public class EmailService {
             );
 
             sendHtml(freshAdmin.getEmail(), subject, html);
+            log.info("✅ [SETUP EMAIL] sendHtml completed for {}", admin.getEmail());
         } catch (Exception ex) {
-            log.error("sendAdminSetupEmail failed: {}", ex.getMessage());
+            log.error("❌ [SETUP EMAIL] sendAdminSetupEmail failed for {}: {}", admin != null ? admin.getEmail() : "null", ex.getMessage(), ex);
         }
     }
 
