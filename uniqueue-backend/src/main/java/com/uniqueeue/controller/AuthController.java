@@ -8,15 +8,17 @@ import com.uniqueeue.dto.request.ResetPasswordRequest;
 import com.uniqueeue.dto.request.VerifyEmailRequest;
 import com.uniqueeue.dto.response.ApiResponse;
 import com.uniqueeue.dto.response.AuthResponse;
+import com.uniqueeue.model.User;
 import com.uniqueeue.repository.UniversityRepository;
 import com.uniqueeue.repository.UserRepository;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.AuthService;
+import com.uniqueeue.service.EmailService;
 import com.uniqueeue.ratelimit.RateLimited;
 import com.uniqueeue.ratelimit.RateKeyType;
-
-import jakarta.validation.Valid;
+import jakarta.validation.Valid;                                    // 🔧 ADDED
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,15 +31,14 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final AuthService authService;
     private final UniversityRepository universityRepository;
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
-    // ─────────────────────────────────────────────────────────────
-    //  REGISTER
-    // ─────────────────────────────────────────────────────────────
     @PostMapping("/register")
     @RateLimited(limit = 3, windowSeconds = 3600, keyType = RateKeyType.IP, name = "register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
@@ -46,9 +47,6 @@ public class AuthController {
                 .body(ApiResponse.success("Registration successful. Check your email for a verification code.", response));
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  LOGIN
-    // ─────────────────────────────────────────────────────────────
     @PostMapping("/login")
     @RateLimited(limit = 5, windowSeconds = 900, keyType = RateKeyType.EMAIL, keyField = "email", name = "login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
@@ -56,9 +54,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  VERIFY EMAIL
-    // ─────────────────────────────────────────────────────────────
     @PostMapping("/verify-email")
     @RateLimited(limit = 5, windowSeconds = 900, keyType = RateKeyType.EMAIL, keyField = "email", name = "verify")
     public ResponseEntity<ApiResponse<AuthResponse>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
@@ -66,9 +61,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Email verified successfully", response));
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  RESEND VERIFICATION
-    // ─────────────────────────────────────────────────────────────
     @PostMapping("/resend-verification")
     @RateLimited(limit = 3, windowSeconds = 3600, keyType = RateKeyType.EMAIL, keyField = "email", name = "resend")
     public ResponseEntity<ApiResponse<Map<String, Object>>> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
@@ -79,9 +71,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Verification code resent", data));
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  FORGOT PASSWORD
-    // ─────────────────────────────────────────────────────────────
     @PostMapping("/forgot-password")
     @RateLimited(limit = 3, windowSeconds = 3600, keyType = RateKeyType.EMAIL, keyField = "email", name = "forgot")
     public ResponseEntity<ApiResponse<Map<String, Object>>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
@@ -95,27 +84,76 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Reset requested", data));
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  RESET PASSWORD
-    // ─────────────────────────────────────────────────────────────
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<Object>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request.getToken(), request.getNewPassword());
         return ResponseEntity.ok(ApiResponse.success("Password reset successful. You can now sign in.", null));
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  SETUP ACCOUNT (New Admin Invitation)
-    // ─────────────────────────────────────────────────────────────
     @PostMapping("/setup-account")
     public ResponseEntity<ApiResponse<Object>> setupAccount(@Valid @RequestBody ResetPasswordRequest request) {
         authService.setupAccount(request.getToken(), request.getNewPassword());
         return ResponseEntity.ok(ApiResponse.success("Account setup complete. You can now sign in.", null));
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  CURRENT USER
-    // ─────────────────────────────────────────────────────────────
+    // 🔧 DIAGNOSTIC: Public endpoint to test ANY email type without auth
+    // IMPORTANT: Remove this after debugging!
+    @PostMapping("/diagnostic-email")
+    public ResponseEntity<?> diagnosticEmail(@RequestBody Map<String, String> body) {
+        String to = body.get("to");
+        String type = body.getOrDefault("type", "setup");
+
+        if (to == null || to.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Missing 'to' field"));
+        }
+
+        log.info("🔍 [DIAGNOSTIC] type={}, to={}", type, to);
+
+        try {
+            User testUser = userRepository.findByEmail(to.trim().toLowerCase()).orElse(null);
+            if (testUser == null) {
+                testUser = User.builder()
+                        .email(to.trim().toLowerCase())
+                        .fullName("Diagnostic Test")
+                        .build();
+                log.warn("⚠️ [DIAGNOSTIC] No user found for {}, using fake user", to);
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("to", to);
+            result.put("type", type);
+            result.put("realUser", testUser.getId() != null);
+
+            switch (type) {
+                case "setup":
+                    emailService.sendAdminSetupEmail(testUser, "test-token-" + System.currentTimeMillis());
+                    result.put("method", "sendAdminSetupEmail");
+                    break;
+                case "reset":
+                    emailService.sendPasswordReset(testUser, "test-reset-" + System.currentTimeMillis());
+                    result.put("method", "sendPasswordReset");
+                    break;
+                case "verify":
+                    emailService.sendVerificationCode(testUser, "123456");
+                    result.put("method", "sendVerificationCode");
+                    break;
+                default:
+                    return ResponseEntity.badRequest().body(Map.of("error", "Unknown type: " + type));
+            }
+
+            result.put("status", "triggered");
+            result.put("message", "Check Render logs for 📧 messages and Brevo Transactional Logs");
+            return ResponseEntity.ok(result);
+        } catch (Exception ex) {
+            log.error("❌ [DIAGNOSTIC] Failed: {}", ex.getMessage(), ex);
+            Map<String, Object> err = new HashMap<>();
+            err.put("error", ex.getMessage());
+            err.put("class", ex.getClass().getSimpleName());
+            err.put("hint", "Check Render logs for stack trace");
+            return ResponseEntity.internalServerError().body(err);
+        }
+    }
+
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<Map<String, Object>>> me(@AuthenticationPrincipal UserPrincipal principal) {
         Map<String, Object> data = new HashMap<>();
@@ -127,9 +165,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Current user", data));
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  MY VERIFICATION STATUS
-    // ─────────────────────────────────────────────────────────────
     @GetMapping("/me/verification-status")
     public ResponseEntity<ApiResponse<Map<String, Object>>> myVerificationStatus(@AuthenticationPrincipal UserPrincipal principal) {
         var userOpt = userRepository.findById(principal.getId());
@@ -147,9 +182,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Verification status", data));
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  UNIVERSITIES
-    // ─────────────────────────────────────────────────────────────
     @GetMapping("/universities")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> universities() {
         List<Map<String, Object>> list = universityRepository.findAll().stream()
@@ -179,9 +211,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Universities", list));
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  REFRESH
-    // ─────────────────────────────────────────────────────────────
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<AuthResponse>> refresh(@RequestBody Map<String, String> body) {
         String refreshToken = body.get("refreshToken");
@@ -200,9 +229,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Signed out on all devices. Please sign in again.", data));
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  UNIVERSITY LOOKUP BY EMAIL DOMAIN
-    // ─────────────────────────────────────────────────────────────
     @GetMapping("/universities/lookup")
     public ResponseEntity<ApiResponse<Map<String, Object>>> lookupUniversity(@RequestParam(value = "domain", required = false) String domain) {
         if (domain == null || domain.isBlank()) return ResponseEntity.ok(ApiResponse.success("No domain provided", null));
