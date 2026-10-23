@@ -23,8 +23,9 @@ import Verification from './admin/Verification'
 import Students from './admin/Students'
 
 const tabs = [
-    { to: '/admin/overview', label: 'Overview', icon: LayoutGrid },
-    { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+    // 🔧 Renamed for clearer UI
+    { to: '/admin/overview', label: 'Live Overview', icon: LayoutGrid },
+    { to: '/admin/analytics', label: 'Reports & Trends', icon: BarChart3 },
     { to: '/admin/appointments', label: 'Appointments', icon: CalendarCheck },
     { to: '/admin/feedback', label: 'Feedback', icon: Star },
     { to: '/admin/queues', label: 'Services', icon: ListOrdered },
@@ -45,7 +46,6 @@ export default function AdminDashboard() {
     return (
         <DashboardLayout tabs={tabs}>
             {isHome && (
-                // 🔧 FIX: Reduced bottom padding to make it compact like the student page
                 <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-4 bg-white px-3 pb-3 pt-4 dark:bg-slate-900 sm:-mx-5 sm:-mt-6 sm:px-5 sm:pt-6 sm:pb-4 lg:-mx-8 lg:-mt-8 lg:px-8 lg:pt-8 lg:pb-4">
                     <PageHeader
                         workspace="Admin Workspace"
