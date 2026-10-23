@@ -27,6 +27,7 @@ import { initSoundUnlock } from './lib/soundService'
 import { usePrefsStore } from './store/prefsStore'
 import { useServerEvents } from './hooks/useServerEvents'
 import { useUniversityTheme } from './hooks/useUniversityTheme'
+import Notifications from './pages/Notifications'
 
 const HIDE_NAVBAR_ROUTES = [
     '/login',
@@ -101,6 +102,14 @@ export default function App() {
                                 element={
                                     <ProtectedRoute>
                                         <Profile />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/notifications"
+                                element={
+                                    <ProtectedRoute>
+                                        <Notifications />
                                     </ProtectedRoute>
                                 }
                             />

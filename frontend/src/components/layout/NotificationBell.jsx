@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, Check, CheckCheck, X as CloseIcon } from 'lucide-react'
+import { Bell, Check, CheckCheck, X as CloseIcon, ArrowRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../../api/axios'
 import { useAuthStore } from '../../store/authStore'
@@ -21,8 +21,6 @@ export default function NotificationBell() {
     const [processing, setProcessing] = useState(null)
     const ref = useRef(null)
 
-    // Debounce: prevent a burst of SSE events (broadcast to a group) from
-    // chiming many times in a row.
     const lastSoundAtRef = useRef(0)
 
     const tryPlayChime = useCallback(() => {
@@ -31,11 +29,7 @@ export default function NotificationBell() {
         const now = Date.now()
         if (now - lastSoundAtRef.current < SOUND_DEBOUNCE_MS) return
         lastSoundAtRef.current = now
-        try {
-            playAttentionSound()
-        } catch {
-            // AudioContext not unlocked yet — silent failure is fine
-        }
+        try { playAttentionSound() } catch { }
     }, [])
 
     const loadUnreadCount = useCallback(
@@ -45,17 +39,10 @@ export default function NotificationBell() {
                 const res = await api.get('/api/notifications/unread/count')
                 const next = res.data.data?.count ?? 0
                 setUnread((prev) => {
-                    // Fallback path: if for some reason SSE didn't fire, still
-                    // chime on count increase — but ONLY if the caller didn't
-                    // already handle the sound.
-                    if (next > prev && !opts.silent) {
-                        tryPlayChime()
-                    }
+                    if (next > prev && !opts.silent) tryPlayChime()
                     return next
                 })
-            } catch {
-                // silent
-            }
+            } catch { }
         },
         [token, tryPlayChime]
     )
@@ -72,46 +59,26 @@ export default function NotificationBell() {
         }
     }, [])
 
-    // Initial fetch + slow safety-net poll (10 min instead of 30s, since SSE
-    // is now the primary channel).
     useEffect(() => {
         loadUnreadCount()
         const interval = setInterval(() => loadUnreadCount({ silent: true }), 600000)
         return () => clearInterval(interval)
     }, [loadUnreadCount])
 
-    // ═══ SSE bridge: react to live notification events ═══
     useEffect(() => {
         if (!token) return undefined
-
         const unsub = syncBus.subscribe('notification:new', () => {
-            // 1. Immediately chime — the event itself is the signal.
             tryPlayChime()
-            // 2. Bump the badge without waiting for a poll.
             setUnread((prev) => prev + 1)
-            // 3. If the panel is open, refetch so the new item appears live.
             if (open) loadNotifications()
         })
-
-        // Also listen on `data-changed` — some flows may not emit the
-        // specific topic, but the broad one is always published by the SSE
-        // hook. Refetch the count so nothing is missed.
         const unsub2 = syncBus.subscribe('data-changed', (payload) => {
-            if (payload?.source === 'sse' && payload?.serverTopic === 'notification:new') {
-                // Already handled above — avoid double handling
-                return
-            }
-            // Silent refresh — don't chime here; the specific handler did.
+            if (payload?.source === 'sse' && payload?.serverTopic === 'notification:new') return
             loadUnreadCount({ silent: true })
         })
-
-        return () => {
-            unsub()
-            unsub2()
-        }
+        return () => { unsub(); unsub2() }
     }, [token, open, tryPlayChime, loadNotifications, loadUnreadCount])
 
-    // Close on outside click
     useEffect(() => {
         const onClick = (event) => {
             if (ref.current && !ref.current.contains(event.target)) setOpen(false)
@@ -120,48 +87,28 @@ export default function NotificationBell() {
         return () => document.removeEventListener('mousedown', onClick)
     }, [])
 
-    // Close on Escape
     useEffect(() => {
-        const onKey = (event) => {
-            if (event.key === 'Escape') setOpen(false)
-        }
+        const onKey = (event) => { if (event.key === 'Escape') setOpen(false) }
         document.addEventListener('keydown', onKey)
         return () => document.removeEventListener('keydown', onKey)
     }, [])
 
-    // Lock body scroll on mobile when open
     useEffect(() => {
-        if (open && window.innerWidth < 640) {
-            document.body.style.overflow = 'hidden'
-        } else {
-            document.body.style.overflow = ''
-        }
-        return () => {
-            document.body.style.overflow = ''
-        }
+        if (open && window.innerWidth < 640) document.body.style.overflow = 'hidden'
+        else document.body.style.overflow = ''
+        return () => { document.body.style.overflow = '' }
     }, [open])
 
-    // Refetch the list whenever the panel opens
-    useEffect(() => {
-        if (open) loadNotifications()
-    }, [open, loadNotifications])
+    useEffect(() => { if (open) loadNotifications() }, [open, loadNotifications])
 
     const markOneRead = async (notification) => {
         if (!notification.isRead) {
-            setNotifications((prev) =>
-                prev.map((item) => (item.id === notification.id ? { ...item, isRead: true } : item))
-            )
-            setUnread((item) => Math.max(0, item - 1))
+            setNotifications((prev) => prev.map((i) => (i.id === notification.id ? { ...i, isRead: true } : i)))
+            setUnread((i) => Math.max(0, i - 1))
             setProcessing(notification.id)
-            try {
-                await api.post(`/api/notifications/${notification.id}/read`)
-            } catch {
-                // next poll resyncs
-            } finally {
-                setProcessing(null)
-            }
+            try { await api.post(`/api/notifications/${notification.id}/read`) } catch { }
+            finally { setProcessing(null) }
         }
-
         if (notification.link) {
             setOpen(false)
             navigate(notification.link)
@@ -171,20 +118,26 @@ export default function NotificationBell() {
     const markAllRead = async () => {
         try {
             await api.post('/api/notifications/read-all')
-            setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })))
+            setNotifications((prev) => prev.map((i) => ({ ...i, isRead: true })))
             setUnread(0)
-        } catch {
-            // ignore
-        }
+        } catch { }
     }
 
-    const unreadCount = notifications.filter((notification) => !notification.isRead).length
+    const viewAllNotifications = () => {
+        setOpen(false)
+        navigate('/notifications')
+    }
+
+    const unreadCount = notifications.filter((n) => !n.isRead).length
+
+    // Show only the latest 4 notifications in the dropdown
+    const recentNotifications = notifications.slice(0, 4)
 
     return (
         <div className="relative" ref={ref}>
             <button
-                onClick={() => setOpen((item) => !item)}
-                className="relative rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                onClick={() => setOpen((v) => !v)}
+                className="relative flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
                 aria-label="Notifications"
             >
                 <Bell className="h-5 w-5" />
@@ -194,7 +147,7 @@ export default function NotificationBell() {
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             exit={{ scale: 0 }}
-                            className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white"
+                            className="absolute right-1 top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white ring-2 ring-white dark:ring-slate-900"
                         >
                             {unread > 9 ? '9+' : unread}
                         </motion.span>
@@ -209,28 +162,28 @@ export default function NotificationBell() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            transition={{ duration: 0.15 }}
                             onClick={() => setOpen(false)}
                             className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm sm:hidden"
                         />
 
                         <motion.div
-                            initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -8, scale: 0.97 }}
-                            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            transition={{ duration: 0.15, ease: "easeOut" }}
                             className="
-                                fixed inset-x-3 top-20 z-50 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900
-                                sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[420px] sm:rounded-lg sm:shadow-lg
+                                fixed inset-x-3 top-20 z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900
+                                sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[380px]
                             "
                         >
-                            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                            {/* Dropdown Header */}
+                            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-4 py-3 dark:border-slate-800 dark:bg-slate-800/30">
                                 <div className="flex items-center gap-2">
-                                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                    <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
                                         Notifications
                                     </h3>
                                     {unreadCount > 0 && (
-                                        <span className="rounded-full bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+                                        <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-bold text-brand-700 dark:bg-brand-900/50 dark:text-brand-300">
                                             {unreadCount} new
                                         </span>
                                     )}
@@ -239,34 +192,26 @@ export default function NotificationBell() {
                                     {unreadCount > 0 && (
                                         <button
                                             onClick={markAllRead}
-                                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-brand-600 transition-colors hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40"
+                                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-brand-600 transition-colors hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-950/40"
                                         >
                                             <CheckCheck className="h-3.5 w-3.5" />
                                             <span className="hidden sm:inline">Mark all read</span>
-                                            <span className="sm:hidden">All</span>
                                         </button>
                                     )}
-                                    <button
-                                        onClick={() => setOpen(false)}
-                                        className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 sm:hidden dark:hover:bg-slate-800"
-                                        aria-label="Close"
-                                    >
+                                    <button onClick={() => setOpen(false)} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 sm:hidden">
                                         <CloseIcon className="h-4 w-4" />
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="max-h-[calc(100vh-8rem)] overflow-y-auto sm:max-h-[500px]">
+                            {/* Dropdown List */}
+                            <div className="max-h-[calc(100vh-14rem)] overflow-y-auto">
                                 {loading ? (
                                     <div className="space-y-3 p-4">
-                                        {[1, 2, 3].map((index) => (
-                                            <div
-                                                key={index}
-                                                className="animate-pulse space-y-2 rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50"
-                                            >
+                                        {[1, 2, 3].map((i) => (
+                                            <div key={i} className="animate-pulse space-y-2">
                                                 <div className="h-3 w-1/3 rounded bg-slate-200 dark:bg-slate-700" />
                                                 <div className="h-3 w-full rounded bg-slate-200 dark:bg-slate-700" />
-                                                <div className="h-3 w-2/3 rounded bg-slate-200 dark:bg-slate-700" />
                                             </div>
                                         ))}
                                     </div>
@@ -275,85 +220,40 @@ export default function NotificationBell() {
                                         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
                                             <Bell className="h-6 w-6 text-slate-400" />
                                         </div>
-                                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                            No notifications
-                                        </p>
-                                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                            You're all caught up.
-                                        </p>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-slate-100">No notifications</p>
+                                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">You're all caught up.</p>
                                     </div>
                                 ) : (
                                     <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {notifications.slice(0, 30).map((count) => {
-                                            const isUnread = !count.isRead
-                                            const isProcessing = processing === count.id
+                                        {recentNotifications.map((n) => {
+                                            const isUnread = !n.isRead
+                                            const isProcessing = processing === n.id
 
                                             return (
                                                 <li
-                                                    key={count.id}
-                                                    onClick={() => markOneRead(count)}
+                                                    key={n.id}
+                                                    onClick={() => markOneRead(n)}
                                                     className={`relative cursor-pointer px-4 py-3 transition-colors ${
                                                         isUnread
-                                                            ? 'bg-brand-50/40 hover:bg-brand-50/70 dark:bg-brand-950/20 dark:hover:bg-brand-950/30'
-                                                            : 'bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800/50'
+                                                            ? 'bg-brand-50/30 hover:bg-brand-50/70 dark:bg-brand-950/10 dark:hover:bg-brand-950/30'
+                                                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
                                                     }`}
                                                 >
-                                                    {isUnread && (
-                                                        <motion.div
-                                                            layoutId={`unread-bar-${count.id}`}
-                                                            className="absolute left-0 top-0 h-full w-1 bg-brand-600"
-                                                        />
-                                                    )}
-
-                                                    <div className="flex items-start gap-3">
+                                                    {isUnread && <div className="absolute left-0 top-0 h-full w-1 bg-brand-600" />}
+                                                    <div className="flex items-start gap-3 pl-1">
                                                         <div className="min-w-0 flex-1">
                                                             <div className="flex items-start justify-between gap-2">
-                                                                <div className="flex min-w-0 items-center gap-2">
-                                                                    {isUnread && (
-                                                                        <span className="h-2 w-2 shrink-0 rounded-full bg-brand-600" />
-                                                                    )}
-                                                                    <p
-                                                                        className={`truncate ${
-                                                                            isUnread
-                                                                                ? 'text-sm font-semibold text-slate-900 dark:text-slate-100'
-                                                                                : 'text-sm font-medium text-slate-700 dark:text-slate-300'
-                                                                        }`}
-                                                                    >
-                                                                        {count.title}
-                                                                    </p>
-                                                                </div>
-
-                                                                {isUnread ? (
-                                                                    isProcessing ? (
-                                                                        <div className="shrink-0 rounded-full bg-slate-100 p-1 dark:bg-slate-800">
-                                                                            <Check className="h-3.5 w-3.5 text-slate-400" />
-                                                                        </div>
-                                                                    ) : null
-                                                                ) : (
-                                                                    <CheckCheck className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                                                                )}
-                                                            </div>
-
-                                                            <p
-                                                                className={`mt-1 whitespace-pre-wrap text-xs leading-relaxed ${
-                                                                    isUnread
-                                                                        ? 'text-slate-700 dark:text-slate-300'
-                                                                        : 'text-slate-500 dark:text-slate-400'
-                                                                }`}
-                                                            >
-                                                                {count.message}
-                                                            </p>
-
-                                                            <div className="mt-2 flex items-center justify-between gap-2">
-                                                                <p className="text-[10px] uppercase tracking-wide text-slate-400">
-                                                                    {formatTimeAgo(count.createdAt)}
+                                                                <p className={`truncate ${isUnread ? 'font-bold text-slate-900 dark:text-slate-100' : 'font-semibold text-slate-700 dark:text-slate-300'} text-sm`}>
+                                                                    {n.title}
                                                                 </p>
-                                                                {count.type && (
-                                                                    <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                                                                        {String(count.type).replace(/_/g, ' ')}
-                                                                    </span>
-                                                                )}
+                                                                {!isUnread && <CheckCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />}
                                                             </div>
+                                                            <p className={`mt-0.5 line-clamp-2 text-xs ${isUnread ? 'text-slate-700 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'}`}>
+                                                                {n.message}
+                                                            </p>
+                                                            <p className="mt-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+                                                                {formatTimeAgo(n.createdAt)}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 </li>
@@ -363,13 +263,16 @@ export default function NotificationBell() {
                                 )}
                             </div>
 
-                            {notifications.length > 0 && (
-                                <div className="border-t border-slate-100 px-4 py-2 text-center dark:border-slate-800">
-                                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                                        Click a notification to mark it as read
-                                    </span>
-                                </div>
-                            )}
+                            {/* Dropdown Footer: View All */}
+                            <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+                                <button
+                                    onClick={viewAllNotifications}
+                                    className="flex w-full items-center justify-center gap-2 py-3 text-xs font-bold text-brand-600 transition-colors hover:bg-slate-100 hover:text-brand-700 dark:text-brand-400 dark:hover:bg-slate-800"
+                                >
+                                    View all notifications
+                                    <ArrowRight className="h-3.5 w-3.5" />
+                                </button>
+                            </div>
                         </motion.div>
                     </>
                 )}
