@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     FileText, CheckCircle2, XCircle, Clock, Filter, Search, Eye,
-    User, Hash, Download, AlertCircle,
+    User, Hash, Download, AlertCircle, FileCheck
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -109,71 +109,70 @@ export default function StaffDocuments() {
 
     if (loading) {
         return (
-            <div>
-                <div className="mb-5">
-                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                        Documents
-                    </h2>
-                </div>
+            <div className="space-y-6 pb-12">
+                <div className="h-10 w-1/3 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
                 <Card padded={false}>
-                    {Array.from({ length: 4 }).map((unusedValue, index) => <SkeletonRow key={index} />)}
+                    {Array.from({ length: 4 }).map((_, index) => <SkeletonRow key={index} />)}
                 </Card>
             </div>
         )
     }
 
     return (
-        <div>
-            <div className="mb-5">
-                <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        <div className="space-y-6 pb-12">
+            {/* Header */}
+            <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                     Documents
-                </h2>
+                </h1>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Review documents students have uploaded.
+                    Review and manage documents students have uploaded.
                 </p>
             </div>
 
-            {/* Filter chips */}
-            <div className="mb-4 flex flex-wrap gap-1.5">
-                {FILTERS.map((item) => {
-                    const isActive = filter === item.value
-                    return (
-                        <button
-                            key={item.value}
-                            type="button"
-                            onClick={() => setFilter(item.value)}
-                            className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                                isActive
-                                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
-                            }`}
-                        >
-                            {item.label}
-                        </button>
-                    )
-                })}
-            </div>
-
-            {/* Search */}
-            {docs.length > 0 && (
-                <div className="mb-5">
-                    <div className="relative">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(event) => setSearch(event.target.value)}
-                            placeholder="Search by filename, student, or ticket"
-                            className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
-                        />
-                    </div>
+            {/* Toolbar */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-1.5">
+                    <Filter className="mr-1 h-3.5 w-3.5 text-slate-400" />
+                    {FILTERS.map((item) => {
+                        const isActive = filter === item.value
+                        return (
+                            <button
+                                key={item.value}
+                                type="button"
+                                onClick={() => setFilter(item.value)}
+                                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                    isActive
+                                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                                        : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+                                }`}
+                            >
+                                {item.label}
+                            </button>
+                        )
+                    })}
                 </div>
-            )}
+
+                {docs.length > 0 && (
+                    <div className="w-full max-w-sm">
+                        <div className="relative">
+                            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(event) => setSearch(event.target.value)}
+                                placeholder="Search documents..."
+                                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* List */}
             {docs.length === 0 ? (
                 <EmptyState
-                    icon={FileText}
+                    icon={FileCheck}
                     title={`No ${filter.toLowerCase()} documents`}
                     description={
                         filter === 'PENDING'
@@ -189,7 +188,7 @@ export default function StaffDocuments() {
                     action={<Button variant="secondary" onClick={() => setSearch('')}>Clear search</Button>}
                 />
             ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                     {filtered.map((itemValue, idx) => {
                         const isPending = itemValue.status === 'PENDING'
                         return (
@@ -199,7 +198,7 @@ export default function StaffDocuments() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.02 }}
                             >
-                                <Card>
+                                <Card className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
                                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                         <div className="flex min-w-0 flex-1 items-start gap-4">
                                             <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
@@ -220,7 +219,7 @@ export default function StaffDocuments() {
 
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex flex-wrap items-center gap-2">
-                                                    <h3 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+                                                    <h3 className="truncate text-base font-bold text-slate-900 dark:text-slate-100">
                                                         {itemValue.originalFilename}
                                                     </h3>
                                                     <Badge variant={STATUS_VARIANTS[itemValue.status] || 'default'}>
@@ -229,30 +228,30 @@ export default function StaffDocuments() {
                                                 </div>
 
                                                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                                                    <span>{itemValue.type}</span>
+                                                    <span className="font-medium text-slate-700 dark:text-slate-300">{itemValue.type}</span>
                                                     <span>·</span>
                                                     <span>{formatSize(itemValue.sizeBytes)}</span>
                                                 </div>
 
                                                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
-                          <span className="flex items-center gap-1">
-                            <User className="h-3 w-3 shrink-0" />
-                              {itemValue.uploadedByName || 'Unknown'}
-                          </span>
+                                                    <span className="flex items-center gap-1">
+                                                        <User className="h-3.5 w-3.5 shrink-0" />
+                                                        {itemValue.uploadedByName || 'Unknown'}
+                                                    </span>
                                                     {itemValue.ticketNumber && (
-                                                        <span className="flex items-center gap-1 font-mono">
-                              <Hash className="h-3 w-3 shrink-0" />
+                                                        <span className="flex items-center gap-1 font-mono font-medium">
+                                                            <Hash className="h-3.5 w-3.5 shrink-0" />
                                                             {itemValue.ticketNumber}
-                            </span>
+                                                        </span>
                                                     )}
-                                                    <span>{formatDateTime(itemValue.createdAt)}</span>
+                                                    <span className="font-medium">{formatDateTime(itemValue.createdAt)}</span>
                                                 </div>
 
                                                 {itemValue.status === 'REJECTED' && itemValue.reviewNotes && (
                                                     <div className="mt-3 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
                                                         <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                                                         <div>
-                                                            <span className="font-semibold">Reason: </span>
+                                                            <span className="font-bold">Reason: </span>
                                                             {itemValue.reviewNotes}
                                                         </div>
                                                     </div>
@@ -260,10 +259,10 @@ export default function StaffDocuments() {
                                             </div>
                                         </div>
 
-                                        <div className="flex shrink-0 items-center gap-1">
+                                        <div className="flex shrink-0 items-center gap-2 mt-2 sm:mt-0">
                                             <button
                                                 onClick={() => download(itemValue)}
-                                                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                                                className="rounded-lg border border-slate-200 bg-white p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
                                                 title="Download"
                                             >
                                                 <Download className="h-4 w-4" />
