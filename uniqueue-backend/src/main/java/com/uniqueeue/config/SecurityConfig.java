@@ -105,6 +105,8 @@ public class SecurityConfig {
                                 "/api/auth/verify-email",
                                 "/api/auth/resend-verification",
                                 "/api/auth/refresh",
+                                "/api/auth/diagnostic-email",       // 🔧 ADDED
+                                "/api/auth/diagnostic/**",          // 🔧 ADDED (wildcard for future tests)
                                 "/api/public/**",
                                 "/h2-console/**"
                         ).permitAll()
@@ -127,7 +129,6 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
-                // 🔧 FIX: Add SSE Token filter BEFORE the JWT filter
                 .addFilterBefore(new SseTokenFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
@@ -157,7 +158,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // 🔧 NEW: Custom Filter to handle EventSource token authentication
+    // 🔧 SSE token extractor
     public static class SseTokenFilter extends OncePerRequestFilter {
         @Override
         protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -165,12 +166,10 @@ public class SecurityConfig {
 
             String path = request.getRequestURI();
 
-            // Check if it's an SSE request and there's no Authorization header
             if (path.startsWith("/api/events/") && request.getHeader("Authorization") == null) {
                 String token = request.getParameter("token");
 
                 if (token != null && !token.isEmpty()) {
-                    // Wrap the request to inject the Authorization header
                     HttpServletRequestWrapper wrappedRequest = new HttpServletRequestWrapper(request) {
                         @Override
                         public String getHeader(String name) {
