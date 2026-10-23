@@ -18,7 +18,6 @@ import StudentWorkflowProgress from './student/StudentWorkflowProgress'
 import StudentSettings from './student/StudentSettings'
 import JoinQueuePage from './student/JoinQueuePage'
 import MyTicketsPage from './student/MyTicketsPage'
-import NotificationsPage from './student/NotificationsPage'
 import ProfilePage from './student/ProfilePage'
 
 import { useUniversityStore } from '../store/universityStore'
@@ -34,7 +33,8 @@ export default function StudentDashboard() {
         { to: '/student/history', label: 'History', icon: History },
         { to: '/student/join-queue', label: 'Join Queue', icon: Search },
         { to: '/student/my-tickets', label: 'My Tickets', icon: Ticket },
-        { to: '/student/notifications', label: 'Notifications', icon: Bell },
+        // 🔧 FIX: Pointing to the global notification route
+        { to: '/notifications', label: 'Notifications', icon: Bell },
         { to: '/student/profile', label: 'Profile', icon: User },
     ]
 
@@ -53,7 +53,6 @@ export default function StudentDashboard() {
     return (
         <DashboardLayout tabs={tabs}>
             {isHome && (
-                // 🔧 FIX: Matched top margin (-mt-4) to seal the gap, reduced bottom padding (pb-3)
                 <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-4 bg-white px-3 pb-3 pt-4 dark:bg-slate-900 sm:-mx-5 sm:-mt-6 sm:px-5 sm:pt-6 sm:pb-4 lg:-mx-8 lg:-mt-8 lg:px-8 lg:pt-8 lg:pb-4">
                     <PageHeader
                         workspace="Student Workspace"
@@ -74,7 +73,7 @@ export default function StudentDashboard() {
                 <Route path="settings" element={<StudentSettings />} />
                 <Route path="join-queue" element={<JoinQueuePage />} />
                 <Route path="my-tickets" element={<MyTicketsPage />} />
-                <Route path="notifications" element={<NotificationsPage />} />
+                {/* 🔧 FIX: Removed the old notifications route */}
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="*" element={<Navigate to="/student" replace />} />
             </Routes>

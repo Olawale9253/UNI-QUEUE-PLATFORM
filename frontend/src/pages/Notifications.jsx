@@ -1,14 +1,13 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom' // 🔧 Added useNavigate
+import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-    Bell, CheckCircle2, Info, AlertTriangle, Loader2,
-    CheckCheck, ArrowRight, Ticket, Megaphone, ArrowLeft // 🔧 Added ArrowLeft
+    Bell, CheckCircle2, AlertTriangle, Loader2,
+    CheckCheck, ArrowRight, Ticket, Megaphone, ArrowLeft
 } from 'lucide-react'
 import api from '../api/axios'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
-import EmptyState from '../components/ui/EmptyState'
 import { useToastStore } from '../store/toastStore'
 import { formatTimeAgo } from '../lib/format'
 import { stagger, staggerItem } from '../lib/motion'
@@ -19,7 +18,7 @@ const TABS = [
 ]
 
 export default function Notifications() {
-    const navigate = useNavigate() // 🔧 Added
+    const navigate = useNavigate()
     const { push } = useToastStore()
     const [notifications, setNotifications] = useState([])
     const [loading, setLoading] = useState(true)
@@ -62,7 +61,7 @@ export default function Notifications() {
         try {
             await api.post(`/api/notifications/${id}/read`)
         } catch {
-            // silently fail, the poll will resync
+            // silent
         }
     }
 
@@ -84,7 +83,7 @@ export default function Notifications() {
 
     if (error) {
         return (
-            <div className="mx-auto max-w-3xl space-y-6 pb-12 pt-8">
+            <div className="mx-auto max-w-3xl space-y-6 pb-12 pt-8 px-4">
                 <div className="rounded-xl border border-rose-200 bg-rose-50 p-8 text-center dark:border-rose-900 dark:bg-rose-950/20">
                     <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-rose-500" />
                     <h2 className="text-base font-bold text-rose-800 dark:text-rose-300">Couldn't load notifications</h2>
@@ -96,19 +95,16 @@ export default function Notifications() {
     }
 
     return (
-        // 🔧 Added pt-6 sm:pt-8 for better spacing from navbar
-        <div className="mx-auto max-w-4xl space-y-6 pb-12 pt-6 sm:pt-8">
-
-            {/* Back Button */}
+        <div className="mx-auto max-w-4xl space-y-6 pb-12 pt-4 sm:pt-8 px-4 sm:px-6">
             <button
                 onClick={() => navigate(-1)}
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
             >
                 <ArrowLeft className="h-4 w-4" />
                 Back
             </button>
 
-            {/* Header */}
+            {/* Responsive Header */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
@@ -124,6 +120,7 @@ export default function Notifications() {
                         loading={markingAll}
                         icon={CheckCheck}
                         variant="secondary"
+                        className="w-full sm:w-auto"
                     >
                         Mark all as read
                     </Button>
@@ -131,12 +128,12 @@ export default function Notifications() {
             </div>
 
             {/* Tabs */}
-            <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-px">
+            <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-px overflow-x-auto custom-scrollbar">
                 {TABS.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`relative flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
+                        className={`relative flex shrink-0 items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
                             activeTab === tab.id
                                 ? 'text-brand-600 dark:text-brand-400'
                                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
@@ -162,7 +159,7 @@ export default function Notifications() {
             <Card padded={false} className="overflow-hidden">
                 <AnimatePresence mode="popLayout">
                     {filtered.length === 0 ? (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-16 text-center">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-16 text-center px-4">
                             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
                                 <Bell className="h-8 w-8 text-slate-400" />
                             </div>
@@ -204,18 +201,18 @@ export default function Notifications() {
                                         key={n.id}
                                         variants={staggerItem}
                                         onClick={() => markOneRead(n.id)}
-                                        className={`group flex gap-4 p-4 sm:px-6 transition-colors cursor-pointer ${
+                                        className={`group flex gap-3 sm:gap-4 p-4 sm:px-6 transition-colors cursor-pointer ${
                                             isUnread
                                                 ? 'bg-brand-50/30 hover:bg-brand-50/60 dark:bg-brand-950/10 dark:hover:bg-brand-950/20'
                                                 : 'hover:bg-slate-50 dark:hover:bg-slate-800/30'
                                         }`}
                                     >
-                                        <div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${colorClass}`}>
-                                            <Icon className="h-5 w-5" />
+                                        <div className={`mt-0.5 flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full ${colorClass}`}>
+                                            <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                                         </div>
 
                                         <div className="min-w-0 flex-1">
-                                            <div className="flex items-center justify-between gap-3">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-3">
                                                 <div className="flex items-center gap-2">
                                                     <h4 className={`truncate text-sm ${isUnread ? 'font-bold text-slate-900 dark:text-slate-100' : 'font-semibold text-slate-700 dark:text-slate-300'}`}>
                                                         {n.title || 'Notification'}
@@ -224,11 +221,11 @@ export default function Notifications() {
                                                         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
                                                     )}
                                                 </div>
-                                                <span className="shrink-0 text-xs text-slate-400">
+                                                <span className="shrink-0 text-[11px] sm:text-xs text-slate-400 font-medium">
                                                     {formatTimeAgo(n.createdAt)}
                                                 </span>
                                             </div>
-                                            <p className={`mt-1 text-sm leading-relaxed ${isUnread ? 'text-slate-700 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'}`}>
+                                            <p className={`mt-1 text-xs sm:text-sm leading-relaxed ${isUnread ? 'text-slate-700 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'}`}>
                                                 {n.message}
                                             </p>
 

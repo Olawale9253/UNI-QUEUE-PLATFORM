@@ -3,7 +3,7 @@ import {
     Building2, Users as UsersIcon, Activity,
     Settings as SettingsIcon,
     Shield, FileText, Megaphone, CreditCard, Clock,
-    MessageSquare // 🔧 Added for Feedback
+    MessageSquare, Bell
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import PageHeader from '../components/layout/PageHeader'
@@ -18,17 +18,19 @@ import AuditLogs from './super-admin/AuditLogs'
 import Settings from './super-admin/Settings'
 import Broadcast from './super-admin/Broadcast'
 import Plans from './super-admin/Plans'
-import Feedback from './super-admin/Feedback' // 🔧 Imported the Feedback page
+import Feedback from './super-admin/Feedback'
 
 const tabs = [
     { to: '/super-admin/universities', label: 'Universities', icon: Building2 },
     { to: '/super-admin/pending-requests', label: 'Pending Requests', icon: Clock },
     { to: '/super-admin/users', label: 'Users', icon: UsersIcon },
-    { to: '/super-admin/feedback', label: 'Feedback', icon: MessageSquare }, // 🔧 Added the tab here
+    { to: '/super-admin/feedback', label: 'Feedback', icon: MessageSquare },
     { to: '/super-admin/analytics', label: 'System Analytics', icon: Activity },
     { to: '/super-admin/tiers', label: 'Tiers & Features', icon: Shield },
     { to: '/super-admin/plans', label: 'Plans', icon: CreditCard },
     { to: '/super-admin/broadcast', label: 'Broadcast', icon: Megaphone },
+    // 🔧 ADDED: Notifications Tab
+    { to: '/notifications', label: 'Notifications', icon: Bell },
     { to: '/super-admin/audit-logs', label: 'Audit Logs', icon: FileText },
     { to: '/super-admin/settings', label: 'Settings', icon: SettingsIcon },
 ]
@@ -52,7 +54,7 @@ export default function SuperAdminDashboard() {
                 <Route path="universities" element={<Universities />} />
                 <Route path="pending-requests" element={<UniversityApplications />} />
                 <Route path="users" element={<Users />} />
-                <Route path="feedback" element={<Feedback />} /> {/* 🔧 Added the route */}
+                <Route path="feedback" element={<Feedback />} />
                 <Route path="analytics" element={<SystemAnalytics />} />
                 <Route path="tiers" element={<TiersAndFeatures />} />
                 <Route path="plans" element={<Plans />} />

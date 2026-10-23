@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import {
     ListOrdered, Calendar, CalendarCheck, Building2, FileText, Activity,
-    User as UserIcon, Settings as SettingsIcon,
+    User as UserIcon, Settings as SettingsIcon, Bell,
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import PageHeader from '../components/layout/PageHeader'
@@ -22,6 +22,8 @@ const tabs = [
     { to: '/staff/slots', label: 'Manage Slots', icon: Calendar },
     { to: '/staff/appointments', label: 'Appointments', icon: CalendarCheck },
     { to: '/staff/documents', label: 'Documents', icon: FileText },
+    // 🔧 ADDED: Notifications Tab
+    { to: '/notifications', label: 'Notifications', icon: Bell },
     { to: '/staff/activity', label: 'Activity', icon: Activity },
     { to: '/staff/profile', label: 'Profile', icon: UserIcon },
     { to: '/staff/settings', label: 'Settings', icon: SettingsIcon },

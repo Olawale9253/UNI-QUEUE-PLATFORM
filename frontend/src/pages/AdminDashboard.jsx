@@ -2,7 +2,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import {
     LayoutGrid, BarChart3, Star, ListOrdered, Users, Route as RouteIcon,
     Settings as SettingsIcon, Building2, CalendarCheck, Activity, History,
-    ShieldCheck, GraduationCap,
+    ShieldCheck, GraduationCap, Bell,
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import PageHeader from '../components/layout/PageHeader'
@@ -34,6 +34,8 @@ const tabs = [
     { to: '/admin/workload', label: 'Workload', icon: Activity },
     { to: '/admin/workflows', label: 'Workflows', icon: RouteIcon },
     { to: '/admin/verification', label: 'Verifications', icon: ShieldCheck },
+    // 🔧 ADDED: Notifications Tab
+    { to: '/notifications', label: 'Notifications', icon: Bell },
     { to: '/admin/audit-logs', label: 'Audit Logs', icon: History },
     { to: '/admin/settings', label: 'Settings', icon: SettingsIcon },
 ]
