@@ -7,6 +7,7 @@ import ThemeProvider from './components/common/ThemeProvider'
 import ImpersonationBanner from './components/layout/ImpersonationBanner'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import ScrollToTop from './components/common/ScrollToTop'
+import IdleTimeout from './components/common/IdleTimeout' // 🔧 Imported IdleTimeout
 
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -69,6 +70,9 @@ export default function App() {
     return (
         <ErrorBoundary>
             <ThemeProvider>
+                {/* 🔧 Added IdleTimeout right here to monitor activity across the whole app */}
+                <IdleTimeout />
+
                 <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
                     <ScrollToTop />
                     <ImpersonationBanner />
