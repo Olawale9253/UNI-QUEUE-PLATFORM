@@ -39,7 +39,6 @@ public class UniversityService {
     private final PlanConfigRepository planConfigRepository;
     private final UniversityStarterPackService starterPackService;
 
-    // 🔧 Added missing repositories for setup flow
     private final EmailService emailService;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
 
@@ -59,10 +58,6 @@ public class UniversityService {
                 .orElseThrow(() -> new ResourceNotFoundException("University not found"));
         return enrich(universityValue12);
     }
-
-    // ============================================================
-    //  CREATE
-    // ============================================================
 
     @Transactional
     public UniversityResponse create(CreateUniversityRequest request) {
@@ -93,10 +88,9 @@ public class UniversityService {
 
         university = universityRepository.save(university);
 
-        // 🔧 FIX: Use a random placeholder password instead of a hardcoded one
         User admin = User.builder()
                 .email(request.getAdminEmail().toLowerCase())
-                .password(passwordEncoder.encode(UUID.randomUUID().toString())) // Random placeholder
+                .password(passwordEncoder.encode(UUID.randomUUID().toString()))
                 .fullName(request.getAdminFullName())
                 .role(Role.ADMIN)
                 .university(university)
@@ -105,19 +99,24 @@ public class UniversityService {
                 .build();
         userRepository.save(admin);
 
-        // 🔧 FIX: Generate setup token
         String token = UUID.randomUUID().toString().replace("-", "")
                 + UUID.randomUUID().toString().replace("-", "");
 
         PasswordResetToken setupToken = PasswordResetToken.builder()
                 .token(token)
                 .user(admin)
-                .expiresAt(LocalDateTime.now().plusHours(48)) // 48 hours to setup
+                .expiresAt(LocalDateTime.now().plusHours(48))
                 .build();
         passwordResetTokenRepository.save(setupToken);
 
-        // 🔧 FIX: Send the setup email
-        emailService.sendAdminSetupEmail(admin, token);
+        // 🔧 FIX: Wrap synchronous email in try/catch so a failure doesn't roll back university creation
+        try {
+            emailService.sendAdminSetupEmail(admin, token);
+            log.info("✅ Setup email sent to {}", admin.getEmail());
+        } catch (Exception ex) {
+            log.error("❌ Setup email FAILED for {} — {}", admin.getEmail(), ex.getMessage(), ex);
+            // Do NOT rethrow — the university is still created
+        }
 
         auditService.record(null, university.getId(),
                 AuditAction.UNIVERSITY_CREATED, "University", university.getId(),
@@ -133,10 +132,6 @@ public class UniversityService {
 
         return enrich(university);
     }
-
-    // ============================================================
-    //  UPDATE
-    // ============================================================
 
     @Transactional
     public UniversityResponse update(Long id, UpdateUniversityRequest request) {
@@ -163,10 +158,6 @@ public class UniversityService {
         return enrich(saved);
     }
 
-    // ============================================================
-    //  DEACTIVATE / REACTIVATE
-    // ============================================================
-
     @Transactional
     public UniversityResponse deactivate(Long id) {
         University universityValue14 = universityRepository.findById(id)
@@ -186,10 +177,6 @@ public class UniversityService {
         auditService.record(null, id, AuditAction.UNIVERSITY_REACTIVATED, "University", id, null);
         return enrich(saved);
     }
-
-    // ============================================================
-    //  DELETE
-    // ============================================================
 
     @Transactional
     public void delete(Long id) {
@@ -242,10 +229,6 @@ public class UniversityService {
         log.info("Deleted university {} ({}) and all associated data", code, id);
     }
 
-    // ============================================================
-    //  FEATURE FLAGS
-    // ============================================================
-
     @Transactional
     public UniversityResponse updateFeatures(Long id, UpdateFeaturesRequest request) {
         University universityValue17 = universityRepository.findById(id)
@@ -260,10 +243,6 @@ public class UniversityService {
         auditService.record(null, id, AuditAction.UNIVERSITY_UPDATED, "University", id, "{\"source\":\"super-admin-features\"}");
         return enrich(saved);
     }
-
-    // ============================================================
-    //  PLAN MANAGEMENT
-    // ============================================================
 
     @Transactional
     public UniversityResponse updatePlan(Long id, UpdatePlanRequest request) {
@@ -295,10 +274,6 @@ public class UniversityService {
         }
     }
 
-    // ============================================================
-    //  ADMINS
-    // ============================================================
-
     @Transactional
     public UniversityResponse createAdmin(Long universityId, CreateAdminRequest request) {
         University university = universityRepository.findById(universityId)
@@ -323,10 +298,6 @@ public class UniversityService {
         auditService.record(null, universityId, AuditAction.ADMIN_CREATED, "User", admin.getId(), "{\"email\":\"" + request.getEmail() + "\"}");
         return enrich(university);
     }
-
-    // ============================================================
-    //  HELPERS
-    // ============================================================
 
     private UniversityResponse enrich(University universityValue19) {
         UniversityResponse response = UniversityResponse.from(universityValue19);

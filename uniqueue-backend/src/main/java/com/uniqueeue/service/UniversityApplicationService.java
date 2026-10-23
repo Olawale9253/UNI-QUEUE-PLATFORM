@@ -29,7 +29,6 @@ public class UniversityApplicationService {
     private final UniversityApplicationRepository applicationRepository;
     private final UniversityRepository universityRepository;
     private final UniversityService universityService;
-    private final AuthService authService;
     private final AuditService auditService;
 
     @Transactional
@@ -99,14 +98,6 @@ public class UniversityApplicationService {
         } catch (Exception ex) {
             log.error("❌ Failed to create university from application {}: {}", id, ex.getMessage(), ex);
             throw new BadRequestException("Could not create university: " + ex.getMessage());
-        }
-
-        // Backup: send password reset email if the setup email failed
-        try {
-            authService.requestPasswordReset(app.getAdminEmail());
-            log.info("📧 Backup password reset email also sent to {}", app.getAdminEmail());
-        } catch (Exception ex) {
-            log.warn("⚠️ Backup email failed for {}: {}", app.getAdminEmail(), ex.getMessage());
         }
 
         app.setStatus(UniversityApplication.Status.APPROVED);

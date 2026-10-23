@@ -53,10 +53,12 @@ public class EmailService {
     private static final String BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
     private void sendHtml(String to, String subject, String htmlBody) {
-        if (to == null || to.isBlank()) return;
-
+        if (to == null || to.isBlank()) {
+            log.warn("📧 [SEND] Skipping — 'to' is null/blank");
+            return;
+        }
         if (!emailEnabled || brevoApiKey == null || brevoApiKey.isEmpty()) {
-            log.info("📧 [EMAIL DISABLED OR NO API KEY] to={} subject={}", to, subject);
+            log.warn("📧 [SEND] Skipping — emailEnabled={}, hasApiKey={}", emailEnabled, brevoApiKey != null && !brevoApiKey.isEmpty());
             return;
         }
 
@@ -85,10 +87,10 @@ public class EmailService {
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
             restTemplate.postForEntity(BREVO_API_URL, request, String.class);
-            log.info("📧 Sent email via HTTP API to {} · {}", to, subject);
+            log.info("📧 [SEND] ✅ Sent email to {} · {}", to, subject);
 
         } catch (Exception ex) {
-            log.error("📧 Failed to send email to {} — {}", to, ex.getMessage(), ex);
+            log.error("📧 [SEND] ❌ Failed to send to {} — {}", to, ex.getMessage(), ex);
         }
     }
 
@@ -211,32 +213,35 @@ public class EmailService {
         }
     }
 
-    // 🔧 NEW: Email for Admin Setup
-    @Async
-    @Transactional(readOnly = true)
+    // 🔧 FIX: SYNCHRONOUS send — no @Async, no @Transactional
+    // This ensures the error surfaces immediately and the user IS visible
     public void sendAdminSetupEmail(User admin, String token) {
+        log.info("🔍 [SETUP EMAIL] START — admin={}, email={}, hasToken={}",
+                admin != null ? admin.getId() : "NULL",
+                admin != null ? admin.getEmail() : "NULL",
+                token != null && !token.isBlank());
+
+        if (admin == null) {
+            log.error("❌ [SETUP EMAIL] admin is null — aborting");
+            throw new IllegalArgumentException("Admin user cannot be null");
+        }
+        if (token == null || token.isBlank()) {
+            log.error("❌ [SETUP EMAIL] token is null/empty for {}", admin.getEmail());
+            throw new IllegalArgumentException("Setup token cannot be empty");
+        }
+
         try {
-            if (admin == null) {
-                log.warn("❌ sendAdminSetupEmail called with null admin");
-                return;
-            }
-
-            log.info("📧 [SETUP EMAIL] Attempting to send setup email to: {}", admin.getEmail());
-
-            User freshAdmin = userRepository.findById(admin.getId()).orElse(admin);
             String setupUrl = baseUrl + "/setup-account?token=" + token;
-
-            log.info("📧 [SETUP EMAIL] URL: {}", setupUrl);
-            log.info("📧 [SETUP EMAIL] From: {}", fromAddress);
-            log.info("📧 [SETUP EMAIL] Brevo API Key configured: {}", (brevoApiKey != null && !brevoApiKey.isEmpty()));
-            log.info("📧 [SETUP EMAIL] Email enabled: {}", emailEnabled);
+            log.info("🔍 [SETUP EMAIL] setupUrl={}", setupUrl);
+            log.info("🔍 [SETUP EMAIL] emailEnabled={}, hasBrevoKey={}", emailEnabled, brevoApiKey != null && !brevoApiKey.isEmpty());
+            log.info("🔍 [SETUP EMAIL] fromAddress={}", fromAddress);
 
             String subject = "Welcome to UniQueue - Set up your Admin Account";
             String html = wrap(
-                    freshAdmin,
+                    admin,
                     null,
                     "Welcome to UniQueue!",
-                    "Hi " + firstName(freshAdmin) + ",<br><br>" +
+                    "Hi " + firstName(admin) + ",<br><br>" +
                             "Your university has been approved and your administrator account has been created. " +
                             "Please click the button below to set up your password and access your dashboard.",
                     null,
@@ -244,10 +249,12 @@ public class EmailService {
                     setupUrl
             );
 
-            sendHtml(freshAdmin.getEmail(), subject, html);
-            log.info("✅ [SETUP EMAIL] sendHtml completed for {}", admin.getEmail());
+            log.info("🔍 [SETUP EMAIL] Calling sendHtml for {}", admin.getEmail());
+            sendHtml(admin.getEmail(), subject, html);
+            log.info("✅ [SETUP EMAIL] DONE — no exception thrown for {}", admin.getEmail());
         } catch (Exception ex) {
-            log.error("❌ [SETUP EMAIL] sendAdminSetupEmail failed for {}: {}", admin != null ? admin.getEmail() : "null", ex.getMessage(), ex);
+            log.error("❌ [SETUP EMAIL] FAILED for {} — {}", admin.getEmail(), ex.getMessage(), ex);
+            throw new RuntimeException("Failed to send setup email: " + ex.getMessage(), ex);
         }
     }
 
