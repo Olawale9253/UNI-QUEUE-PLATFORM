@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
-    Save, Sparkles, CheckCircle2, XCircle, Building2, DollarSign, Layers,
+    Save, Sparkles, CheckCircle2, XCircle, Building2, DollarSign, Layers, ShieldCheck, Mail, Calendar, Workflow, FileText
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -20,10 +20,10 @@ export const PLANS = {
 }
 
 const FEATURES = [
-    { key: 'featureWaitlist', label: 'Waitlist', description: 'Queue overflow handling' },
-    { key: 'featureAppointments', label: 'Appointments', description: '1-on-1 and group bookings' },
-    { key: 'featureWorkflows', label: 'Workflows', description: 'Multi-step clearances' },
-    { key: 'featureDocuments', label: 'Documents', description: 'File uploads (proofs, transcripts)' },
+    { key: 'featureWaitlist', label: 'Waitlist', description: 'Queue overflow handling', icon: Layers },
+    { key: 'featureAppointments', label: 'Appointments', description: '1-on-1 and group bookings', icon: Calendar },
+    { key: 'featureWorkflows', label: 'Workflows', description: 'Multi-step clearances', icon: Workflow },
+    { key: 'featureDocuments', label: 'Documents', description: 'File uploads (proofs, transcripts)', icon: FileText },
 ]
 
 export default function TiersAndFeatures() {
@@ -67,7 +67,7 @@ export default function TiersAndFeatures() {
             setUniversities((prev) =>
                 prev.map((itemValue) => (itemValue.id === uni.id ? { ...itemValue, ...res.data.data } : itemValue))
             )
-            push({ type: 'success', message: `${uni.name} → ${uni.plan}` })
+            push({ type: 'success', message: `${uni.name} updated to ${uni.plan}` })
         } catch (err) {
             push({ type: 'error', message: err.message || 'Failed to update plan' })
             await load()
@@ -105,136 +105,198 @@ export default function TiersAndFeatures() {
     }
 
     return (
-        <div className="space-y-6 pb-12">
-            <Card>
+        <div className="space-y-8 pb-12">
+            {/* Page Header */}
+            <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    Tiers & Features
+                </h1>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    Manage subscription plans, service limits, and feature access for each university.
+                </p>
+            </div>
+
+            {/* Premium Plans Overview Row */}
+            <div>
                 <div className="mb-3 flex items-center gap-2">
                     <DollarSign className="h-4 w-4 text-brand-600" />
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Available plans</h3>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300">Available Plans</h3>
                 </div>
-                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {Object.entries(PLANS).map(([key, plan]) => {
                         const ngnPrice = plan.price * rate
                         return (
-                            <div key={key} className="rounded-lg border border-slate-200 bg-slate-50/50 p-3 dark:border-slate-800 dark:bg-slate-900/50">
+                            <Card key={key} className="relative overflow-hidden">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{plan.label}</span>
+                                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{plan.label}</span>
                                     <Badge variant={plan.color}>
-                                        {plan.price === 0 ? 'Free' : `$${plan.price} / ₦${ngnPrice.toLocaleString()}`}
+                                        {plan.price === 0 ? 'Free' : `$${plan.price}`}
                                     </Badge>
                                 </div>
-                                <div className="mt-2 space-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-                                    <div>{plan.maxQueues} queues</div>
-                                    <div>{plan.maxStaff} staff</div>
-                                    <div>{plan.maxTicketsPerDay.toLocaleString()} tickets/day</div>
+                                <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                                    {plan.price === 0 ? 'Free forever' : `₦${ngnPrice.toLocaleString()}/mo`}
                                 </div>
-                            </div>
+                                <div className="mt-4 space-y-1.5 text-xs text-slate-500 dark:text-slate-400">
+                                    <div className="flex items-center gap-1.5"><Layers className="h-3 w-3" /> {plan.maxQueues} Services</div>
+                                    <div className="flex items-center gap-1.5"><ShieldCheck className="h-3 w-3" /> {plan.maxStaff} Staff</div>
+                                    <div className="flex items-center gap-1.5"><Mail className="h-3 w-3" /> {plan.maxTicketsPerDay.toLocaleString()} Tickets/day</div>
+                                </div>
+                            </Card>
                         )
                     })}
                 </div>
-            </Card>
+            </div>
 
-            {universities.length === 0 ? (
-                <EmptyState icon={Building2} title="No universities yet" description="Register a university first to manage tiers and features." />
-            ) : (
-                <motion.div variants={stagger(0, 0.05)} initial="initial" animate="animate" className="space-y-4">
-                    {universities.map((uni) => {
-                        const planMeta = PLANS[uni.plan] || PLANS.FREE
-                        const planSaving = saving[uni.id]?.plan
-                        const featuresSaving = saving[uni.id]?.features
-                        const ngnPrice = planMeta.price * rate
+            {/* University Settings */}
+            <div>
+                <div className="mb-4 flex items-center gap-2">
+                    <Building2 className="h-5 w-5 text-slate-400" />
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">University Configurations</h2>
+                </div>
 
-                        return (
-                            <motion.div key={uni.id} variants={staggerItem}>
-                                <Card>
-                                    <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white dark:bg-slate-700">
-                                                {uni.code?.slice(0, 2)}
-                                            </div>
-                                            <div>
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">{uni.name}</span>
-                                                    <Badge variant={planMeta.color}>{planMeta.label}</Badge>
-                                                    <Badge variant={uni.isActive ? 'success' : 'default'}>{uni.isActive ? 'Active' : 'Inactive'}</Badge>
+                {universities.length === 0 ? (
+                    <EmptyState icon={Building2} title="No universities yet" description="Register a university first to manage tiers and features." />
+                ) : (
+                    <motion.div variants={stagger(0, 0.05)} initial="initial" animate="animate" className="space-y-6">
+                        {universities.map((uni) => {
+                            const planMeta = PLANS[uni.plan] || PLANS.FREE
+                            const planSaving = saving[uni.id]?.plan
+                            const featuresSaving = saving[uni.id]?.features
+
+                            return (
+                                <motion.div key={uni.id} variants={staggerItem}>
+                                    <Card>
+                                        {/* Card Header */}
+                                        <div className="mb-6 flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-sm font-bold text-white dark:bg-slate-700">
+                                                    {uni.code?.slice(0, 2) || <Building2 className="h-5 w-5" />}
                                                 </div>
-                                                <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                                                    Code: {uni.code} · {uni.queueCount || 0} queues · {uni.staffCount || 0} staff
+                                                <div>
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{uni.name}</span>
+                                                        <Badge variant={planMeta.color}>{planMeta.label}</Badge>
+                                                        <Badge variant={uni.isActive ? 'success' : 'default'}>{uni.isActive ? 'Active' : 'Inactive'}</Badge>
+                                                    </div>
+                                                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                                        Code: {uni.code} · {uni.queueCount || 0} services · {uni.staffCount || 0} staff
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                                        <div>
-                                            <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                <Layers className="h-4 w-4 text-brand-600" />
-                                                Billing plan
-                                            </h4>
-                                            <div className="flex items-center gap-2">
-                                                <select
-                                                    value={uni.plan || 'FREE'}
-                                                    onChange={(event) => updateLocal(uni.id, 'plan', event.target.value)}
-                                                    className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                                                >
-                                                    {Object.entries(PLANS).map(([key, parameter]) => (
-                                                        <option key={key} value={key}>
-                                                            {parameter.label} {parameter.price > 0 && `— $${parameter.price} / ₦${(parameter.price * rate).toLocaleString()}`}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                <Button size="sm" icon={Save} onClick={() => savePlan(uni)} loading={planSaving} disabled={planSaving}>
-                                                    Save
-                                                </Button>
-                                            </div>
-                                            <div className="mt-3 grid grid-cols-3 gap-2 rounded-lg bg-slate-50 p-3 text-xs dark:bg-slate-900/50">
-                                                <div><div className="text-slate-500 dark:text-slate-400">Max queues</div><div className="mt-0.5 text-sm font-semibold text-slate-900 dark:text-slate-100">{uni.maxQueues}</div></div>
-                                                <div><div className="text-slate-500 dark:text-slate-400">Max staff</div><div className="mt-0.5 text-sm font-semibold text-slate-900 dark:text-slate-100">{uni.maxStaff}</div></div>
-                                                <div><div className="text-slate-500 dark:text-slate-400">Max tickets/day</div><div className="mt-0.5 text-sm font-semibold text-slate-900 dark:text-slate-100">{(uni.maxTicketsPerDay || 0).toLocaleString()}</div></div>
-                                            </div>
-                                        </div>
+                                        {/* Two Column Layout */}
+                                        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
 
-                                        <div>
-                                            <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                <Sparkles className="h-4 w-4 text-brand-600" />
-                                                Feature access
-                                            </h4>
-                                            <div className="space-y-2">
-                                                {FEATURES.map((item) => {
-                                                    const enabled = uni[item.key] !== false
-                                                    return (
-                                                        <button
-                                                            key={item.key}
-                                                            type="button"
-                                                            onClick={() => updateLocal(uni.id, item.key, !enabled)}
-                                                            className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition-colors ${enabled ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-950/20' : 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/50'}`}
+                                            {/* Left Column: Plan & Limits */}
+                                            <div className="space-y-6">
+                                                <div>
+                                                    <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                        <Layers className="h-4 w-4 text-brand-600" />
+                                                        Billing Plan
+                                                    </h4>
+                                                    <div className="flex items-center gap-2">
+                                                        <select
+                                                            value={uni.plan || 'FREE'}
+                                                            onChange={(event) => updateLocal(uni.id, 'plan', event.target.value)}
+                                                            className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                                         >
-                                                            <div className="min-w-0">
-                                                                <div className="flex items-center gap-2">
-                                                                    {enabled ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" /> : <XCircle className="h-4 w-4 shrink-0 text-slate-400" />}
-                                                                    <span className={`text-sm font-medium ${enabled ? 'text-emerald-900 dark:text-emerald-100' : 'text-slate-600 dark:text-slate-300'}`}>{item.label}</span>
-                                                                </div>
-                                                                <div className={`ml-6 text-xs ${enabled ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{item.description}</div>
-                                                            </div>
-                                                            <div className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${enabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'}`}>
-                                                                <div className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform" style={{ transform: enabled ? 'translateX(20px)' : 'translateX(0)', left: '2px' }} />
-                                                            </div>
-                                                        </button>
-                                                    )
-                                                })}
+                                                            {Object.entries(PLANS).map(([key, parameter]) => (
+                                                                <option key={key} value={key}>
+                                                                    {parameter.label} {parameter.price > 0 && `— $${parameter.price} / ₦${(parameter.price * rate).toLocaleString()}`}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        <Button size="sm" icon={Save} onClick={() => savePlan(uni)} loading={planSaving} disabled={planSaving}>
+                                                            Save
+                                                        </Button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Limits Row */}
+                                                <div className="grid grid-cols-3 gap-3 rounded-xl bg-slate-50 p-4 dark:bg-slate-800/50">
+                                                    <div>
+                                                        <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Max Services</div>
+                                                        <div className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">{uni.maxQueues}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Max Staff</div>
+                                                        <div className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">{uni.maxStaff}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Max Tickets/Day</div>
+                                                        <div className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">{(uni.maxTicketsPerDay || 0).toLocaleString()}</div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="mt-3 flex justify-end">
-                                                <Button size="sm" variant="secondary" icon={Save} onClick={() => saveFeatures(uni)} loading={featuresSaving} disabled={featuresSaving}>
-                                                    Save features
-                                                </Button>
+
+                                            {/* Right Column: Feature Toggles */}
+                                            <div className="space-y-4">
+                                                <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                    <Sparkles className="h-4 w-4 text-brand-600" />
+                                                    Feature Access
+                                                </h4>
+
+                                                <div className="space-y-3">
+                                                    {FEATURES.map((item) => {
+                                                        const enabled = uni[item.key] !== false
+                                                        const Icon = item.icon
+                                                        return (
+                                                            <div
+                                                                key={item.key}
+                                                                className={`flex items-center justify-between rounded-xl border p-3 transition-colors ${
+                                                                    enabled
+                                                                        ? 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/50 dark:bg-emerald-950/20'
+                                                                        : 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/50'
+                                                                }`}
+                                                            >
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                                                                        enabled ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400' : 'bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                                                                    }`}>
+                                                                        <Icon className="h-4 w-4" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <div className={`text-sm font-semibold ${enabled ? 'text-emerald-900 dark:text-emerald-100' : 'text-slate-700 dark:text-slate-300'}`}>
+                                                                            {item.label}
+                                                                        </div>
+                                                                        <div className="text-xs text-slate-500 dark:text-slate-400">{item.description}</div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Custom Toggle Switch */}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => updateLocal(uni.id, item.key, !enabled)}
+                                                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${
+                                                                        enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                                                    }`}
+                                                                >
+                                                                    <span
+                                                                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                                                            enabled ? 'translate-x-6' : 'translate-x-1'
+                                                                        }`}
+                                                                    />
+                                                                </button>
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+
+                                                <div className="flex justify-end pt-2">
+                                                    <Button size="sm" variant="secondary" icon={Save} onClick={() => saveFeatures(uni)} loading={featuresSaving} disabled={featuresSaving}>
+                                                        Save Features
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </Card>
-                            </motion.div>
-                        )
-                    })}
-                </motion.div>
-            )}
+                                    </Card>
+                                </motion.div>
+                            )
+                        })}
+                    </motion.div>
+                )}
+            </div>
         </div>
     )
 }
