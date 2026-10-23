@@ -1,17 +1,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
-    Send,
-    Megaphone,
-    Users,
-    Building2,
-    AlertCircle,
-    CheckCircle2,
+    Send, Megaphone, Users, Building2, AlertCircle, CheckCircle2,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
-import Input from '../../components/ui/Input'
 import Select from '../../components/ui/Select'
 import Badge from '../../components/ui/Badge'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
@@ -119,26 +113,37 @@ export default function Broadcast() {
     ].join(' ')
 
     return (
-        <div className="space-y-6 pb-12">
+        <div className="space-y-8 pb-12">
+            {/* Page Header */}
+            <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    System Broadcast
+                </h1>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    Send platform-wide announcements and alerts directly to user notification bells.
+                </p>
+            </div>
+
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                {/* Compose Form */}
                 <div className="lg:col-span-2">
                     <Card>
-                        <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40">
-                                <Megaphone className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+                        <div className="mb-6 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
+                                <Megaphone className="h-5 w-5" />
                             </div>
                             <div>
-                                <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Compose message</h2>
+                                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Compose Message</h2>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                                    Only users with active accounts will receive it.
+                                    Only users with active accounts will receive this notification.
                                 </p>
                             </div>
                         </div>
 
-                        <form onSubmit={handleSendClick} className="space-y-4">
+                        <form onSubmit={handleSendClick} className="space-y-5">
                             <div>
-                                <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Title <span className="text-rose-500">*</span>
+                                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                    Announcement Title <span className="text-rose-500">*</span>
                                 </label>
                                 <input
                                     type="text"
@@ -146,121 +151,114 @@ export default function Broadcast() {
                                     onChange={setField('title')}
                                     placeholder="e.g. Scheduled maintenance this weekend"
                                     maxLength={255}
-                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-900"
                                     required
                                 />
                             </div>
 
                             <div>
-                                <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Message <span className="text-rose-500">*</span>
+                                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                    Message Body <span className="text-rose-500">*</span>
                                 </label>
                                 <textarea
                                     rows={6}
                                     value={form.message}
                                     onChange={setField('message')}
-                                    placeholder="Write your announcement here. Keep it short and clear."
+                                    placeholder="Write your announcement here. Keep it clear and concise..."
                                     maxLength={2000}
-                                    className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                                    className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-900"
                                     required
                                 />
-                                <div className="mt-1 flex justify-end">
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {form.message.length} / 2000
-                  </span>
+                                <div className="mt-1.5 flex justify-end">
+                                    <span className="text-xs font-medium text-slate-400">
+                                        {form.message.length} / 2000
+                                    </span>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                                 <Select
-                                    label="Target university"
+                                    label="Target University"
                                     value={form.universityId}
                                     onChange={setField('universityId')}
                                     options={universityOptions}
                                     placeholder="All universities"
                                 />
                                 <Select
-                                    label="Target role"
+                                    label="Target Role"
                                     value={form.role}
                                     onChange={setField('role')}
                                     options={ROLE_OPTIONS}
                                 />
                             </div>
 
-                            <div className="flex justify-end pt-2">
-                                <Button
-                                    type="submit"
-                                    icon={Send}
-                                    disabled={sending}
-                                >
-                                    Send broadcast
+                            <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <Button type="submit" icon={Send} disabled={sending}>
+                                    Send Broadcast
                                 </Button>
                             </div>
                         </form>
                     </Card>
                 </div>
 
-                <div className="space-y-4">
+                {/* Preview Panel */}
+                <div className="space-y-6">
                     <Card>
-                        <div className="mb-3 flex items-center gap-2">
+                        <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
                             <Users className="h-4 w-4 text-brand-600" />
-                            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Audience</h3>
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">Audience Preview</h3>
                         </div>
 
-                        <div className="space-y-3">
-                            <div className="rounded-lg bg-slate-50 px-3 py-2.5 dark:bg-slate-900/50">
-                                <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                    Recipients
+                        <div className="space-y-4">
+                            <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/50">
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                    Estimated Recipients
                                 </div>
-                                <div className="mt-1 flex items-center gap-2">
+                                <div className="mt-1 flex items-baseline gap-2">
                                     {countLoading ? (
-                                        <span className="text-sm text-slate-500 dark:text-slate-400">Calculating…</span>
+                                        <span className="text-sm font-medium text-slate-500">Calculating…</span>
                                     ) : (
                                         <>
-                      <span className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-                        {recipientCount ?? '—'}
-                      </span>
-                                            <span className="text-sm text-slate-500 dark:text-slate-400">users</span>
+                                            <span className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+                                                {recipientCount ?? '—'}
+                                            </span>
+                                            <span className="text-sm font-medium text-slate-500">users</span>
                                         </>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-800">
-                                <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                    Scope
+                            <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                    Target Scope
                                 </div>
-                                <div className="mt-1 text-sm font-medium text-slate-900 dark:text-slate-100">
+                                <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
                                     {audienceLabel}
                                 </div>
                             </div>
                         </div>
                     </Card>
 
-                    <Card>
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900/50 dark:bg-amber-950/20">
                         <div className="mb-3 flex items-center gap-2">
-                            <AlertCircle className="h-4 w-4 text-amber-600" />
-                            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Good to know</h3>
+                            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                            <h3 className="text-sm font-bold text-amber-900 dark:text-amber-200">Important Notes</h3>
                         </div>
-                        <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
+                        <ul className="space-y-2.5 text-xs text-amber-800 dark:text-amber-300">
                             <li className="flex gap-2">
-                                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                                <span>Broadcasts appear in the recipient's notification bell instantly.</span>
+                                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                                <span>Broadcasts appear instantly in the recipient's notification bell.</span>
                             </li>
                             <li className="flex gap-2">
-                                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
                                 <span>Recipients can dismiss them like any other notification.</span>
                             </li>
                             <li className="flex gap-2">
-                                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                                <span>Disabled accounts are skipped automatically.</span>
-                            </li>
-                            <li className="flex gap-2">
-                                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                                <span>The action is recorded in Audit Logs.</span>
+                                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                                <span>Disabled accounts are automatically skipped.</span>
                             </li>
                         </ul>
-                    </Card>
+                    </div>
                 </div>
             </div>
 
@@ -269,8 +267,8 @@ export default function Broadcast() {
                 onClose={() => !sending && setConfirmOpen(false)}
                 onConfirm={confirmSend}
                 title="Send this broadcast?"
-                description={`"${form.title}" will be sent to ${recipientCount ?? '?'} users. This cannot be undone.`}
-                confirmLabel="Send broadcast"
+                description={`"${form.title}" will be sent to ${recipientCount ?? '?'} users. This action cannot be undone.`}
+                confirmLabel="Yes, send now"
                 variant="info"
                 loading={sending}
             />

@@ -38,25 +38,41 @@ export default function Settings() {
         }
     }
 
-    if (loading) return <div className="p-8 text-center text-slate-500 dark:text-slate-400">Loading settings…</div>
+    if (loading) {
+        return (
+            <div className="flex h-64 items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" />
+            </div>
+        )
+    }
 
     return (
-        <div className="mx-auto max-w-3xl space-y-6 pb-12">
-            <form onSubmit={save} className="space-y-6">
+        <div className="mx-auto max-w-3xl space-y-8 pb-12 pt-4">
+            {/* Page Header */}
+            <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    Platform Settings
+                </h1>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    Manage global configuration for the entire UniQueue platform.
+                </p>
+            </div>
+
+            <form onSubmit={save}>
                 <Card>
-                    <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40">
-                            <DollarSign className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+                    <div className="mb-6 flex items-center gap-3 border-b border-slate-100 pb-5 dark:border-slate-800">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
+                            <DollarSign className="h-5 w-5" />
                         </div>
                         <div>
-                            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Currency Settings</h2>
+                            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Currency Configuration</h2>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                                Used to calculate Naira equivalents on the pricing pages.
+                                Used to calculate Naira equivalents on pricing pages across the app.
                             </p>
                         </div>
                     </div>
 
-                    <div className="max-w-xs">
+                    <div className="max-w-md">
                         <Input
                             label="USD to NGN Exchange Rate"
                             type="number"
@@ -70,7 +86,7 @@ export default function Settings() {
                     </div>
                 </Card>
 
-                <div className="flex justify-end gap-3">
+                <div className="mt-6 flex justify-end gap-3">
                     <Button type="button" variant="secondary" icon={RefreshCw} onClick={load} disabled={saving}>
                         Reset
                     </Button>
