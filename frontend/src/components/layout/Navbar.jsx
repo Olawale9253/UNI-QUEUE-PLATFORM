@@ -79,15 +79,16 @@ export default function Navbar() {
     const dashboardHref = user ? dashboards[user.role] || '/' : '/'
 
     const navLinkClass = ({ isActive }) =>
-        `relative flex items-center px-3 py-2 text-sm font-semibold transition-all duration-200 ${
+        `relative flex items-center px-3 py-2 text-sm font-medium transition-all duration-200 ${
             isActive
                 ? 'text-brand-600 dark:text-brand-400'
                 : 'text-slate-600 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400'
         }`
 
     return (
-        <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/90">
-            <div className="flex h-16 w-full items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        // 🔧 PREMIUM: Glassmorphism, refined shadow, and border
+        <header className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/80 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.05)] backdrop-blur-xl dark:border-slate-800/60 dark:bg-slate-950/80">
+            <div className="flex h-16 w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
 
                 {/* LEFT: LOGO & BRANDING */}
                 <div className="flex min-w-0 items-center gap-3">
@@ -97,16 +98,16 @@ export default function Navbar() {
                                 onClick={toggleSidebar}
                                 aria-label="Toggle menu"
                                 title="Toggle menu"
-                                className="group hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-900 md:inline-flex dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                                className="group hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-900 md:inline-flex dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                             >
-                                <Menu className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
+                                <Menu className="h-5 w-5 transition-transform duration-200 group-hover:scale-105" />
                             </button>
                             <button
                                 onClick={openMobileSidebar}
                                 aria-label="Open menu"
-                                className="group inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-900 md:hidden dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                                className="group inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-900 md:hidden dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                             >
-                                <Menu className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
+                                <Menu className="h-5 w-5 transition-transform duration-200 group-hover:scale-105" />
                             </button>
                         </>
                     )}
@@ -115,9 +116,10 @@ export default function Navbar() {
                         to={dashboardHref}
                         className="flex min-w-0 items-center gap-3 transition-opacity hover:opacity-90"
                     >
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200/80 sm:h-11 sm:w-11 dark:bg-slate-800 dark:ring-slate-700/80">
+                        {/* Logo Box with subtle ring and shadow */}
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-900/5 sm:h-11 sm:w-11 dark:bg-slate-900 dark:ring-white/10">
                             {isSuperAdmin ? (
-                                <div className="flex h-full w-full items-center justify-center bg-slate-900 text-white dark:bg-slate-700">
+                                <div className="flex h-full w-full items-center justify-center bg-slate-900 text-white dark:bg-slate-800">
                                     <Shield className="h-5 w-5 sm:h-6 sm:w-6" />
                                 </div>
                             ) : hasLogo ? (
@@ -136,11 +138,12 @@ export default function Navbar() {
                             )}
                         </div>
 
+                        {/* Brand Text - Tighter and more refined */}
                         <div className="hidden min-w-0 sm:block">
-                            <div className="truncate text-sm font-extrabold uppercase tracking-tight text-slate-900 dark:text-slate-100">
+                            <div className="truncate text-sm font-extrabold uppercase tracking-tight text-slate-900 sm:text-base dark:text-slate-100">
                                 {isSuperAdmin ? 'UniQueue' : hasUniversity ? university.name : 'UniQueue'}
                             </div>
-                            <div className="truncate text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">
+                            <div className="truncate text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
                                 {isSuperAdmin ? 'Platform Console' : 'Digital Queue System'}
                             </div>
                         </div>
@@ -157,7 +160,7 @@ export default function Navbar() {
                                     {isActive && (
                                         <motion.div
                                             layoutId="nav-indicator"
-                                            className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-brand-600 shadow-[0_0_8px_rgba(var(--brand-500),0.6)]"
+                                            className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-brand-600"
                                         />
                                     )}
                                 </>
@@ -170,7 +173,7 @@ export default function Navbar() {
                                     {isActive && (
                                         <motion.div
                                             layoutId="nav-indicator"
-                                            className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-brand-600 shadow-[0_0_8px_rgba(var(--brand-500),0.6)]"
+                                            className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-brand-600"
                                         />
                                     )}
                                 </>
@@ -181,50 +184,56 @@ export default function Navbar() {
 
                 {/* RIGHT: ACTIONS & AUTH */}
                 <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="flex items-center gap-1 sm:gap-1.5">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800">
+
+                    {/* Icon Group - unified hover states */}
+                    <div className="flex items-center gap-1">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800">
                             <ThemeToggle />
                         </div>
-                        {user && <NotificationBell />}
+                        {user && (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800">
+                                <NotificationBell />
+                            </div>
+                        )}
                     </div>
 
-                    {!user && <div className="hidden h-5 w-px bg-slate-200 lg:block dark:bg-slate-700" />}
+                    {!user && <div className="hidden h-6 w-px bg-slate-200 lg:block dark:bg-slate-800" />}
 
                     {user ? (
                         <div ref={menuRef} className="relative ml-1">
+                            {/* 🔧 PREMIUM: Pill-shaped user menu button */}
                             <button
-                                onClick={() => setMenuOpen((itemValue) => !itemValue)}
-                                className="flex items-center gap-2.5 rounded-xl border border-transparent p-1 transition-all hover:border-slate-200 hover:bg-slate-50 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+                                onClick={() => setMenuOpen((v) => !v)}
+                                className="flex items-center gap-2 rounded-full border border-slate-200/60 bg-white p-1 pr-3 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700/60 dark:bg-slate-900 dark:hover:border-slate-600 dark:hover:bg-slate-800/80"
                                 aria-label="User menu"
                             >
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white shadow-sm ring-2 ring-transparent transition-all dark:bg-slate-700">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-xs font-bold text-white shadow-inner">
                                     {getInitials(user.fullName)}
                                 </div>
                                 <div className="hidden text-left xl:block pr-1">
-                                    <div className="max-w-[140px] truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                    <div className="max-w-[120px] truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                                         {user.fullName}
-                                    </div>
-                                    <div className="max-w-[140px] truncate text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                                        {user.email}
                                     </div>
                                 </div>
                                 <ChevronDown
-                                    className={`hidden h-4 w-4 shrink-0 text-slate-400 transition-transform sm:block ${
+                                    className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${
                                         menuOpen ? 'rotate-180' : ''
                                     }`}
                                 />
                             </button>
 
+                            {/* Dropdown */}
                             <AnimatePresence>
                                 {menuOpen && (
                                     <motion.div
-                                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                         transition={{ duration: 0.15, ease: "easeOut" }}
-                                        className="absolute right-0 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-800 dark:shadow-black/40"
+                                        className="absolute right-0 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 ring-1 ring-black/5 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/40"
                                     >
-                                        <div className="border-b border-slate-100 px-4 py-4 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50">
+                                        {/* Dropdown Header */}
+                                        <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
                                             <div className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">
                                                 {user.fullName}
                                             </div>
@@ -233,11 +242,11 @@ export default function Navbar() {
                                             </div>
                                         </div>
 
-                                        <div className="p-1.5">
+                                        <div className="p-2">
                                             <Link
                                                 to="/profile"
                                                 onClick={() => setMenuOpen(false)}
-                                                className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+                                                className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                                             >
                                                 <UserIcon className="h-4 w-4 text-slate-400" />
                                                 My Profile
@@ -245,7 +254,7 @@ export default function Navbar() {
 
                                             <button
                                                 onClick={handleLogout}
-                                                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 mt-0.5"
+                                                className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
                                             >
                                                 <LogOut className="h-4 w-4" />
                                                 Sign Out
@@ -265,7 +274,7 @@ export default function Navbar() {
                             </Link>
                             <Link
                                 to="/register"
-                                className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-brand-500/20 transition-all hover:bg-brand-700 hover:shadow-md hover:shadow-brand-500/30"
+                                className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-slate-800 hover:shadow-md dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
                             >
                                 Get started
                             </Link>
