@@ -52,13 +52,21 @@ export default function Staff() {
     useEffect(() => { load() }, [load])
 
     const setField = (f) => (e) => setForm({ ...form, [f]: e.target.value })
+
     const createStaff = async (e) => {
-        e.preventDefault(); setCreating(true)
+        e.preventDefault()
+        setCreating(true)
         try {
-            await api.post('/api/admin/staff', form); push({ type: 'success', message: 'Staff member added' })
-            setForm(initialForm); setShowCreate(false); await load()
-        } catch (err) { push({ type: 'error', message: err.message || 'Failed to create' }) }
-        finally { setCreating(false) }
+            await api.post('/api/admin/staff', form)
+            push({ type: 'success', message: 'Staff member added successfully' })
+            setForm(initialForm)
+            setShowCreate(false)
+            await load()
+        } catch (err) {
+            push({ type: 'error', message: err.message || 'Failed to create staff' })
+        } finally {
+            setCreating(false)
+        }
     }
 
     const assignToQueue = async (queueId) => {
@@ -104,7 +112,17 @@ export default function Staff() {
                     <motion.div variants={expand} initial="initial" animate="animate" exit="exit" className="overflow-hidden">
                         <Card>
                             <h3 className="mb-4 text-base font-bold text-slate-900 dark:text-slate-100">Add a new staff member</h3>
-                            {/* Form JSX kept identical */}
+                            <form onSubmit={createStaff} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <Input label="Full name" value={form.fullName} onChange={setField('fullName')} placeholder="Jane Doe" required />
+                                <Input label="Email" type="email" value={form.email} onChange={setField('email')} placeholder="jane.staff@university.edu.ng" required />
+                                <Input label="Password" type="password" value={form.password} onChange={setField('password')} placeholder="At least 8 characters" required />
+                                <Input label="Department" value={form.department} onChange={setField('department')} placeholder="e.g. Bursary" icon={Building2} />
+                                <Input label="Phone" value={form.phone} onChange={setField('phone')} placeholder="e.g. 08012345678" icon={Phone} />
+                                <div className="md:col-span-2 flex justify-end gap-2 pt-2">
+                                    <Button type="button" variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
+                                    <Button type="submit" loading={creating} disabled={creating}>Create staff account</Button>
+                                </div>
+                            </form>
                         </Card>
                     </motion.div>
                 )}
@@ -114,42 +132,42 @@ export default function Staff() {
                 <div className="min-w-0 flex-1">
                     <Input placeholder="Search by name, email, or department..." value={search} onChange={(e) => setSearch(e.target.value)} icon={Search} />
                 </div>
-                <ExportButton rows={filteredStaff} columns={[]} filename="uniqueue-staff" label="Export" />
+                <ExportButton rows={filteredStaff} columns={[{ key: 'fullName', label: 'Name' }, { key: 'email', label: 'Email' }]} filename="uniqueue-staff" label="Export" />
             </div>
 
             {staff.length === 0 ? <EmptyState icon={Users} title="No staff members yet" description="Add your first staff member to begin." action={<Button onClick={() => setShowCreate(true)}>Add staff</Button>} /> : filteredStaff.length === 0 ? <EmptyState icon={Search} title="No matches" description="Try a different search." action={<Button onClick={() => setSearch('')}>Clear search</Button>} /> : (
-                <motion.div variants={stagger(0, 0.05)} initial="initial" animate="animate" className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <motion.div variants={stagger(0, 0.05)} initial="initial" animate="animate" className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {filteredStaff.map(item => {
                         const assigned = assignmentsByStaff.get(item.id) || []
                         const isSelected = selectedIds.has(item.id)
                         return (
                             <motion.div key={item.id} variants={staggerItem}>
-                                <Card className={`flex h-full flex-col relative transition-all ${isSelected ? 'ring-2 ring-brand-500 border-transparent' : ''}`}>
-                                    <div className="mb-3 flex items-start justify-between">
+                                <Card className={`flex h-full flex-col relative transition-all group ${isSelected ? 'ring-2 ring-brand-500 border-transparent' : 'hover:shadow-md'}`}>
+                                    <div className="mb-4 flex items-start justify-between">
                                         <div className="flex gap-3 items-center">
-                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white dark:bg-slate-700">
+                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white shadow-sm">
                                                 {item.fullName?.split(' ').map(n => n[0]).slice(0, 2).join('')}
                                             </div>
                                             <div>
                                                 <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">{item.fullName}</h3>
-                                                <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5"><Mail className="h-3 w-3" />{item.email}</div>
+                                                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5"><Mail className="h-3 w-3" />{item.email}</div>
                                             </div>
                                         </div>
                                         <SelectCheckbox checked={isSelected} onChange={() => toggleSelect(item.id)} />
                                     </div>
 
-                                    <div className="flex flex-wrap gap-1.5 mt-2 flex-1 content-start">
-                                        {assigned.length === 0 ? <span className="text-xs text-slate-400">Not assigned to any queue</span> : assigned.map(a => (
-                                            <span key={a.queueId} className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-950/40 dark:text-brand-300">
+                                    <div className="flex flex-wrap gap-2 mt-2 flex-1 content-start">
+                                        {assigned.length === 0 ? <span className="text-xs font-medium text-slate-400">Not assigned to any service</span> : assigned.map(a => (
+                                            <span key={a.queueId} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                                 {a.queueName}
-                                                <button onClick={() => unassignFromQueue(a.queueId, item.id)} className="rounded-full p-0.5 hover:bg-brand-100 dark:hover:bg-brand-950/60"><CloseIcon className="h-3 w-3" /></button>
+                                                <button onClick={() => unassignFromQueue(a.queueId, item.id)} className="rounded-full p-0.5 hover:bg-slate-200 dark:hover:bg-slate-700"><CloseIcon className="h-3 w-3" /></button>
                                             </span>
                                         ))}
                                     </div>
 
-                                    <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                                    <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
                                         <Button size="sm" variant="secondary" icon={LinkIcon} onClick={() => setAssignTarget(item)}>Assign</Button>
-                                        <button onClick={() => setDeleteTarget(item)} className="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400"><Trash2 className="h-4 w-4" /></button>
+                                        <button onClick={() => setDeleteTarget(item)} className="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"><Trash2 className="h-4 w-4" /></button>
                                     </div>
                                 </Card>
                             </motion.div>
@@ -157,8 +175,6 @@ export default function Staff() {
                     })}
                 </motion.div>
             )}
-
-            {/* Modals and BulkToolbar remain identical */}
         </div>
     )
 }
