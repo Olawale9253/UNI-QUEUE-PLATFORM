@@ -26,12 +26,9 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-/* 🔧 FIX: Force the outer body to never scroll. This ensures only the inner
-   <main> tag inside DashboardLayout scrolls. */
 html, body, #root {
     height: 100%;
     margin: 0;
-    overflow: hidden;
 }
 
 body {
@@ -56,36 +53,43 @@ body {
    Premium Custom Scrollbar
    ═══════════════════════════════════════════════════════════ */
 
+/* Width of the scrollbar */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 
+/* Hide the up/down arrows */
 ::-webkit-scrollbar-button {
     display: none;
 }
 
+/* Track (background) */
 ::-webkit-scrollbar-track {
     background: transparent;
 }
 
+/* Handle (the draggable part) */
 ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
+    background: #cbd5e1; /* Tailwind slate-300 */
     border-radius: 10px;
 }
 
+/* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #94a3b8; /* Tailwind slate-400 */
 }
 
+/* Dark Mode Handle */
 .dark ::-webkit-scrollbar-thumb {
-    background: #475569;
+    background: #475569; /* Tailwind slate-600 */
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-    background: #64748b;
+    background: #64748b; /* Tailwind slate-500 */
 }
 
+/* For Firefox */
 * {
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
@@ -97,41 +101,80 @@ body {
 
 /* ═══════════════════════════════════════════════════════════
    DARK MODE OVERRIDES
+   Applies to common Tailwind utility classes so we don't have
+   to add `dark:` variants to every single component.
    ═══════════════════════════════════════════════════════════ */
 
 .dark body {
-    background-color: #0f172a;
-    color: #e2e8f0;
+    background-color: #0f172a;   /* slate-900 */
+    color: #e2e8f0;              /* slate-200 */
 }
 
 /* ─── Backgrounds ─── */
-.dark .bg-white { background-color: #1e293b; }
-.dark .bg-slate-50 { background-color: #0f172a; }
-.dark .bg-slate-100 { background-color: #1e293b; }
-.dark .bg-slate-200 { background-color: #334155; }
-.dark .hover\:bg-slate-50:hover { background-color: #1e293b; }
-.dark .hover\:bg-slate-100:hover { background-color: #334155; }
-.dark .hover\:bg-slate-200:hover { background-color: #475569; }
+.dark .bg-white {
+    background-color: #1e293b;   /* slate-800 */
+}
+.dark .bg-slate-50 {
+    background-color: #0f172a;   /* slate-900 */
+}
+.dark .bg-slate-100 {
+    background-color: #1e293b;   /* slate-800 */
+}
+.dark .bg-slate-200 {
+    background-color: #334155;   /* slate-700 */
+}
+.dark .hover\:bg-slate-50:hover {
+    background-color: #1e293b;
+}
+.dark .hover\:bg-slate-100:hover {
+    background-color: #334155;
+}
+.dark .hover\:bg-slate-200:hover {
+    background-color: #475569;
+}
 
+/* Slate-50 / slate-50/50 backgrounds become dark surface */
 .dark .bg-slate-50\/50,
 .dark .bg-slate-50\/70 {
     background-color: rgba(30, 41, 59, 0.5);
 }
 
 /* ─── Text ─── */
-.dark .text-slate-900 { color: #f1f5f9; }
-.dark .text-slate-800 { color: #e2e8f0; }
-.dark .text-slate-700 { color: #cbd5e1; }
-.dark .text-slate-600 { color: #94a3b8; }
-.dark .text-slate-500 { color: #94a3b8; }
-.dark .text-slate-400 { color: #64748b; }
+.dark .text-slate-900 {
+    color: #f1f5f9;              /* slate-100 */
+}
+.dark .text-slate-800 {
+    color: #e2e8f0;
+}
+.dark .text-slate-700 {
+    color: #cbd5e1;
+}
+.dark .text-slate-600 {
+    color: #94a3b8;              /* slate-400 */
+}
+.dark .text-slate-500 {
+    color: #94a3b8;
+}
+.dark .text-slate-400 {
+    color: #64748b;              /* slate-500 */
+}
 
 /* ─── Borders ─── */
-.dark .border-slate-100 { border-color: #334155; }
-.dark .border-slate-200 { border-color: #334155; }
-.dark .border-slate-300 { border-color: #475569; }
-.dark .divide-slate-100 > * + * { border-color: #334155; }
-.dark .divide-slate-200 > * + * { border-color: #334155; }
+.dark .border-slate-100 {
+    border-color: #334155;
+}
+.dark .border-slate-200 {
+    border-color: #334155;
+}
+.dark .border-slate-300 {
+    border-color: #475569;
+}
+.dark .divide-slate-100 > * + * {
+    border-color: #334155;
+}
+.dark .divide-slate-200 > * + * {
+    border-color: #334155;
+}
 
 /* ─── Inputs & Selects ─── */
 .dark input,
@@ -142,10 +185,14 @@ body {
     border-color: #475569;
 }
 .dark input::placeholder,
-.dark textarea::placeholder { color: #64748b; }
+.dark textarea::placeholder {
+    color: #64748b;
+}
 .dark input:focus,
 .dark select:focus,
-.dark textarea:focus { border-color: var(--color-brand-500); }
+.dark textarea:focus {
+    border-color: var(--color-brand-500);
+}
 
 /* ─── Buttons: secondary variant ─── */
 .dark .bg-white.text-slate-700 {
@@ -166,7 +213,9 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   CURSOR: POINTER
+   CURSOR: POINTER for all clickable elements
+   Tailwind v3 removed the default `cursor: pointer` from
+   buttons — this restores it universally.
    ═══════════════════════════════════════════════════════════ */
 
 button:not(:disabled),
@@ -183,7 +232,9 @@ label[for]:not([disabled]) {
     cursor: pointer;
 }
 
-a[href] { cursor: pointer; }
+a[href] {
+    cursor: pointer;
+}
 
 input[type="checkbox"]:not(:disabled),
 input[type="radio"]:not(:disabled),
@@ -194,8 +245,12 @@ input[type="file"]:not(:disabled) {
     cursor: pointer;
 }
 
-[onclick]:not([disabled]) { cursor: pointer; }
+/* Any element with an inline click handler */
+[onclick]:not([disabled]) {
+    cursor: pointer;
+}
 
+/* Disabled state overrides */
 button:disabled,
 [role="button"][aria-disabled="true"],
 [aria-disabled="true"],
@@ -206,36 +261,125 @@ input:disabled,
 }
 
 /* ─── Navbar sticky scrolled state ─── */
-.dark .bg-white\/80 { background-color: rgba(30, 41, 59, 0.85); }
-.dark .bg-white\/90 { background-color: rgba(30, 41, 59, 0.9); }
-.dark .bg-slate-50\/95 { background-color: rgba(15, 23, 42, 0.95); }
+.dark .bg-white\/80 {
+    background-color: rgba(30, 41, 59, 0.85);
+}
+.dark .bg-white\/90 {
+    background-color: rgba(30, 41, 59, 0.9);
+}
 
-/* ─── Brand backgrounds ─── */
-.dark .bg-brand-50 { background-color: rgba(79, 70, 229, 0.15); }
-.dark .bg-brand-100 { background-color: rgba(79, 70, 229, 0.25); }
+/* ─── Sticky tab bar (frosted, opaque-ish) ─── */
+.dark .bg-slate-50\/95 {
+    background-color: rgba(15, 23, 42, 0.95);
+}
+
+/* ─── Brand backgrounds become more saturated in dark mode ─── */
+.dark .bg-brand-50 {
+    background-color: rgba(79, 70, 229, 0.15);
+}
+.dark .bg-brand-100 {
+    background-color: rgba(79, 70, 229, 0.25);
+}
 
 /* ─── Semantic colors ─── */
-.dark .bg-emerald-50 { background-color: rgba(5, 150, 105, 0.15); }
-.dark .bg-amber-50 { background-color: rgba(217, 119, 6, 0.15); }
-.dark .bg-rose-50 { background-color: rgba(225, 29, 72, 0.15); }
-.dark .bg-sky-50 { background-color: rgba(2, 132, 199, 0.15); }
+.dark .bg-emerald-50 {
+    background-color: rgba(5, 150, 105, 0.15);
+}
+.dark .bg-amber-50 {
+    background-color: rgba(217, 119, 6, 0.15);
+}
+.dark .bg-rose-50 {
+    background-color: rgba(225, 29, 72, 0.15);
+}
+.dark .bg-sky-50 {
+    background-color: rgba(2, 132, 199, 0.15);
+}
 
 .dark .text-emerald-700,
-.dark .text-emerald-800 { color: #6ee7b7; }
+.dark .text-emerald-800 {
+    color: #6ee7b7;
+}
 .dark .text-amber-700,
 .dark .text-amber-800,
-.dark .text-amber-900 { color: #fcd34d; }
+.dark .text-amber-900 {
+    color: #fcd34d;
+}
 .dark .text-rose-600,
-.dark .text-rose-700 { color: #fda4af; }
+.dark .text-rose-700 {
+    color: #fda4af;
+}
 .dark .text-sky-700,
-.dark .text-sky-800 { color: #7dd3fc; }
+.dark .text-sky-800 {
+    color: #7dd3fc;
+}
 
-.dark .border-emerald-200 { border-color: rgba(5, 150, 105, 0.4); }
-.dark .border-amber-200 { border-color: rgba(217, 119, 6, 0.4); }
-.dark .border-rose-200 { border-color: rgba(225, 29, 72, 0.4); }
-.dark .border-sky-200 { border-color: rgba(2, 132, 199, 0.4); }
+/* Registration keeps the bright, high-contrast appearance of its public form. */
+.dark .registration-page {
+    color-scheme: light;
+    background-color: #fff;
+    color: #0f172a;
+}
+.dark .registration-page .bg-white {
+    background-color: #fff;
+}
+.dark .registration-page .bg-brand-100 {
+    background-color: #e0e7ff;
+}
+.dark .registration-page .text-slate-900 {
+    color: #0f172a;
+}
+.dark .registration-page .text-slate-800 {
+    color: #1e293b;
+}
+.dark .registration-page .text-slate-700 {
+    color: #334155;
+}
+.dark .registration-page .text-slate-600 {
+    color: #475569;
+}
+.dark .registration-page .text-slate-500 {
+    color: #64748b;
+}
+.dark .registration-page .text-slate-400 {
+    color: #94a3b8;
+}
+.dark .registration-page .border-slate-200 {
+    border-color: #e2e8f0;
+}
+.dark .registration-page input,
+.dark .registration-page select,
+.dark .registration-page textarea {
+    background-color: #fff;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+.dark .registration-page input::placeholder,
+.dark .registration-page textarea::placeholder {
+    color: #94a3b8;
+}
 
-/* ─── Scrollbar Hide ─── */
+.dark .border-emerald-200 {
+    border-color: rgba(5, 150, 105, 0.4);
+}
+.dark .border-amber-200 {
+    border-color: rgba(217, 119, 6, 0.4);
+}
+.dark .border-rose-200 {
+    border-color: rgba(225, 29, 72, 0.4);
+}
+.dark .border-sky-200 {
+    border-color: rgba(2, 132, 199, 0.4);
+}
+
+/* ─── Scrollbar in dark mode ─── */
+.dark ::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+/* Hide scrollbar on the sidebar nav (it stays scrollable via mouse wheel
+   if content ever overflows, but no visible scrollbar) */
 .scrollbar-none {
     scrollbar-width: none;
     -ms-overflow-style: none;
