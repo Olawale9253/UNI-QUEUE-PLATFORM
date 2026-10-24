@@ -1,19 +1,23 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { X as CloseIcon, Building2, Save, AlertCircle } from 'lucide-react'
+import { X as CloseIcon, Building2, Save, AlertCircle, Palette } from 'lucide-react'
 import api from '../../api/axios'
 import Button from '../../components/ui/Button'
 import { useToastStore } from '../../store/toastStore'
 
 export default function UniversityDetailsModal({ university, onClose, onSaved }) {
     const { push } = useToastStore()
+
+    // 🔧 ADDED: primaryColor to state
     const [form, setForm] = useState({
         name: university.name || '',
         code: university.code || '',
         emailDomain: university.emailDomain || '',
         logoUrl: university.logoUrl || '',
+        primaryColor: university.primaryColor || '#4f46e5',
         isActive: university.isActive !== false,
     })
+
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState(null)
 
@@ -24,7 +28,6 @@ export default function UniversityDetailsModal({ university, onClose, onSaved })
         setSaving(true)
         setError(null)
         try {
-            // Assumes you have a PUT endpoint for updating a university
             await api.put(`/api/super-admin/universities/${university.id}`, form)
             push({ type: 'success', message: 'University updated successfully' })
             onSaved()
@@ -72,13 +75,40 @@ export default function UniversityDetailsModal({ university, onClose, onSaved })
                         </div>
 
                         <div>
-                            <label className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300">Email Domain (e.g. student.lautech.edu.ng)</label>
-                            <input type="text" value={form.emailDomain} onChange={setField('emailDomain')} placeholder="Leave blank for no restriction" className={inputClass} />
+                            <label className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300">Email Domain</label>
+                            <input type="text" value={form.emailDomain} onChange={setField('emailDomain')} placeholder="e.g. student.lautech.edu.ng" className={inputClass} />
                         </div>
 
                         <div>
                             <label className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300">Logo URL</label>
                             <input type="url" value={form.logoUrl} onChange={setField('logoUrl')} placeholder="https://..." className={inputClass} />
+                        </div>
+
+                        {/* 🔧 NEW: Brand Color Picker */}
+                        <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
+                            <label className="mb-2 flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-slate-100">
+                                <Palette className="h-3.5 w-3.5 text-slate-500" /> Brand Color
+                            </label>
+                            <div className="flex items-center gap-3">
+                                <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg shadow-sm ring-1 ring-slate-900/10">
+                                    <input
+                                        type="color"
+                                        value={form.primaryColor}
+                                        onChange={setField('primaryColor')}
+                                        className="absolute -left-2 -top-2 h-16 w-16 cursor-pointer border-0 p-0"
+                                    />
+                                </div>
+                                <div className="relative flex-1">
+                                    <span className="absolute inset-y-0 left-3 flex items-center text-sm font-medium text-slate-400">#</span>
+                                    <input
+                                        type="text"
+                                        value={form.primaryColor.replace('#', '')}
+                                        onChange={(e) => setForm({ ...form, primaryColor: `#${e.target.value}` })}
+                                        maxLength={6}
+                                        className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-8 pr-3 font-mono text-sm uppercase text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         <label className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 p-4 dark:border-slate-700">
