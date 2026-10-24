@@ -28,6 +28,7 @@ import { initSoundUnlock } from './lib/soundService'
 import { usePrefsStore } from './store/prefsStore'
 import { useServerEvents } from './hooks/useServerEvents'
 import { useUniversityTheme } from './hooks/useUniversityTheme'
+import { useUniversitySync } from './hooks/useUniversitySync'   // 👈 ADD
 
 const HIDE_NAVBAR_ROUTES = [
     '/login',
@@ -44,6 +45,7 @@ export default function App() {
 
     useServerEvents()
     useUniversityTheme()
+    useUniversitySync()   // 👈 ADD
 
     useEffect(() => {
         initSoundUnlock()
