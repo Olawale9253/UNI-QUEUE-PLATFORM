@@ -30,12 +30,7 @@ import { useServerEvents } from './hooks/useServerEvents'
 import { useUniversityTheme } from './hooks/useUniversityTheme'
 
 const HIDE_NAVBAR_ROUTES = [
-    '/login',
-    '/register',
-    '/forgot-password',
-    '/reset-password',
-    '/verify-email',
-    '/setup-account',
+    '/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/setup-account',
 ]
 
 export default function App() {
@@ -47,24 +42,16 @@ export default function App() {
 
     useEffect(() => {
         initSoundUnlock()
-
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch((err) => {
-                console.warn('SW registration failed:', err)
-            })
+            navigator.serviceWorker.register('/sw.js').catch((err) => console.warn('SW registration failed:', err))
         }
-
         if (localStorage.getItem('uniqueue_token')) {
             usePrefsStore.getState().load()
         }
     }, [])
 
     useEffect(() => {
-        const onPageShow = (event) => {
-            if (event.persisted) {
-                window.location.reload()
-            }
-        }
+        const onPageShow = (event) => { if (event.persisted) window.location.reload() }
         window.addEventListener('pageshow', onPageShow)
         return () => window.removeEventListener('pageshow', onPageShow)
     }, [])
@@ -73,14 +60,11 @@ export default function App() {
         <ErrorBoundary>
             <ThemeProvider>
                 <IdleTimeout />
-
-                {/* 🔧 FIX: h-screen overflow-hidden stops the outer body from scrolling */}
-                <div className="flex h-screen flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
+                {/* 🔧 FIX: h-full relies on index.css forcing html/body/#root to 100% and overflow-hidden */}
+                <div className="flex h-full flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
                     <ScrollToTop />
                     <ImpersonationBanner />
-
                     {!hideNavbar && <Navbar />}
-
                     <main className="flex-1 overflow-hidden">
                         <Routes>
                             <Route path="/" element={<Home />} />
@@ -91,54 +75,12 @@ export default function App() {
                             <Route path="/reset-password" element={<ResetPassword />} />
                             <Route path="/setup-account" element={<SetupAccount />} />
                             <Route path="/verify-email" element={<VerifyEmail />} />
-                            <Route
-                                path="/pending-verification"
-                                element={
-                                    <ProtectedRoute>
-                                        <PendingVerification />
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/profile"
-                                element={
-                                    <ProtectedRoute>
-                                        <Profile />
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/student/*"
-                                element={
-                                    <ProtectedRoute allowedRoles={['USER', 'FRESHER']}>
-                                        <StudentDashboard />
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/staff/*"
-                                element={
-                                    <ProtectedRoute allowedRoles={['STAFF']}>
-                                        <StaffDashboard />
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/admin/*"
-                                element={
-                                    <ProtectedRoute allowedRoles={['ADMIN']}>
-                                        <AdminDashboard />
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/super-admin/*"
-                                element={
-                                    <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-                                        <SuperAdminDashboard />
-                                    </ProtectedRoute>
-                                }
-                            />
+                            <Route path="/pending-verification" element={<ProtectedRoute><PendingVerification /></ProtectedRoute>} />
+                            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                            <Route path="/student/*" element={<ProtectedRoute allowedRoles={['USER', 'FRESHER']}><StudentDashboard /></ProtectedRoute>} />
+                            <Route path="/staff/*" element={<ProtectedRoute allowedRoles={['STAFF']}><StaffDashboard /></ProtectedRoute>} />
+                            <Route path="/admin/*" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminDashboard /></ProtectedRoute>} />
+                            <Route path="/super-admin/*" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SuperAdminDashboard /></ProtectedRoute>} />
                             <Route path="*" element={<NotFound />} />
                         </Routes>
                     </main>
