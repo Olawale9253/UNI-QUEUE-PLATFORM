@@ -93,7 +93,64 @@ function OfficeCard({ office, onEdit, onOpen, onDelete, isSelected, onToggleSele
     )
 }
 
-// OfficeDetail remains the same as previous code...
+function OfficeDetail({ office, queues, onClose }) {
+    const navigate = useNavigate()
+    const services = queues.filter((queue) => queue.officeId === office.id)
+
+    return (
+        <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm" />
+            <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4">
+                <motion.div initial={{ opacity: 0, scale: 0.96, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96, y: 12 }} transition={{ duration: 0.2 }} onClick={(e) => e.stopPropagation()} className="relative my-8 w-full max-w-3xl rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+                    <button onClick={onClose} className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <CloseIcon className="h-4 w-4" />
+                    </button>
+
+                    <div className="flex items-start gap-3 pr-8">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-950/40">
+                            <Building2 className="h-6 w-6 text-brand-600 dark:text-brand-400" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <h2 className="truncate text-lg font-bold text-slate-900 dark:text-slate-100">{office.name}</h2>
+                            {office.location && <p className="mt-0.5 flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400"><MapPin className="h-3.5 w-3.5 shrink-0" />{office.location}</p>}
+                            {office.description && <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{office.description}</p>}
+                        </div>
+                        <Link to="/admin/queues">
+                            <Button variant="secondary" icon={Pencil} className="shrink-0">Manage services</Button>
+                        </Link>
+                    </div>
+
+                    <div className="mt-6">
+                        <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Services in this office</h3>
+                        {services.length === 0 ? (
+                            <EmptyState icon={ListOrdered} variant="info" size="sm" title="No services yet" description="Add services to this office so students can join them." action={<Button icon={Plus} size="sm" onClick={() => navigate('/admin/queues')}>Create service</Button>} />
+                        ) : (
+                            <div className="space-y-3">
+                                {services.map((service) => (
+                                    <div key={service.id} className="rounded-lg border border-slate-200 p-4 dark:border-slate-700">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <h4 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{service.name}</h4>
+                                                {service.description && <p className="mt-0.5 line-clamp-1 text-xs text-slate-500 dark:text-slate-400">{service.description}</p>}
+                                            </div>
+                                            <Badge variant={service.isActive ? 'success' : 'default'}>{service.isActive ? 'Active' : 'Inactive'}</Badge>
+                                        </div>
+                                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                                            <span className="flex items-center gap-1 font-bold text-brand-600 dark:text-brand-400"><Users className="h-3 w-3" /> {service.waitingCount ?? 0} waiting</span>
+                                            <span className="flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400"><Ticket className="h-3 w-3" /> ~{service.estimatedMinutes ?? 0} min</span>
+                                            {service.staffCount > 0 && <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400"><Users className="h-3 w-3" /> {service.staffCount} staff</span>}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    <div className="mt-6 flex justify-end"><Button variant="secondary" onClick={onClose}>Close</Button></div>
+                </motion.div>
+            </div>
+        </>
+    )
+}
 
 export default function Offices() {
     const { push } = useToastStore()
@@ -105,7 +162,6 @@ export default function Offices() {
     const [editTarget, setEditTarget] = useState(null)
     const [openOffice, setOpenOffice] = useState(null)
 
-    // Delete state
     const [deleteTarget, setDeleteTarget] = useState(null)
     const [deleting, setDeleting] = useState(false)
 
@@ -154,7 +210,28 @@ export default function Offices() {
         }
     }
 
-    // Bulk Action logic remains the same...
+    const handleBulkAction = async (action) => {
+        if (selectedIds.length === 0) return
+        setBulkLoading(true)
+        try {
+            if (action === 'delete') {
+                await Promise.all(selectedIds.map(id => api.delete(`/api/admin/offices/${id}`)))
+                push({ type: 'success', message: `${selectedIds.length} office(s) deleted` })
+            } else {
+                const isActive = action === 'activate'
+                await Promise.all(selectedIds.map(id => {
+                    const office = offices.find(o => o.id === id)
+                    return api.put(`/api/admin/offices/${id}`, { ...office, isActive })
+                }))
+                push({ type: 'success', message: `${selectedIds.length} office(s) ${isActive ? 'activated' : 'deactivated'}` })
+            }
+            load()
+        } catch (err) {
+            push({ type: 'error', message: `Failed to ${action} offices` })
+        } finally {
+            setBulkLoading(false)
+        }
+    }
 
     if (loading) return <div className="space-y-6 pb-24"><SkeletonQueueGrid count={6} /></div>
 
@@ -195,11 +272,26 @@ export default function Offices() {
                 </motion.div>
             )}
 
-            {/* Dialogs */}
+            {/* Bulk Action Bar */}
+            <AnimatePresence>
+                {selectedIds.length > 0 && (
+                    <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }} className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-2xl dark:border-slate-700 dark:bg-slate-800">
+                        <div className="px-3 text-sm font-semibold text-slate-700 dark:text-slate-200 border-r border-slate-200 dark:border-slate-700">{selectedIds.length} selected</div>
+                        <button onClick={() => handleBulkAction('activate')} disabled={bulkLoading} className="flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400"><PlayCircle className="h-4 w-4" /> Activate</button>
+                        <button onClick={() => handleBulkAction('deactivate')} disabled={bulkLoading} className="flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400"><PauseCircle className="h-4 w-4" /> Deactivate</button>
+                        <button onClick={() => handleBulkAction('delete')} disabled={bulkLoading} className="flex items-center gap-1.5 rounded-lg bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400"><Trash2 className="h-4 w-4" /> Delete</button>
+                        <button onClick={() => setSelectedIds([])} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"><CloseIcon className="h-4 w-4" /></button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <ConfirmDialog open={!!deleteTarget} onClose={() => !deleting && setDeleteTarget(null)} onConfirm={handleDelete} title={`Delete "${deleteTarget?.name}"?`} description="This will permanently remove the office." confirmLabel="Delete office" variant="danger" loading={deleting} />
 
             <AnimatePresence>
                 {showModal && <OfficeFormModal office={editTarget} onClose={() => setShowModal(false)} onSaved={load} onDeleted={load} />}
+            </AnimatePresence>
+            <AnimatePresence>
+                {openOffice && <OfficeDetail office={openOffice} queues={queues} onClose={() => setOpenOffice(null)} />}
             </AnimatePresence>
         </div>
     )
