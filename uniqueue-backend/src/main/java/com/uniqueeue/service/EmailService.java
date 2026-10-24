@@ -56,6 +56,7 @@ public class EmailService {
 
     private static final String BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
+    // 🔧 NEW: Retry mechanism for transient network issues
     private void sendHtml(String to, String subject, String htmlBody) {
         if (to == null || to.isBlank()) {
             log.warn("📧 [SEND] Skipping — 'to' is null/blank");
@@ -66,35 +67,51 @@ public class EmailService {
             return;
         }
 
-        try {
-            String senderEmail = fromAddress;
-            String senderName = "UniQueue";
-            if (fromAddress.contains("<") && fromAddress.contains(">")) {
-                senderName = fromAddress.substring(0, fromAddress.indexOf("<")).trim();
-                senderEmail = fromAddress.substring(fromAddress.indexOf("<") + 1, fromAddress.indexOf(">")).trim();
+        int maxAttempts = 3;
+        int attempt = 0;
+
+        while (attempt < maxAttempts) {
+            attempt++;
+            try {
+                String senderEmail = fromAddress;
+                String senderName = "UniQueue";
+                if (fromAddress.contains("<") && fromAddress.contains(">")) {
+                    senderName = fromAddress.substring(0, fromAddress.indexOf("<")).trim();
+                    senderEmail = fromAddress.substring(fromAddress.indexOf("<") + 1, fromAddress.indexOf(">")).trim();
+                }
+
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("sender", Map.of("name", senderName, "email", senderEmail));
+                payload.put("to", List.of(Map.of("email", to)));
+                payload.put("subject", subject);
+                payload.put("htmlContent", htmlBody);
+
+                if (replyTo != null && !replyTo.isBlank()) {
+                    payload.put("replyTo", Map.of("email", replyTo));
+                }
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                headers.set("api-key", brevoApiKey);
+                headers.set("accept", "application/json");
+
+                HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+                restTemplate.postForEntity(BREVO_API_URL, request, String.class);
+                log.info("📧 [SEND] ✅ Sent email to {} · {}", to, subject);
+                return; // Success — exit the retry loop
+            } catch (Exception ex) {
+                log.warn("📧 [SEND] Attempt {}/{} failed for {} — {}", attempt, maxAttempts, to, ex.getMessage());
+                if (attempt >= maxAttempts) {
+                    log.error("📧 [SEND] ❌ All {} attempts failed for {} — {}", maxAttempts, to, ex.getMessage(), ex);
+                    throw new RuntimeException("Failed to send email after " + maxAttempts + " attempts: " + ex.getMessage(), ex);
+                }
+                try {
+                    Thread.sleep(1000L * attempt); // 1s, then 2s
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Email send interrupted", ie);
+                }
             }
-
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("sender", Map.of("name", senderName, "email", senderEmail));
-            payload.put("to", List.of(Map.of("email", to)));
-            payload.put("subject", subject);
-            payload.put("htmlContent", htmlBody);
-
-            if (replyTo != null && !replyTo.isBlank()) {
-                payload.put("replyTo", Map.of("email", replyTo));
-            }
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("api-key", brevoApiKey);
-            headers.set("accept", "application/json");
-
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
-            restTemplate.postForEntity(BREVO_API_URL, request, String.class);
-            log.info("📧 [SEND] ✅ Sent email to {} · {}", to, subject);
-
-        } catch (Exception ex) {
-            log.error("📧 [SEND] ❌ Failed to send to {} — {}", to, ex.getMessage(), ex);
         }
     }
 
@@ -217,10 +234,6 @@ public class EmailService {
         }
     }
 
-    /**
-     * 🔧 BULLETPROOF FIX: Explicitly load university via ID (safe on Hibernate proxies).
-     * This avoids LazyInitializationException regardless of transaction state.
-     */
     @Transactional(readOnly = true)
     public void sendAdminSetupEmail(User admin, String token) {
         log.info("🔍 [SETUP EMAIL] START — admin={}, email={}, hasToken={}",
@@ -240,18 +253,15 @@ public class EmailService {
                     ? userRepository.findById(admin.getId()).orElse(admin)
                     : admin;
 
-            // 🔧 Resolve university details explicitly to avoid lazy-loading crash
             String uniName = "UniQueue";
             String primaryColor = "#4f46e5";
 
             try {
-                // getId() is safe on Hibernate proxies (returns ID without hitting DB)
                 Long uniId = freshAdmin.getUniversity() != null
                         ? freshAdmin.getUniversity().getId()
                         : null;
 
                 if (uniId != null) {
-                    // Explicit fetch — this has its own transaction/session
                     University uni = universityRepository.findById(uniId).orElse(null);
                     if (uni != null) {
                         if (uni.getName() != null && !uni.getName().isBlank()) {
@@ -260,19 +270,13 @@ public class EmailService {
                         if (uni.getPrimaryColor() != null && !uni.getPrimaryColor().isBlank()) {
                             primaryColor = uni.getPrimaryColor();
                         }
-                        log.info("🔍 [SETUP EMAIL] Resolved university: name='{}', color={}", uniName, primaryColor);
                     }
-                } else {
-                    log.warn("⚠️ [SETUP EMAIL] No university linked to admin {}", freshAdmin.getEmail());
                 }
             } catch (Exception ex) {
                 log.warn("⚠️ [SETUP EMAIL] Could not resolve university, using defaults: {}", ex.getMessage());
             }
 
             String setupUrl = baseUrl + "/setup-account?token=" + token;
-            log.info("🔍 [SETUP EMAIL] setupUrl={}", setupUrl);
-            log.info("🔍 [SETUP EMAIL] emailEnabled={}, hasBrevoKey={}", emailEnabled, brevoApiKey != null && !brevoApiKey.isEmpty());
-
             String subject = "Welcome to UniQueue - Set up your Admin Account";
             String html = wrapWithBrand(
                     uniName,
@@ -286,7 +290,6 @@ public class EmailService {
                     setupUrl
             );
 
-            log.info("🔍 [SETUP EMAIL] Calling sendHtml for {}", freshAdmin.getEmail());
             sendHtml(freshAdmin.getEmail(), subject, html);
             log.info("✅ [SETUP EMAIL] DONE — no exception thrown for {}", freshAdmin.getEmail());
         } catch (Exception ex) {
@@ -317,10 +320,6 @@ public class EmailService {
         }
     }
 
-    /**
-     * 🔧 Existing wrap() — resolves university via lazy loading.
-     * Wrapped in try/catch so it never crashes if university is a proxy without a session.
-     */
     private String wrap(User user, Queue queue, String heading, String body, String callout, String ctaLabel, String ctaUrl) {
         String uniName = "UniQueue";
         String accent = "#4f46e5";
@@ -342,9 +341,6 @@ public class EmailService {
         return wrapWithBrand(uniName, accent, heading, body, callout, ctaLabel, ctaUrl);
     }
 
-    /**
-     * 🔧 NEW: Build HTML with explicit university name and color (no lazy loading).
-     */
     private String wrapWithBrand(String uniName, String accent,
                                  String heading, String body, String callout,
                                  String ctaLabel, String ctaUrl) {
