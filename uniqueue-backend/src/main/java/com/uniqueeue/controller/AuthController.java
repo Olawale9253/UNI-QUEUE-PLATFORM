@@ -8,17 +8,14 @@ import com.uniqueeue.dto.request.ResetPasswordRequest;
 import com.uniqueeue.dto.request.VerifyEmailRequest;
 import com.uniqueeue.dto.response.ApiResponse;
 import com.uniqueeue.dto.response.AuthResponse;
-import com.uniqueeue.model.User;
 import com.uniqueeue.repository.UniversityRepository;
 import com.uniqueeue.repository.UserRepository;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.AuthService;
-import com.uniqueeue.service.EmailService;
 import com.uniqueeue.ratelimit.RateLimited;
 import com.uniqueeue.ratelimit.RateKeyType;
-import jakarta.validation.Valid;                                    // 🔧 ADDED
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,13 +28,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Slf4j
 public class AuthController {
 
     private final AuthService authService;
     private final UniversityRepository universityRepository;
     private final UserRepository userRepository;
-    private final EmailService emailService;
 
     @PostMapping("/register")
     @RateLimited(limit = 3, windowSeconds = 3600, keyType = RateKeyType.IP, name = "register")
@@ -94,64 +89,6 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Object>> setupAccount(@Valid @RequestBody ResetPasswordRequest request) {
         authService.setupAccount(request.getToken(), request.getNewPassword());
         return ResponseEntity.ok(ApiResponse.success("Account setup complete. You can now sign in.", null));
-    }
-
-    // 🔧 DIAGNOSTIC: Public endpoint to test ANY email type without auth
-    // IMPORTANT: Remove this after debugging!
-    @PostMapping("/diagnostic-email")
-    public ResponseEntity<?> diagnosticEmail(@RequestBody Map<String, String> body) {
-        String to = body.get("to");
-        String type = body.getOrDefault("type", "setup");
-
-        if (to == null || to.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Missing 'to' field"));
-        }
-
-        log.info("🔍 [DIAGNOSTIC] type={}, to={}", type, to);
-
-        try {
-            User testUser = userRepository.findByEmail(to.trim().toLowerCase()).orElse(null);
-            if (testUser == null) {
-                testUser = User.builder()
-                        .email(to.trim().toLowerCase())
-                        .fullName("Diagnostic Test")
-                        .build();
-                log.warn("⚠️ [DIAGNOSTIC] No user found for {}, using fake user", to);
-            }
-
-            Map<String, Object> result = new HashMap<>();
-            result.put("to", to);
-            result.put("type", type);
-            result.put("realUser", testUser.getId() != null);
-
-            switch (type) {
-                case "setup":
-                    emailService.sendAdminSetupEmail(testUser, "test-token-" + System.currentTimeMillis());
-                    result.put("method", "sendAdminSetupEmail");
-                    break;
-                case "reset":
-                    emailService.sendPasswordReset(testUser, "test-reset-" + System.currentTimeMillis());
-                    result.put("method", "sendPasswordReset");
-                    break;
-                case "verify":
-                    emailService.sendVerificationCode(testUser, "123456");
-                    result.put("method", "sendVerificationCode");
-                    break;
-                default:
-                    return ResponseEntity.badRequest().body(Map.of("error", "Unknown type: " + type));
-            }
-
-            result.put("status", "triggered");
-            result.put("message", "Check Render logs for 📧 messages and Brevo Transactional Logs");
-            return ResponseEntity.ok(result);
-        } catch (Exception ex) {
-            log.error("❌ [DIAGNOSTIC] Failed: {}", ex.getMessage(), ex);
-            Map<String, Object> err = new HashMap<>();
-            err.put("error", ex.getMessage());
-            err.put("class", ex.getClass().getSimpleName());
-            err.put("hint", "Check Render logs for stack trace");
-            return ResponseEntity.internalServerError().body(err);
-        }
     }
 
     @GetMapping("/me")

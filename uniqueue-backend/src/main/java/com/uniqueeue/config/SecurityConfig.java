@@ -105,8 +105,6 @@ public class SecurityConfig {
                                 "/api/auth/verify-email",
                                 "/api/auth/resend-verification",
                                 "/api/auth/refresh",
-                                "/api/auth/diagnostic-email",       // 🔧 ADDED
-                                "/api/auth/diagnostic/**",          // 🔧 ADDED (wildcard for future tests)
                                 "/api/public/**",
                                 "/h2-console/**"
                         ).permitAll()
