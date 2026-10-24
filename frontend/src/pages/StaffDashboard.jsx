@@ -15,6 +15,7 @@ import StaffDocuments from './staff/StaffDocuments'
 import ActivityPage from './staff/ActivityPage'
 import StaffProfile from './staff/StaffProfile'
 import SettingsPage from './staff/SettingsPage'
+import Notifications from './Notifications' // 🔧 Import here
 
 const tabs = [
     { to: '/staff/serving', label: 'Serving Queue', icon: ListOrdered },
@@ -22,8 +23,7 @@ const tabs = [
     { to: '/staff/slots', label: 'Manage Slots', icon: Calendar },
     { to: '/staff/appointments', label: 'Appointments', icon: CalendarCheck },
     { to: '/staff/documents', label: 'Documents', icon: FileText },
-    // 🔧 ADDED: Notifications Tab
-    { to: '/notifications', label: 'Notifications', icon: Bell },
+    { to: '/staff/notifications', label: 'Notifications', icon: Bell }, // 🔧 Point to sub-route
     { to: '/staff/activity', label: 'Activity', icon: Activity },
     { to: '/staff/profile', label: 'Profile', icon: UserIcon },
     { to: '/staff/settings', label: 'Settings', icon: SettingsIcon },
@@ -51,6 +51,7 @@ export default function StaffDashboard() {
                 <Route path="appointments" element={<AppointmentsList />} />
                 <Route path="documents" element={<StaffDocuments />} />
                 <Route path="activity" element={<ActivityPage />} />
+                <Route path="notifications" element={<Notifications />} /> {/* 🔧 Add route */}
                 <Route path="profile" element={<StaffProfile />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="*" element={<Navigate to="/staff" replace />} />

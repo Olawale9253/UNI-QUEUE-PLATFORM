@@ -14,7 +14,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
-import SetupAccount from './pages/SetupAccount' // 🔧 ADD THIS IMPORT
+import SetupAccount from './pages/SetupAccount'
 import VerifyEmail from './pages/VerifyEmail'
 import Profile from './pages/Profile'
 import StudentDashboard from './pages/StudentDashboard'
@@ -24,7 +24,6 @@ import SuperAdminDashboard from './pages/SuperAdminDashboard'
 import NotFound from './pages/NotFound'
 import PendingVerification from './pages/PendingVerification'
 import PublicRegisterUniversity from './pages/PublicRegisterUniversity'
-import Notifications from './pages/Notifications'
 import { initSoundUnlock } from './lib/soundService'
 import { usePrefsStore } from './store/prefsStore'
 import { useServerEvents } from './hooks/useServerEvents'
@@ -36,7 +35,7 @@ const HIDE_NAVBAR_ROUTES = [
     '/forgot-password',
     '/reset-password',
     '/verify-email',
-    '/setup-account', // 🔧 ADD THIS
+    '/setup-account',
 ]
 
 export default function App() {
@@ -89,7 +88,7 @@ export default function App() {
                             <Route path="/for-universities" element={<PublicRegisterUniversity />} />
                             <Route path="/forgot-password" element={<ForgotPassword />} />
                             <Route path="/reset-password" element={<ResetPassword />} />
-                            <Route path="/setup-account" element={<SetupAccount />} /> {/* 🔧 ADD THIS ROUTE */}
+                            <Route path="/setup-account" element={<SetupAccount />} />
                             <Route path="/verify-email" element={<VerifyEmail />} />
                             <Route
                                 path="/pending-verification"
@@ -104,14 +103,6 @@ export default function App() {
                                 element={
                                     <ProtectedRoute>
                                         <Profile />
-                                    </ProtectedRoute>
-                                }
-                            />
-                            <Route
-                                path="/notifications"
-                                element={
-                                    <ProtectedRoute>
-                                        <Notifications />
                                     </ProtectedRoute>
                                 }
                             />

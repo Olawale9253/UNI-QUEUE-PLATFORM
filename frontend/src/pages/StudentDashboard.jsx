@@ -19,6 +19,7 @@ import StudentSettings from './student/StudentSettings'
 import JoinQueuePage from './student/JoinQueuePage'
 import MyTicketsPage from './student/MyTicketsPage'
 import ProfilePage from './student/ProfilePage'
+import Notifications from './Notifications' // 🔧 Import here
 
 import { useUniversityStore } from '../store/universityStore'
 
@@ -33,8 +34,7 @@ export default function StudentDashboard() {
         { to: '/student/history', label: 'History', icon: History },
         { to: '/student/join-queue', label: 'Join Queue', icon: Search },
         { to: '/student/my-tickets', label: 'My Tickets', icon: Ticket },
-        // 🔧 FIX: Pointing to the global notification route
-        { to: '/notifications', label: 'Notifications', icon: Bell },
+        { to: '/student/notifications', label: 'Notifications', icon: Bell }, // 🔧 Point to sub-route
         { to: '/student/profile', label: 'Profile', icon: User },
     ]
 
@@ -73,7 +73,7 @@ export default function StudentDashboard() {
                 <Route path="settings" element={<StudentSettings />} />
                 <Route path="join-queue" element={<JoinQueuePage />} />
                 <Route path="my-tickets" element={<MyTicketsPage />} />
-                {/* 🔧 FIX: Removed the old notifications route */}
+                <Route path="notifications" element={<Notifications />} /> {/* 🔧 Add route */}
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="*" element={<Navigate to="/student" replace />} />
             </Routes>

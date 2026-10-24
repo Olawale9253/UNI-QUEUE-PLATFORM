@@ -21,6 +21,7 @@ import AuditLog from './admin/AuditLog'
 import Settings from './admin/Settings'
 import Verification from './admin/Verification'
 import Students from './admin/Students'
+import Notifications from './Notifications' // 🔧 Import here
 
 const tabs = [
     { to: '/admin/overview', label: 'Live Overview', icon: LayoutGrid },
@@ -34,8 +35,7 @@ const tabs = [
     { to: '/admin/workload', label: 'Workload', icon: Activity },
     { to: '/admin/workflows', label: 'Workflows', icon: RouteIcon },
     { to: '/admin/verification', label: 'Verifications', icon: ShieldCheck },
-    // 🔧 ADDED: Notifications Tab
-    { to: '/notifications', label: 'Notifications', icon: Bell },
+    { to: '/admin/notifications', label: 'Notifications', icon: Bell }, // 🔧 Point to sub-route
     { to: '/admin/audit-logs', label: 'Audit Logs', icon: History },
     { to: '/admin/settings', label: 'Settings', icon: SettingsIcon },
 ]
@@ -67,6 +67,7 @@ export default function AdminDashboard() {
                 <Route path="workload" element={<Workload />} />
                 <Route path="workflows" element={<Workflows />} />
                 <Route path="verification" element={<Verification />} />
+                <Route path="notifications" element={<Notifications />} /> {/* 🔧 Add route */}
                 <Route path="audit-logs" element={<AuditLog />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="*" element={<Navigate to="/admin" replace />} />

@@ -11,8 +11,16 @@ import { syncBus } from '../../lib/syncBus'
 
 const SOUND_DEBOUNCE_MS = 1200
 
+const dashboards = {
+    SUPER_ADMIN: '/super-admin',
+    ADMIN: '/admin',
+    STAFF: '/staff',
+    USER: '/student',
+    FRESHER: '/student',
+}
+
 export default function NotificationBell() {
-    const { token } = useAuthStore()
+    const { user, token } = useAuthStore() // 🔧 Added user
     const navigate = useNavigate()
     const [open, setOpen] = useState(false)
     const [unread, setUnread] = useState(0)
@@ -123,14 +131,14 @@ export default function NotificationBell() {
         } catch { }
     }
 
+    // 🔧 FIX: Navigate to the correct dashboard's notifications page based on user role
     const viewAllNotifications = () => {
         setOpen(false)
-        navigate('/notifications')
+        const basePath = user ? dashboards[user.role] || '/' : '/'
+        navigate(`${basePath}/notifications`)
     }
 
     const unreadCount = notifications.filter((n) => !n.isRead).length
-
-    // Show only the latest 4 notifications in the dropdown
     const recentNotifications = notifications.slice(0, 4)
 
     return (
@@ -176,7 +184,6 @@ export default function NotificationBell() {
                                 sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[380px]
                             "
                         >
-                            {/* Dropdown Header */}
                             <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-4 py-3 dark:border-slate-800 dark:bg-slate-800/30">
                                 <div className="flex items-center gap-2">
                                     <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -204,7 +211,6 @@ export default function NotificationBell() {
                                 </div>
                             </div>
 
-                            {/* Dropdown List */}
                             <div className="max-h-[calc(100vh-14rem)] overflow-y-auto">
                                 {loading ? (
                                     <div className="space-y-3 p-4">
@@ -263,7 +269,6 @@ export default function NotificationBell() {
                                 )}
                             </div>
 
-                            {/* Dropdown Footer: View All */}
                             <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
                                 <button
                                     onClick={viewAllNotifications}
