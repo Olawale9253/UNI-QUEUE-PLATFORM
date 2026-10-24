@@ -49,19 +49,54 @@ body {
     outline: none;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   Premium Custom Scrollbar
+   ═══════════════════════════════════════════════════════════ */
+
+/* Width of the scrollbar */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
 }
+
+/* Hide the up/down arrows */
+::-webkit-scrollbar-button {
+    display: none;
+}
+
+/* Track (background) */
 ::-webkit-scrollbar-track {
     background: transparent;
 }
+
+/* Handle (the draggable part) */
 ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 4px;
+    background: #cbd5e1; /* Tailwind slate-300 */
+    border-radius: 10px;
 }
+
+/* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #94a3b8; /* Tailwind slate-400 */
+}
+
+/* Dark Mode Handle */
+.dark ::-webkit-scrollbar-thumb {
+    background: #475569; /* Tailwind slate-600 */
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #64748b; /* Tailwind slate-500 */
+}
+
+/* For Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.dark * {
+    scrollbar-color: #475569 transparent;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -225,7 +260,6 @@ input:disabled,
     cursor: not-allowed;
 }
 
-/* ─── Navbar sticky scrolled state ─── */
 /* ─── Navbar sticky scrolled state ─── */
 .dark .bg-white\/80 {
     background-color: rgba(30, 41, 59, 0.85);
