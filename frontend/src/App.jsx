@@ -7,13 +7,14 @@ import ThemeProvider from './components/common/ThemeProvider'
 import ImpersonationBanner from './components/layout/ImpersonationBanner'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import ScrollToTop from './components/common/ScrollToTop'
-import IdleTimeout from './components/common/IdleTimeout' // 🔧 Imported IdleTimeout
+import IdleTimeout from './components/common/IdleTimeout'
 
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import SetupAccount from './pages/SetupAccount' // 🔧 ADD THIS IMPORT
 import VerifyEmail from './pages/VerifyEmail'
 import Profile from './pages/Profile'
 import StudentDashboard from './pages/StudentDashboard'
@@ -23,11 +24,11 @@ import SuperAdminDashboard from './pages/SuperAdminDashboard'
 import NotFound from './pages/NotFound'
 import PendingVerification from './pages/PendingVerification'
 import PublicRegisterUniversity from './pages/PublicRegisterUniversity'
+import Notifications from './pages/Notifications'
 import { initSoundUnlock } from './lib/soundService'
 import { usePrefsStore } from './store/prefsStore'
 import { useServerEvents } from './hooks/useServerEvents'
 import { useUniversityTheme } from './hooks/useUniversityTheme'
-import Notifications from './pages/Notifications'
 
 const HIDE_NAVBAR_ROUTES = [
     '/login',
@@ -35,6 +36,7 @@ const HIDE_NAVBAR_ROUTES = [
     '/forgot-password',
     '/reset-password',
     '/verify-email',
+    '/setup-account', // 🔧 ADD THIS
 ]
 
 export default function App() {
@@ -71,7 +73,6 @@ export default function App() {
     return (
         <ErrorBoundary>
             <ThemeProvider>
-                {/* 🔧 Added IdleTimeout right here to monitor activity across the whole app */}
                 <IdleTimeout />
 
                 <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
@@ -86,6 +87,10 @@ export default function App() {
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />
                             <Route path="/for-universities" element={<PublicRegisterUniversity />} />
+                            <Route path="/forgot-password" element={<ForgotPassword />} />
+                            <Route path="/reset-password" element={<ResetPassword />} />
+                            <Route path="/setup-account" element={<SetupAccount />} /> {/* 🔧 ADD THIS ROUTE */}
+                            <Route path="/verify-email" element={<VerifyEmail />} />
                             <Route
                                 path="/pending-verification"
                                 element={
@@ -94,9 +99,6 @@ export default function App() {
                                     </ProtectedRoute>
                                 }
                             />
-                            <Route path="/forgot-password" element={<ForgotPassword />} />
-                            <Route path="/reset-password" element={<ResetPassword />} />
-                            <Route path="/verify-email" element={<VerifyEmail />} />
                             <Route
                                 path="/profile"
                                 element={
