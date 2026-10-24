@@ -74,13 +74,14 @@ export default function App() {
             <ThemeProvider>
                 <IdleTimeout />
 
-                <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
+                {/* 🔧 FIX: h-screen overflow-hidden stops the outer body from scrolling */}
+                <div className="flex h-screen flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
                     <ScrollToTop />
                     <ImpersonationBanner />
 
                     {!hideNavbar && <Navbar />}
 
-                    <main className="flex-1">
+                    <main className="flex-1 overflow-hidden">
                         <Routes>
                             <Route path="/" element={<Home />} />
                             <Route path="/login" element={<Login />} />
