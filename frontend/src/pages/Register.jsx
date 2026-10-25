@@ -483,7 +483,7 @@ export default function Register() {
                                 to="/login"
                                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white py-3.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:text-brand-400 dark:hover:bg-slate-700"
                             >
-                                Sign in instead
+                                Sign in
                             </Link>
                         </div>
 
