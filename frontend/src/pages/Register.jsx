@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-    ArrowRight, ArrowLeft, Loader2, Eye, EyeOff,
-    ShieldCheck, Users, GraduationCap, Zap, MapPin, Search, Check
+    ArrowRight, Loader2, Eye, EyeOff,
+    ShieldCheck, GraduationCap, Zap, Search, Check, Sparkles, User
 } from 'lucide-react'
 import api from '../api/axios'
 import { useAuthStore } from '../store/authStore'
@@ -32,7 +32,6 @@ function LeftPanel({ university, imageError, onImageError }) {
 
     return (
         <div className="relative hidden h-full min-h-screen flex-col overflow-hidden bg-[#eef2ff] p-10 dark:bg-slate-950 lg:flex">
-            {/* Background Image & Gradients */}
             <div className="absolute inset-0 z-0">
                 <motion.img
                     key={backgroundSrc}
@@ -46,14 +45,11 @@ function LeftPanel({ university, imageError, onImageError }) {
                     className="absolute bottom-0 left-0 h-[55%] w-full object-cover object-top"
                     draggable={false}
                 />
-                {/* Gradient blends the image into the top background so text is cleanly readable */}
                 <div className="absolute inset-0 bg-gradient-to-b from-[#eef2ff] via-[#eef2ff] to-transparent to-[65%] dark:from-slate-950 dark:via-slate-950 dark:to-transparent" />
             </div>
 
             <div className="relative z-10 flex flex-col h-full">
-                {/* TOP SECTION: Logo + Hero Text + Features grouped together */}
                 <div>
-                    {/* Logo */}
                     <div className="flex items-center gap-3">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
                             {logoUrl ? (
@@ -72,7 +68,6 @@ function LeftPanel({ university, imageError, onImageError }) {
                         </div>
                     </div>
 
-                    {/* Hero Text */}
                     <div className="mt-14 max-w-md">
                         <h2 className="text-4xl font-extrabold leading-[1.15] tracking-tight text-[#0f172a] dark:text-white">
                             Your University<br />
@@ -83,7 +78,6 @@ function LeftPanel({ university, imageError, onImageError }) {
                         </p>
                     </div>
 
-                    {/* Feature List - Moved UP to sit on the solid background */}
                     <ul className="mt-10 space-y-5">
                         <li className="flex items-start gap-4">
                             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100 dark:bg-slate-800 dark:ring-slate-700 dark:text-brand-400">
@@ -122,7 +116,6 @@ export default function Register() {
     const [showConfirm, setShowConfirm] = useState(false)
     const [imageError, setImageError] = useState(false)
 
-    // University search state
     const [uniSearch, setUniSearch] = useState('')
     const [uniDropdownOpen, setUniDropdownOpen] = useState(false)
     const uniRef = useRef(null)
@@ -153,7 +146,6 @@ export default function Register() {
         return () => { cancelled = true }
     }, [push])
 
-    // Close university dropdown on click outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (uniRef.current && !uniRef.current.contains(event.target)) {
@@ -183,8 +175,11 @@ export default function Register() {
 
     const fresherEnabled = selectedUni?.fresherRegistrationEnabled !== false
 
+    // If the university doesn't allow freshers, force back to student mode
     useEffect(() => {
-        if (mode === 'fresher' && selectedUni && !fresherEnabled) setMode('student')
+        if (mode === 'fresher' && selectedUni && !fresherEnabled) {
+            setMode('student')
+        }
     }, [mode, selectedUni, fresherEnabled])
 
     const submit = async (event) => {
@@ -256,6 +251,8 @@ export default function Register() {
     const sectionTitleClass = 'flex items-center gap-3 mb-4'
 
     const showJamb = mode === 'fresher' && selectedUni?.requireJambReg !== false
+    const showAdmissionRef = mode === 'fresher' && selectedUni?.requireAdmissionRef
+    const showApplicationNo = mode === 'fresher' && selectedUni?.requireApplicationNumber
 
     return (
         <div className="min-h-screen bg-white dark:bg-slate-950 lg:h-screen lg:overflow-hidden">
@@ -280,11 +277,15 @@ export default function Register() {
                             </div>
                             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Create your account</h1>
                             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                                {mode === 'fresher' ? 'For new students registering before receiving their matric number.' : 'Fill in the details below to register and get started.'}
+                                {mode === 'fresher'
+                                    ? 'For new students registering before receiving their matric number.'
+                                    : 'Fill in the details below to register and get started.'}
                             </p>
                         </div>
 
                         <form onSubmit={submit} className="space-y-8">
+
+                            {/* 1. PERSONAL INFORMATION */}
                             <section>
                                 <div className={sectionTitleClass}>
                                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">1</span>
@@ -307,12 +308,53 @@ export default function Register() {
                                 </div>
                             </section>
 
+                            {/* 2. ACCOUNT DETAILS & ROLE SELECTION */}
                             <section>
                                 <div className={sectionTitleClass}>
                                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">2</span>
                                     <h2 className="text-base font-bold text-slate-900 dark:text-white">Account Details</h2>
                                     <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
                                 </div>
+
+                                {/* 🔧 NEW: STUDENT TYPE TOGGLE */}
+                                {selectedUni && (
+                                    <div className="mb-5">
+                                        <label className={labelClass}>I am a...</label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setMode('student')}
+                                                className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-all ${
+                                                    mode === 'student'
+                                                        ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/40 dark:text-brand-300'
+                                                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                                                }`}
+                                            >
+                                                <User className="h-4 w-4" />
+                                                Continuing Student
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setMode('fresher')}
+                                                disabled={!fresherEnabled}
+                                                className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-all ${
+                                                    mode === 'fresher'
+                                                        ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/40 dark:text-brand-300'
+                                                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                                                }`}
+                                            >
+                                                <Sparkles className="h-4 w-4" />
+                                                New Student (Fresher)
+                                            </button>
+                                        </div>
+                                        {!fresherEnabled && (
+                                            <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">
+                                                This university has disabled fresher registration. Please register as a continuing student.
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div>
                                         <label className={labelClass}>Email address</label>
@@ -361,17 +403,36 @@ export default function Register() {
                                         )}
                                     </div>
 
+                                    {/* 🔧 DYNAMIC FIELDS BASED ON MODE */}
                                     {mode === 'student' ? (
                                         <div>
                                             <label className={labelClass}>Matric number</label>
                                             <input type="text" value={form.matricNumber} onChange={setField('matricNumber')} placeholder={selectedUni?.matricExample || 'Enter your matric number'} required className={inputClass} />
                                         </div>
-                                    ) : showJamb ? (
-                                        <div>
-                                            <label className={labelClass}>{selectedUni?.jambRegDescription || 'JAMB registration number'}</label>
-                                            <input type="text" value={form.jambRegNumber} onChange={setField('jambRegNumber')} placeholder={selectedUni?.jambRegExample || 'Enter JAMB registration number'} required className={inputClass} />
-                                        </div>
-                                    ) : null}
+                                    ) : (
+                                        <>
+                                            {showJamb && (
+                                                <div>
+                                                    <label className={labelClass}>{selectedUni?.jambRegDescription || 'JAMB registration number'}</label>
+                                                    <input type="text" value={form.jambRegNumber} onChange={setField('jambRegNumber')} placeholder={selectedUni?.jambRegExample || 'Enter JAMB registration number'} required className={inputClass} />
+                                                </div>
+                                            )}
+
+                                            {showAdmissionRef && (
+                                                <div>
+                                                    <label className={labelClass}>{selectedUni?.admissionRefDescription || 'Admission reference number'}</label>
+                                                    <input type="text" value={form.admissionRef} onChange={setField('admissionRef')} placeholder={selectedUni?.admissionRefExample || 'Enter admission reference'} required className={inputClass} />
+                                                </div>
+                                            )}
+
+                                            {showApplicationNo && (
+                                                <div>
+                                                    <label className={labelClass}>{selectedUni?.applicationNumberDescription || 'Application number'}</label>
+                                                    <input type="text" value={form.applicationNumber} onChange={setField('applicationNumber')} placeholder={selectedUni?.applicationNumberExample || 'Enter application number'} required className={inputClass} />
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
 
                                     <div>
                                         <label className={labelClass}>Password</label>
