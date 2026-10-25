@@ -173,8 +173,8 @@ export default function Register() {
         setImageError(false)
     }
 
-    // If the university doesn't allow freshers, force back to student mode
     const fresherEnabled = selectedUni?.fresherRegistrationEnabled !== false
+
     useEffect(() => {
         if (mode === 'fresher' && selectedUni && !fresherEnabled) {
             setMode('student')
@@ -284,7 +284,6 @@ export default function Register() {
 
                         <form onSubmit={submit} className="space-y-8">
 
-                            {/* SECTION 1 */}
                             <section>
                                 <div className={sectionTitleClass}>
                                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">1</span>
@@ -307,7 +306,6 @@ export default function Register() {
                                 </div>
                             </section>
 
-                            {/* SECTION 2 */}
                             <section>
                                 <div className={sectionTitleClass}>
                                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">2</span>
@@ -315,42 +313,43 @@ export default function Register() {
                                     <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
                                 </div>
 
-                                {/* 🔧 FIX: Toggle is now ALWAYS visible, not hidden behind selectedUni */}
-                                <div className="mb-5">
-                                    <label className={labelClass}>I am a...</label>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => setMode('student')}
-                                            className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-all ${
-                                                mode === 'student'
-                                                    ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/40 dark:text-brand-300'
-                                                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
-                                            }`}
-                                        >
-                                            <User className="h-4 w-4" />
-                                            Continuing Student
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setMode('fresher')}
-                                            disabled={selectedUni ? !fresherEnabled : false}
-                                            className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-all ${
-                                                mode === 'fresher'
-                                                    ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/40 dark:text-brand-300'
-                                                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
-                                            }`}
-                                        >
-                                            <Sparkles className="h-4 w-4" />
-                                            New Student (Fresher)
-                                        </button>
+                                {selectedUni && (
+                                    <div className="mb-5">
+                                        <label className={labelClass}>I am a...</label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setMode('student')}
+                                                className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-all ${
+                                                    mode === 'student'
+                                                        ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/40 dark:text-brand-300'
+                                                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                                                }`}
+                                            >
+                                                <User className="h-4 w-4" />
+                                                Continuing Student
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setMode('fresher')}
+                                                disabled={!fresherEnabled}
+                                                className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-all ${
+                                                    mode === 'fresher'
+                                                        ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/40 dark:text-brand-300'
+                                                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                                                }`}
+                                            >
+                                                <Sparkles className="h-4 w-4" />
+                                                New Student (Fresher)
+                                            </button>
+                                        </div>
+                                        {!fresherEnabled && (
+                                            <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">
+                                                This university has disabled fresher registration. Please register as a continuing student.
+                                            </p>
+                                        )}
                                     </div>
-                                    {selectedUni && !fresherEnabled && (
-                                        <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">
-                                            This university has disabled fresher registration. Please register as a continuing student.
-                                        </p>
-                                    )}
-                                </div>
+                                )}
 
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div>
@@ -400,7 +399,6 @@ export default function Register() {
                                         )}
                                     </div>
 
-                                    {/* 🔧 DYNAMIC FIELDS BASED ON MODE */}
                                     {mode === 'student' ? (
                                         <div>
                                             <label className={labelClass}>Matric number</label>
