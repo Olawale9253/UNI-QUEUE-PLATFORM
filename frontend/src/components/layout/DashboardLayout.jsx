@@ -27,7 +27,8 @@ function SidebarLink({ item, collapsed, onClick }) {
                     collapsed ? 'justify-center px-2' : 'gap-3 px-3'
                 } ${
                     isActive
-                        ? 'bg-brand-600 text-white shadow-md' // 👈 NOW IT USES SOLID BRAND COLOR
+                        ? // 🟢 LIGHT MODE: Subtle tint | 🌙 DARK MODE: Muted tint
+                        'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300'
                         : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100'
                 }`
             }
@@ -37,7 +38,7 @@ function SidebarLink({ item, collapsed, onClick }) {
                     <Icon
                         className={`h-4 w-4 shrink-0 ${
                             isActive
-                                ? 'text-white' // 👈 ICON TURNS WHITE
+                                ? 'text-brand-600 dark:text-brand-400' // Colored Icon
                                 : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
                         }`}
                     />
@@ -65,13 +66,7 @@ export default function DashboardLayout({ tabs, title, description, action, chil
     }, [mobileSidebarOpen])
 
     const homeHref = user ? ROLE_HOME[user.role] || '/' : '/'
-
-    const homeItem = {
-        to: homeHref,
-        label: 'Home',
-        icon: HomeIcon,
-        end: true,
-    }
+    const homeItem = { to: homeHref, label: 'Home', icon: HomeIcon, end: true }
 
     return (
         <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-slate-50 dark:bg-slate-950">
@@ -86,20 +81,13 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                             Menu
                         </p>
                     )}
-
                     <div className="space-y-0.5">
                         <SidebarLink item={homeItem} collapsed={sidebarCollapsed} />
                     </div>
-
                     <div className="my-2 mx-2 border-t border-slate-100 dark:border-slate-800" />
-
                     <div className="space-y-0.5">
                         {tabs.map((item) => (
-                            <SidebarLink
-                                key={item.to}
-                                item={item}
-                                collapsed={sidebarCollapsed}
-                            />
+                            <SidebarLink key={item.to} item={item} collapsed={sidebarCollapsed} />
                         ))}
                     </div>
                 </nav>
@@ -109,52 +97,29 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                 {mobileSidebarOpen && (
                     <>
                         <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            onClick={closeMobileSidebar}
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }} onClick={closeMobileSidebar}
                             className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm md:hidden"
                         />
                         <motion.aside
-                            initial={{ x: '-100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '-100%' }}
+                            initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
                             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                             className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-white shadow-2xl md:hidden dark:bg-slate-900"
                         >
                             <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-4 dark:border-slate-800">
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                                    Menu
-                                </span>
-                                <button
-                                    onClick={closeMobileSidebar}
-                                    className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
-                                    aria-label="Close menu"
-                                >
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Menu</span>
+                                <button onClick={closeMobileSidebar} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
                                     <CloseIcon className="h-4 w-4" />
                                 </button>
                             </div>
-
                             <nav className="flex-1 overflow-y-auto px-2 py-3">
                                 <div className="space-y-0.5">
-                                    <SidebarLink
-                                        item={homeItem}
-                                        collapsed={false}
-                                        onClick={closeMobileSidebar}
-                                    />
+                                    <SidebarLink item={homeItem} collapsed={false} onClick={closeMobileSidebar} />
                                 </div>
-
                                 <div className="my-2 mx-2 border-t border-slate-100 dark:border-slate-800" />
-
                                 <div className="space-y-0.5">
                                     {tabs.map((item) => (
-                                        <SidebarLink
-                                            key={item.to}
-                                            item={item}
-                                            collapsed={false}
-                                            onClick={closeMobileSidebar}
-                                        />
+                                        <SidebarLink key={item.to} item={item} collapsed={false} onClick={closeMobileSidebar} />
                                     ))}
                                 </div>
                             </nav>
@@ -165,9 +130,7 @@ export default function DashboardLayout({ tabs, title, description, action, chil
 
             <main className="min-w-0 flex-1 overflow-y-auto">
                 <div className="mx-auto w-full max-w-[1680px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-                    {title && (
-                        <PageHeader title={title} description={description} action={action} />
-                    )}
+                    {title && <PageHeader title={title} description={description} action={action} />}
                     {children}
                 </div>
             </main>
