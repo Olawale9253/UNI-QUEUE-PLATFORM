@@ -117,11 +117,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/events/**").authenticated()
 
                         // ─── ROLE-SCOPED ───
-                        .requestMatchers("/api/super-admin/**").hasRole("SUPER_ADMIN")
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/staff/**").hasRole("STAFF")
-                        .requestMatchers("/api/user/**").hasAnyRole("USER", "FRESHER")
-                        .requestMatchers("/api/offices/**").hasAnyRole("USER", "FRESHER", "STAFF", "ADMIN")
+                        .requestMatchers("/api/super-admin/**").hasAuthority("SUPER_ADMIN")
+                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/staff/**").hasAuthority("STAFF")
+                        .requestMatchers("/api/user/**").hasAnyAuthority("USER", "FRESHER")
+                        .requestMatchers("/api/offices/**").hasAnyAuthority("USER", "FRESHER", "STAFF", "ADMIN")
 
                         // ─── EVERYTHING ELSE ───
                         .anyRequest().authenticated()

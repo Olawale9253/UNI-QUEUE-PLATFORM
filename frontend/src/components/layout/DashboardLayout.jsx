@@ -27,7 +27,7 @@ function SidebarLink({ item, collapsed, onClick }) {
                     collapsed ? 'justify-center px-2' : 'gap-3 px-3'
                 } ${
                     isActive
-                        ? 'bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-300'
+                        ? 'bg-brand-600 text-white shadow-md' // 👈 NOW IT USES SOLID BRAND COLOR
                         : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100'
                 }`
             }
@@ -37,7 +37,7 @@ function SidebarLink({ item, collapsed, onClick }) {
                     <Icon
                         className={`h-4 w-4 shrink-0 ${
                             isActive
-                                ? 'text-brand-600 dark:text-brand-400'
+                                ? 'text-white' // 👈 ICON TURNS WHITE
                                 : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
                         }`}
                     />
@@ -74,7 +74,6 @@ export default function DashboardLayout({ tabs, title, description, action, chil
     }
 
     return (
-        // 🔧 FIX: h-[calc(100vh-4rem)] and overflow-hidden makes this an "App Shell"
         <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-slate-50 dark:bg-slate-950">
             <aside
                 className={`hidden h-full shrink-0 border-r border-slate-200 bg-white/90 shadow-sm transition-[width] duration-300 ease-out md:flex md:flex-col dark:border-slate-800 dark:bg-slate-900/90 ${
@@ -164,7 +163,6 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                 )}
             </AnimatePresence>
 
-            {/* 🔧 FIX: overflow-y-auto makes this the ONLY scrolling area */}
             <main className="min-w-0 flex-1 overflow-y-auto">
                 <div className="mx-auto w-full max-w-[1680px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
                     {title && (
