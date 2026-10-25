@@ -9,71 +9,62 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * In-memory bucket cache for rate limiting.
- *
- * NOTE: buckets are stored per JVM. If you run multiple backend instances,
- * swap this out for a Redis-backed Bucket4j implementation — the public
- * API here will stay the same.
- */
 @Service
 @Slf4j
 public class RateLimitService {
 
-    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+    /** Tracks the bucket + last access time so idle buckets can be evicted. */
+    private record BucketEntry(Bucket bucket, AtomicLong lastAccessEpochSecond) {}
 
-    /**
-     * Attempts to consume one token from the bucket.
-     *
-     * @return 0 if the request is allowed. Otherwise, the number of
-     *         seconds the client should wait before at least one token
-     *         is refilled (rounded up, minimum 1).
-     */
+    private final Map<String, BucketEntry> buckets = new ConcurrentHashMap<>();
+
     public long tryConsume(String key, int limit, int windowSeconds) {
-        Bucket bucket = buckets.computeIfAbsent(key, cacheKey ->
+        long now = Instant.now().getEpochSecond();
+
+        BucketEntry entry = buckets.computeIfAbsent(key, k -> new BucketEntry(
                 Bucket.builder()
                         .addLimit(Bandwidth.classic(
                                 limit,
                                 Refill.greedy(limit, Duration.ofSeconds(windowSeconds))
                         ))
-                        .build()
-        );
+                        .build(),
+                new AtomicLong(now)
+        ));
+        entry.lastAccessEpochSecond().set(now);
 
-        // tryConsumeAndReturnRemaining gives us a ConsumptionProbe with
-        // both "was it consumed?" and "how long until refill?"
-        ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
+        ConsumptionProbe probe = entry.bucket().tryConsumeAndReturnRemaining(1);
 
         if (probe.isConsumed()) {
             return 0L;
         }
 
         long nanos = probe.getNanosToWaitForRefill();
-        // Round up to nearest second, minimum 1
         return Math.max(1L, (nanos + 999_999_999L) / 1_000_000_000L);
     }
 
-    /** Approximate number of tracked buckets (for metrics/debugging). */
     public int size() {
         return buckets.size();
     }
 
+    /**
+     * Evicts buckets idle for over 1 hour. Every window is at most 3600s,
+     * so a bucket untouched for 1 hour is guaranteed to be fully refilled
+     * and safe to remove. Evicting by idle time prevents the unbounded
+     * growth that the previous token-count check caused.
+     */
     @Scheduled(fixedDelay = 1_800_000L, initialDelay = 1_800_000L)
     public void cleanup() {
+        long cutoff = Instant.now().getEpochSecond() - 3600;
         int before = buckets.size();
-        buckets.entrySet().removeIf(bucketValue -> {
-            try {
-                long available = bucketValue.getValue().getAvailableTokens();
-                return available > 1_000_000L;
-            } catch (Exception ex) {
-                return false;
-            }
-        });
+        buckets.entrySet().removeIf(e -> e.getValue().lastAccessEpochSecond().get() < cutoff);
         int after = buckets.size();
         if (before != after) {
-            log.debug("Rate limit cleanup: {} -> {} buckets", before, after);
+            log.debug("Rate limit cleanup: evicted {} buckets ({} -> {})", before - after, before, after);
         }
     }
 }

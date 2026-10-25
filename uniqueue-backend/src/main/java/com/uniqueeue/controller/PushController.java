@@ -2,6 +2,8 @@ package com.uniqueeue.controller;
 
 import com.uniqueeue.dto.response.ApiResponse;
 import com.uniqueeue.model.PushSubscription;
+import com.uniqueeue.ratelimit.RateKeyType;
+import com.uniqueeue.ratelimit.RateLimited;
 import com.uniqueeue.repository.PushSubscriptionRepository;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.WebPushService;
@@ -16,10 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Push subscription lifecycle. Called by the frontend after the user grants
- * notification permission and the browser creates a subscription.
- */
 @RestController
 @RequestMapping("/api/push")
 @RequiredArgsConstructor
@@ -29,12 +27,8 @@ public class PushController {
     private final PushSubscriptionRepository subscriptionRepository;
     private final WebPushService webPushService;
 
-    /**
-     * Save (or refresh) the browser's subscription for this user.
-     * Called every time the frontend boots with a valid subscription.
-     * Idempotent — same endpoint = upsert.
-     */
     @PostMapping("/subscribe")
+    @RateLimited(limit = 10, windowSeconds = 60, keyType = RateKeyType.USER, name = "push-subscribe")
     public ResponseEntity<ApiResponse<Map<String, Object>>> subscribe(
             @RequestBody Map<String, Object> body,
             @AuthenticationPrincipal UserPrincipal principal,
@@ -54,8 +48,6 @@ public class PushController {
                     .body(ApiResponse.error("Missing endpoint or keys"));
         }
 
-        // Upsert by endpoint. If it already exists, update the user (in case
-        // the browser session changed) and the last_used_at.
         PushSubscription sub = subscriptionRepository.findByEndpoint(endpoint)
                 .orElseGet(() -> PushSubscription.builder()
                         .endpoint(endpoint)
@@ -73,9 +65,6 @@ public class PushController {
         return ResponseEntity.ok(ApiResponse.success("Subscribed", data));
     }
 
-    /**
-     * Remove a specific subscription (the current browser's).
-     */
     @DeleteMapping("/unsubscribe")
     public ResponseEntity<ApiResponse<Object>> unsubscribe(
             @RequestParam("endpoint") String endpoint,
@@ -92,11 +81,8 @@ public class PushController {
         return ResponseEntity.ok(ApiResponse.success("Unsubscribed", null));
     }
 
-    /**
-     * Send a test push to the current user. Useful for a "Send test"
-     * button in Settings.
-     */
     @PostMapping("/test")
+    @RateLimited(limit = 3, windowSeconds = 60, keyType = RateKeyType.USER, name = "push-test")
     public ResponseEntity<ApiResponse<Object>> test(
             @AuthenticationPrincipal UserPrincipal principal) {
         webPushService.sendToUser(
@@ -108,9 +94,6 @@ public class PushController {
         return ResponseEntity.ok(ApiResponse.success("Test push sent", null));
     }
 
-    /**
-     * For debugging — how many devices is this user subscribed on?
-     */
     @GetMapping("/devices")
     public ResponseEntity<ApiResponse<Map<String, Object>>> devices(
             @AuthenticationPrincipal UserPrincipal principal) {

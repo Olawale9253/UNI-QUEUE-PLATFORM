@@ -2,6 +2,8 @@ package com.uniqueeue.controller;
 
 import com.uniqueeue.dto.response.ApiResponse;
 import com.uniqueeue.dto.response.TicketResponse;
+import com.uniqueeue.ratelimit.RateKeyType;
+import com.uniqueeue.ratelimit.RateLimited;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.TicketService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ public class UserTicketController {
     private final TicketService ticketService;
 
     @PostMapping("/join")
+    @RateLimited(limit = 10, windowSeconds = 60, keyType = RateKeyType.USER, name = "ticket-join")
     public ResponseEntity<ApiResponse<TicketResponse>> join(
             @RequestBody Map<String, Long> body,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -59,11 +62,8 @@ public class UserTicketController {
         return ResponseEntity.ok(ApiResponse.success("Left queue", null));
     }
 
-    /**
-     * Student moves their own ticket to the end of the queue.
-     * Only allowed for WAITING or CALLED tickets.
-     */
     @PostMapping("/{id}/reschedule")
+    @RateLimited(limit = 5, windowSeconds = 300, keyType = RateKeyType.USER, name = "ticket-reschedule")
     public ResponseEntity<ApiResponse<TicketResponse>> reschedule(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -72,11 +72,8 @@ public class UserTicketController {
                 ticketService.rescheduleMyTurn(principal.getId(), id)));
     }
 
-    /**
-     * Student skips their own turn. Ticket is marked NO_SHOW
-     * and the next waiting student is promoted.
-     */
     @PostMapping("/{id}/skip")
+    @RateLimited(limit = 5, windowSeconds = 300, keyType = RateKeyType.USER, name = "ticket-skip")
     public ResponseEntity<ApiResponse<TicketResponse>> skip(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {

@@ -6,5 +6,7 @@ public enum RateKeyType {
     /** Email extracted from the JSON body — field name is set via {@code keyField}. */
     EMAIL,
     /** Authenticated user ID from the JWT. */
-    USER
+    USER,
+    /** No key — used only to disable the secondary limiter in @RateLimited. */
+    NONE
 }

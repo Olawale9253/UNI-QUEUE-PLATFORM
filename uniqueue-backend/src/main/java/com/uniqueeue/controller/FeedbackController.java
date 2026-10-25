@@ -4,6 +4,8 @@ import com.uniqueeue.dto.request.CreateFeedbackRequest;
 import com.uniqueeue.dto.response.ApiResponse;
 import com.uniqueeue.dto.response.FeedbackResponse;
 import com.uniqueeue.dto.response.StaffFeedbackSummaryResponse;
+import com.uniqueeue.ratelimit.RateKeyType;
+import com.uniqueeue.ratelimit.RateLimited;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.FeedbackService;
 import jakarta.validation.Valid;
@@ -23,9 +25,9 @@ public class FeedbackController {
 
     private final FeedbackService feedbackService;
 
-    /** Student submits feedback for their own completed ticket. */
     @PostMapping("/user/feedback")
     @PreAuthorize("hasAnyRole('USER', 'FRESHER')")
+    @RateLimited(limit = 5, windowSeconds = 60, keyType = RateKeyType.USER, name = "feedback")
     public ResponseEntity<ApiResponse<FeedbackResponse>> submit(
             @Valid @RequestBody CreateFeedbackRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -34,7 +36,6 @@ public class FeedbackController {
                 .body(ApiResponse.success("Feedback submitted", response));
     }
 
-    /** Admin views all feedback for their university. */
     @GetMapping("/admin/feedback")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<FeedbackResponse>>> list(
@@ -43,7 +44,6 @@ public class FeedbackController {
                 "Feedback", feedbackService.listForUniversity(principal.getUniversityId())));
     }
 
-    /** Staff views feedback for tickets they served. */
     @GetMapping("/staff/feedback")
     @PreAuthorize("hasRole('STAFF')")
     public ResponseEntity<ApiResponse<List<FeedbackResponse>>> myFeedback(
@@ -52,7 +52,6 @@ public class FeedbackController {
                 "My feedback", feedbackService.listForStaff(principal.getId())));
     }
 
-    /** 🔧 NEW: Staff's personal feedback summary (avg, per-queue, trends, anonymized comments). */
     @GetMapping("/staff/feedback/me")
     @PreAuthorize("hasRole('STAFF')")
     public ResponseEntity<ApiResponse<StaffFeedbackSummaryResponse>> myFeedbackSummary(
@@ -61,7 +60,6 @@ public class FeedbackController {
                 "My feedback summary", feedbackService.getStaffSummary(principal.getId())));
     }
 
-    /** Super Admin views all feedback across the platform. */
     @GetMapping("/super-admin/feedback")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<List<FeedbackResponse>>> listAll() {

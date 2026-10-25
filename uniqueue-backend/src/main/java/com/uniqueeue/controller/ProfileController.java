@@ -7,6 +7,8 @@ import com.uniqueeue.dto.request.UpdateProfileRequest;
 import com.uniqueeue.dto.response.ApiResponse;
 import com.uniqueeue.dto.response.AuthResponse;
 import com.uniqueeue.dto.response.ProfileResponse;
+import com.uniqueeue.ratelimit.RateKeyType;
+import com.uniqueeue.ratelimit.RateLimited;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.EmailChangeService;
 import com.uniqueeue.service.ProfileService;
@@ -43,12 +45,8 @@ public class ProfileController {
                 profileService.updateProfile(principal.getId(), request)));
     }
 
-    /**
-     * Change password. Backend bumps tokenVersion (invalidating every existing
-     * session) and returns a fresh access + refresh token so the caller's
-     * current tab stays logged in while all other sessions are killed.
-     */
     @PutMapping("/password")
+    @RateLimited(limit = 5, windowSeconds = 900, keyType = RateKeyType.USER, name = "password-change")
     public ResponseEntity<ApiResponse<AuthResponse>> changePassword(
             @Valid @RequestBody ChangePasswordRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -56,11 +54,8 @@ public class ProfileController {
         return ResponseEntity.ok(ApiResponse.success("Password changed", response));
     }
 
-    // ───────────────────────────────────────────────────────────
-    //  EMAIL CHANGE (2-step + resend)
-    // ───────────────────────────────────────────────────────────
-
     @PostMapping("/email/request")
+    @RateLimited(limit = 3, windowSeconds = 3600, keyType = RateKeyType.USER, name = "email-change-request")
     public ResponseEntity<ApiResponse<Map<String, Object>>> requestEmailChange(
             @Valid @RequestBody EmailChangeRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -74,12 +69,8 @@ public class ProfileController {
         return ResponseEntity.ok(ApiResponse.success("Verification code sent", data));
     }
 
-    /**
-     * Resend the verification code to the pending email without requiring
-     * the password again — as long as the pending request hasn't expired.
-     * Rate-limited server-side (30s cooldown).
-     */
     @PostMapping("/email/resend")
+    @RateLimited(limit = 5, windowSeconds = 3600, keyType = RateKeyType.USER, name = "email-change-resend")
     public ResponseEntity<ApiResponse<Map<String, Object>>> resendEmailChangeCode(
             @AuthenticationPrincipal UserPrincipal principal) {
         EmailChangeService.ResendResult result =
@@ -94,6 +85,7 @@ public class ProfileController {
     }
 
     @PostMapping("/email/verify")
+    @RateLimited(limit = 10, windowSeconds = 900, keyType = RateKeyType.USER, name = "email-change-verify")
     public ResponseEntity<ApiResponse<ProfileResponse>> verifyEmailChange(
             @Valid @RequestBody EmailChangeVerifyRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {

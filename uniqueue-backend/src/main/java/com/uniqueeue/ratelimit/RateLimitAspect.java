@@ -29,26 +29,50 @@ public class RateLimitAspect {
 
     @Around("@annotation(rateLimited)")
     public Object check(ProceedingJoinPoint pjp, RateLimited rateLimited) throws Throwable {
-        String key = resolveKey(rateLimited);
-        String bucketKey = rateLimited.keyType() + ":" + key + ":" + rateLimited.name();
 
-        long waitSeconds = rateLimitService.tryConsume(
-                bucketKey,
+        // 1. Primary limit
+        enforce(
+                rateLimited.keyType(),
+                rateLimited.keyField(),
+                rateLimited.name(),
                 rateLimited.limit(),
                 rateLimited.windowSeconds()
         );
 
-        if (waitSeconds > 0) {
-            String message = buildMessage(rateLimited.name(), waitSeconds);
-            log.warn("Rate limit hit: bucket={} limit={}/{}s wait={}s",
-                    bucketKey, rateLimited.limit(), rateLimited.windowSeconds(), waitSeconds);
-            throw new RateLimitExceededException(message, waitSeconds);
+        // 2. Optional secondary limit (e.g. IP + EMAIL on login)
+        if (rateLimited.secondaryKeyType() != RateKeyType.NONE) {
+            enforce(
+                    rateLimited.secondaryKeyType(),
+                    rateLimited.secondaryKeyField(),
+                    rateLimited.name() + "-secondary",
+                    rateLimited.secondaryLimit(),
+                    rateLimited.secondaryWindowSeconds()
+            );
         }
+
         return pjp.proceed();
     }
 
+    private void enforce(RateKeyType keyType, String keyField, String name,
+                         int limit, int windowSeconds) {
+        String key = resolveKey(keyType, keyField);
+        String bucketKey = keyType + ":" + key + ":" + name;
+
+        long waitSeconds = rateLimitService.tryConsume(bucketKey, limit, windowSeconds);
+
+        if (waitSeconds > 0) {
+            String message = buildMessage(name, waitSeconds);
+            log.warn("Rate limit hit: bucket={} limit={}/{}s wait={}s",
+                    bucketKey, limit, windowSeconds, waitSeconds);
+            throw new RateLimitExceededException(message, waitSeconds);
+        }
+    }
+
     private String buildMessage(String name, long waitSeconds) {
-        String action = (name == null || name.isBlank()) ? "requests" : name + " attempts";
+        String baseName = name != null && name.endsWith("-secondary")
+                ? name.substring(0, name.length() - "-secondary".length())
+                : name;
+        String action = (baseName == null || baseName.isBlank()) ? "requests" : baseName + " attempts";
         return "Too many " + action + ". Try again in " + formatWait(waitSeconds) + ".";
     }
 
@@ -64,11 +88,12 @@ public class RateLimitAspect {
         return hours + " hour" + (hours == 1 ? "" : "s");
     }
 
-    private String resolveKey(RateLimited rateLimited) {
-        return switch (rateLimited.keyType()) {
+    private String resolveKey(RateKeyType keyType, String keyField) {
+        return switch (keyType) {
             case IP    -> resolveIp();
-            case EMAIL -> resolveEmail(rateLimited.keyField());
+            case EMAIL -> resolveEmail(keyField);
             case USER  -> resolveUserId();
+            case NONE  -> "none";
         };
     }
 

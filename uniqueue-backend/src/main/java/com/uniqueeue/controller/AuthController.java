@@ -43,7 +43,11 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @RateLimited(limit = 5, windowSeconds = 900, keyType = RateKeyType.EMAIL, keyField = "email", name = "login")
+    @RateLimited(
+            limit = 5, windowSeconds = 900, keyType = RateKeyType.EMAIL, keyField = "email",
+            name = "login",
+            secondaryKeyType = RateKeyType.IP, secondaryLimit = 20, secondaryWindowSeconds = 900
+    )
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
@@ -80,12 +84,14 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
+    @RateLimited(limit = 5, windowSeconds = 900, keyType = RateKeyType.IP, name = "reset")
     public ResponseEntity<ApiResponse<Object>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request.getToken(), request.getNewPassword());
         return ResponseEntity.ok(ApiResponse.success("Password reset successful. You can now sign in.", null));
     }
 
     @PostMapping("/setup-account")
+    @RateLimited(limit = 5, windowSeconds = 900, keyType = RateKeyType.IP, name = "setup")
     public ResponseEntity<ApiResponse<Object>> setupAccount(@Valid @RequestBody ResetPasswordRequest request) {
         authService.setupAccount(request.getToken(), request.getNewPassword());
         return ResponseEntity.ok(ApiResponse.success("Account setup complete. You can now sign in.", null));
@@ -149,6 +155,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
+    @RateLimited(limit = 30, windowSeconds = 60, keyType = RateKeyType.IP, name = "refresh")
     public ResponseEntity<ApiResponse<AuthResponse>> refresh(@RequestBody Map<String, String> body) {
         String refreshToken = body.get("refreshToken");
         if (refreshToken == null || refreshToken.isBlank()) {
