@@ -51,7 +51,8 @@ function LeftPanel({ brand, imageError, onImageError }) {
             </div>
 
             {/* Top: Logo */}
-            <div className="relative z-10 flex items-center gap-3">
+            {/* 👇 ADDED: Wrapped in Link to navigate home */}
+            <Link to="/" className="relative z-10 flex w-fit items-center gap-3 transition-opacity hover:opacity-80">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
                     {brand.logoUrl ? (
                         <img
@@ -72,7 +73,7 @@ function LeftPanel({ brand, imageError, onImageError }) {
                         Digital Queue System
                     </div>
                 </div>
-            </div>
+            </Link>
 
             {/* Middle: Features */}
             <div className="relative z-10 max-w-md pt-8">
@@ -267,8 +268,9 @@ export default function Login() {
     const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300'
 
     return (
-        <div className="min-h-screen bg-white dark:bg-slate-950 lg:h-screen lg:overflow-hidden">
-            <div className="grid min-h-screen grid-cols-1 lg:h-full lg:min-h-0 lg:grid-cols-2">
+        /* 👇 THE FIX: h-full w-full overflow-y-auto allows mobile scrolling */
+        <div className="h-full w-full overflow-y-auto bg-white dark:bg-slate-950 lg:overflow-hidden">
+            <div className="flex min-h-full flex-col lg:grid lg:h-full lg:grid-cols-2">
 
                 <LeftPanel
                     brand={brand}
@@ -276,7 +278,7 @@ export default function Login() {
                     onImageError={() => setImageError(true)}
                 />
 
-                <div className="flex min-h-0 items-start justify-center overflow-y-auto bg-white px-6 py-10 dark:bg-slate-950 sm:px-12 lg:h-full lg:py-12">
+                <div className="flex w-full items-start justify-center bg-white px-6 py-10 dark:bg-slate-950 sm:px-12 lg:h-full lg:overflow-y-auto lg:py-12">
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -284,14 +286,15 @@ export default function Login() {
                         className="w-full max-w-[420px] mt-10 sm:mt-20"
                     >
 
-                        <div className="mb-8 flex items-center gap-2.5 lg:hidden">
+                        {/* 👇 ADDED: Wrapped Mobile Logo in Link to navigate home */}
+                        <Link to="/" className="mb-8 flex w-fit items-center gap-2.5 transition-opacity hover:opacity-80 lg:hidden">
                             <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-brand-600 text-white">
                                 <Logo size={20} variant="icon" />
                             </div>
                             <div className="text-sm font-bold uppercase tracking-tight text-slate-900 dark:text-white">
                                 {brand.name}
                             </div>
-                        </div>
+                        </Link>
 
                         <div className="mb-8">
                             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
