@@ -175,7 +175,6 @@ export default function Register() {
 
     const fresherEnabled = selectedUni?.fresherRegistrationEnabled !== false
 
-    // If the university doesn't allow freshers, force back to student mode
     useEffect(() => {
         if (mode === 'fresher' && selectedUni && !fresherEnabled) {
             setMode('student')
@@ -285,7 +284,6 @@ export default function Register() {
 
                         <form onSubmit={submit} className="space-y-8">
 
-                            {/* 1. PERSONAL INFORMATION */}
                             <section>
                                 <div className={sectionTitleClass}>
                                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">1</span>
@@ -308,7 +306,6 @@ export default function Register() {
                                 </div>
                             </section>
 
-                            {/* 2. ACCOUNT DETAILS & ROLE SELECTION */}
                             <section>
                                 <div className={sectionTitleClass}>
                                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">2</span>
@@ -316,7 +313,6 @@ export default function Register() {
                                     <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
                                 </div>
 
-                                {/* 🔧 NEW: STUDENT TYPE TOGGLE */}
                                 {selectedUni && (
                                     <div className="mb-5">
                                         <label className={labelClass}>I am a...</label>
@@ -403,7 +399,6 @@ export default function Register() {
                                         )}
                                     </div>
 
-                                    {/* 🔧 DYNAMIC FIELDS BASED ON MODE */}
                                     {mode === 'student' ? (
                                         <div>
                                             <label className={labelClass}>Matric number</label>
