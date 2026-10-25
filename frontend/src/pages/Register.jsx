@@ -50,7 +50,8 @@ function LeftPanel({ university, imageError, onImageError }) {
 
             <div className="relative z-10 flex flex-col h-full">
                 <div>
-                    <div className="flex items-center gap-3">
+                    {/* 👇 ADDED: Wrapped the logo in a Link to navigate home */}
+                    <Link to="/" className="flex items-center gap-3 w-fit transition-opacity hover:opacity-80">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
                             {logoUrl ? (
                                 <img src={logoUrl} alt={brandName} className="h-full w-full object-contain p-1" onError={(e) => { e.target.style.display = 'none' }} />
@@ -66,7 +67,7 @@ function LeftPanel({ university, imageError, onImageError }) {
                                 Digital Queue System
                             </div>
                         </div>
-                    </div>
+                    </Link>
 
                     <div className="mt-14 max-w-md">
                         <h2 className="text-4xl font-extrabold leading-[1.15] tracking-tight text-[#0f172a] dark:text-white">
@@ -312,7 +313,6 @@ export default function Register() {
                                     <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
                                 </div>
 
-                                {/* 👇 CONDITIONAL: Only show "I am a..." if a university is selected */}
                                 {selectedUni && (
                                     <div className="mb-5">
                                         <label className={labelClass}>I am a...</label>
@@ -399,7 +399,6 @@ export default function Register() {
                                         )}
                                     </div>
 
-                                    {/* 👇 CONDITIONAL: Only show the specific ID inputs if a uni is selected */}
                                     {selectedUni && (
                                         mode === 'student' ? (
                                             <div>
