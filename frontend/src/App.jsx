@@ -16,7 +16,6 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import SetupAccount from './pages/SetupAccount'
 import VerifyEmail from './pages/VerifyEmail'
-import Profile from './pages/Profile'
 import StudentDashboard from './pages/StudentDashboard'
 import StaffDashboard from './pages/StaffDashboard'
 import AdminDashboard from './pages/AdminDashboard'
@@ -54,8 +53,6 @@ export default function App() {
             let refreshing = false
             let lastCheck = 0
 
-            // 1. Auto-reload when a NEW Service Worker takes over.
-            //    Only attach if a controller already exists (i.e., not on first-ever install).
             if (navigator.serviceWorker.controller) {
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
                     if (refreshing) return
@@ -65,12 +62,10 @@ export default function App() {
                 })
             }
 
-            // 2. Register SW and set up update checks
             navigator.serviceWorker.register('/sw.js')
                 .then((registration) => {
                     const checkForUpdate = () => {
                         if (document.visibilityState !== 'visible') return
-                        // Throttle: check at most once per minute
                         const now = Date.now()
                         if (now - lastCheck < 60_000) return
                         lastCheck = now
@@ -80,10 +75,7 @@ export default function App() {
                         })
                     }
 
-                    // Check when app regains focus (clicked from home screen, tab switched, etc.)
                     document.addEventListener('visibilitychange', checkForUpdate)
-
-                    // Initial check on mount
                     checkForUpdate()
                 })
                 .catch((err) => {
@@ -135,14 +127,7 @@ export default function App() {
                                     </ProtectedRoute>
                                 }
                             />
-                            <Route
-                                path="/profile"
-                                element={
-                                    <ProtectedRoute>
-                                        <Profile />
-                                    </ProtectedRoute>
-                                }
-                            />
+                            {/* 🗑️ Removed: /profile standalone route */}
                             <Route
                                 path="/student/*"
                                 element={

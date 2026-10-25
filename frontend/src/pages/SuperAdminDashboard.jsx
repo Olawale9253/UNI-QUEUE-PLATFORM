@@ -19,7 +19,8 @@ import Settings from './super-admin/Settings'
 import Broadcast from './super-admin/Broadcast'
 import Plans from './super-admin/Plans'
 import Feedback from './super-admin/Feedback'
-import Notifications from './Notifications' // 🔧 Import here
+import Notifications from './Notifications'
+import Profile from './Profile'   // 👈 ADDED
 
 const tabs = [
     { to: '/super-admin/universities', label: 'Universities', icon: Building2 },
@@ -30,7 +31,7 @@ const tabs = [
     { to: '/super-admin/tiers', label: 'Tiers & Features', icon: Shield },
     { to: '/super-admin/plans', label: 'Plans', icon: CreditCard },
     { to: '/super-admin/broadcast', label: 'Broadcast', icon: Megaphone },
-    { to: '/super-admin/notifications', label: 'Notifications', icon: Bell }, // 🔧 Point to sub-route
+    { to: '/super-admin/notifications', label: 'Notifications', icon: Bell },
     { to: '/super-admin/audit-logs', label: 'Audit Logs', icon: FileText },
     { to: '/super-admin/settings', label: 'Settings', icon: SettingsIcon },
 ]
@@ -59,9 +60,10 @@ export default function SuperAdminDashboard() {
                 <Route path="tiers" element={<TiersAndFeatures />} />
                 <Route path="plans" element={<Plans />} />
                 <Route path="broadcast" element={<Broadcast />} />
-                <Route path="notifications" element={<Notifications />} /> {/* 🔧 Add route */}
+                <Route path="notifications" element={<Notifications />} />
                 <Route path="audit-logs" element={<AuditLogs />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="profile" element={<Profile />} />   {/* 👈 ADDED */}
                 <Route path="*" element={<Navigate to="/super-admin" replace />} />
             </Routes>
         </DashboardLayout>
