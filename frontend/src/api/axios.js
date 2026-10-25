@@ -12,8 +12,8 @@ const PUBLIC_AUTH_PATHS = [
     '/api/auth/reset-password',
     '/api/auth/refresh',
     '/api/auth/universities',
-    '/api/auth/verify-email',         // 🔧 ADDED
-    '/api/auth/resend-verification',  // 🔧 ADDED
+    '/api/auth/verify-email',
+    '/api/auth/resend-verification',
 ]
 
 let refreshPromise = null
@@ -67,9 +67,18 @@ function clearAuthAndRedirect() {
     }
 }
 
+// 🔧 FIXED REQUEST INTERCEPTOR
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('uniqueue_token')
-    if (token) config.headers.Authorization = `Bearer ${token}`
+    const url = config.url || ''
+
+    // Never send Authorization on public auth endpoints (login, register, etc.)
+    // This prevents unnecessary preflights that Cloudflare can challenge.
+    const isPublicPath = PUBLIC_AUTH_PATHS.some((itemValue) => url.includes(itemValue))
+
+    if (token && !isPublicPath) {
+        config.headers.Authorization = `Bearer ${token}`
+    }
     return config
 })
 
@@ -93,7 +102,6 @@ api.interceptors.response.use(
         }
 
         // 2. Handle HTTP Errors (400, 403, 404, etc.)
-        // Extract the backend message so components can just use err.message
         const backendMessage = error.response.data?.message
         if (backendMessage) {
             error.message = backendMessage
@@ -101,7 +109,7 @@ api.interceptors.response.use(
             error.message = 'Server error. Please try again later.'
         }
 
-        // 🔧 FIX: Only try to refresh on 401 Unauthorized, and NOT on public paths
+        // 3. Only try to refresh on 401 Unauthorized, and NOT on public paths
         if (status !== 401 || isPublicPath) {
             return Promise.reject(error)
         }
