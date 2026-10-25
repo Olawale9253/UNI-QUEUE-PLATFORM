@@ -405,3 +405,28 @@ input:disabled,
 .dark .dashboard-shell .rounded-xl.border {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 12px 28px -22px rgba(0, 0, 0, 0.75);
 }
+
+/* ═══════════════════════════════════════════════════════════
+   FIX BROWSER AUTOFILL BACKGROUND (Chrome / Safari)
+   ═══════════════════════════════════════════════════════════ */
+
+/* Light Mode */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-text-fill-color: #0f172a !important; /* slate-900 */
+    /* This huge inset shadow hides the browser's default gray background */
+    box-shadow: 0 0 0 1000px #ffffff inset !important; /* white */
+    /* Delays the browser's default background flash */
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Dark Mode */
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+    -webkit-text-fill-color: #f1f5f9 !important; /* slate-100 */
+    box-shadow: 0 0 0 1000px #1e293b inset !important; /* slate-800 */
+}
