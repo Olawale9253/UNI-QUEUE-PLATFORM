@@ -3,6 +3,7 @@ package com.uniqueeue.controller;
 import com.uniqueeue.dto.request.CreateFeedbackRequest;
 import com.uniqueeue.dto.response.ApiResponse;
 import com.uniqueeue.dto.response.FeedbackResponse;
+import com.uniqueeue.dto.response.StaffFeedbackSummaryResponse;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.FeedbackService;
 import jakarta.validation.Valid;
@@ -51,7 +52,16 @@ public class FeedbackController {
                 "My feedback", feedbackService.listForStaff(principal.getId())));
     }
 
-    /** 🔧 NEW: Super Admin views all feedback across the platform. */
+    /** 🔧 NEW: Staff's personal feedback summary (avg, per-queue, trends, anonymized comments). */
+    @GetMapping("/staff/feedback/me")
+    @PreAuthorize("hasRole('STAFF')")
+    public ResponseEntity<ApiResponse<StaffFeedbackSummaryResponse>> myFeedbackSummary(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "My feedback summary", feedbackService.getStaffSummary(principal.getId())));
+    }
+
+    /** Super Admin views all feedback across the platform. */
     @GetMapping("/super-admin/feedback")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<List<FeedbackResponse>>> listAll() {
