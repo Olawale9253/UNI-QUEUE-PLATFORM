@@ -28,7 +28,7 @@ import { initSoundUnlock } from './lib/soundService'
 import { usePrefsStore } from './store/prefsStore'
 import { useServerEvents } from './hooks/useServerEvents'
 import { useUniversityTheme } from './hooks/useUniversityTheme'
-import { useUniversitySync } from './hooks/useUniversitySync'   // 👈 ADD
+import { useUniversitySync } from './hooks/useUniversitySync'
 
 const HIDE_NAVBAR_ROUTES = [
     '/login',
@@ -45,15 +45,50 @@ export default function App() {
 
     useServerEvents()
     useUniversityTheme()
-    useUniversitySync()   // 👈 ADD
+    useUniversitySync()
 
     useEffect(() => {
         initSoundUnlock()
 
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch((err) => {
-                console.warn('SW registration failed:', err)
-            })
+            let refreshing = false
+            let lastCheck = 0
+
+            // 1. Auto-reload when a NEW Service Worker takes over.
+            //    Only attach if a controller already exists (i.e., not on first-ever install).
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (refreshing) return
+                    refreshing = true
+                    console.log('[SW] New Service Worker active. Reloading...')
+                    window.location.reload()
+                })
+            }
+
+            // 2. Register SW and set up update checks
+            navigator.serviceWorker.register('/sw.js')
+                .then((registration) => {
+                    const checkForUpdate = () => {
+                        if (document.visibilityState !== 'visible') return
+                        // Throttle: check at most once per minute
+                        const now = Date.now()
+                        if (now - lastCheck < 60_000) return
+                        lastCheck = now
+
+                        registration.update().catch((err) => {
+                            console.warn('[SW] Update check failed:', err)
+                        })
+                    }
+
+                    // Check when app regains focus (clicked from home screen, tab switched, etc.)
+                    document.addEventListener('visibilitychange', checkForUpdate)
+
+                    // Initial check on mount
+                    checkForUpdate()
+                })
+                .catch((err) => {
+                    console.warn('[SW] Registration failed:', err)
+                })
         }
 
         if (localStorage.getItem('uniqueue_token')) {
@@ -76,7 +111,6 @@ export default function App() {
             <ThemeProvider>
                 <IdleTimeout />
 
-                {/* 🔧 FIX: h-screen overflow-hidden stops the outer body from scrolling */}
                 <div className="flex h-screen flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
                     <ScrollToTop />
                     <ImpersonationBanner />
