@@ -77,7 +77,7 @@ export default function DashboardLayout({ tabs, title, description, action, chil
         <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-slate-50 dark:bg-slate-950">
             {/* DESKTOP SIDEBAR */}
             <aside
-                className={`hidden h-full shrink-0 border-r border-slate-200 bg-white/90 shadow-sm transition-[width] duration-300 ease-out md:flex md:flex-col dark:border-slate-800 dark:bg-slate-900/90 ${
+                className={`hidden h-full shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white/90 shadow-sm transition-[width] duration-300 ease-out md:flex dark:border-slate-800 dark:bg-slate-900/90 ${
                     sidebarCollapsed ? 'w-16' : 'w-56'
                 }`}
             >
@@ -99,7 +99,7 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                 </nav>
 
                 {/* 🔧 DESKTOP LOGOUT BUTTON */}
-                <div className="mt-auto border-t border-slate-200 p-2 dark:border-slate-800">
+                <div className="shrink-0 border-t border-slate-200 p-2 dark:border-slate-800">
                     <button
                         onClick={handleExit}
                         title={sidebarCollapsed ? "Log Out" : undefined}
@@ -146,7 +146,7 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                             </nav>
 
                             {/* 🔧 MOBILE LOGOUT BUTTON */}
-                            <div className="mt-auto border-t border-slate-200 p-3 dark:border-slate-800">
+                            <div className="shrink-0 border-t border-slate-200 p-3 dark:border-slate-800">
                                 <button
                                     onClick={() => {
                                         closeMobileSidebar()
