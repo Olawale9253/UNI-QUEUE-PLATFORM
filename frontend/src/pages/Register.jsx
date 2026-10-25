@@ -32,6 +32,7 @@ function LeftPanel({ university, imageError, onImageError }) {
 
     return (
         <div className="relative hidden h-full min-h-screen flex-col justify-between overflow-hidden bg-[#eef2ff] p-10 dark:bg-slate-950 lg:flex">
+            {/* Background Image & Gradients */}
             <div className="absolute inset-0 z-0">
                 <motion.img
                     key={backgroundSrc}
@@ -42,56 +43,66 @@ function LeftPanel({ university, imageError, onImageError }) {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 1.2, ease }}
                     onError={onImageError}
-                    className="absolute bottom-0 left-0 h-[55%] w-full object-cover object-top"
+                    className="absolute bottom-0 left-0 h-[60%] w-full object-cover object-top"
                     draggable={false}
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-[#eef2ff] via-[#eef2ff] to-transparent to-[75%] dark:from-slate-950 dark:via-slate-950" />
-                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#0f172a]/80 via-[#0f172a]/20 to-transparent" />
+                {/* The gradient ensures the top 70% is solid, so text is highly readable */}
+                <div className="absolute inset-0 bg-gradient-to-b from-[#eef2ff] via-[#eef2ff] to-transparent to-[70%] dark:from-slate-950 dark:via-slate-950 dark:to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#0f172a]/60 to-transparent" />
             </div>
 
-            <div className="relative z-10 flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
-                    {logoUrl ? (
-                        <img src={logoUrl} alt={brandName} className="h-full w-full object-contain p-1" onError={(e) => { e.target.style.display = 'none' }} />
-                    ) : (
-                        <Logo size={24} variant="icon" />
-                    )}
-                </div>
+            <div className="relative z-10 flex flex-col h-full justify-between">
+                {/* TOP SECTION: Logo + Hero Text grouped together */}
                 <div>
-                    <div className="text-sm font-extrabold uppercase tracking-tight text-slate-900 dark:text-white">
-                        {brandName}
+                    {/* Logo */}
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
+                            {logoUrl ? (
+                                <img src={logoUrl} alt={brandName} className="h-full w-full object-contain p-1" onError={(e) => { e.target.style.display = 'none' }} />
+                            ) : (
+                                <Logo size={24} variant="icon" />
+                            )}
+                        </div>
+                        <div>
+                            <div className="text-sm font-extrabold uppercase tracking-tight text-slate-900 dark:text-white">
+                                {brandName}
+                            </div>
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600 dark:text-slate-400">
+                                Digital Queue System
+                            </div>
+                        </div>
                     </div>
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600 dark:text-slate-400">
-                        Digital Queue System
+
+                    {/* Hero Text - Moved UP and given more breathing room */}
+                    <div className="mt-16 max-w-md">
+                        <h2 className="text-4xl font-extrabold leading-[1.15] tracking-tight text-[#0f172a] dark:text-white">
+                            Your University<br />
+                            <span className="text-brand-600 dark:text-brand-400">Queue, Made Simple</span>
+                        </h2>
+                        <p className="mt-5 max-w-sm text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                            Join the university community and enjoy a faster, easier and more organized queue experience.
+                        </p>
                     </div>
                 </div>
-            </div>
 
-            <div className="relative z-10 max-w-md pt-8">
-                <h2 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-[#0f172a] dark:text-white">
-                    Your University<br />
-                    <span className="text-brand-600 dark:text-brand-400">Queue, Made Simple</span>
-                </h2>
-                <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-800 dark:text-slate-300">
-                    Join the university community and enjoy a faster, easier and more organized queue experience.
-                </p>
-                <ul className="mt-8 space-y-5">
-                    <li className="flex items-start gap-4">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100 dark:bg-slate-800 dark:ring-slate-700 dark:text-brand-400">
+                {/* BOTTOM SECTION: Frosted Glass Features */}
+                <ul className="relative z-10 mt-auto space-y-4 pb-4">
+                    <li className="flex items-start gap-4 rounded-2xl bg-white/90 p-4 shadow-sm backdrop-blur-md dark:bg-slate-900/90 dark:border dark:border-slate-700/50">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-900/50 dark:text-brand-400">
                             <Zap className="h-5 w-5" />
                         </span>
                         <div>
                             <strong className="block text-sm font-bold text-slate-900 dark:text-white">Quick Access</strong>
-                            <span className="text-sm text-slate-700 dark:text-slate-400">Skip long lines and save time</span>
+                            <span className="text-sm text-slate-600 dark:text-slate-400">Skip long lines and save time</span>
                         </div>
                     </li>
-                    <li className="flex items-start gap-4">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100 dark:bg-slate-800 dark:ring-slate-700 dark:text-brand-400">
+                    <li className="flex items-start gap-4 rounded-2xl bg-white/90 p-4 shadow-sm backdrop-blur-md dark:bg-slate-900/90 dark:border dark:border-slate-700/50">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-900/50 dark:text-brand-400">
                             <ShieldCheck className="h-5 w-5" />
                         </span>
                         <div>
                             <strong className="block text-sm font-bold text-slate-900 dark:text-white">Secure & Reliable</strong>
-                            <span className="text-sm text-slate-700 dark:text-slate-400">Your data is always protected</span>
+                            <span className="text-sm text-slate-600 dark:text-slate-400">Your data is always protected</span>
                         </div>
                     </li>
                 </ul>
@@ -287,7 +298,6 @@ export default function Register() {
                                         <input type="text" autoComplete="given-name" value={form.firstName} onChange={setField('firstName')} placeholder="Enter first name" required className={inputClass} />
                                     </div>
                                     <div>
-                                        {/* 🔧 FIX: Removed (optional) and added required */}
                                         <label className={labelClass}>Middle name</label>
                                         <input type="text" autoComplete="additional-name" value={form.middleName} onChange={setField('middleName')} placeholder="Enter middle name" required className={inputClass} />
                                     </div>
@@ -310,7 +320,6 @@ export default function Register() {
                                         <input type="email" autoComplete="email" value={form.email} onChange={setField('email')} placeholder="you@example.com" required className={inputClass} />
                                     </div>
 
-                                    {/* 🔧 FIX: Autocomplete University Search */}
                                     <div className="relative" ref={uniRef}>
                                         <label className={labelClass}>University</label>
                                         <div className="relative">
