@@ -68,7 +68,6 @@ export default function SettingsPage() {
         }
     }
 
-    // 🔧 FIX: Added back the reset function
     const reset = () => {
         setPrefs(DEFAULTS)
         try { localStorage.removeItem(STORAGE_KEY) } catch {}
@@ -83,7 +82,8 @@ export default function SettingsPage() {
     })()
 
     return (
-        <div className="mx-auto max-w-3xl space-y-6 pb-12 pt-4">
+        /* 👇 FIXED ALIGNMENT: Removed mx-auto max-w-3xl and pt-4 */
+        <div className="space-y-6 pb-12">
             <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Settings</h1>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Personal preferences for your staff workspace.</p>
