@@ -16,3 +16,20 @@ uniqueue-backend/data/
 *.jsx.bak
 *.js.bak
 *~
+
+# Debug dumps
+**/debug_bundle*.txt
+
+# Editor backups
+*.properties.save
+*.properties.bak
+*.jsx.bak
+*.js.bak
+*.orig
+*~
+
+# Frontend env files (values live in Vercel dashboard)
+frontend/.env
+frontend/.env.production
+frontend/.env.local
+frontend/.env.*.local

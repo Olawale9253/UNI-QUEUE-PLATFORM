@@ -1,6 +1,8 @@
 package com.uniqueeue.controller;
 
 import com.uniqueeue.dto.response.ApiResponse;
+import com.uniqueeue.ratelimit.RateKeyType;
+import com.uniqueeue.ratelimit.RateLimited;
 import com.uniqueeue.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -8,6 +10,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,6 +29,8 @@ public class FileController {
     private final FileStorageService fileStorageService;
 
     @PostMapping("/upload")
+    @PreAuthorize("hasAnyRole('USER', 'FRESHER', 'STAFF', 'ADMIN', 'SUPER_ADMIN')")
+    @RateLimited(limit = 20, windowSeconds = 3600, keyType = RateKeyType.USER, name = "file-upload")
     public ResponseEntity<?> upload(@RequestParam("file") MultipartFile file) {
         try {
             String stored = fileStorageService.store(file);

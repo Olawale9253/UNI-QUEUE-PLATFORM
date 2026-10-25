@@ -4,6 +4,8 @@ import com.uniqueeue.dto.request.BookAppointmentRequest;
 import com.uniqueeue.dto.response.ApiResponse;
 import com.uniqueeue.dto.response.AppointmentResponse;
 import com.uniqueeue.dto.response.AppointmentSlotResponse;
+import com.uniqueeue.ratelimit.RateKeyType;
+import com.uniqueeue.ratelimit.RateLimited;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.AppointmentService;
 import jakarta.validation.Valid;
@@ -33,6 +35,7 @@ public class UserAppointmentController {
     }
 
     @PostMapping("/book")
+    @RateLimited(limit = 10, windowSeconds = 3600, keyType = RateKeyType.USER, name = "appointment-book")
     public ResponseEntity<ApiResponse<AppointmentResponse>> book(
             @Valid @RequestBody BookAppointmentRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {

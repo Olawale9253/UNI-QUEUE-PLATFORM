@@ -3,6 +3,8 @@ package com.uniqueeue.controller;
 import com.uniqueeue.dto.response.ApiResponse;
 import com.uniqueeue.dto.response.StudentWorkflowResponse;
 import com.uniqueeue.dto.response.WorkflowResponse;
+import com.uniqueeue.ratelimit.RateKeyType;
+import com.uniqueeue.ratelimit.RateLimited;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.WorkflowService;
 import com.uniqueeue.dto.response.WorkflowProgressResponse;
@@ -23,7 +25,6 @@ public class UserWorkflowController {
 
     private final WorkflowService workflowService;
 
-    /** Workflows available in the student's university. */
     @GetMapping("/available")
     public ResponseEntity<ApiResponse<List<WorkflowResponse>>> available(
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -32,7 +33,6 @@ public class UserWorkflowController {
                 workflowService.listAvailableForStudent(principal.getId())));
     }
 
-    /** Student's own workflow progress entries. */
     @GetMapping
     public ResponseEntity<ApiResponse<List<StudentWorkflowResponse>>> mine(
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -49,6 +49,7 @@ public class UserWorkflowController {
     }
 
     @PostMapping("/{workflowId}/start")
+    @RateLimited(limit = 10, windowSeconds = 3600, keyType = RateKeyType.USER, name = "workflow-start")
     public ResponseEntity<ApiResponse<StudentWorkflowResponse>> start(
             @PathVariable Long workflowId,
             @AuthenticationPrincipal UserPrincipal principal) {
