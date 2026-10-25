@@ -7,3 +7,12 @@ application-prod-local.properties
 .env
 .env.local
 uniqueue-backend/data/
+
+# Debug bundles and backups — never commit
+**/debug_bundle*.txt
+*.properties.save
+*.properties.bak
+*.properties.orig
+*.jsx.bak
+*.js.bak
+*~
