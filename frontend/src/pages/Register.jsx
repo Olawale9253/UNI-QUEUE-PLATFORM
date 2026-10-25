@@ -253,7 +253,6 @@ export default function Register() {
     const showApplicationNo = mode === 'fresher' && selectedUni?.requireApplicationNumber
 
     return (
-        /* 👇 THE FIX: h-full overflow-y-auto allows mobile scrolling */
         <div className="h-full w-full overflow-y-auto bg-white dark:bg-slate-950 lg:overflow-hidden">
             <div className="flex min-h-full flex-col lg:grid lg:h-full lg:grid-cols-2">
                 <LeftPanel university={selectedUni} imageError={imageError} onImageError={() => setImageError(true)} />
@@ -313,41 +312,44 @@ export default function Register() {
                                     <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
                                 </div>
 
-                                <div className="mb-5">
-                                    <label className={labelClass}>I am a...</label>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => setMode('student')}
-                                            className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-all ${
-                                                mode === 'student'
-                                                    ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/40 dark:text-brand-300'
-                                                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
-                                            }`}
-                                        >
-                                            <User className="h-4 w-4" />
-                                            Continuing Student
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setMode('fresher')}
-                                            disabled={selectedUni ? !fresherEnabled : false}
-                                            className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-all ${
-                                                mode === 'fresher'
-                                                    ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/40 dark:text-brand-300'
-                                                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
-                                            }`}
-                                        >
-                                            <Sparkles className="h-4 w-4" />
-                                            New Student (Fresher)
-                                        </button>
+                                {/* 👇 CONDITIONAL: Only show "I am a..." if a university is selected */}
+                                {selectedUni && (
+                                    <div className="mb-5">
+                                        <label className={labelClass}>I am a...</label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setMode('student')}
+                                                className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-all ${
+                                                    mode === 'student'
+                                                        ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/40 dark:text-brand-300'
+                                                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                                                }`}
+                                            >
+                                                <User className="h-4 w-4" />
+                                                Continuing Student
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setMode('fresher')}
+                                                disabled={!fresherEnabled}
+                                                className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-all ${
+                                                    mode === 'fresher'
+                                                        ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/40 dark:text-brand-300'
+                                                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                                                }`}
+                                            >
+                                                <Sparkles className="h-4 w-4" />
+                                                New Student (Fresher)
+                                            </button>
+                                        </div>
+                                        {!fresherEnabled && (
+                                            <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">
+                                                This university has disabled fresher registration. Please register as a continuing student.
+                                            </p>
+                                        )}
                                     </div>
-                                    {selectedUni && !fresherEnabled && (
-                                        <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">
-                                            This university has disabled fresher registration. Please register as a continuing student.
-                                        </p>
-                                    )}
-                                </div>
+                                )}
 
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div>
@@ -397,34 +399,37 @@ export default function Register() {
                                         )}
                                     </div>
 
-                                    {mode === 'student' ? (
-                                        <div>
-                                            <label className={labelClass}>Matric number</label>
-                                            <input type="text" value={form.matricNumber} onChange={setField('matricNumber')} placeholder={selectedUni?.matricExample || 'Enter your matric number'} required className={inputClass} />
-                                        </div>
-                                    ) : (
-                                        <>
-                                            {showJamb && (
-                                                <div>
-                                                    <label className={labelClass}>{selectedUni?.jambRegDescription || 'JAMB registration number'}</label>
-                                                    <input type="text" value={form.jambRegNumber} onChange={setField('jambRegNumber')} placeholder={selectedUni?.jambRegExample || 'Enter JAMB registration number'} required className={inputClass} />
-                                                </div>
-                                            )}
+                                    {/* 👇 CONDITIONAL: Only show the specific ID inputs if a uni is selected */}
+                                    {selectedUni && (
+                                        mode === 'student' ? (
+                                            <div>
+                                                <label className={labelClass}>Matric number</label>
+                                                <input type="text" value={form.matricNumber} onChange={setField('matricNumber')} placeholder={selectedUni?.matricExample || 'Enter your matric number'} required className={inputClass} />
+                                            </div>
+                                        ) : (
+                                            <>
+                                                {showJamb && (
+                                                    <div>
+                                                        <label className={labelClass}>{selectedUni?.jambRegDescription || 'JAMB registration number'}</label>
+                                                        <input type="text" value={form.jambRegNumber} onChange={setField('jambRegNumber')} placeholder={selectedUni?.jambRegExample || 'Enter JAMB registration number'} required className={inputClass} />
+                                                    </div>
+                                                )}
 
-                                            {showAdmissionRef && (
-                                                <div>
-                                                    <label className={labelClass}>{selectedUni?.admissionRefDescription || 'Admission reference number'}</label>
-                                                    <input type="text" value={form.admissionRef} onChange={setField('admissionRef')} placeholder={selectedUni?.admissionRefExample || 'Enter admission reference'} required className={inputClass} />
-                                                </div>
-                                            )}
+                                                {showAdmissionRef && (
+                                                    <div>
+                                                        <label className={labelClass}>{selectedUni?.admissionRefDescription || 'Admission reference number'}</label>
+                                                        <input type="text" value={form.admissionRef} onChange={setField('admissionRef')} placeholder={selectedUni?.admissionRefExample || 'Enter admission reference'} required className={inputClass} />
+                                                    </div>
+                                                )}
 
-                                            {showApplicationNo && (
-                                                <div>
-                                                    <label className={labelClass}>{selectedUni?.applicationNumberDescription || 'Application number'}</label>
-                                                    <input type="text" value={form.applicationNumber} onChange={setField('applicationNumber')} placeholder={selectedUni?.applicationNumberExample || 'Enter application number'} required className={inputClass} />
-                                                </div>
-                                            )}
-                                        </>
+                                                {showApplicationNo && (
+                                                    <div>
+                                                        <label className={labelClass}>{selectedUni?.applicationNumberDescription || 'Application number'}</label>
+                                                        <input type="text" value={form.applicationNumber} onChange={setField('applicationNumber')} placeholder={selectedUni?.applicationNumberExample || 'Enter application number'} required className={inputClass} />
+                                                    </div>
+                                                )}
+                                            </>
+                                        )
                                     )}
 
                                     <div>
