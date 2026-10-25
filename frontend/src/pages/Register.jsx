@@ -260,25 +260,21 @@ export default function Register() {
                 <div className="flex w-full items-start justify-center bg-white px-6 py-10 dark:bg-slate-950 sm:px-12 lg:h-full lg:overflow-y-auto lg:py-12">
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }} className="w-full max-w-[600px]">
 
-                        {/* 👇 ADDED: Mobile Logo & Sign In row */}
-                        <div className="mb-8 flex w-full items-center justify-between lg:justify-end">
-                            {/* Mobile-only Logo */}
-                            <Link to="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80 lg:hidden">
-                                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-brand-600 text-white">
-                                    <Logo size={20} variant="icon" />
+                        {/* 👇 Mobile-only Logo with Subtitle */}
+                        <div className="mb-8 flex w-full items-center justify-between lg:hidden">
+                            <Link to="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand-600 text-white">
+                                    <Logo size={22} variant="icon" />
                                 </div>
-                                <div className="text-sm font-bold uppercase tracking-tight text-slate-900 dark:text-white">
-                                    UniQueue
+                                <div>
+                                    <div className="text-sm font-extrabold uppercase tracking-tight text-slate-900 dark:text-white">
+                                        UniQueue
+                                    </div>
+                                    <div className="text-[9px] font-semibold uppercase tracking-[0.15em] text-slate-600 dark:text-slate-400">
+                                        Digital Queue System
+                                    </div>
                                 </div>
                             </Link>
-
-                            {/* Sign in Link */}
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                                Already have an account?{' '}
-                                <Link to="/login" className="font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400">
-                                    Sign in
-                                </Link>
-                            </p>
                         </div>
 
                         <div className="mb-8">
@@ -477,6 +473,26 @@ export default function Register() {
                                 )}
                             </button>
                         </form>
+
+                        {/* 👇 PREMIUM BOTTOM SECTION FOR SIGN IN */}
+                        <div className="mt-8">
+                            <div className="mb-6 flex items-center">
+                                <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
+                                <span className="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                    Already have an account?
+                                </span>
+                                <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
+                            </div>
+
+                            <Link
+                                to="/login"
+                                className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white py-3.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:text-brand-400 dark:hover:bg-slate-700"
+                            >
+                                Sign in instead
+                                <ArrowRight className="h-4 w-4 text-brand-400" />
+                            </Link>
+                        </div>
+
                     </motion.div>
                 </div>
             </div>
