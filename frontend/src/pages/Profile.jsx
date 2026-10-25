@@ -1,22 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-    ArrowLeft,
-    User as UserIcon,
-    Mail,
-    Building2,
-    Shield,
-    Lock,
-    Check,
-    AlertCircle,
-    Eye,
-    EyeOff,
-    GraduationCap,
-    ArrowRight,
-    ShieldCheck,
-    BellRing,
-    CheckCircle2,
+    ArrowLeft, User as UserIcon, Mail, Building2, Shield, Lock,
+    Check, AlertCircle, Eye, EyeOff, GraduationCap, ArrowRight,
+    ShieldCheck, BellRing, CheckCircle2,
 } from 'lucide-react'
 import api from '../api/axios'
 import Card from '../components/ui/Card'
@@ -47,9 +35,6 @@ const ROLE_VARIANTS = {
     FRESHER: 'info',
 }
 
-/**
- * Push-notification copy varies by role.
- */
 function getNotificationCopy(role) {
     switch (role) {
         case 'SUPER_ADMIN':
@@ -81,10 +66,6 @@ function getNotificationCopy(role) {
     }
 }
 
-/**
- * Returns the status text below "Push notifications" — either the role's
- * generic state, or a specific reason the browser can't do push.
- */
 function getPushStatusText(webPush, notifications) {
     if (webPush.subscription) return notifications.active
 
@@ -110,7 +91,6 @@ function getPushStatusText(webPush, notifications) {
     return notifications.off
 }
 
-// ── Reusable password input with show/hide toggle ──
 function PasswordField({ label, value, onChange, placeholder, autoComplete }) {
     const [show, setShow] = useState(false)
     return (
@@ -147,6 +127,16 @@ export default function Profile() {
     const { push } = useToastStore()
     const webPush = useWebPush()
     const navigate = useNavigate()
+    const location = useLocation()
+
+    // 👇 Detect if we're inside a dashboard (sidebar present) or standalone
+    const isInDashboard = /^\/(student|staff|admin|super-admin)\//.test(location.pathname)
+
+    // Dashboard: rely on parent's padding/max-width, just stack
+    // Standalone: provide our own scroll + padding
+    const wrapperClass = isInDashboard
+        ? 'space-y-6 pb-12'
+        : 'h-full w-full overflow-y-auto bg-slate-50 px-4 py-8 dark:bg-slate-950 sm:px-6 lg:px-8'
 
     const [profile, setProfile] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -185,7 +175,6 @@ export default function Profile() {
     }
     const backHref = dashboards[role] || '/'
 
-    // ── Load profile ──
     const load = async () => {
         try {
             const res = await api.get('/api/profile')
@@ -234,7 +223,6 @@ export default function Profile() {
         }
     }
 
-    // ── Fresher → Student upgrade ──
     const upgradeToStudent = async (eventValue) => {
         eventValue.preventDefault()
         if (!matricInput.trim()) {
@@ -271,13 +259,10 @@ export default function Profile() {
                 currentPassword: passwordForm.currentPassword,
                 newPassword: passwordForm.newPassword,
             })
-
-            // Backend returns fresh tokens because it bumped tokenVersion.
             const dateValue = res.data?.data
             if (dateValue?.accessToken) {
                 useAuthStore.getState().updateTokens(dateValue.accessToken, dateValue.refreshToken)
             }
-
             push({ type: 'success', message: 'Password changed successfully' })
             setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
         } catch (err) {
@@ -311,14 +296,10 @@ export default function Profile() {
     // ── Loading state ──
     if (loading) {
         return (
-            <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+            <div className={wrapperClass}>
                 <div className="mb-6 h-8 w-32 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
-                <Card className="mb-6">
-                    <SkeletonRow />
-                </Card>
-                <Card className="mb-6">
-                    <SkeletonRow />
-                </Card>
+                <Card className="mb-6"><SkeletonRow /></Card>
+                <Card className="mb-6"><SkeletonRow /></Card>
             </div>
         )
     }
@@ -326,7 +307,7 @@ export default function Profile() {
     // ── Error state ──
     if (loadError) {
         return (
-            <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+            <div className={wrapperClass}>
                 <button
                     onClick={() => navigate(backHref)}
                     className="mb-6 -ml-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
@@ -348,8 +329,7 @@ export default function Profile() {
     }
 
     return (
-        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-            {/* ───── Back button ───── */}
+        <div className={wrapperClass}>
             <button
                 onClick={() => navigate(backHref)}
                 className="mb-6 -ml-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
@@ -358,7 +338,7 @@ export default function Profile() {
                 Back to dashboard
             </button>
 
-            {/* ───── HEADER ───── */}
+            {/* HEADER */}
             <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -366,7 +346,6 @@ export default function Profile() {
             >
                 <Card className="mb-6 overflow-hidden">
                     <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
-                        {/* ⬅️ SQUIRCLE LOGO CONTAINER */}
                         <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
                             {profile?.universityLogoUrl ? (
                                 <img
@@ -398,15 +377,15 @@ export default function Profile() {
 
                                 {!isSuperAdmin && profile?.universityName && (
                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                    <Building2 className="h-3 w-3 text-slate-400" />
+                                        <Building2 className="h-3 w-3 text-slate-400" />
                                         {profile.universityName}
-                  </span>
+                                    </span>
                                 )}
 
                                 {isStudent && profile?.matricNumber && (
                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 font-mono text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                    {profile.matricNumber}
-                  </span>
+                                        {profile.matricNumber}
+                                    </span>
                                 )}
                             </div>
                         </div>
@@ -414,7 +393,7 @@ export default function Profile() {
                 </Card>
             </motion.div>
 
-            {/* ───── FRESHER UPGRADE CARD ───── */}
+            {/* FRESHER UPGRADE CARD */}
             {isFresher && profile?.canUpgrade && (
                 <motion.div
                     initial={{ opacity: 0, y: 8 }}
@@ -483,7 +462,7 @@ export default function Profile() {
                 </motion.div>
             )}
 
-            {/* ───── LOGIN & SECURITY ───── */}
+            {/* LOGIN & SECURITY */}
             <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -532,7 +511,7 @@ export default function Profile() {
                 </Card>
             </motion.div>
 
-            {/* ───── NOTIFICATIONS — role-aware ───── */}
+            {/* NOTIFICATIONS */}
             <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -606,7 +585,7 @@ export default function Profile() {
                 </Card>
             </motion.div>
 
-            {/* ───── PERSONAL INFO ───── */}
+            {/* PERSONAL INFO */}
             <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -689,7 +668,7 @@ export default function Profile() {
                 </Card>
             </motion.div>
 
-            {/* ───── PASSWORD ───── */}
+            {/* PASSWORD */}
             <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -760,7 +739,6 @@ export default function Profile() {
                         </div>
                     </form>
 
-                    {/* ───── SIGN OUT ALL DEVICES ───── */}
                     <div className="mt-6 border-t border-slate-100 pt-5 dark:border-slate-800">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="min-w-0">
@@ -778,7 +756,7 @@ export default function Profile() {
                 </Card>
             </motion.div>
 
-            {/* ───── EMAIL CHANGE MODAL ───── */}
+            {/* EMAIL CHANGE MODAL */}
             <AnimatePresence>
                 {showEmailModal && (
                     <ChangeEmailModal
