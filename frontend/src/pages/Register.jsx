@@ -50,8 +50,7 @@ function LeftPanel({ university, imageError, onImageError }) {
 
             <div className="relative z-10 flex flex-col h-full">
                 <div>
-                    {/* 👇 ADDED: Wrapped the logo in a Link to navigate home */}
-                    <Link to="/" className="flex items-center gap-3 w-fit transition-opacity hover:opacity-80">
+                    <Link to="/" className="flex w-fit items-center gap-3 transition-opacity hover:opacity-80">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
                             {logoUrl ? (
                                 <img src={logoUrl} alt={brandName} className="h-full w-full object-contain p-1" onError={(e) => { e.target.style.display = 'none' }} />
@@ -261,11 +260,23 @@ export default function Register() {
                 <div className="flex w-full items-start justify-center bg-white px-6 py-10 dark:bg-slate-950 sm:px-12 lg:h-full lg:overflow-y-auto lg:py-12">
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }} className="w-full max-w-[600px]">
 
-                        <div className="mb-8 flex items-center justify-between">
-                            <p className="ml-auto text-sm text-slate-500 dark:text-slate-400">
+                        {/* 👇 ADDED: Mobile Logo & Sign In row */}
+                        <div className="mb-8 flex w-full items-center justify-between lg:justify-end">
+                            {/* Mobile-only Logo */}
+                            <Link to="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80 lg:hidden">
+                                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-brand-600 text-white">
+                                    <Logo size={20} variant="icon" />
+                                </div>
+                                <div className="text-sm font-bold uppercase tracking-tight text-slate-900 dark:text-white">
+                                    UniQueue
+                                </div>
+                            </Link>
+
+                            {/* Sign in Link */}
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
                                 Already have an account?{' '}
                                 <Link to="/login" className="font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400">
-                                    Sign in <ArrowRight className="inline h-3.5 w-3.5" />
+                                    Sign in
                                 </Link>
                             </p>
                         </div>
