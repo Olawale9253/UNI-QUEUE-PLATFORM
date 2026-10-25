@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
     Building2, Palette, Save, GraduationCap, Users, RefreshCw,
     Sparkles, FileText, Hash, CalendarX, Globe,
@@ -41,6 +42,7 @@ const COUNTRIES = [
 ]
 
 export default function Settings() {
+    const navigate = useNavigate() // 👈 ADDED
     const { push } = useToastStore()
     const { refresh: refreshUniversity } = useUniversityStore()
     const [loading, setLoading] = useState(true)
@@ -116,9 +118,10 @@ export default function Settings() {
                 maxStaff: Number(form.maxStaff),
                 maxQueues: Number(form.maxQueues),
             })
-            push({ type: 'success', message: 'Settings saved' })
+            push({ type: 'success', message: 'Settings saved successfully' })
             refreshUniversity()
             await load()
+            navigate('/admin') // 👈 ADDED: Redirect to admin home after save
         } catch (err) {
             push({ type: 'error', message: err.message || 'Failed to save' })
         } finally {
@@ -324,7 +327,6 @@ export default function Settings() {
                         <Input label="Matric format description" value={form.matricDescription} onChange={setField('matricDescription')} placeholder="YY/XXXXX/XXX" />
                     </div>
 
-                    {/* NEW — matric verification mode */}
                     <div className="mt-5 rounded-lg border border-slate-200 p-4">
                         <label className="mb-2 block text-sm font-medium text-slate-900">
                             Matric verification mode
