@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useUniversityStore } from '../../store/universityStore'
 
 // ─── Color math ────────────────────────────────────────────────
-// Convert hex → { r, g, b } in 0-255
 function hexToRgb(hex) {
     const hexValue = hex.replace('#', '')
     const full = hexValue.length === 3 ? hexValue.split('').map((character) => character + character).join('') : hexValue
@@ -10,13 +9,11 @@ function hexToRgb(hex) {
     return { r: (int >> 16) & 255, g: (int >> 8) & 255, b: int & 255 }
 }
 
-// { r, g, b } → hex
 function rgbToHex(result, group, secondValue) {
     const toHex = (value) => Math.round(Math.max(0, Math.min(255, value))).toString(16).padStart(2, '0')
     return `#${toHex(result)}${toHex(group)}${toHex(secondValue)}`
 }
 
-// Mix color toward white (amount 0..1) or toward black (amount -1..0)
 function mix(color, target, amount) {
     const character = hexToRgb(color)
     const token = target === 'white' ? { r: 255, g: 255, b: 255 } : { r: 0, g: 0, b: 0 }
@@ -28,7 +25,6 @@ function mix(color, target, amount) {
     )
 }
 
-// Generate a Tailwind-like 50..950 scale from a single base color
 function generateShades(base) {
     return {
         50:  mix(base, 'white', 0.95),
@@ -49,6 +45,7 @@ function generateShades(base) {
 export default function ThemeProvider({ children }) {
     const { university } = useUniversityStore()
 
+    // 1. Apply University Brand Colors
     useEffect(() => {
         const base = university?.primaryColor || '#4f46e5'
         const shades = generateShades(base)
@@ -58,6 +55,42 @@ export default function ThemeProvider({ children }) {
             root.style.setProperty(`--color-brand-${key}`, value)
         })
     }, [university?.primaryColor])
+
+    // 2. Apply System Dark Mode
+    useEffect(() => {
+        const root = document.documentElement
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+
+        const applyTheme = () => {
+            const savedTheme = localStorage.getItem('theme')
+
+            if (savedTheme === 'dark') {
+                root.classList.add('dark')
+            } else if (savedTheme === 'light') {
+                root.classList.remove('dark')
+            } else {
+                // If no manual toggle has been clicked, follow the mobile OS theme
+                if (mediaQuery.matches) {
+                    root.classList.add('dark')
+                } else {
+                    root.classList.remove('dark')
+                }
+            }
+        }
+
+        // Apply immediately on load
+        applyTheme()
+
+        // Listen for changes if the user's phone switches to dark mode at sunset
+        const handleChange = () => {
+            if (!localStorage.getItem('theme')) {
+                applyTheme()
+            }
+        }
+
+        mediaQuery.addEventListener('change', handleChange)
+        return () => mediaQuery.removeEventListener('change', handleChange)
+    }, [])
 
     return children
 }

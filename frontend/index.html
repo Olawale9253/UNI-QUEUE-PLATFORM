@@ -14,6 +14,21 @@
   />
   <meta name="description" content="UniQueue — Multi-tenant queue management for universities" />
   <meta name="theme-color" content="#4f46e5" />
+  <meta name="color-scheme" content="light dark" />
+
+  <!-- Prevent flash of light mode before React mounts -->
+  <script>
+    (function () {
+      try {
+        var savedTheme = localStorage.getItem('theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
+
   <title>UniQueue</title>
 </head>
 <body>
