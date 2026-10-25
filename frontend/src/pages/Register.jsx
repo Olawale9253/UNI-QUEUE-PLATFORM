@@ -31,7 +31,7 @@ function LeftPanel({ university, imageError, onImageError }) {
     const brandName = university?.name || 'UniQueue'
 
     return (
-        <div className="relative hidden h-full min-h-screen flex-col justify-between overflow-hidden bg-[#eef2ff] p-10 dark:bg-slate-950 lg:flex">
+        <div className="relative hidden h-full min-h-screen flex-col overflow-hidden bg-[#eef2ff] p-10 dark:bg-slate-950 lg:flex">
             {/* Background Image & Gradients */}
             <div className="absolute inset-0 z-0">
                 <motion.img
@@ -43,17 +43,15 @@ function LeftPanel({ university, imageError, onImageError }) {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 1.2, ease }}
                     onError={onImageError}
-                    className="absolute bottom-0 left-0 h-[60%] w-full object-cover object-top"
+                    className="absolute bottom-0 left-0 h-[55%] w-full object-cover object-top"
                     draggable={false}
                 />
-                {/* Gradient for the top text */}
-                <div className="absolute inset-0 bg-gradient-to-b from-[#eef2ff] via-[#eef2ff] to-transparent to-[60%] dark:from-slate-950 dark:via-slate-950 dark:to-transparent" />
-                {/* Darker gradient at the bottom so the white text pops without containers */}
-                <div className="absolute inset-x-0 bottom-0 h-[70%] bg-gradient-to-t from-[#0f172a] via-[#0f172a]/70 to-transparent" />
+                {/* Gradient blends the image into the top background so text is cleanly readable */}
+                <div className="absolute inset-0 bg-gradient-to-b from-[#eef2ff] via-[#eef2ff] to-transparent to-[65%] dark:from-slate-950 dark:via-slate-950 dark:to-transparent" />
             </div>
 
-            <div className="relative z-10 flex flex-col h-full justify-between">
-                {/* TOP SECTION: Logo + Hero Text grouped together */}
+            <div className="relative z-10 flex flex-col h-full">
+                {/* TOP SECTION: Logo + Hero Text + Features grouped together */}
                 <div>
                     {/* Logo */}
                     <div className="flex items-center gap-3">
@@ -75,38 +73,38 @@ function LeftPanel({ university, imageError, onImageError }) {
                     </div>
 
                     {/* Hero Text */}
-                    <div className="mt-16 max-w-md">
+                    <div className="mt-14 max-w-md">
                         <h2 className="text-4xl font-extrabold leading-[1.15] tracking-tight text-[#0f172a] dark:text-white">
                             Your University<br />
                             <span className="text-brand-600 dark:text-brand-400">Queue, Made Simple</span>
                         </h2>
-                        <p className="mt-5 max-w-sm text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                        <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-700 dark:text-slate-300">
                             Join the university community and enjoy a faster, easier and more organized queue experience.
                         </p>
                     </div>
-                </div>
 
-                {/* BOTTOM SECTION: Clean Text List, perfectly aligned to the left */}
-                <ul className="relative z-10 mt-auto space-y-6 pb-2">
-                    <li className="flex items-start gap-4">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20 text-white backdrop-blur-sm ring-1 ring-white/30 shadow-sm">
-                            <Zap className="h-5 w-5" />
-                        </span>
-                        <div>
-                            <strong className="block text-sm font-bold text-white">Quick Access</strong>
-                            <span className="text-sm text-slate-300">Skip long lines and save time</span>
-                        </div>
-                    </li>
-                    <li className="flex items-start gap-4">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20 text-white backdrop-blur-sm ring-1 ring-white/30 shadow-sm">
-                            <ShieldCheck className="h-5 w-5" />
-                        </span>
-                        <div>
-                            <strong className="block text-sm font-bold text-white">Secure & Reliable</strong>
-                            <span className="text-sm text-slate-300">Your data is always protected</span>
-                        </div>
-                    </li>
-                </ul>
+                    {/* Feature List - Moved UP to sit on the solid background */}
+                    <ul className="mt-10 space-y-5">
+                        <li className="flex items-start gap-4">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100 dark:bg-slate-800 dark:ring-slate-700 dark:text-brand-400">
+                                <Zap className="h-5 w-5" />
+                            </span>
+                            <div>
+                                <strong className="block text-sm font-bold text-slate-900 dark:text-white">Quick Access</strong>
+                                <span className="text-sm text-slate-700 dark:text-slate-400">Skip long lines and save time</span>
+                            </div>
+                        </li>
+                        <li className="flex items-start gap-4">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-600 shadow-sm ring-1 ring-slate-100 dark:bg-slate-800 dark:ring-slate-700 dark:text-brand-400">
+                                <ShieldCheck className="h-5 w-5" />
+                            </span>
+                            <div>
+                                <strong className="block text-sm font-bold text-slate-900 dark:text-white">Secure & Reliable</strong>
+                                <span className="text-sm text-slate-700 dark:text-slate-400">Your data is always protected</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     )
