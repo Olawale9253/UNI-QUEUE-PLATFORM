@@ -300,7 +300,6 @@ export default function StudentWorkflowProgress() {
         if (!data?.enrollmentId) return
         setCancelling(true)
         try {
-            // FIXED: Correct endpoint is /api/user/workflows/{id}/abandon
             await api.post(`/api/user/workflows/${data.enrollmentId}/abandon`)
             push({ type: 'success', message: 'Workflow cancelled successfully.' })
             setShowCancelConfirm(false)
@@ -314,7 +313,7 @@ export default function StudentWorkflowProgress() {
 
     if (loading) {
         return (
-            <div className="mx-auto w-full max-w-2xl px-4 py-6 sm:px-6">
+            <div className="space-y-4 pb-12">
                 <Skeleton />
             </div>
         )
@@ -322,7 +321,7 @@ export default function StudentWorkflowProgress() {
 
     if (error === 'NONE') {
         return (
-            <div className="mx-auto w-full max-w-2xl px-4 py-6 sm:px-6">
+            <div className="space-y-4 pb-12">
                 <EmptyState message="You are not enrolled in a clearance workflow yet." />
             </div>
         )
@@ -330,7 +329,7 @@ export default function StudentWorkflowProgress() {
 
     if (error) {
         return (
-            <div className="mx-auto w-full max-w-2xl px-4 py-6 sm:px-6">
+            <div className="space-y-4 pb-12">
                 <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-8 text-center dark:border-rose-900 dark:bg-rose-950/20">
                     <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-rose-500" />
                     <p className="text-sm font-medium text-rose-800 dark:text-rose-300">
@@ -349,7 +348,7 @@ export default function StudentWorkflowProgress() {
     }
 
     return (
-        <div className="mx-auto w-full max-w-2xl space-y-4 px-4 py-6 sm:px-6">
+        <div className="space-y-4 pb-12">
             <Link
                 to="/student/workflows"
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400"
