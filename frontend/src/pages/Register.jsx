@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-    ArrowRight, Loader2, Eye, EyeOff,
+    Loader2, Eye, EyeOff,
     ShieldCheck, GraduationCap, Zap, Search, Check, Sparkles, User
 } from 'lucide-react'
 import api from '../api/axios'
@@ -260,7 +260,6 @@ export default function Register() {
                 <div className="flex w-full items-start justify-center bg-white px-6 py-10 dark:bg-slate-950 sm:px-12 lg:h-full lg:overflow-y-auto lg:py-12">
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }} className="w-full max-w-[600px]">
 
-                        {/* 👇 Mobile-only Logo with Subtitle */}
                         <div className="mb-8 flex w-full items-center justify-between lg:hidden">
                             <Link to="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand-600 text-white">
@@ -466,15 +465,11 @@ export default function Register() {
                                         Creating account…
                                     </>
                                 ) : (
-                                    <>
-                                        Create account
-
-                                    </>
+                                    'Create account'
                                 )}
                             </button>
                         </form>
 
-                        {/* 👇 PREMIUM BOTTOM SECTION FOR SIGN IN */}
                         <div className="mt-8">
                             <div className="mb-6 flex items-center">
                                 <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
@@ -488,8 +483,7 @@ export default function Register() {
                                 to="/login"
                                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white py-3.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:text-brand-400 dark:hover:bg-slate-700"
                             >
-                                Sign in
-
+                                Sign in instead
                             </Link>
                         </div>
 

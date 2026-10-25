@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
-    ArrowRight, ChevronLeft, ChevronRight, Sparkles, Users, Building2,
+    ChevronLeft, ChevronRight, Sparkles, Users, Building2,
     ShieldCheck, Bell, LineChart, Route as RouteIcon, Ticket,
     GraduationCap, CheckCircle2, Activity, UserPlus, ClipboardList, BadgeCheck,
 } from 'lucide-react'
@@ -244,7 +244,6 @@ function HeroCarousel() {
                                             className="group inline-flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 text-sm font-bold text-slate-900 shadow-xl transition-all hover:bg-slate-50 hover:scale-105"
                                         >
                                             {dashboardHref ? 'Go to dashboard' : item.cta.label}
-                                            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                                         </Link>
                                         {item.ctaSecondary && (
                                             <Link
@@ -522,7 +521,6 @@ function FinalCTA() {
                         className="group inline-flex items-center gap-2 rounded-xl bg-brand-600 px-8 py-4 text-sm font-bold text-white shadow-lg shadow-brand-600/30 transition-all hover:bg-brand-700 hover:scale-105"
                     >
                         {dashboardHref ? 'Go to dashboard' : 'Get started free'}
-                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </Link>
                 </div>
 
@@ -547,7 +545,6 @@ function FinalCTA() {
 
 export default function Home() {
     return (
-        /* 👇 THE FIX: 'h-full overflow-y-auto' allows this page to scroll independently */
         <div className="h-full overflow-y-auto bg-white dark:bg-slate-950">
             <HeroCarousel />
             <Features />

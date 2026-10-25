@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-    ArrowRight, Loader2, Eye, EyeOff,
+    Loader2, Eye, EyeOff,
     ShieldCheck, Users, Zap, MapPin, Lock
 } from 'lucide-react'
 import api from '../api/axios'
@@ -28,7 +28,6 @@ function LeftPanel({ brand, imageError, onImageError }) {
     return (
         <div className="relative hidden h-full min-h-screen flex-col justify-between overflow-hidden bg-[#eef2ff] p-10 dark:bg-slate-950 lg:flex">
 
-            {/* Background Image & Overlays */}
             <div className="absolute inset-0 z-0">
                 <motion.img
                     key={backgroundSrc}
@@ -43,15 +42,10 @@ function LeftPanel({ brand, imageError, onImageError }) {
                     draggable={false}
                 />
 
-                {/* 1. Top blend: Keeps text area solid light blue (or dark slate), fades to transparent */}
                 <div className="absolute inset-0 bg-gradient-to-b from-[#eef2ff] via-[#eef2ff] to-transparent to-[75%] dark:from-slate-950 dark:via-slate-950" />
-
-                {/* 2. Bottom darken: Makes the footer text readable */}
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#0f172a]/80 via-[#0f172a]/20 to-transparent" />
             </div>
 
-            {/* Top: Logo */}
-            {/* 👇 ADDED: Wrapped in Link to navigate home */}
             <Link to="/" className="relative z-10 flex w-fit items-center gap-3 transition-opacity hover:opacity-80">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
                     {brand.logoUrl ? (
@@ -75,7 +69,6 @@ function LeftPanel({ brand, imageError, onImageError }) {
                 </div>
             </Link>
 
-            {/* Middle: Features */}
             <div className="relative z-10 max-w-md pt-8">
                 <h2 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-[#0f172a] dark:text-white">
                     Welcome back.<br />
@@ -117,7 +110,6 @@ function LeftPanel({ brand, imageError, onImageError }) {
                 </ul>
             </div>
 
-            {/* Bottom: Footer */}
             <div className="relative z-10 pt-10">
                 <div className="flex items-center gap-2 text-xs font-medium text-white drop-shadow-md">
                     <MapPin className="h-4 w-4" />
@@ -237,7 +229,6 @@ export default function Login() {
             return
         }
 
-        // 🔧 FIX: Check if the error is related to an unverified account
         const msg = (res.error || '').toLowerCase()
         if (
             msg.includes('not verified') ||
@@ -247,7 +238,6 @@ export default function Login() {
             msg.includes('activate')
         ) {
             push({ type: 'info', message: 'Please verify your email to continue.' })
-            // Redirect immediately to the verification page, passing the email
             navigate('/verify-email', { state: { email: email.trim() } })
             return
         }
@@ -268,7 +258,6 @@ export default function Login() {
     const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300'
 
     return (
-        /* 👇 THE FIX: h-full w-full overflow-y-auto allows mobile scrolling */
         <div className="h-full w-full overflow-y-auto bg-white dark:bg-slate-950 lg:overflow-hidden">
             <div className="flex min-h-full flex-col lg:grid lg:h-full lg:grid-cols-2">
 
@@ -286,7 +275,6 @@ export default function Login() {
                         className="w-full max-w-[420px] mt-10 sm:mt-20"
                     >
 
-                        {/* 👇 ADDED: Wrapped Mobile Logo in Link to navigate home */}
                         <Link to="/" className="mb-8 flex w-fit items-center gap-2.5 transition-opacity hover:opacity-80 lg:hidden">
                             <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-brand-600 text-white">
                                 <Logo size={20} variant="icon" />
@@ -369,9 +357,7 @@ export default function Login() {
                                         Signing in…
                                     </>
                                 ) : (
-                                    <>
-                                        Sign in
-                                    </>
+                                    'Sign in'
                                 )}
                             </button>
 
