@@ -162,9 +162,9 @@ export default function HistoryTab() {
                 </p>
             </div>
 
-            {/* Sticky Toolbar */}
+            {/* Sticky Toolbar - REMOVED negative margins to prevent clipping */}
             {tickets.length > 0 && (
-                <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-4 bg-white px-3 pb-3 pt-4 dark:bg-slate-900 sm:-mx-5 sm:-mt-6 sm:px-5 sm:pt-6 sm:pb-4 lg:-mx-8 lg:-mt-8 lg:px-8 lg:pt-8 lg:pb-4">
+                <div className="sticky top-0 z-20 -mx-3 bg-white/95 px-3 py-3 backdrop-blur-sm dark:bg-slate-900/95 sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8 border-b border-slate-200 dark:border-slate-800">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="w-full max-w-sm">
                             <div className="relative">
