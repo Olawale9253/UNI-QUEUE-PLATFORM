@@ -161,6 +161,7 @@ export default function Register() {
         return universities.filter(u => u.name.toLowerCase().includes(uniSearch.toLowerCase()))
     }, [universities, uniSearch])
 
+    // Derive selectedUni safely
     const selectedUni = useMemo(
         () => universities.find((u) => String(u.id) === String(form.universityId)) || null,
         [universities, form.universityId]
@@ -319,44 +320,6 @@ export default function Register() {
                                     <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
                                 </div>
 
-                                {selectedUni && (
-                                    <div className="mb-5">
-                                        <label className={labelClass}>I am a...</label>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <button
-                                                type="button"
-                                                onClick={() => setMode('student')}
-                                                className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-all ${
-                                                    mode === 'student'
-                                                        ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/40 dark:text-brand-300'
-                                                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
-                                                }`}
-                                            >
-                                                <User className="h-4 w-4" />
-                                                Continuing Student
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setMode('fresher')}
-                                                disabled={!fresherEnabled}
-                                                className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-all ${
-                                                    mode === 'fresher'
-                                                        ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/40 dark:text-brand-300'
-                                                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
-                                                }`}
-                                            >
-                                                <Sparkles className="h-4 w-4" />
-                                                New Student (Fresher)
-                                            </button>
-                                        </div>
-                                        {!fresherEnabled && (
-                                            <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">
-                                                This university has disabled fresher registration. Please register as a continuing student.
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
-
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div>
                                         <label className={labelClass}>Email address</label>
@@ -404,39 +367,86 @@ export default function Register() {
                                             </div>
                                         )}
                                     </div>
+                                </div>
 
-                                    {selectedUni && (
-                                        mode === 'student' ? (
-                                            <div>
-                                                <label className={labelClass}>Matric number</label>
-                                                <input type="text" value={form.matricNumber} onChange={setField('matricNumber')} placeholder={selectedUni?.matricExample || 'Enter your matric number'} required className={inputClass} />
+                                {/* 👇 THIS ENTIRE BLOCK IS NOW HIDDEN UNTIL A UNIVERSITY IS SELECTED */}
+                                {selectedUni && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        className="overflow-hidden"
+                                    >
+                                        <div className="mt-5 mb-5 border-t border-slate-100 pt-5 dark:border-slate-800">
+                                            <label className={labelClass}>I am a...</label>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setMode('student')}
+                                                    className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-all ${
+                                                        mode === 'student'
+                                                            ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/40 dark:text-brand-300'
+                                                            : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                                                    }`}
+                                                >
+                                                    <User className="h-4 w-4" />
+                                                    Continuing Student
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setMode('fresher')}
+                                                    disabled={!fresherEnabled}
+                                                    className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-all ${
+                                                        mode === 'fresher'
+                                                            ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/40 dark:text-brand-300'
+                                                            : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                                                    }`}
+                                                >
+                                                    <Sparkles className="h-4 w-4" />
+                                                    New Student (Fresher)
+                                                </button>
                                             </div>
-                                        ) : (
-                                            <>
-                                                {showJamb && (
-                                                    <div>
-                                                        <label className={labelClass}>{selectedUni?.jambRegDescription || 'JAMB registration number'}</label>
-                                                        <input type="text" value={form.jambRegNumber} onChange={setField('jambRegNumber')} placeholder={selectedUni?.jambRegExample || 'Enter JAMB registration number'} required className={inputClass} />
-                                                    </div>
-                                                )}
+                                            {!fresherEnabled && (
+                                                <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">
+                                                    This university has disabled fresher registration. Please register as a continuing student.
+                                                </p>
+                                            )}
+                                        </div>
 
-                                                {showAdmissionRef && (
-                                                    <div>
-                                                        <label className={labelClass}>{selectedUni?.admissionRefDescription || 'Admission reference number'}</label>
-                                                        <input type="text" value={form.admissionRef} onChange={setField('admissionRef')} placeholder={selectedUni?.admissionRefExample || 'Enter admission reference'} required className={inputClass} />
-                                                    </div>
-                                                )}
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mb-4">
+                                            {mode === 'student' ? (
+                                                <div>
+                                                    <label className={labelClass}>Matric number</label>
+                                                    <input type="text" value={form.matricNumber} onChange={setField('matricNumber')} placeholder={selectedUni?.matricExample || 'Enter your matric number'} required className={inputClass} />
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    {showJamb && (
+                                                        <div>
+                                                            <label className={labelClass}>{selectedUni?.jambRegDescription || 'JAMB registration number'}</label>
+                                                            <input type="text" value={form.jambRegNumber} onChange={setField('jambRegNumber')} placeholder={selectedUni?.jambRegExample || 'Enter JAMB registration number'} required className={inputClass} />
+                                                        </div>
+                                                    )}
 
-                                                {showApplicationNo && (
-                                                    <div>
-                                                        <label className={labelClass}>{selectedUni?.applicationNumberDescription || 'Application number'}</label>
-                                                        <input type="text" value={form.applicationNumber} onChange={setField('applicationNumber')} placeholder={selectedUni?.applicationNumberExample || 'Enter application number'} required className={inputClass} />
-                                                    </div>
-                                                )}
-                                            </>
-                                        )
-                                    )}
+                                                    {showAdmissionRef && (
+                                                        <div>
+                                                            <label className={labelClass}>{selectedUni?.admissionRefDescription || 'Admission reference number'}</label>
+                                                            <input type="text" value={form.admissionRef} onChange={setField('admissionRef')} placeholder={selectedUni?.admissionRefExample || 'Enter admission reference'} required className={inputClass} />
+                                                        </div>
+                                                    )}
 
+                                                    {showApplicationNo && (
+                                                        <div>
+                                                            <label className={labelClass}>{selectedUni?.applicationNumberDescription || 'Application number'}</label>
+                                                            <input type="text" value={form.applicationNumber} onChange={setField('applicationNumber')} placeholder={selectedUni?.applicationNumberExample || 'Enter application number'} required className={inputClass} />
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                )}
+
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mt-4">
                                     <div>
                                         <label className={labelClass}>Password</label>
                                         <div className="relative">
@@ -483,7 +493,7 @@ export default function Register() {
                                 to="/login"
                                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white py-3.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:text-brand-400 dark:hover:bg-slate-700"
                             >
-                                Sign in
+                                Sign in instead
                             </Link>
                         </div>
 
