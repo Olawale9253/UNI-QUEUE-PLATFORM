@@ -10,6 +10,7 @@ import {
     Home,
     Info,
     Building2,
+    X,
 } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { useUniversityStore } from '../../store/universityStore'
@@ -29,6 +30,7 @@ export default function Navbar() {
     const location = useLocation()
 
     const [menuOpen, setMenuOpen] = useState(false)
+    const [isPublicMenuOpen, setIsPublicMenuOpen] = useState(false)
     const [logoFailed, setLogoFailed] = useState(false)
     const menuRef = useRef(null)
 
@@ -62,6 +64,7 @@ export default function Navbar() {
 
     useEffect(() => {
         setMenuOpen(false)
+        setIsPublicMenuOpen(false)
     }, [location.pathname])
 
     const handleLogout = () => {
@@ -86,7 +89,6 @@ export default function Navbar() {
         }`
 
     return (
-        // 🔧 PREMIUM: Glassmorphism, refined shadow, and border
         <header className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/80 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.05)] backdrop-blur-xl dark:border-slate-800/60 dark:bg-slate-950/80">
             <div className="flex h-16 w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
 
@@ -116,7 +118,6 @@ export default function Navbar() {
                         to={dashboardHref}
                         className="flex min-w-0 items-center gap-3 transition-opacity hover:opacity-90"
                     >
-                        {/* Logo Box with subtle ring and shadow */}
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-900/5 sm:h-11 sm:w-11 dark:bg-slate-900 dark:ring-white/10">
                             {isSuperAdmin ? (
                                 <div className="flex h-full w-full items-center justify-center bg-slate-900 text-white dark:bg-slate-800">
@@ -138,7 +139,6 @@ export default function Navbar() {
                             )}
                         </div>
 
-                        {/* Brand Text - Tighter and more refined */}
                         <div className="hidden min-w-0 sm:block">
                             <div className="truncate text-sm font-extrabold uppercase tracking-tight text-slate-900 sm:text-base dark:text-slate-100">
                                 {isSuperAdmin ? 'UniQueue' : hasUniversity ? university.name : 'UniQueue'}
@@ -150,7 +150,7 @@ export default function Navbar() {
                     </Link>
                 </div>
 
-                {/* CENTER: DESKTOP NAV LINKS (Public pages only) */}
+                {/* CENTER: DESKTOP NAV LINKS */}
                 {!user && (
                     <nav className="hidden items-center gap-6 lg:flex">
                         <NavLink to="/" className={navLinkClass}>
@@ -184,8 +184,6 @@ export default function Navbar() {
 
                 {/* RIGHT: ACTIONS & AUTH */}
                 <div className="flex items-center gap-2 sm:gap-3">
-
-                    {/* Icon Group - unified hover states */}
                     <div className="flex items-center gap-1">
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800">
                             <ThemeToggle />
@@ -201,7 +199,6 @@ export default function Navbar() {
 
                     {user ? (
                         <div ref={menuRef} className="relative ml-1">
-                            {/* 🔧 PREMIUM: Pill-shaped user menu button */}
                             <button
                                 onClick={() => setMenuOpen((v) => !v)}
                                 className="flex items-center gap-2 rounded-full border border-slate-200/60 bg-white p-1 pr-3 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700/60 dark:bg-slate-900 dark:hover:border-slate-600 dark:hover:bg-slate-800/80"
@@ -222,7 +219,6 @@ export default function Navbar() {
                                 />
                             </button>
 
-                            {/* Dropdown */}
                             <AnimatePresence>
                                 {menuOpen && (
                                     <motion.div
@@ -232,7 +228,6 @@ export default function Navbar() {
                                         transition={{ duration: 0.15, ease: "easeOut" }}
                                         className="absolute right-0 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 ring-1 ring-black/5 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/40"
                                     >
-                                        {/* Dropdown Header */}
                                         <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
                                             <div className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">
                                                 {user.fullName}
@@ -278,10 +273,61 @@ export default function Navbar() {
                             >
                                 Get started
                             </Link>
+
+                            {/* MOBILE PUBLIC MENU TOGGLE */}
+                            <button
+                                onClick={() => setIsPublicMenuOpen(!isPublicMenuOpen)}
+                                className="ml-1 flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 lg:hidden dark:text-slate-400 dark:hover:bg-slate-800"
+                            >
+                                {isPublicMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                            </button>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* MOBILE PUBLIC MENU DROPDOWN */}
+            <AnimatePresence>
+                {!user && isPublicMenuOpen && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden border-t border-slate-200 bg-white lg:hidden dark:border-slate-800 dark:bg-slate-950"
+                    >
+                        <div className="flex flex-col px-4 py-3 gap-1">
+                            <NavLink
+                                to="/"
+                                onClick={() => setIsPublicMenuOpen(false)}
+                                className={({ isActive }) =>
+                                    `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold ${
+                                        isActive
+                                            ? 'bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-300'
+                                            : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
+                                    }`
+                                }
+                            >
+                                <Home className="h-4 w-4" />
+                                Home
+                            </NavLink>
+                            <NavLink
+                                to="/for-universities"
+                                onClick={() => setIsPublicMenuOpen(false)}
+                                className={({ isActive }) =>
+                                    `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold ${
+                                        isActive
+                                            ? 'bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-300'
+                                            : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
+                                    }`
+                                }
+                            >
+                                <Building2 className="h-4 w-4" />
+                                For Universities
+                            </NavLink>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </header>
     )
 }
