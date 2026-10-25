@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/api/events/:path*", "destination": "https://uni-queue-platform.onrender.com/api/events/:path*" },
     { "source": "/api/:path*", "destination": "https://uni-queue-platform.onrender.com/api/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
