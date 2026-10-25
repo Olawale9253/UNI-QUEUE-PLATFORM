@@ -547,7 +547,8 @@ function FinalCTA() {
 
 export default function Home() {
     return (
-        <div className="bg-white dark:bg-slate-950">
+        /* 👇 THE FIX: 'h-full overflow-y-auto' allows this page to scroll independently */
+        <div className="h-full overflow-y-auto bg-white dark:bg-slate-950">
             <HeroCarousel />
             <Features />
             <HowItWorks />
