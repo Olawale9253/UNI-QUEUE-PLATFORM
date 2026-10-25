@@ -49,6 +49,15 @@ body {
     outline: none;
 }
 
+/* Force native form controls (checkboxes, radios) to respect the app's theme */
+input, select, textarea {
+    color-scheme: light;
+}
+
+.dark input, .dark select, .dark textarea {
+    color-scheme: dark;
+}
+
 /* ═══════════════════════════════════════════════════════════
    Premium Custom Scrollbar
    ═══════════════════════════════════════════════════════════ */

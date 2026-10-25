@@ -42,7 +42,7 @@ const COUNTRIES = [
 ]
 
 export default function Settings() {
-    const navigate = useNavigate() // 👈 ADDED
+    const navigate = useNavigate()
     const { push } = useToastStore()
     const { refresh: refreshUniversity } = useUniversityStore()
     const [loading, setLoading] = useState(true)
@@ -121,7 +121,7 @@ export default function Settings() {
             push({ type: 'success', message: 'Settings saved successfully' })
             refreshUniversity()
             await load()
-            navigate('/admin') // 👈 ADDED: Redirect to admin home after save
+            navigate('/admin')
         } catch (err) {
             push({ type: 'error', message: err.message || 'Failed to save' })
         } finally {
@@ -382,7 +382,7 @@ export default function Settings() {
                             type="checkbox"
                             checked={form.fresherRegistrationEnabled}
                             onChange={setCheck('fresherRegistrationEnabled')}
-                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                            className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-brand-600 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]"
                         />
                         <div>
                             <div className="text-sm font-medium text-slate-900">Allow fresher registration</div>
@@ -426,7 +426,12 @@ export default function Settings() {
 
                             <div className="mt-5 rounded-lg border border-slate-200 p-4">
                                 <label className="flex cursor-pointer items-start gap-3">
-                                    <input type="checkbox" checked={form.requireJambReg} onChange={setCheck('requireJambReg')} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+                                    <input
+                                        type="checkbox"
+                                        checked={form.requireJambReg}
+                                        onChange={setCheck('requireJambReg')}
+                                        className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-brand-600 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]"
+                                    />
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
                                             <FileText className="h-3.5 w-3.5 text-slate-400" />
@@ -445,7 +450,12 @@ export default function Settings() {
 
                             <div className="mt-3 rounded-lg border border-slate-200 p-4">
                                 <label className="flex cursor-pointer items-start gap-3">
-                                    <input type="checkbox" checked={form.requireAdmissionRef} onChange={setCheck('requireAdmissionRef')} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+                                    <input
+                                        type="checkbox"
+                                        checked={form.requireAdmissionRef}
+                                        onChange={setCheck('requireAdmissionRef')}
+                                        className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-brand-600 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]"
+                                    />
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
                                             <FileText className="h-3.5 w-3.5 text-slate-400" />
@@ -464,7 +474,12 @@ export default function Settings() {
 
                             <div className="mt-3 rounded-lg border border-slate-200 p-4">
                                 <label className="flex cursor-pointer items-start gap-3">
-                                    <input type="checkbox" checked={form.requireApplicationNumber} onChange={setCheck('requireApplicationNumber')} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+                                    <input
+                                        type="checkbox"
+                                        checked={form.requireApplicationNumber}
+                                        onChange={setCheck('requireApplicationNumber')}
+                                        className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-brand-600 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]"
+                                    />
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
                                             <Hash className="h-3.5 w-3.5 text-slate-400" />
