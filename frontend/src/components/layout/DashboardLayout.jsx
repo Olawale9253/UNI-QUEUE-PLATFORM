@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X as CloseIcon, Home as HomeIcon } from 'lucide-react'
+import { X as CloseIcon, Home as HomeIcon, LogOut } from 'lucide-react'
 import PageHeader from './PageHeader'
 import { useUIStore } from '../../store/uiStore'
 import { useAuthStore } from '../../store/authStore'
@@ -27,8 +27,7 @@ function SidebarLink({ item, collapsed, onClick }) {
                     collapsed ? 'justify-center px-2' : 'gap-3 px-3'
                 } ${
                     isActive
-                        ? // 🟢 LIGHT MODE: Subtle tint | 🌙 DARK MODE: Muted tint
-                        'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300'
+                        ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300'
                         : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100'
                 }`
             }
@@ -38,7 +37,7 @@ function SidebarLink({ item, collapsed, onClick }) {
                     <Icon
                         className={`h-4 w-4 shrink-0 ${
                             isActive
-                                ? 'text-brand-600 dark:text-brand-400' // Colored Icon
+                                ? 'text-brand-600 dark:text-brand-400'
                                 : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
                         }`}
                     />
@@ -51,8 +50,9 @@ function SidebarLink({ item, collapsed, onClick }) {
 
 export default function DashboardLayout({ tabs, title, description, action, children }) {
     const { sidebarCollapsed, mobileSidebarOpen, closeMobileSidebar } = useUIStore()
-    const { user } = useAuthStore()
+    const { user, logout } = useAuthStore()
     const location = useLocation()
+    const navigate = useNavigate()
 
     useEffect(() => {
         closeMobileSidebar()
@@ -65,11 +65,17 @@ export default function DashboardLayout({ tabs, title, description, action, chil
         }
     }, [mobileSidebarOpen])
 
+    const handleExit = () => {
+        logout()
+        navigate('/')
+    }
+
     const homeHref = user ? ROLE_HOME[user.role] || '/' : '/'
     const homeItem = { to: homeHref, label: 'Home', icon: HomeIcon, end: true }
 
     return (
         <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-slate-50 dark:bg-slate-950">
+            {/* DESKTOP SIDEBAR */}
             <aside
                 className={`hidden h-full shrink-0 border-r border-slate-200 bg-white/90 shadow-sm transition-[width] duration-300 ease-out md:flex md:flex-col dark:border-slate-800 dark:bg-slate-900/90 ${
                     sidebarCollapsed ? 'w-16' : 'w-56'
@@ -91,8 +97,23 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                         ))}
                     </div>
                 </nav>
+
+                {/* 🔧 DESKTOP LOGOUT BUTTON */}
+                <div className="mt-auto border-t border-slate-200 p-2 dark:border-slate-800">
+                    <button
+                        onClick={handleExit}
+                        title={sidebarCollapsed ? "Log Out" : undefined}
+                        className={`group flex w-full items-center rounded-lg py-2 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 ${
+                            sidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3'
+                        }`}
+                    >
+                        <LogOut className="h-4 w-4 shrink-0" />
+                        {!sidebarCollapsed && <span className="truncate">Log Out</span>}
+                    </button>
+                </div>
             </aside>
 
+            {/* MOBILE SIDEBAR */}
             <AnimatePresence>
                 {mobileSidebarOpen && (
                     <>
@@ -123,6 +144,20 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                                     ))}
                                 </div>
                             </nav>
+
+                            {/* 🔧 MOBILE LOGOUT BUTTON */}
+                            <div className="mt-auto border-t border-slate-200 p-3 dark:border-slate-800">
+                                <button
+                                    onClick={() => {
+                                        closeMobileSidebar()
+                                        handleExit()
+                                    }}
+                                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                                >
+                                    <LogOut className="h-4 w-4 shrink-0" />
+                                    <span>Log Out & Exit</span>
+                                </button>
+                            </div>
                         </motion.aside>
                     </>
                 )}
