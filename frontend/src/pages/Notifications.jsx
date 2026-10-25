@@ -83,7 +83,7 @@ export default function Notifications() {
 
     if (error) {
         return (
-            <div className="mx-auto max-w-3xl space-y-6 pb-12 pt-8 px-4">
+            <div className="space-y-6">
                 <div className="rounded-xl border border-rose-200 bg-rose-50 p-8 text-center dark:border-rose-900 dark:bg-rose-950/20">
                     <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-rose-500" />
                     <h2 className="text-base font-bold text-rose-800 dark:text-rose-300">Couldn't load notifications</h2>
@@ -95,7 +95,7 @@ export default function Notifications() {
     }
 
     return (
-        <div className="mx-auto max-w-4xl space-y-6 pb-12 pt-4 sm:pt-8 px-4 sm:px-6">
+        <div className="space-y-6">
             <button
                 onClick={() => navigate(-1)}
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
