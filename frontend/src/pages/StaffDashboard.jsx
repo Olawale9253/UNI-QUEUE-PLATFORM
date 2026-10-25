@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import {
     ListOrdered, Calendar, CalendarCheck, Building2, FileText, Activity,
-    User as UserIcon, Settings as SettingsIcon, Bell,
+    User as UserIcon, Settings as SettingsIcon, Bell, Star,
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import PageHeader from '../components/layout/PageHeader'
@@ -12,10 +12,11 @@ import QueuesList from './staff/QueuesList'
 import AppointmentSlots from './staff/AppointmentSlots'
 import AppointmentsList from './staff/AppointmentsList'
 import StaffDocuments from './staff/StaffDocuments'
+import StaffFeedback from './staff/StaffFeedback'
 import ActivityPage from './staff/ActivityPage'
 import StaffProfile from './staff/StaffProfile'
 import SettingsPage from './staff/SettingsPage'
-import Notifications from './Notifications' // 🔧 Import here
+import Notifications from './Notifications'
 
 const tabs = [
     { to: '/staff/serving', label: 'Serving Queue', icon: ListOrdered },
@@ -23,7 +24,8 @@ const tabs = [
     { to: '/staff/slots', label: 'Manage Slots', icon: Calendar },
     { to: '/staff/appointments', label: 'Appointments', icon: CalendarCheck },
     { to: '/staff/documents', label: 'Documents', icon: FileText },
-    { to: '/staff/notifications', label: 'Notifications', icon: Bell }, // 🔧 Point to sub-route
+    { to: '/staff/feedback', label: 'My Feedback', icon: Star },
+    { to: '/staff/notifications', label: 'Notifications', icon: Bell },
     { to: '/staff/activity', label: 'Activity', icon: Activity },
     { to: '/staff/profile', label: 'Profile', icon: UserIcon },
     { to: '/staff/settings', label: 'Settings', icon: SettingsIcon },
@@ -50,8 +52,9 @@ export default function StaffDashboard() {
                 <Route path="slots" element={<AppointmentSlots />} />
                 <Route path="appointments" element={<AppointmentsList />} />
                 <Route path="documents" element={<StaffDocuments />} />
+                <Route path="feedback" element={<StaffFeedback />} />
                 <Route path="activity" element={<ActivityPage />} />
-                <Route path="notifications" element={<Notifications />} /> {/* 🔧 Add route */}
+                <Route path="notifications" element={<Notifications />} />
                 <Route path="profile" element={<StaffProfile />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="*" element={<Navigate to="/staff" replace />} />
