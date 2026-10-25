@@ -144,7 +144,7 @@ public class SecurityConfig {
                                         "script-src 'self'; " +
                                         "style-src 'self' 'unsafe-inline'; " +
                                         "img-src 'self' data:; " +
-                                        "connect-src 'self'; " +
+                                        "connect-src 'self' https://uni-queue-platform.vercel.app; " +
                                         "font-src 'self'; " +
                                         "object-src 'none'; " +
                                         "base-uri 'none'; " +
