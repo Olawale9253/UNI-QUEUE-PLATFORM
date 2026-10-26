@@ -35,7 +35,11 @@ public class AuthController {
     private final UserRepository userRepository;
 
     @PostMapping("/register")
-    @RateLimited(limit = 3, windowSeconds = 3600, keyType = RateKeyType.IP, name = "register")
+    @RateLimited(
+            limit = 3, windowSeconds = 3600, keyType = RateKeyType.EMAIL, keyField = "email",
+            name = "register",
+            secondaryKeyType = RateKeyType.IP, secondaryLimit = 100, secondaryWindowSeconds = 3600
+    )
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -46,7 +50,7 @@ public class AuthController {
     @RateLimited(
             limit = 5, windowSeconds = 900, keyType = RateKeyType.EMAIL, keyField = "email",
             name = "login",
-            secondaryKeyType = RateKeyType.IP, secondaryLimit = 20, secondaryWindowSeconds = 900
+            secondaryKeyType = RateKeyType.IP, secondaryLimit = 100, secondaryWindowSeconds = 900
     )
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
@@ -54,14 +58,22 @@ public class AuthController {
     }
 
     @PostMapping("/verify-email")
-    @RateLimited(limit = 5, windowSeconds = 900, keyType = RateKeyType.EMAIL, keyField = "email", name = "verify")
+    @RateLimited(
+            limit = 5, windowSeconds = 900, keyType = RateKeyType.EMAIL, keyField = "email",
+            name = "verify",
+            secondaryKeyType = RateKeyType.IP, secondaryLimit = 100, secondaryWindowSeconds = 900
+    )
     public ResponseEntity<ApiResponse<AuthResponse>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
         AuthResponse response = authService.verifyEmail(request.getEmail(), request.getCode());
         return ResponseEntity.ok(ApiResponse.success("Email verified successfully", response));
     }
 
     @PostMapping("/resend-verification")
-    @RateLimited(limit = 3, windowSeconds = 3600, keyType = RateKeyType.EMAIL, keyField = "email", name = "resend")
+    @RateLimited(
+            limit = 3, windowSeconds = 3600, keyType = RateKeyType.EMAIL, keyField = "email",
+            name = "resend",
+            secondaryKeyType = RateKeyType.IP, secondaryLimit = 50, secondaryWindowSeconds = 3600
+    )
     public ResponseEntity<ApiResponse<Map<String, Object>>> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
         String code = authService.resendVerification(request.getEmail());
         Map<String, Object> data = new HashMap<>();
@@ -71,7 +83,11 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    @RateLimited(limit = 3, windowSeconds = 3600, keyType = RateKeyType.EMAIL, keyField = "email", name = "forgot")
+    @RateLimited(
+            limit = 3, windowSeconds = 3600, keyType = RateKeyType.EMAIL, keyField = "email",
+            name = "forgot",
+            secondaryKeyType = RateKeyType.IP, secondaryLimit = 50, secondaryWindowSeconds = 3600
+    )
     public ResponseEntity<ApiResponse<Map<String, Object>>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         String token = authService.requestPasswordReset(request.getEmail());
         Map<String, Object> data = new HashMap<>();
@@ -155,7 +171,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    @RateLimited(limit = 30, windowSeconds = 60, keyType = RateKeyType.IP, name = "refresh")
+    @RateLimited(limit = 50, windowSeconds = 60, keyType = RateKeyType.IP, name = "refresh")
     public ResponseEntity<ApiResponse<AuthResponse>> refresh(@RequestBody Map<String, String> body) {
         String refreshToken = body.get("refreshToken");
         if (refreshToken == null || refreshToken.isBlank()) {

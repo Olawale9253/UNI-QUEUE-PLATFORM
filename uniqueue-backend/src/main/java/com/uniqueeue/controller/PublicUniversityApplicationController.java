@@ -20,7 +20,7 @@ public class PublicUniversityApplicationController {
     private final UniversityApplicationService service;
 
     @PostMapping
-    @RateLimited(limit = 5, windowSeconds = 3600, keyType = RateKeyType.IP, name = "public-app")
+    @RateLimited(limit = 50, windowSeconds = 3600, keyType = RateKeyType.IP, name = "public-app")
     public ResponseEntity<ApiResponse<UniversityApplicationResponse>> submit(
             @Valid @RequestBody SubmitUniversityApplicationRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(
