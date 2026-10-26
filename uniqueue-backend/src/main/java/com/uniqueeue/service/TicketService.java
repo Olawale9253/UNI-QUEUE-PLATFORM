@@ -10,6 +10,7 @@ import com.uniqueeue.exception.ResourceNotFoundException;
 import com.uniqueeue.model.Queue;
 import com.uniqueeue.model.Ticket;
 import com.uniqueeue.model.User;
+import com.uniqueeue.repository.FeedbackRepository;
 import com.uniqueeue.repository.QueueRepository;
 import com.uniqueeue.repository.QueueStaffRepository;
 import com.uniqueeue.repository.TicketRepository;
@@ -45,6 +46,9 @@ public class TicketService {
     private final QueueService queueService;
     private final EmailService emailService;
     private final EventService eventService;
+
+    // 🔧 ADDED: To check if a completed ticket has been rated
+    private final FeedbackRepository feedbackRepository;
 
     // ============================================================
     //  STUDENT
@@ -139,9 +143,26 @@ public class TicketService {
 
     @Transactional(readOnly = true)
     public Optional<TicketResponse> getActiveTicket(Long userId) {
+        // 1. Check for truly active tickets (WAITING, WAITLISTED, CALLED, SERVING)
         List<Ticket> active = ticketRepository.findActiveByUserId(userId);
-        if (active.isEmpty()) return Optional.empty();
-        return Optional.of(enrichWithPosition(active.get(0)));
+        if (!active.isEmpty()) {
+            return Optional.of(enrichWithPosition(active.get(0)));
+        }
+
+        // 2. Check for a recently completed ticket that hasn't been rated yet
+        // This keeps the "Rate Service" prompt on the dashboard until the user submits feedback
+        List<Ticket> history = ticketRepository.findByUserIdOrderByJoinedAtDesc(userId);
+        if (!history.isEmpty()) {
+            Ticket latest = history.get(0);
+            if (latest.getStatus() == TicketStatus.COMPLETED) {
+                // If no feedback exists for this ticket, return it so the UI can prompt for a rating
+                if (!feedbackRepository.existsByTicketId(latest.getId())) {
+                    return Optional.of(enrichWithPosition(latest));
+                }
+            }
+        }
+
+        return Optional.empty();
     }
 
     @Transactional(readOnly = true)
