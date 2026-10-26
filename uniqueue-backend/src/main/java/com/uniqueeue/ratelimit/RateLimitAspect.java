@@ -56,7 +56,7 @@ public class RateLimitAspect {
     private void enforce(RateKeyType keyType, String keyField, String name,
                          int limit, int windowSeconds) {
         String key = resolveKey(keyType, keyField);
-        String bucketKey = keyType + ":" + key + ":" + name;
+        String bucketKey = keyType + ":" + key + ":" + name + ":" + limit + ":" + windowSeconds;
 
         long waitSeconds = rateLimitService.tryConsume(bucketKey, limit, windowSeconds);
 
