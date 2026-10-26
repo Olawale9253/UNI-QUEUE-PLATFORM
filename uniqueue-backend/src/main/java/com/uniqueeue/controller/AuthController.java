@@ -59,9 +59,9 @@ public class AuthController {
 
     @PostMapping("/verify-email")
     @RateLimited(
-            limit = 5, windowSeconds = 900, keyType = RateKeyType.EMAIL, keyField = "email",
+            limit = 10, windowSeconds = 900, keyType = RateKeyType.EMAIL, keyField = "email",
             name = "verify",
-            secondaryKeyType = RateKeyType.IP, secondaryLimit = 100, secondaryWindowSeconds = 900
+            secondaryKeyType = RateKeyType.IP, secondaryLimit = 200, secondaryWindowSeconds = 900
     )
     public ResponseEntity<ApiResponse<AuthResponse>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
         AuthResponse response = authService.verifyEmail(request.getEmail(), request.getCode());
@@ -70,9 +70,9 @@ public class AuthController {
 
     @PostMapping("/resend-verification")
     @RateLimited(
-            limit = 3, windowSeconds = 3600, keyType = RateKeyType.EMAIL, keyField = "email",
+            limit = 5, windowSeconds = 3600, keyType = RateKeyType.EMAIL, keyField = "email",
             name = "resend",
-            secondaryKeyType = RateKeyType.IP, secondaryLimit = 50, secondaryWindowSeconds = 3600
+            secondaryKeyType = RateKeyType.IP, secondaryLimit = 100, secondaryWindowSeconds = 3600
     )
     public ResponseEntity<ApiResponse<Map<String, Object>>> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
         String code = authService.resendVerification(request.getEmail());
