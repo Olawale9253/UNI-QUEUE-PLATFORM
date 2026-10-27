@@ -142,7 +142,7 @@ export default function OfficesTab() {
         )
     }
 
-    // Force a white background wrapper
+    // Force a pure white background wrapper
     return (
         <div className="bg-white dark:bg-slate-950 min-h-screen -m-4 p-4 sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
             <div className="space-y-6 pb-12 max-w-[1600px] mx-auto">
@@ -150,15 +150,28 @@ export default function OfficesTab() {
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                            Office
+                            Campus Offices
                         </h1>
                         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
                             View university offices and staff details. Find the right office, get contact information, and know who to see for your needs.
                         </p>
                     </div>
 
-                    <div className="hidden md:flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/50 px-4 py-3 dark:border-blue-900/30 dark:bg-blue-900/10">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">
+                    {/* 👇 UPDATED: Dynamic Brand Color for Top Banner */}
+                    <div
+                        className="hidden md:flex items-center gap-3 rounded-xl border px-4 py-3"
+                        style={{
+                            backgroundColor: withAlpha(primaryColor, 0.08),
+                            borderColor: withAlpha(primaryColor, 0.2)
+                        }}
+                    >
+                        <div
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                            style={{
+                                backgroundColor: withAlpha(primaryColor, 0.15),
+                                color: primaryColor
+                            }}
+                        >
                             <Users className="h-5 w-5" />
                         </div>
                         <div>
@@ -178,7 +191,7 @@ export default function OfficesTab() {
                 ) : (
                     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[380px_1fr]">
 
-                        {/* LEFT SIDEBAR (Office List) - Sticky without internal scrolling */}
+                        {/* LEFT SIDEBAR (Office List) */}
                         <div className="lg:sticky lg:top-24">
                             <Card className="h-fit p-0 overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
                                 <div className="p-4 border-b border-slate-100 dark:border-slate-800">
@@ -194,7 +207,6 @@ export default function OfficesTab() {
                                     </div>
                                 </div>
 
-                                {/* Removed the max-h and overflow-y-auto to fix the awkward scrolling */}
                                 <div className="p-2">
                                     {filtered.length === 0 ? (
                                         <div className="px-4 py-8 text-center">
@@ -263,7 +275,7 @@ export default function OfficesTab() {
                                 >
                                     {/* Hero Card */}
                                     <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
-                                        <div className="p-6 sm:p-8 bg-slate-50/50 dark:bg-slate-900/30">
+                                        <div className="p-6 sm:p-8">
                                             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
                                                 <div className="flex items-start gap-4">
                                                     <div
@@ -277,7 +289,6 @@ export default function OfficesTab() {
                                                             {selected.office.name}
                                                         </h2>
                                                         <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-400">
-                                                            {/* 👇 ADDED: School Code right beside the name */}
                                                             {university?.name || 'University Portal'} {university?.code ? `(${university.code})` : ''}
                                                         </p>
                                                         <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-600 dark:text-slate-300">
@@ -286,6 +297,7 @@ export default function OfficesTab() {
                                                     </div>
                                                 </div>
 
+                                                {/* 👇 UPDATED: Renamed button to make contextual sense */}
                                                 <button
                                                     onClick={() => navigate('/student/queues')}
                                                     className="shrink-0 inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors hover:opacity-80"
@@ -295,8 +307,8 @@ export default function OfficesTab() {
                                                         backgroundColor: withAlpha(primaryColor, 0.05)
                                                     }}
                                                 >
-                                                    <Phone className="h-4 w-4" />
-                                                    Get Office Contact
+                                                    <Ticket className="h-4 w-4" />
+                                                    View Services & Queues
                                                 </button>
                                             </div>
                                         </div>
@@ -457,7 +469,7 @@ export default function OfficesTab() {
                                     </div>
                                 </motion.div>
                             ) : (
-                                <Card className="h-full min-h-[500px] flex items-center justify-center border-dashed border-2 bg-slate-50/50 dark:bg-slate-900/20">
+                                <Card className="h-full min-h-[500px] flex items-center justify-center border-dashed border-2 bg-white dark:bg-slate-900/20">
                                     <EmptyState
                                         icon={Info}
                                         variant="info"
