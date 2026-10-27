@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     Building2, MapPin, Clock, Users, ListOrdered, Search, Ticket,
     ArrowRight, GraduationCap, UserCircle2, Info, ChevronRight, Activity,
-    Mail, Phone
+    Mail, Phone, X, Copy, Check
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -20,6 +20,31 @@ import { withAlpha } from '../../lib/colors'
 function formatTime(token) {
     if (!token) return null
     return String(token).slice(0, 5)
+}
+
+// 👇 NEW: Reusable Copy Button for the Modals
+function CopyButton({ text, primaryColor }) {
+    const [copied, setCopied] = useState(false)
+    const copy = async (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        try {
+            await navigator.clipboard.writeText(text)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 1500)
+        } catch {}
+    }
+    return (
+        <button
+            type="button"
+            onClick={copy}
+            title="Copy to clipboard"
+            className="rounded p-1.5 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+            style={{ color: primaryColor }}
+        >
+            {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+        </button>
+    )
 }
 
 function OfficesSkeleton() {
@@ -55,6 +80,10 @@ export default function OfficesTab() {
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
     const [selectedOfficeId, setSelectedOfficeId] = useState(null)
+
+    // 👇 NEW: State for the Modals
+    const [contactModalOpen, setContactModalOpen] = useState(false)
+    const [profileStaff, setProfileStaff] = useState(null)
 
     const isFresher = user?.role === 'FRESHER'
     const primaryColor = university?.primaryColor || '#4f46e5'
@@ -298,9 +327,9 @@ export default function OfficesTab() {
                                                     </div>
                                                 </div>
 
-                                                {/* 👇 REPLACED BUTTON: Contact Office */}
+                                                {/* 👇 UPDATED: Opens the Contact Modal */}
                                                 <button
-                                                    onClick={() => push({ type: 'info', message: `Office Contact: ${selected.office.email || 'office@university.edu'} | ${selected.office.phone || '+234 803 123 4567'}` })}
+                                                    onClick={() => setContactModalOpen(true)}
                                                     className="shrink-0 inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors hover:opacity-80"
                                                     style={{
                                                         borderColor: primaryColor,
@@ -388,9 +417,9 @@ export default function OfficesTab() {
                                                                 </div>
                                                             </div>
 
-                                                            {/* 👇 FIXED BUTTON: Triggers a toast with staff details */}
+                                                            {/* 👇 UPDATED: Opens the Staff Profile Modal */}
                                                             <button
-                                                                onClick={() => push({ type: 'info', message: `Staff Profile: ${staff.fullName} | Email: ${staff.email || 'N/A'} | Phone: ${staff.phone || 'N/A'}` })}
+                                                                onClick={() => setProfileStaff(staff)}
                                                                 className="shrink-0 inline-flex items-center justify-center rounded-lg border px-4 py-2 text-sm font-semibold shadow-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                                                                 style={{ borderColor: withAlpha(primaryColor, 0.3), color: primaryColor }}
                                                             >
@@ -495,6 +524,126 @@ export default function OfficesTab() {
                     </div>
                 )}
             </div>
+
+            {/* 👇 NEW: PREMIUM CONTACT MODAL */}
+            <AnimatePresence>
+                {contactModalOpen && selected && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            onClick={() => setContactModalOpen(false)}
+                            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm"
+                        />
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                                className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white shadow-2xl pointer-events-auto overflow-hidden dark:border-slate-700 dark:bg-slate-900"
+                            >
+                                <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-4 dark:border-slate-800 dark:bg-slate-900/50">
+                                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Contact {selected.office.name}</h3>
+                                    <button onClick={() => setContactModalOpen(false)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                </div>
+                                <div className="p-6 space-y-4">
+                                    <a href={`mailto:${selected.office.email || 'office@university.edu'}`} className="flex items-center justify-between rounded-xl border border-slate-200 p-4 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800 group">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}>
+                                                <Mail className="h-5 w-5" />
+                                            </div>
+                                            <div>
+                                                <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Email Address</div>
+                                                <div className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:underline">{selected.office.email || 'office@university.edu'}</div>
+                                            </div>
+                                        </div>
+                                        <CopyButton text={selected.office.email || 'office@university.edu'} primaryColor={primaryColor} />
+                                    </a>
+
+                                    <a href={`tel:${selected.office.phone || '+2348031234567'}`} className="flex items-center justify-between rounded-xl border border-slate-200 p-4 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800 group">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}>
+                                                <Phone className="h-5 w-5" />
+                                            </div>
+                                            <div>
+                                                <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Phone Number</div>
+                                                <div className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:underline">{selected.office.phone || '+234 803 123 4567'}</div>
+                                            </div>
+                                        </div>
+                                        <CopyButton text={selected.office.phone || '+2348031234567'} primaryColor={primaryColor} />
+                                    </a>
+                                </div>
+                                <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 dark:bg-slate-900/50 dark:border-slate-800 flex justify-end">
+                                    <button onClick={() => setContactModalOpen(false)} className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors">
+                                        Close
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* 👇 NEW: PREMIUM STAFF PROFILE MODAL */}
+            <AnimatePresence>
+                {profileStaff && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            onClick={() => setProfileStaff(null)}
+                            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm"
+                        />
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                                className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white shadow-2xl pointer-events-auto overflow-hidden dark:border-slate-700 dark:bg-slate-900"
+                            >
+                                <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-4 dark:border-slate-800 dark:bg-slate-900/50">
+                                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Staff Profile</h3>
+                                    <button onClick={() => setProfileStaff(null)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                </div>
+                                <div className="p-6 flex flex-col items-center">
+                                    <div
+                                        className="flex h-20 w-20 items-center justify-center rounded-full text-3xl font-bold text-white shadow-inner mb-4"
+                                        style={{ backgroundColor: primaryColor }}
+                                    >
+                                        {profileStaff.fullName?.charAt(0) || <UserCircle2 className="h-10 w-10" />}
+                                    </div>
+                                    <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100">{profileStaff.fullName}</h4>
+                                    <p className="text-sm font-medium text-slate-500 mb-6">{selected?.office.name || 'University Staff'}</p>
+
+                                    <div className="w-full space-y-3">
+                                        <div className="flex items-center justify-between rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                                            <div className="flex items-center gap-3">
+                                                <Mail className="h-4 w-4 text-slate-400" />
+                                                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">{profileStaff.email || 'staff@university.edu'}</span>
+                                            </div>
+                                            <CopyButton text={profileStaff.email || 'staff@university.edu'} primaryColor={primaryColor} />
+                                        </div>
+                                        <div className="flex items-center justify-between rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                                            <div className="flex items-center gap-3">
+                                                <Phone className="h-4 w-4 text-slate-400" />
+                                                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">{profileStaff.phone || '+234 803 123 4567'}</span>
+                                            </div>
+                                            <CopyButton text={profileStaff.phone || '+2348031234567'} primaryColor={primaryColor} />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 dark:bg-slate-900/50 dark:border-slate-800 flex justify-end">
+                                    <button onClick={() => setProfileStaff(null)} className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors">
+                                        Close
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    </>
+                )}
+            </AnimatePresence>
         </div>
     )
 }
