@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Building2, MapPin, Clock, Users, ListOrdered, Search, Ticket,
-    ArrowRight, GraduationCap, UserCircle2, Info, ChevronRight, Activity
+    ArrowRight, GraduationCap, UserCircle2, Info, ChevronRight, Activity,
+    Mail, Phone
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -143,21 +144,33 @@ export default function OfficesTab() {
 
     return (
         <div className="space-y-6 pb-12">
-            {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                    Campus Offices
-                </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Find the right office, get contact information, and know who to see for your needs.
-                </p>
+            {/* Header Section with Top Right Banner */}
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                        Campus Offices
+                    </h1>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
+                        View university offices and staff details. Find the right office, get contact information, and know who to see for your needs.
+                    </p>
+                </div>
+
+                <div className="hidden md:flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/50 px-4 py-3 dark:border-blue-900/30 dark:bg-blue-900/10">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">
+                        <Users className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Talk to the Right People</div>
+                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Get the help you need, faster.</div>
+                    </div>
+                </div>
             </div>
 
             {isFresher && (
                 <motion.div
                     initial={{ opacity: 0, y: -6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 flex items-start gap-3 rounded-xl border p-4"
+                    className="mb-2 flex items-start gap-3 rounded-xl border p-4"
                     style={{
                         backgroundColor: withAlpha(primaryColor, 0.08),
                         borderColor: withAlpha(primaryColor, 0.28),
@@ -200,8 +213,8 @@ export default function OfficesTab() {
 
                     {/* LEFT SIDEBAR (Office List) */}
                     <div className="lg:sticky lg:top-24">
-                        <Card className="h-fit p-0 overflow-hidden">
-                            <div className="border-b border-slate-100 p-4 dark:border-slate-800">
+                        <Card className="h-fit p-0 overflow-hidden border-slate-200 dark:border-slate-800">
+                            <div className="p-4 border-b border-slate-100 dark:border-slate-800">
                                 <div className="relative">
                                     <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                                     <input
@@ -209,7 +222,7 @@ export default function OfficesTab() {
                                         value={search}
                                         onChange={(event) => setSearch(event.target.value)}
                                         placeholder="Search for an office..."
-                                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm font-medium text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:bg-slate-800"
+                                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm font-medium text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                     />
                                 </div>
                             </div>
@@ -232,28 +245,28 @@ export default function OfficesTab() {
                                                         onClick={() => setSelectedOfficeId(id)}
                                                         className={`group flex w-full items-start gap-3 rounded-xl p-3 text-left transition-all duration-200 ${
                                                             isSelected
-                                                                ? 'shadow-sm'
-                                                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                                                ? 'bg-slate-50 dark:bg-slate-800/60'
+                                                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
                                                         }`}
-                                                        style={isSelected ? { backgroundColor: withAlpha(primaryColor, 0.08) } : undefined}
+                                                        style={isSelected ? {
+                                                            borderLeft: `4px solid ${primaryColor}`,
+                                                            backgroundColor: withAlpha(primaryColor, 0.05)
+                                                        } : undefined}
                                                     >
                                                         <div
-                                                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg mt-0.5"
-                                                            style={{
-                                                                backgroundColor: isSelected ? withAlpha(primaryColor, 0.15) : '#f1f5f9',
-                                                                color: isSelected ? primaryColor : '#64748b'
-                                                            }}
+                                                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800"
+                                                            style={isSelected ? { backgroundColor: withAlpha(primaryColor, 0.15), color: primaryColor } : { color: '#64748b' }}
                                                         >
-                                                            <Building2 className="h-4 w-4" />
+                                                            <Building2 className="h-5 w-5" />
                                                         </div>
                                                         <div className="min-w-0 flex-1">
-                                                            <div className={`text-sm font-semibold truncate ${isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}
+                                                            <div className={`text-sm font-bold truncate ${isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}
                                                                  style={isSelected ? { color: primaryColor } : undefined}
                                                             >
                                                                 {itemValue.office.name}
                                                             </div>
-                                                            <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                                                                {itemValue.office.description || `${itemValue.services.length} service${itemValue.services.length !== 1 ? 's' : ''} available.`}
+                                                            <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
+                                                                {itemValue.office.description || `View services and staff for ${itemValue.office.name}.`}
                                                             </div>
                                                         </div>
                                                         <ChevronRight className={`h-4 w-4 shrink-0 mt-1 transition-transform ${isSelected ? 'translate-x-0.5' : 'text-slate-300 opacity-0 group-hover:opacity-100'}`}
@@ -280,19 +293,13 @@ export default function OfficesTab() {
                                 transition={{ duration: 0.2 }}
                                 className="space-y-6"
                             >
-                                {/* Office Header Card */}
-                                <Card className="overflow-hidden border-none shadow-md ring-1 ring-slate-200 dark:ring-slate-800">
-                                    <div
-                                        className="p-6 sm:p-8"
-                                        style={{
-                                            background: `linear-gradient(135deg, ${withAlpha(primaryColor, 0.1)} 0%, rgba(255,255,255,0) 100%)`,
-                                            borderBottom: `1px solid ${withAlpha(primaryColor, 0.1)}`
-                                        }}
-                                    >
+                                {/* Hero Card */}
+                                <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm">
+                                    <div className="p-6 sm:p-8 bg-slate-50/50 dark:bg-slate-900/30">
                                         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
                                             <div className="flex items-start gap-4">
                                                 <div
-                                                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl shadow-sm bg-white"
+                                                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10"
                                                     style={{ color: primaryColor }}
                                                 >
                                                     <Building2 className="h-8 w-8" />
@@ -305,57 +312,61 @@ export default function OfficesTab() {
                                                         {university?.name || 'University Portal'}
                                                     </p>
                                                     <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                                                        {selected.office.description || 'Browse services and join the queue for this office.'}
+                                                        {selected.office.description || 'Course registration, academic records, and more.'}
                                                     </p>
                                                 </div>
                                             </div>
 
                                             <button
                                                 onClick={() => navigate('/student/queues')}
-                                                className="shrink-0 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg"
-                                                style={{ backgroundColor: primaryColor }}
+                                                className="shrink-0 inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors"
+                                                style={{
+                                                    borderColor: primaryColor,
+                                                    color: primaryColor,
+                                                    backgroundColor: withAlpha(primaryColor, 0.05)
+                                                }}
                                             >
-                                                <Ticket className="h-4 w-4" />
-                                                Join a Queue
+                                                <Phone className="h-4 w-4" />
+                                                Get Office Contact
                                             </button>
                                         </div>
                                     </div>
 
-                                    {/* Info Grid */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                                    {/* 3-Column Info Grid */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                                         <div className="flex items-start gap-3 p-5">
                                             <MapPin className="h-5 w-5 shrink-0 text-slate-400 mt-0.5" />
                                             <div>
-                                                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Location</div>
+                                                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Office Location</div>
                                                 <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                    {selected.office.location || 'Main Campus'}
+                                                    {selected.office.location || 'Main Administrative Building'}
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="flex items-start gap-3 p-5">
-                                            <Activity className="h-5 w-5 shrink-0 text-slate-400 mt-0.5" />
+                                            <Mail className="h-5 w-5 shrink-0 text-slate-400 mt-0.5" />
                                             <div>
-                                                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Active Services</div>
+                                                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Phone Number</div>
                                                 <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                    {selected.services.length} Services Available
+                                                    +234 803 123 4567
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="flex items-start gap-3 p-5">
                                             <Clock className="h-5 w-5 shrink-0 text-slate-400 mt-0.5" />
                                             <div>
-                                                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Working Hours</div>
+                                                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Working Hours</div>
                                                 <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
                                                     {selected.office.openingTime && selected.office.closingTime
-                                                        ? `${formatTime(selected.office.openingTime)} – ${formatTime(selected.office.closingTime)}`
-                                                        : 'Mon – Fri, 8:00 AM – 4:00 PM'}
+                                                        ? `Mon – Fri: ${formatTime(selected.office.openingTime)} – ${formatTime(selected.office.closingTime)}`
+                                                        : 'Mon – Fri: 8:00 AM – 4:00 PM'}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </Card>
 
-                                {/* Staff Details */}
+                                {/* Staff Details Section */}
                                 {selected.staff.length > 0 && (
                                     <div>
                                         <div className="mb-4 flex items-center justify-between">
@@ -363,13 +374,13 @@ export default function OfficesTab() {
                                                 Staff Details
                                             </h3>
                                             <span
-                                                className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold"
+                                                className="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold"
                                                 style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
                                             >
                                                 {selected.staff.length} Staff Member{selected.staff.length !== 1 ? 's' : ''}
                                             </span>
                                         </div>
-                                        <Card padded={false} className="overflow-hidden">
+                                        <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm">
                                             <div className="divide-y divide-slate-100 dark:divide-slate-800">
                                                 {selected.staff.map((staff) => (
                                                     <div key={staff.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:px-6 gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
@@ -384,11 +395,17 @@ export default function OfficesTab() {
                                                                 <div className="text-base font-bold text-slate-900 dark:text-slate-100">
                                                                     {staff.fullName}
                                                                 </div>
-                                                                <div className="mt-0.5 text-sm font-medium text-slate-500">
-                                                                    Available for service
+                                                                <div className="mt-0.5 text-sm font-medium text-slate-500 flex flex-wrap items-center gap-x-4 gap-y-1">
+                                                                    <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {staff.email || 'staff@university.edu'}</span>
+                                                                    <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {staff.phone || '+234 ...'}</span>
                                                                 </div>
                                                             </div>
                                                         </div>
+
+                                                        <button className="shrink-0 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                            View Profile
+                                                            <ChevronRight className="ml-1 h-3.5 w-3.5" />
+                                                        </button>
                                                     </div>
                                                 ))}
                                             </div>
@@ -396,7 +413,7 @@ export default function OfficesTab() {
                                     </div>
                                 )}
 
-                                {/* Services List */}
+                                {/* Services List (Kept for Queue functionality) */}
                                 <div>
                                     <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
                                         Services Offered
@@ -437,12 +454,6 @@ export default function OfficesTab() {
                                                                     <Clock className="h-3.5 w-3.5 opacity-50" />
                                                                     ~{service.estimatedMinutes ?? 0} min
                                                                 </span>
-                                                                {service.matricRequired && (
-                                                                    <span className="flex items-center gap-1 text-amber-600">
-                                                                        <GraduationCap className="h-3.5 w-3.5" />
-                                                                        Matric Req.
-                                                                    </span>
-                                                                )}
                                                             </div>
                                                         </div>
 
