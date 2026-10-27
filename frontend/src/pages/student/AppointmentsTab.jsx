@@ -4,13 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     Calendar, Clock, MapPin, Phone, Search, Filter, ChevronRight,
     Building2, Users, CheckCircle2, HelpCircle, Ticket, GraduationCap,
-    FileText, Monitor, Banknote, UserCircle2, ArrowRight, Info
+    FileText, Monitor, Banknote, UserCircle2, ArrowRight, Info, ChevronDown
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
-import Button from '../../components/ui/Button'
 import { useToastStore } from '../../store/toastStore'
 import { useAuthStore } from '../../store/authStore'
 import { useUniversityStore } from '../../store/universityStore'
@@ -29,9 +28,9 @@ function getOfficeIcon(name) {
 
 const TIME_SLOTS = ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM']
 const DATES = [
-    { value: 'today', label: 'Today' },
-    { value: 'tomorrow', label: 'Tomorrow' },
-    { value: 'next', label: 'Next Working Day' }
+    { value: 'today', label: 'Today - Fri, 31 Oct 2026' },
+    { value: 'tomorrow', label: 'Tomorrow - Sat, 01 Nov 2026' },
+    { value: 'monday', label: 'Monday - Mon, 03 Nov 2026' }
 ]
 
 export default function AppointmentsTab() {
@@ -40,7 +39,7 @@ export default function AppointmentsTab() {
     const { university } = useUniversityStore()
     const navigate = useNavigate()
 
-    const [activeTopTab, setActiveTopTab] = useState('available') // 'available', 'mine', 'history'
+    const [activeTopTab, setActiveTopTab] = useState('available')
     const [offices, setOffices] = useState([])
     const [myAppointments, setMyAppointments] = useState([])
     const [loading, setLoading] = useState(true)
@@ -66,7 +65,6 @@ export default function AppointmentsTab() {
             const qs = queuesRes.data?.data || []
             const os = officesRes.data?.data || []
 
-            // Enrich offices with their services (queues) and staff
             const enrichedOffices = os.map(office => {
                 const services = qs.filter(q =>
                     (q.officeId && office.id && String(q.officeId) === String(office.id)) ||
@@ -86,7 +84,6 @@ export default function AppointmentsTab() {
             setOffices(enrichedOffices.sort((a, b) => a.name.localeCompare(b.name)))
             setMyAppointments(apptsRes.data?.data || [])
 
-            // Auto-select first available office
             if (enrichedOffices.length > 0 && !selectedOffice) {
                 setSelectedOffice(enrichedOffices[0])
             }
@@ -109,18 +106,19 @@ export default function AppointmentsTab() {
         )
     }, [offices, search])
 
-    const handleBookAppointment = async () => {
-        if (!selectedOffice || !selectedService || !selectedTime) {
-            push({ type: 'error', message: 'Please select a service and time slot' })
+    // 👇 FIXED: Accept service as an argument to avoid React state delay bug
+    const handleBookAppointment = async (serviceToBook) => {
+        if (!selectedOffice || !serviceToBook || !selectedTime) {
+            push({ type: 'error', message: 'Please select a time slot first' })
             return
         }
         setBooking(true)
         try {
-            // Mock API call for booking
-            await new Promise(resolve => setTimeout(resolve, 800))
-            push({ type: 'success', message: `Appointment booked for ${selectedTime} at ${selectedOffice.name}` })
+            await new Promise(resolve => setTimeout(resolve, 800)) // Simulate API
+            push({ type: 'success', message: `Appointment booked for ${serviceToBook.name} at ${selectedTime}` })
             setActiveTopTab('mine')
-            // Refresh appointments
+
+            // Refresh
             const apptsRes = await api.get('/api/user/appointments').catch(() => ({ data: { data: [] } }))
             setMyAppointments(apptsRes.data?.data || [])
         } catch (err) {
@@ -205,11 +203,11 @@ export default function AppointmentsTab() {
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
                                         placeholder="Search by office, service or staff..."
-                                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4"
-                                        style={{ focusRingColor: withAlpha(primaryColor, 0.1) }}
+                                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2"
+                                        style={{ focusRingColor: withAlpha(primaryColor, 0.2) }}
                                     />
                                 </div>
-                                <button className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                                <button className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
                                     <Filter className="h-4 w-4 text-slate-400" /> All Offices
                                 </button>
                             </div>
@@ -225,12 +223,12 @@ export default function AppointmentsTab() {
                                             <Card
                                                 key={office.id}
                                                 className={`cursor-pointer transition-all ${
-                                                    isSelected ? 'ring-2 shadow-md' : 'hover:border-slate-300'
+                                                    isSelected ? 'shadow-sm border-2' : 'border hover:border-slate-300'
                                                 }`}
-                                                style={isSelected ? { borderColor: primaryColor, ringColor: withAlpha(primaryColor, 0.2) } : undefined}
+                                                style={isSelected ? { borderColor: primaryColor } : undefined}
                                                 onClick={() => setSelectedOffice(office)}
                                             >
-                                                <div className="flex items-start gap-4 p-2">
+                                                <div className="flex items-start gap-4 p-1">
                                                     <div
                                                         className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
                                                         style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
@@ -254,7 +252,10 @@ export default function AppointmentsTab() {
                                                                 <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Today - Fri, 31 Oct 2026</span>
                                                                 <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-slate-400" /> 9:00 AM – 4:00 PM</span>
                                                             </div>
+
+                                                            {/* 👇 FIXED: Explicit onClick handler */}
                                                             <button
+                                                                onClick={(e) => { e.stopPropagation(); setSelectedOffice(office); }}
                                                                 className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors"
                                                                 style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
                                                             >
@@ -345,13 +346,19 @@ export default function AppointmentsTab() {
                                                 <div className="flex items-center gap-3 mb-3">
                                                     <Calendar className="h-4 w-4 text-slate-400" />
                                                     <span className="text-sm font-semibold text-slate-700">Select Date</span>
-                                                    <select
-                                                        className="rounded-lg border border-slate-200 bg-white py-1.5 pl-3 pr-8 text-sm font-medium text-slate-900 focus:outline-none"
-                                                        value={selectedDate}
-                                                        onChange={(e) => setSelectedDate(e.target.value)}
-                                                    >
-                                                        {DATES.map(d => <option key={d.value} value={d.value}>{d.label} - Fri, 31 Oct 2026</option>)}
-                                                    </select>
+
+                                                    {/* 👇 FIXED: Custom chevron for select */}
+                                                    <div className="relative">
+                                                        <select
+                                                            className="appearance-none rounded-lg border border-slate-200 bg-white py-1.5 pl-3 pr-10 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2"
+                                                            value={selectedDate}
+                                                            onChange={(e) => setSelectedDate(e.target.value)}
+                                                            style={{ focusRingColor: withAlpha(primaryColor, 0.2) }}
+                                                        >
+                                                            {DATES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                                                        </select>
+                                                        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                                    </div>
                                                 </div>
                                                 <div className="flex flex-wrap gap-2">
                                                     {TIME_SLOTS.map(time => (
@@ -381,14 +388,19 @@ export default function AppointmentsTab() {
                                                         selectedOffice.services.map((service) => (
                                                             <div
                                                                 key={service.id}
-                                                                className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
-                                                                    selectedService?.id === service.id ? 'bg-slate-50 ring-1' : 'border-slate-200 bg-white hover:border-slate-300'
+                                                                className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${
+                                                                    selectedService?.id === service.id
+                                                                        ? 'bg-slate-50 shadow-sm'
+                                                                        : 'border-slate-200 bg-white hover:border-slate-300'
                                                                 }`}
-                                                                style={selectedService?.id === service.id ? { borderColor: primaryColor, ringColor: withAlpha(primaryColor, 0.3) } : undefined}
+                                                                style={selectedService?.id === service.id ? { borderColor: primaryColor, boxShadow: \`0 0 0 1px \${withAlpha(primaryColor, 0.5)}\` } : undefined}
                                                                 onClick={() => setSelectedService(service)}
                                                             >
                                                                 <div className="flex items-start gap-3">
-                                                                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                                                                    <div
+                                                                        className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                                                                        style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
+                                                                    >
                                                                         <FileText className="h-4 w-4" />
                                                                     </div>
                                                                     <div>
@@ -396,16 +408,23 @@ export default function AppointmentsTab() {
                                                                         <div className="text-xs text-slate-500 mt-0.5">{service.description || 'Standard appointment service.'}</div>
                                                                     </div>
                                                                 </div>
-                                                                <div className="flex items-center gap-4">
+                                                                <div className="flex items-center gap-4 mt-3 sm:mt-0">
                                                                     <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
                                                                         <Clock className="h-3.5 w-3.5" /> {service.averageServiceMinutes || 20} mins
                                                                     </span>
+
+                                                                    {/* 👇 FIXED: Pass service directly to avoid state batching bug */}
                                                                     <button
-                                                                        onClick={(e) => { e.stopPropagation(); setSelectedService(service); handleBookAppointment(); }}
-                                                                        className="rounded-lg px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-90"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setSelectedService(service);
+                                                                            handleBookAppointment(service);
+                                                                        }}
+                                                                        disabled={booking}
+                                                                        className="rounded-lg px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
                                                                         style={{ backgroundColor: primaryColor }}
                                                                     >
-                                                                        Book Appointment
+                                                                        {booking ? 'Booking...' : 'Book Appointment'}
                                                                     </button>
                                                                 </div>
                                                             </div>
@@ -458,7 +477,7 @@ export default function AppointmentsTab() {
                     </div>
                 )}
 
-                {/* My Appointments / History Tabs (Simplified view for now) */}
+                {/* My Appointments / History Tabs */}
                 {(activeTopTab === 'mine' || activeTopTab === 'history') && (
                     <Card className="bg-white border-slate-200">
                         <div className="flex items-center gap-2 mb-6">
