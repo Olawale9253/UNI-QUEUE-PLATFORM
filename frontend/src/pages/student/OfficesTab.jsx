@@ -166,41 +166,6 @@ export default function OfficesTab() {
                 </div>
             </div>
 
-            {isFresher && (
-                <motion.div
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-2 flex items-start gap-3 rounded-xl border p-4"
-                    style={{
-                        backgroundColor: withAlpha(primaryColor, 0.08),
-                        borderColor: withAlpha(primaryColor, 0.28),
-                    }}
-                >
-                    <div
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-                        style={{ backgroundColor: primaryColor }}
-                    >
-                        <GraduationCap className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="flex-1 text-sm">
-                        <p className="font-semibold text-slate-900 dark:text-slate-100">
-                            You're registered as a fresher
-                        </p>
-                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                            Some services require a matric number. Once you receive yours, update your profile to unlock everything.
-                        </p>
-                        <button
-                            onClick={() => navigate('/student/profile')}
-                            className="mt-3 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
-                            style={{ backgroundColor: primaryColor }}
-                        >
-                            Go to profile
-                            <ArrowRight className="h-3 w-3" />
-                        </button>
-                    </div>
-                </motion.div>
-            )}
-
             {offices.length === 0 ? (
                 <EmptyState
                     icon={Building2}
@@ -413,7 +378,7 @@ export default function OfficesTab() {
                                     </div>
                                 )}
 
-                                {/* Services List (Kept for Queue functionality) */}
+                                {/* Services List */}
                                 <div>
                                     <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
                                         Services Offered
