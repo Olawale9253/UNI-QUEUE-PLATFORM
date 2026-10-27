@@ -63,7 +63,6 @@ export default function AppointmentsTab() {
 
     const primaryColor = university?.primaryColor || '#4f46e5'
 
-    // 👇 FIX 1: Removed 'selectedOffice' from the dependency array to prevent infinite reloads
     const load = useCallback(async () => {
         try {
             const [officesRes, apptsRes, queuesRes] = await Promise.all([
@@ -94,7 +93,11 @@ export default function AppointmentsTab() {
             setOffices(enrichedOffices.sort((a, b) => a.name.localeCompare(b.name)))
             setMyAppointments(apptsRes.data?.data || [])
 
-            setSelectedOfficeId(prev => prev ?? (enrichedOffices.length > 0 ? enrichedOffices[0].id : null))
+            // Only set the default ID if one isn't already selected
+            setSelectedOfficeId(prev => {
+                if (prev) return prev;
+                return enrichedOffices.length > 0 ? enrichedOffices[0].id : null;
+            })
         } catch (err) {
             push({ type: 'error', message: err.message || 'Failed to load data' })
         } finally {
@@ -106,7 +109,7 @@ export default function AppointmentsTab() {
 
     const selectedOffice = offices.find(o => String(o.id) === String(selectedOfficeId))
 
-    // 👇 FIX 2: Reset to "appointments" tab whenever the selected office changes
+    // Reset the sub-tab to 'appointments' when a new office is selected
     useEffect(() => {
         setActiveSubTab('appointments')
     }, [selectedOfficeId])
@@ -177,7 +180,7 @@ export default function AppointmentsTab() {
                 </div>
 
                 {/* Top Tabs */}
-                <div className="flex flex-wrap items-center gap-2 mb-6 border-b border-slate-200 pb-px">
+                <div className="inline-flex items-center gap-1 p-1 mb-6 bg-slate-50 border border-slate-200 rounded-xl">
                     {[
                         { id: 'available', label: 'Available Appointments', icon: Calendar },
                         { id: 'mine', label: 'My Appointments', icon: UserCircle2 },
@@ -186,39 +189,36 @@ export default function AppointmentsTab() {
                         <button
                             key={tab.id}
                             onClick={() => setActiveTopTab(tab.id)}
-                            className={`relative flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-colors ${
-                                activeTopTab === tab.id ? '' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-t-lg'
+                            className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+                                activeTopTab === tab.id ? 'bg-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
                             }`}
                             style={activeTopTab === tab.id ? { color: primaryColor } : undefined}
                         >
                             <tab.icon className="h-4 w-4" />
                             {tab.label}
-                            {activeTopTab === tab.id && (
-                                <motion.div layoutId="topTab" className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: primaryColor }} />
-                            )}
                         </button>
                     ))}
                 </div>
 
                 {/* Main Content */}
                 {activeTopTab === 'available' && (
-                    /* 👇 FIX 3: Widened right column significantly to 2.2fr to prevent breaks */
-                    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_2.2fr]">
+                    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
+
                         {/* LEFT COLUMN */}
                         <div className="space-y-4">
-                            <div className="flex flex-col sm:flex-row gap-3">
+                            <div className="flex items-center gap-3">
                                 <div className="relative flex-1">
                                     <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                                     <input
                                         type="text"
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
-                                        placeholder="Search by office, service or staff..."
+                                        placeholder="Search by office..."
                                         className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2"
                                         style={{ '--tw-ring-color': withAlpha(primaryColor, 0.2) }}
                                     />
                                 </div>
-                                <button className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+                                <button className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors shrink-0">
                                     <Filter className="h-4 w-4 text-slate-400" /> All Offices
                                 </button>
                             </div>
@@ -234,12 +234,12 @@ export default function AppointmentsTab() {
                                             <Card
                                                 key={office.id}
                                                 className={`cursor-pointer transition-all ${
-                                                    isSelected ? 'shadow-sm border-2' : 'border hover:border-slate-300'
+                                                    isSelected ? 'border-2 shadow-sm' : 'border border-slate-200 hover:border-slate-300'
                                                 }`}
                                                 style={isSelected ? { borderColor: primaryColor } : undefined}
                                                 onClick={() => setSelectedOfficeId(office.id)}
                                             >
-                                                <div className="flex items-start gap-4 p-1">
+                                                <div className="flex items-start gap-4">
                                                     <div
                                                         className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
                                                         style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
@@ -250,7 +250,7 @@ export default function AppointmentsTab() {
                                                         <div className="flex items-start justify-between gap-2">
                                                             <div>
                                                                 <h3 className="text-base font-bold text-slate-900">{office.name}</h3>
-                                                                <p className="mt-0.5 text-sm text-slate-500 line-clamp-2">{office.description || 'View available services and book an appointment.'}</p>
+                                                                <p className="mt-1 text-sm text-slate-500 line-clamp-2">{office.description || 'View available services and book an appointment.'}</p>
                                                             </div>
                                                             <Badge variant={office.isAvailable ? 'success' : 'default'} className="shrink-0 flex items-center gap-1">
                                                                 {office.isAvailable && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
@@ -258,18 +258,21 @@ export default function AppointmentsTab() {
                                                             </Badge>
                                                         </div>
 
-                                                        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs font-medium text-slate-500">
-                                                            <div className="flex items-center gap-4">
+                                                        <div className="mt-4 flex flex-col gap-2">
+                                                            <div className="flex items-center gap-4 text-xs font-medium text-slate-500">
                                                                 <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Today - Fri, 31 Oct 2026</span>
                                                                 <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-slate-400" /> 9:00 AM – 4:00 PM</span>
                                                             </div>
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); setSelectedOfficeId(office.id); }}
-                                                                className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors"
-                                                                style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
-                                                            >
-                                                                View Details <ChevronRight className="h-3 w-3" />
-                                                            </button>
+
+                                                            <div className="flex justify-end mt-1">
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); setSelectedOfficeId(office.id); }}
+                                                                    className="flex items-center gap-1 rounded-lg px-4 py-2 text-xs font-bold transition-colors hover:opacity-80"
+                                                                    style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
+                                                                >
+                                                                    View Details <ChevronRight className="h-3 w-3" />
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -285,8 +288,9 @@ export default function AppointmentsTab() {
                             {selectedOffice ? (
                                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={selectedOffice.id}>
                                     <Card padded={false} className="overflow-hidden shadow-sm bg-white border-slate-200">
-                                        <div className="p-6 sm:p-8" style={{ backgroundColor: withAlpha(primaryColor, 0.02) }}>
-                                            <div className="flex items-start gap-4">
+                                        {/* Hero Header */}
+                                        <div className="p-6 sm:p-8" style={{ backgroundColor: withAlpha(primaryColor, 0.03), borderBottom: `1px solid ${withAlpha(primaryColor, 0.1)}` }}>
+                                            <div className="flex items-start gap-5">
                                                 <div
                                                     className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5"
                                                     style={{ color: primaryColor }}
@@ -294,16 +298,18 @@ export default function AppointmentsTab() {
                                                     {(() => { const Icon = getOfficeIcon(selectedOffice.name); return <Icon className="h-8 w-8" /> })()}
                                                 </div>
                                                 <div>
-                                                    <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-                                                        {selectedOffice.name}
+                                                    <div className="flex items-center gap-3">
+                                                        <h2 className="text-2xl font-bold text-slate-900">
+                                                            {selectedOffice.name}
+                                                        </h2>
                                                         <Badge variant={selectedOffice.isAvailable ? 'success' : 'default'} className="text-xs px-2 py-0.5">
                                                             {selectedOffice.isAvailable ? 'Available' : 'Closed'}
                                                         </Badge>
-                                                    </h2>
+                                                    </div>
                                                     <p className="mt-1 text-sm font-medium text-slate-600">
                                                         {university?.name || 'University Portal'} {university?.code ? `(${university.code})` : ''}
                                                     </p>
-                                                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                                                    <p className="mt-3 text-sm leading-relaxed text-slate-600">
                                                         {selectedOffice.description || 'Handles course registration, academic records, transcripts, result checking and other academic related services.'}
                                                     </p>
                                                 </div>
@@ -311,12 +317,12 @@ export default function AppointmentsTab() {
                                         </div>
 
                                         {/* 3-Column Info Grid */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 border-y border-slate-100 bg-white">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 border-b border-slate-100 bg-white">
                                             <div className="flex items-start gap-3 p-4">
                                                 <MapPin className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
                                                 <div>
                                                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Location</div>
-                                                    <div className="mt-1 text-sm font-semibold text-slate-900 line-clamp-2">{selectedOffice.location || 'Main Administrative Building, Ground Floor'}</div>
+                                                    <div className="mt-1 text-sm font-semibold text-slate-900 line-clamp-1" title={selectedOffice.location || 'Main Administrative Building'}>{selectedOffice.location || 'Main Administrative Building'}</div>
                                                 </div>
                                             </div>
                                             <div className="flex items-start gap-3 p-4">
@@ -330,12 +336,12 @@ export default function AppointmentsTab() {
                                                 <Clock className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
                                                 <div>
                                                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Working Hours</div>
-                                                    {/* 👇 FIX 4: Added whitespace-nowrap to prevent text wrapping */}
                                                     <div className="mt-1 text-sm font-semibold text-slate-900 whitespace-nowrap">Mon – Fri: 8:00 AM – 4:00 PM</div>
                                                 </div>
                                             </div>
                                         </div>
 
+                                        {/* Sub Tabs */}
                                         <div className="px-6 pt-6">
                                             <div className="flex items-center gap-6 border-b border-slate-200">
                                                 <button
@@ -365,7 +371,7 @@ export default function AppointmentsTab() {
                                             {activeSubTab === 'appointments' && (
                                                 <>
                                                     {/* Horizontal Date & Time bar */}
-                                                    <div className="flex flex-wrap items-center gap-4 mb-6 border-b border-slate-100 pb-4">
+                                                    <div className="flex flex-wrap items-center gap-4 mb-6 border-b border-slate-100 pb-5">
                                                         <div className="flex items-center gap-2 shrink-0">
                                                             <Calendar className="h-4 w-4 text-slate-400" />
                                                             <span className="text-sm font-semibold text-slate-700">Select Date</span>
@@ -382,8 +388,7 @@ export default function AppointmentsTab() {
                                                             </div>
                                                         </div>
 
-                                                        {/* 👇 FIX 5: Removed flex-wrap to keep all times on one line */}
-                                                        <div className="flex items-center gap-2 overflow-x-auto pb-1 w-full">
+                                                        <div className="flex items-center gap-2 overflow-x-auto pb-1 w-full lg:w-auto">
                                                             {TIME_SLOTS.map(time => (
                                                                 <button
                                                                     key={time}
@@ -403,11 +408,11 @@ export default function AppointmentsTab() {
 
                                                     {/* Services */}
                                                     <div>
-                                                        <h4 className="text-sm font-bold text-slate-900 mb-3">Available Services</h4>
+                                                        <h4 className="text-base font-bold text-slate-900 mb-4">Available Services</h4>
                                                         <div className="space-y-3">
                                                             {selectedOffice.services.length === 0 ? (
                                                                 <div className="p-8 text-center border border-dashed rounded-xl bg-slate-50 flex flex-col items-center justify-center">
-                                                                    <div className="h-10 w-10 text-slate-300 mb-2">
+                                                                    <div className="h-10 w-10 text-slate-300 mb-3">
                                                                         <FileText className="h-full w-full" />
                                                                     </div>
                                                                     <p className="text-sm font-bold text-slate-600">No Services Available</p>
@@ -436,7 +441,7 @@ export default function AppointmentsTab() {
                                                                                 </div>
                                                                                 <div>
                                                                                     <div className="text-sm font-bold text-slate-900">{service.name}</div>
-                                                                                    <div className="text-xs text-slate-500 mt-0.5 line-clamp-1">{service.description || 'Standard appointment service.'}</div>
+                                                                                    <div className="text-xs text-slate-500 mt-1 line-clamp-1">{service.description || 'Standard appointment service.'}</div>
                                                                                 </div>
                                                                             </div>
                                                                             <div className="flex items-center gap-4 mt-3 sm:mt-0">
@@ -450,7 +455,7 @@ export default function AppointmentsTab() {
                                                                                         handleBookAppointment(service);
                                                                                     }}
                                                                                     disabled={booking}
-                                                                                    className="rounded-lg px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+                                                                                    className="rounded-lg px-5 py-2 text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
                                                                                     style={{ backgroundColor: primaryColor }}
                                                                                 >
                                                                                     {booking ? 'Booking...' : 'Book Appointment'}
@@ -467,7 +472,7 @@ export default function AppointmentsTab() {
 
                                             {activeSubTab === 'staff' && (
                                                 <div>
-                                                    <h4 className="text-sm font-bold text-slate-900 mb-3">Staff Members for {selectedOffice.name}</h4>
+                                                    <h4 className="text-base font-bold text-slate-900 mb-4">Staff Members</h4>
                                                     {selectedOffice.staff.length === 0 ? (
                                                         <div className="p-8 text-center border border-dashed rounded-xl bg-slate-50">
                                                             <p className="text-sm font-bold text-slate-600">No staff assigned</p>
@@ -477,8 +482,8 @@ export default function AppointmentsTab() {
                                                         <div className="space-y-3">
                                                             {selectedOffice.staff.map(staff => (
                                                                 <div key={staff.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white">
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white" style={{ backgroundColor: primaryColor }}>
+                                                                    <div className="flex items-center gap-4">
+                                                                        <div className="flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold text-white" style={{ backgroundColor: primaryColor }}>
                                                                             {staff.fullName?.charAt(0) || 'S'}
                                                                         </div>
                                                                         <div>
@@ -494,14 +499,15 @@ export default function AppointmentsTab() {
                                             )}
                                         </div>
 
-                                        <div className="p-6 bg-slate-50 border-t border-slate-100 mt-4">
+                                        {/* Bottom Banner */}
+                                        <div className="p-6 bg-slate-50 border-t border-slate-100">
                                             <div
                                                 className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl border p-4"
                                                 style={{ backgroundColor: withAlpha(primaryColor, 0.05), borderColor: withAlpha(primaryColor, 0.15) }}
                                             >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white shadow-sm" style={{ color: primaryColor }}>
-                                                        <HelpCircle className="h-5 w-5" />
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white shadow-sm" style={{ color: primaryColor }}>
+                                                        <HelpCircle className="h-6 w-6" />
                                                     </div>
                                                     <div>
                                                         <div className="text-sm font-bold text-slate-900">Can't find what you need?</div>
@@ -510,7 +516,7 @@ export default function AppointmentsTab() {
                                                 </div>
                                                 <button
                                                     onClick={() => navigate('/student/queues')}
-                                                    className="shrink-0 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold text-white shadow-sm transition-opacity hover:opacity-90"
+                                                    className="shrink-0 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-opacity hover:opacity-90"
                                                     style={{ backgroundColor: primaryColor }}
                                                 >
                                                     <Ticket className="h-4 w-4" /> Join Queue
