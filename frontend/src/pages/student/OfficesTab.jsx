@@ -157,7 +157,6 @@ export default function OfficesTab() {
                         </p>
                     </div>
 
-                    {/* 👇 UPDATED: Dynamic Brand Color for Top Banner */}
                     <div
                         className="hidden md:flex items-center gap-3 rounded-xl border px-4 py-3"
                         style={{
@@ -225,7 +224,7 @@ export default function OfficesTab() {
                                                             onClick={() => setSelectedOfficeId(id)}
                                                             className={`group flex w-full items-start gap-3 rounded-xl p-3 text-left transition-all duration-200 ${
                                                                 isSelected
-                                                                    ? 'bg-slate-50 dark:bg-slate-800/60'
+                                                                    ? 'bg-white dark:bg-slate-800/60 shadow-sm'
                                                                     : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
                                                             }`}
                                                             style={isSelected ? {
@@ -297,7 +296,6 @@ export default function OfficesTab() {
                                                     </div>
                                                 </div>
 
-                                                {/* 👇 UPDATED: Renamed button to make contextual sense */}
                                                 <button
                                                     onClick={() => navigate('/student/queues')}
                                                     className="shrink-0 inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors hover:opacity-80"
@@ -347,21 +345,25 @@ export default function OfficesTab() {
                                         </div>
                                     </Card>
 
-                                    {/* Staff Details Section */}
-                                    {selected.staff.length > 0 && (
-                                        <div>
-                                            <div className="mb-4 flex items-center justify-between">
-                                                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                                                    Staff Details
-                                                </h3>
-                                                <span
-                                                    className="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold"
-                                                    style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
-                                                >
-                                                    {selected.staff.length} Staff Member{selected.staff.length !== 1 ? 's' : ''}
-                                                </span>
-                                            </div>
-                                            <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
+                                    {/* Staff Details Section (Forced to always render) */}
+                                    <div>
+                                        <div className="mb-4 flex items-center justify-between">
+                                            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                                                Staff Details
+                                            </h3>
+                                            <span
+                                                className="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold"
+                                                style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
+                                            >
+                                                {selected.staff.length} Staff Member{selected.staff.length !== 1 ? 's' : ''}
+                                            </span>
+                                        </div>
+                                        <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
+                                            {selected.staff.length === 0 ? (
+                                                <div className="p-8 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
+                                                    No staff members assigned to this office yet.
+                                                </div>
+                                            ) : (
                                                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
                                                     {selected.staff.map((staff) => (
                                                         <div key={staff.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 sm:px-6 gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
@@ -393,9 +395,9 @@ export default function OfficesTab() {
                                                         </div>
                                                     ))}
                                                 </div>
-                                            </Card>
-                                        </div>
-                                    )}
+                                            )}
+                                        </Card>
+                                    </div>
 
                                     {/* Services List */}
                                     <div>
@@ -469,15 +471,20 @@ export default function OfficesTab() {
                                     </div>
                                 </motion.div>
                             ) : (
-                                <Card className="h-full min-h-[500px] flex items-center justify-center border-dashed border-2 bg-white dark:bg-slate-900/20">
-                                    <EmptyState
-                                        icon={Info}
-                                        variant="info"
-                                        size="lg"
-                                        bordered={false}
-                                        title="Select an office to view details"
-                                        description="Pick an office from the list on the left to see its staff, contact information, and available services."
-                                    />
+                                // 👇 CUSTOM EMPTY STATE (Matching School Color)
+                                <Card className="h-full min-h-[500px] flex items-center justify-center border-dashed border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                                    <div className="flex flex-col items-center justify-center p-8 text-center">
+                                        <div
+                                            className="mb-4 flex h-16 w-16 items-center justify-center rounded-full"
+                                            style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
+                                        >
+                                            <Info className="h-8 w-8" />
+                                        </div>
+                                        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Select an office to view details</h3>
+                                        <p className="mt-2 max-w-sm text-sm text-slate-500 dark:text-slate-400">
+                                            Pick an office from the list on the left to see its staff, contact information, and available services.
+                                        </p>
+                                    </div>
                                 </Card>
                             )}
                         </AnimatePresence>

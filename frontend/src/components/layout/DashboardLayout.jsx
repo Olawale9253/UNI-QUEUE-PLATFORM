@@ -74,10 +74,11 @@ export default function DashboardLayout({ tabs, title, description, action, chil
     const homeItem = { to: homeHref, label: 'Home', icon: HomeIcon, end: true }
 
     return (
-        <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-slate-50 dark:bg-slate-950">
+        // 👇 CHANGED: bg-slate-50 to bg-white
+        <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-white dark:bg-slate-950">
             {/* DESKTOP SIDEBAR */}
             <aside
-                className={`hidden h-full shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white/90 shadow-sm transition-[width] duration-300 ease-out md:flex dark:border-slate-800 dark:bg-slate-900/90 ${
+                className={`hidden h-full shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white shadow-sm transition-[width] duration-300 ease-out md:flex dark:border-slate-800 dark:bg-slate-900/90 ${
                     sidebarCollapsed ? 'w-16' : 'w-56'
                 }`}
             >
@@ -98,7 +99,6 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                     </div>
                 </nav>
 
-                {/* 🔧 DESKTOP LOGOUT BUTTON */}
                 <div className="shrink-0 border-t border-slate-200 p-2 dark:border-slate-800">
                     <button
                         onClick={handleExit}
@@ -144,8 +144,6 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                                     ))}
                                 </div>
                             </nav>
-
-                            {/* 🔧 MOBILE LOGOUT BUTTON */}
                             <div className="shrink-0 border-t border-slate-200 p-3 dark:border-slate-800">
                                 <button
                                     onClick={() => {
@@ -163,7 +161,8 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                 )}
             </AnimatePresence>
 
-            <main className="min-w-0 flex-1 overflow-y-auto">
+            {/* 👇 CHANGED: main background to white */}
+            <main className="min-w-0 flex-1 overflow-y-auto bg-white dark:bg-slate-950">
                 <div className="mx-auto w-full max-w-[1680px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
                     {title && <PageHeader title={title} description={description} action={action} />}
                     {children}
