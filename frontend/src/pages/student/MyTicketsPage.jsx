@@ -3,14 +3,13 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     ArrowRight, Check, Clock3, LogOut, Ticket, History,
-    RotateCcw, SkipForward, ArrowUpRight
+    RotateCcw, SkipForward, ArrowUpRight, Copy
 } from 'lucide-react'
 import api from '../../api/axios'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { formatDateTime } from '../../lib/format'
 import Card from '../../components/ui/Card'
-import Button from '../../components/ui/Button'
 
 const QUEUE_STEPS = ['Joined', 'Waiting', 'In Service', 'Completed']
 
@@ -30,14 +29,39 @@ function getActiveStep(status) {
 
 function StatusBadge({ status }) {
     const isComplete = status?.toUpperCase() === 'COMPLETED'
+    const isCancelled = status?.toUpperCase() === 'CANCELLED'
+    const isNoShow = status?.toUpperCase() === 'NO_SHOW'
+
+    let colorClass = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+    if (isComplete) colorClass = 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+    if (isCancelled || isNoShow) colorClass = 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
+
     return (
-        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider ${
-            isComplete
-                ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-                : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
-        }`}>
+        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider ${colorClass}`}>
             {status?.replaceAll('_', ' ') || 'Active'}
         </span>
+    )
+}
+
+function CopyButton({ text }) {
+    const [copied, setCopied] = useState(false)
+    const copy = async (event) => {
+        event.stopPropagation()
+        try {
+            await navigator.clipboard.writeText(text)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 1500)
+        } catch {}
+    }
+    return (
+        <button
+            type="button"
+            onClick={copy}
+            title="Copy ticket ID"
+            className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+        >
+            {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+        </button>
     )
 }
 
@@ -109,7 +133,7 @@ export default function MyTicketsPage() {
         }
     }
 
-    // 👇 LIMIT: Only show the most recent 3 past tickets to keep it clean
+    // LIMIT: Only show the most recent 3 past tickets to keep it clean
     const pastTickets = history.filter((ticket) => ticket.status !== 'WAITING').slice(0, 3)
 
     if (loading && !activeTicket) {
@@ -149,7 +173,7 @@ export default function MyTicketsPage() {
                                         {activeTicket.queueName || 'Queue'}
                                     </h3>
                                     <p className="mt-0.5 text-sm font-medium text-slate-500 dark:text-slate-400">
-                                        Ticket #{activeTicket.ticketNumber || activeTicket.id}
+                                        Ticket {activeTicket.ticketNumber || activeTicket.id}
                                     </p>
                                 </div>
                             </div>
@@ -175,7 +199,6 @@ export default function MyTicketsPage() {
                                 </p>
                             </div>
 
-                            {/* 👇 PREMIUM ACTION BUTTONS */}
                             <div className="flex flex-col gap-2 items-center justify-center sm:justify-end">
                                 {isActionable && (
                                     <div className="flex w-full flex-col gap-2">
@@ -258,7 +281,7 @@ export default function MyTicketsPage() {
                 </Card>
             )}
 
-            {/* 👇 PAST TICKETS SECTION WITH NAVIGATION */}
+            {/* 👇 UPGRADED RECENT TICKETS SECTION */}
             <div>
                 <div className="mb-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -275,35 +298,58 @@ export default function MyTicketsPage() {
                     )}
                 </div>
 
-                <Card padded={false}>
-                    {pastTickets.length === 0 ? (
+                {pastTickets.length === 0 ? (
+                    <Card>
                         <p className="px-6 py-8 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
                             You have no past tickets yet.
                         </p>
-                    ) : (
-                        <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                            {pastTickets.map((ticket) => (
-                                <li key={ticket.id} className="flex flex-wrap items-center justify-between gap-4 p-4 sm:px-6 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                                    <div className="flex min-w-0 items-center gap-4">
-                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                                            <Ticket className="h-5 w-5" />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <p className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">
-                                                {ticket.queueName || 'Queue'}
-                                            </p>
-                                            <p className="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                                                Ticket #{ticket.ticketNumber || ticket.id}
-                                                {ticket.createdAt ? ` · ${formatDateTime(ticket.createdAt)}` : ''}
-                                            </p>
-                                        </div>
+                    </Card>
+                ) : (
+                    <div className="space-y-3">
+                        {pastTickets.map((ticket) => (
+                            <motion.div
+                                key={ticket.id}
+                                initial={{ opacity: 0, y: 4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/20"
+                            >
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0 flex-1">
+                                        <h4 className="truncate text-base font-bold text-slate-900 dark:text-slate-100">
+                                            {ticket.queueName || ticket.officeName || 'Service'}
+                                        </h4>
                                     </div>
                                     <StatusBadge status={ticket.status} />
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </Card>
+                                </div>
+
+                                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="font-medium text-slate-500 dark:text-slate-400">Ticket:</span>
+                                        <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                                            {ticket.ticketNumber || ticket.id}
+                                        </span>
+                                        <CopyButton text={ticket.ticketNumber || String(ticket.id)} />
+                                    </div>
+
+                                    {ticket.position != null && (
+                                        <div className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                                            <span className="text-slate-500">Position:</span>{' '}
+                                            <span className="font-bold text-slate-900 dark:text-slate-100">
+                                                {ticket.position}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {ticket.createdAt && (
+                                        <div className="text-xs font-medium text-slate-400">
+                                            {formatDateTime(ticket.createdAt)}
+                                        </div>
+                                    )}
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     )
