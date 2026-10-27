@@ -381,7 +381,7 @@ export default function QueuesTab() {
                             update your profile to unlock everything.
                         </p>
                         <button
-                            onClick={() => navigate('/profile')}
+                            onClick={() => navigate('/student/profile')} // 👈 FIXED: Navigating to student profile
                             className="mt-3 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
                             style={{ backgroundColor: primaryColor }}
                         >
