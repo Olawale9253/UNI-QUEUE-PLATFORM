@@ -53,7 +53,9 @@ export default function AppointmentsTab() {
     const [myAppointments, setMyAppointments] = useState([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
-    const [selectedOffice, setSelectedOffice] = useState(null)
+
+    // 👇 FIXED: Using ID instead of object to prevent stale closures
+    const [selectedOfficeId, setSelectedOfficeId] = useState(null)
 
     const [selectedDate, setSelectedDate] = useState('today')
     const [selectedTime, setSelectedTime] = useState('10:00 AM')
@@ -92,17 +94,19 @@ export default function AppointmentsTab() {
             setOffices(enrichedOffices.sort((a, b) => a.name.localeCompare(b.name)))
             setMyAppointments(apptsRes.data?.data || [])
 
-            if (enrichedOffices.length > 0 && !selectedOffice) {
-                setSelectedOffice(enrichedOffices[0])
-            }
+            // 👇 FIXED: Only auto-select if nothing is selected yet
+            setSelectedOfficeId(prev => prev ?? (enrichedOffices.length > 0 ? enrichedOffices[0].id : null))
         } catch (err) {
             push({ type: 'error', message: err.message || 'Failed to load data' })
         } finally {
             setLoading(false)
         }
-    }, [push, selectedOffice])
+    }, [push])
 
     useEffect(() => { load() }, [load])
+
+    // 👇 FIXED: Derive the selected office object from the ID
+    const selectedOffice = offices.find(o => String(o.id) === String(selectedOfficeId))
 
     const filteredOffices = useMemo(() => {
         if (!search.trim()) return offices
@@ -195,7 +199,8 @@ export default function AppointmentsTab() {
 
                 {/* Main Content */}
                 {activeTopTab === 'available' && (
-                    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_1.2fr]">
+                    /* 👇 FIXED: Widened right column to 1.6fr */
+                    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_1.6fr]">
                         {/* LEFT COLUMN */}
                         <div className="space-y-4">
                             <div className="flex flex-col sm:flex-row gap-3">
@@ -220,7 +225,7 @@ export default function AppointmentsTab() {
                             ) : (
                                 <div className="space-y-3">
                                     {filteredOffices.map(office => {
-                                        const isSelected = selectedOffice?.id === office.id
+                                        const isSelected = String(selectedOfficeId) === String(office.id)
                                         const Icon = getOfficeIcon(office.name)
                                         return (
                                             <Card
@@ -229,7 +234,7 @@ export default function AppointmentsTab() {
                                                     isSelected ? 'shadow-sm border-2' : 'border hover:border-slate-300'
                                                 }`}
                                                 style={isSelected ? { borderColor: primaryColor } : undefined}
-                                                onClick={() => setSelectedOffice(office)}
+                                                onClick={() => setSelectedOfficeId(office.id)}
                                             >
                                                 <div className="flex items-start gap-4 p-1">
                                                     <div
@@ -256,7 +261,7 @@ export default function AppointmentsTab() {
                                                                 <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-slate-400" /> 9:00 AM – 4:00 PM</span>
                                                             </div>
                                                             <button
-                                                                onClick={(e) => { e.stopPropagation(); setSelectedOffice(office); }}
+                                                                onClick={(e) => { e.stopPropagation(); setSelectedOfficeId(office.id); }}
                                                                 className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors"
                                                                 style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
                                                             >
@@ -302,26 +307,28 @@ export default function AppointmentsTab() {
                                             </div>
                                         </div>
 
+                                        {/* 3-Column Info Grid */}
                                         <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 border-y border-slate-100 bg-white">
                                             <div className="flex items-start gap-3 p-4">
                                                 <MapPin className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
                                                 <div>
                                                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Location</div>
-                                                    <div className="mt-1 text-sm font-semibold text-slate-900">{selectedOffice.location || 'Main Administrative Building, Ground Floor'}</div>
+                                                    <div className="mt-1 text-sm font-semibold text-slate-900 line-clamp-2">{selectedOffice.location || 'Main Administrative Building, Ground Floor'}</div>
                                                 </div>
                                             </div>
                                             <div className="flex items-start gap-3 p-4">
                                                 <Phone className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
                                                 <div>
                                                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Phone Number</div>
-                                                    <div className="mt-1 text-sm font-semibold text-slate-900">+234 803 123 4567</div>
+                                                    <div className="mt-1 text-sm font-semibold text-slate-900 whitespace-nowrap">+234 803 123 4567</div>
                                                 </div>
                                             </div>
                                             <div className="flex items-start gap-3 p-4">
                                                 <Clock className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
                                                 <div>
                                                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Working Hours</div>
-                                                    <div className="mt-1 text-sm font-semibold text-slate-900">Mon – Fri: 8:00 AM – 4:00 PM</div>
+                                                    {/* 👇 FIXED: Added whitespace-nowrap to prevent breaking */}
+                                                    <div className="mt-1 text-sm font-semibold text-slate-900 whitespace-nowrap">Mon – Fri: 8:00 AM – 4:00 PM</div>
                                                 </div>
                                             </div>
                                         </div>
