@@ -24,7 +24,7 @@ function formatTime(token) {
 
 function OfficesSkeleton() {
     return (
-        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[340px_1fr]">
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[380px_1fr]">
             <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                 <SkeletonBox className="h-10 w-full" />
                 <div className="mt-4 space-y-2">
@@ -142,328 +142,336 @@ export default function OfficesTab() {
         )
     }
 
+    // Force a white background wrapper
     return (
-        <div className="space-y-6 pb-12">
-            {/* Header Section with Top Right Banner */}
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                        Campus Offices
-                    </h1>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
-                        View university offices and staff details. Find the right office, get contact information, and know who to see for your needs.
-                    </p>
-                </div>
-
-                <div className="hidden md:flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/50 px-4 py-3 dark:border-blue-900/30 dark:bg-blue-900/10">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">
-                        <Users className="h-5 w-5" />
-                    </div>
+        <div className="bg-white dark:bg-slate-950 min-h-screen -m-4 p-4 sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
+            <div className="space-y-6 pb-12 max-w-[1600px] mx-auto">
+                {/* Header Section with Top Right Banner */}
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div>
-                        <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Talk to the Right People</div>
-                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Get the help you need, faster.</div>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                            Office
+                        </h1>
+                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
+                            View university offices and staff details. Find the right office, get contact information, and know who to see for your needs.
+                        </p>
+                    </div>
+
+                    <div className="hidden md:flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/50 px-4 py-3 dark:border-blue-900/30 dark:bg-blue-900/10">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">
+                            <Users className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Talk to the Right People</div>
+                            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Get the help you need, faster.</div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {offices.length === 0 ? (
-                <EmptyState
-                    icon={Building2}
-                    variant="info"
-                    title="No offices available yet"
-                    description="Your university hasn't set up any offices. Check back soon or contact your admin."
-                />
-            ) : (
-                <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[340px_1fr]">
+                {offices.length === 0 ? (
+                    <EmptyState
+                        icon={Building2}
+                        variant="info"
+                        title="No offices available yet"
+                        description="Your university hasn't set up any offices. Check back soon or contact your admin."
+                    />
+                ) : (
+                    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[380px_1fr]">
 
-                    {/* LEFT SIDEBAR (Office List) */}
-                    <div className="lg:sticky lg:top-24">
-                        <Card className="h-fit p-0 overflow-hidden border-slate-200 dark:border-slate-800">
-                            <div className="p-4 border-b border-slate-100 dark:border-slate-800">
-                                <div className="relative">
-                                    <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                                    <input
-                                        type="text"
-                                        value={search}
-                                        onChange={(event) => setSearch(event.target.value)}
-                                        placeholder="Search for an office..."
-                                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm font-medium text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="max-h-[calc(100vh-16rem)] overflow-y-auto p-2">
-                                {filtered.length === 0 ? (
-                                    <div className="px-4 py-8 text-center">
-                                        <p className="text-xs font-bold text-slate-600 dark:text-slate-300">No offices match</p>
-                                        <p className="mt-0.5 text-[11px] font-medium text-slate-400">Try a different search term.</p>
-                                    </div>
-                                ) : (
-                                    <ul className="space-y-1">
-                                        {filtered.map((itemValue) => {
-                                            const id = itemValue.office.id ?? itemValue.office.name
-                                            const isSelected = String(id) === String(selectedOfficeId)
-                                            return (
-                                                <li key={String(id)}>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setSelectedOfficeId(id)}
-                                                        className={`group flex w-full items-start gap-3 rounded-xl p-3 text-left transition-all duration-200 ${
-                                                            isSelected
-                                                                ? 'bg-slate-50 dark:bg-slate-800/60'
-                                                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
-                                                        }`}
-                                                        style={isSelected ? {
-                                                            borderLeft: `4px solid ${primaryColor}`,
-                                                            backgroundColor: withAlpha(primaryColor, 0.05)
-                                                        } : undefined}
-                                                    >
-                                                        <div
-                                                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800"
-                                                            style={isSelected ? { backgroundColor: withAlpha(primaryColor, 0.15), color: primaryColor } : { color: '#64748b' }}
-                                                        >
-                                                            <Building2 className="h-5 w-5" />
-                                                        </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <div className={`text-sm font-bold truncate ${isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}
-                                                                 style={isSelected ? { color: primaryColor } : undefined}
-                                                            >
-                                                                {itemValue.office.name}
-                                                            </div>
-                                                            <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
-                                                                {itemValue.office.description || `View services and staff for ${itemValue.office.name}.`}
-                                                            </div>
-                                                        </div>
-                                                        <ChevronRight className={`h-4 w-4 shrink-0 mt-1 transition-transform ${isSelected ? 'translate-x-0.5' : 'text-slate-300 opacity-0 group-hover:opacity-100'}`}
-                                                                      style={isSelected ? { color: primaryColor } : undefined}
-                                                        />
-                                                    </button>
-                                                </li>
-                                            )
-                                        })}
-                                    </ul>
-                                )}
-                            </div>
-                        </Card>
-                    </div>
-
-                    {/* RIGHT PANEL (Office Details) */}
-                    <AnimatePresence mode="wait">
-                        {selected ? (
-                            <motion.div
-                                key={String(selected.office.id ?? selected.office.name)}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                transition={{ duration: 0.2 }}
-                                className="space-y-6"
-                            >
-                                {/* Hero Card */}
-                                <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm">
-                                    <div className="p-6 sm:p-8 bg-slate-50/50 dark:bg-slate-900/30">
-                                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
-                                            <div className="flex items-start gap-4">
-                                                <div
-                                                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10"
-                                                    style={{ color: primaryColor }}
-                                                >
-                                                    <Building2 className="h-8 w-8" />
-                                                </div>
-                                                <div>
-                                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                                                        {selected.office.name}
-                                                    </h2>
-                                                    <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-400">
-                                                        {university?.name || 'University Portal'}
-                                                    </p>
-                                                    <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                                                        {selected.office.description || 'Course registration, academic records, and more.'}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <button
-                                                onClick={() => navigate('/student/queues')}
-                                                className="shrink-0 inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors"
-                                                style={{
-                                                    borderColor: primaryColor,
-                                                    color: primaryColor,
-                                                    backgroundColor: withAlpha(primaryColor, 0.05)
-                                                }}
-                                            >
-                                                <Phone className="h-4 w-4" />
-                                                Get Office Contact
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* 3-Column Info Grid */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-                                        <div className="flex items-start gap-3 p-5">
-                                            <MapPin className="h-5 w-5 shrink-0 text-slate-400 mt-0.5" />
-                                            <div>
-                                                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Office Location</div>
-                                                <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                    {selected.office.location || 'Main Administrative Building'}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-start gap-3 p-5">
-                                            <Mail className="h-5 w-5 shrink-0 text-slate-400 mt-0.5" />
-                                            <div>
-                                                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Phone Number</div>
-                                                <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                    +234 803 123 4567
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-start gap-3 p-5">
-                                            <Clock className="h-5 w-5 shrink-0 text-slate-400 mt-0.5" />
-                                            <div>
-                                                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Working Hours</div>
-                                                <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                    {selected.office.openingTime && selected.office.closingTime
-                                                        ? `Mon – Fri: ${formatTime(selected.office.openingTime)} – ${formatTime(selected.office.closingTime)}`
-                                                        : 'Mon – Fri: 8:00 AM – 4:00 PM'}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Card>
-
-                                {/* Staff Details Section */}
-                                {selected.staff.length > 0 && (
-                                    <div>
-                                        <div className="mb-4 flex items-center justify-between">
-                                            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                                                Staff Details
-                                            </h3>
-                                            <span
-                                                className="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold"
-                                                style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
-                                            >
-                                                {selected.staff.length} Staff Member{selected.staff.length !== 1 ? 's' : ''}
-                                            </span>
-                                        </div>
-                                        <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm">
-                                            <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                                                {selected.staff.map((staff) => (
-                                                    <div key={staff.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:px-6 gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                                                        <div className="flex items-center gap-4">
-                                                            <div
-                                                                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white shadow-inner"
-                                                                style={{ backgroundColor: primaryColor }}
-                                                            >
-                                                                {staff.fullName?.charAt(0) || <UserCircle2 className="h-6 w-6" />}
-                                                            </div>
-                                                            <div>
-                                                                <div className="text-base font-bold text-slate-900 dark:text-slate-100">
-                                                                    {staff.fullName}
-                                                                </div>
-                                                                <div className="mt-0.5 text-sm font-medium text-slate-500 flex flex-wrap items-center gap-x-4 gap-y-1">
-                                                                    <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {staff.email || 'staff@university.edu'}</span>
-                                                                    <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {staff.phone || '+234 ...'}</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <button className="shrink-0 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                                            View Profile
-                                                            <ChevronRight className="ml-1 h-3.5 w-3.5" />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </Card>
-                                    </div>
-                                )}
-
-                                {/* Services List */}
-                                <div>
-                                    <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
-                                        Services Offered
-                                    </h3>
-                                    {selected.services.length === 0 ? (
-                                        <EmptyState
-                                            icon={ListOrdered}
-                                            size="sm"
-                                            title="No services yet"
-                                            description="This office hasn't opened any services."
+                        {/* LEFT SIDEBAR (Office List) - Sticky without internal scrolling */}
+                        <div className="lg:sticky lg:top-24">
+                            <Card className="h-fit p-0 overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
+                                <div className="p-4 border-b border-slate-100 dark:border-slate-800">
+                                    <div className="relative">
+                                        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            type="text"
+                                            value={search}
+                                            onChange={(event) => setSearch(event.target.value)}
+                                            placeholder="Search for an office..."
+                                            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm font-medium text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                         />
+                                    </div>
+                                </div>
+
+                                {/* Removed the max-h and overflow-y-auto to fix the awkward scrolling */}
+                                <div className="p-2">
+                                    {filtered.length === 0 ? (
+                                        <div className="px-4 py-8 text-center">
+                                            <p className="text-xs font-bold text-slate-600 dark:text-slate-300">No offices match</p>
+                                            <p className="mt-0.5 text-[11px] font-medium text-slate-400">Try a different search term.</p>
+                                        </div>
                                     ) : (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {selected.services.map((service) => {
-                                                const isLive = service.isOpen === true
-                                                const isLocked = isFresher && service.matricRequired
+                                        <ul className="space-y-1">
+                                            {filtered.map((itemValue) => {
+                                                const id = itemValue.office.id ?? itemValue.office.name
+                                                const isSelected = String(id) === String(selectedOfficeId)
                                                 return (
-                                                    <Card key={service.id} className="group flex flex-col justify-between transition-all hover:border-slate-300 hover:shadow-md">
-                                                        <div>
-                                                            <div className="flex items-start justify-between gap-3 mb-2">
-                                                                <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                                                                    {service.name}
-                                                                </h4>
-                                                                <Badge variant={isLive ? 'success' : 'default'} className="shrink-0">
-                                                                    {isLive ? 'Live' : 'Closed'}
-                                                                </Badge>
+                                                    <li key={String(id)}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedOfficeId(id)}
+                                                            className={`group flex w-full items-start gap-3 rounded-xl p-3 text-left transition-all duration-200 ${
+                                                                isSelected
+                                                                    ? 'bg-slate-50 dark:bg-slate-800/60'
+                                                                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                                                            }`}
+                                                            style={isSelected ? {
+                                                                borderLeft: `4px solid ${primaryColor}`,
+                                                                backgroundColor: withAlpha(primaryColor, 0.05)
+                                                            } : undefined}
+                                                        >
+                                                            <div
+                                                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800"
+                                                                style={isSelected ? { backgroundColor: withAlpha(primaryColor, 0.15), color: primaryColor } : { color: '#64748b' }}
+                                                            >
+                                                                <Building2 className="h-5 w-5" />
                                                             </div>
-                                                            <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 min-h-[2.5rem]">
-                                                                {service.description || 'No description provided.'}
-                                                            </p>
-
-                                                            <div className="mt-4 flex items-center gap-4 text-xs font-semibold">
-                                                                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                                                                    <Users className="h-3.5 w-3.5 opacity-50" />
-                                                                    {service.waitingCount ?? 0} waiting
-                                                                </span>
-                                                                <span className={`flex items-center gap-1.5 ${isLive ? 'text-amber-600' : 'text-slate-400'}`}>
-                                                                    <Clock className="h-3.5 w-3.5 opacity-50" />
-                                                                    ~{service.estimatedMinutes ?? 0} min
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
-                                                            {isLocked ? (
-                                                                <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-400 dark:bg-slate-800/50 dark:text-slate-500 cursor-not-allowed">
-                                                                    Update profile to join
-                                                                </div>
-                                                            ) : isLive ? (
-                                                                <button
-                                                                    onClick={() => navigate('/student/queues')}
-                                                                    className="flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all shadow-sm hover:shadow-md"
-                                                                    style={{ backgroundColor: primaryColor }}
+                                                            <div className="min-w-0 flex-1">
+                                                                <div className={`text-sm font-bold truncate ${isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}
+                                                                     style={isSelected ? { color: primaryColor } : undefined}
                                                                 >
-                                                                    Join this queue
-                                                                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                                                                </button>
-                                                            ) : (
-                                                                <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400 cursor-not-allowed">
-                                                                    Currently Closed
+                                                                    {itemValue.office.name}
                                                                 </div>
-                                                            )}
-                                                        </div>
-                                                    </Card>
+                                                                <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
+                                                                    {itemValue.office.description || `View services and staff for ${itemValue.office.name}.`}
+                                                                </div>
+                                                            </div>
+                                                            <ChevronRight className={`h-4 w-4 shrink-0 mt-1 transition-transform ${isSelected ? 'translate-x-0.5' : 'text-slate-300 opacity-0 group-hover:opacity-100'}`}
+                                                                          style={isSelected ? { color: primaryColor } : undefined}
+                                                            />
+                                                        </button>
+                                                    </li>
                                                 )
                                             })}
-                                        </div>
+                                        </ul>
                                     )}
                                 </div>
-                            </motion.div>
-                        ) : (
-                            <Card className="h-full min-h-[500px] flex items-center justify-center border-dashed border-2 bg-slate-50/50 dark:bg-slate-900/20">
-                                <EmptyState
-                                    icon={Info}
-                                    variant="info"
-                                    size="lg"
-                                    bordered={false}
-                                    title="Select an office to view details"
-                                    description="Pick an office from the list on the left to see its staff, contact information, and available services."
-                                />
                             </Card>
-                        )}
-                    </AnimatePresence>
-                </div>
-            )}
+                        </div>
+
+                        {/* RIGHT PANEL (Office Details) */}
+                        <AnimatePresence mode="wait">
+                            {selected ? (
+                                <motion.div
+                                    key={String(selected.office.id ?? selected.office.name)}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="space-y-6"
+                                >
+                                    {/* Hero Card */}
+                                    <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
+                                        <div className="p-6 sm:p-8 bg-slate-50/50 dark:bg-slate-900/30">
+                                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+                                                <div className="flex items-start gap-4">
+                                                    <div
+                                                        className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10"
+                                                        style={{ color: primaryColor }}
+                                                    >
+                                                        <Building2 className="h-8 w-8" />
+                                                    </div>
+                                                    <div>
+                                                        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                                                            {selected.office.name}
+                                                        </h2>
+                                                        <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-400">
+                                                            {/* 👇 ADDED: School Code right beside the name */}
+                                                            {university?.name || 'University Portal'} {university?.code ? `(${university.code})` : ''}
+                                                        </p>
+                                                        <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                                                            {selected.office.description || 'Course registration, academic records, and more.'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <button
+                                                    onClick={() => navigate('/student/queues')}
+                                                    className="shrink-0 inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors hover:opacity-80"
+                                                    style={{
+                                                        borderColor: primaryColor,
+                                                        color: primaryColor,
+                                                        backgroundColor: withAlpha(primaryColor, 0.05)
+                                                    }}
+                                                >
+                                                    <Phone className="h-4 w-4" />
+                                                    Get Office Contact
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* 3-Column Info Grid */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                                            <div className="flex items-start gap-3 p-5">
+                                                <MapPin className="h-5 w-5 shrink-0 text-slate-400 mt-0.5" />
+                                                <div>
+                                                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Office Location</div>
+                                                    <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                        {selected.office.location || 'Main Administrative Building'}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-start gap-3 p-5">
+                                                <Mail className="h-5 w-5 shrink-0 text-slate-400 mt-0.5" />
+                                                <div>
+                                                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Phone Number</div>
+                                                    <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                        +234 803 123 4567
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-start gap-3 p-5">
+                                                <Clock className="h-5 w-5 shrink-0 text-slate-400 mt-0.5" />
+                                                <div>
+                                                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Working Hours</div>
+                                                    <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                        {selected.office.openingTime && selected.office.closingTime
+                                                            ? `Mon – Fri: ${formatTime(selected.office.openingTime)} – ${formatTime(selected.office.closingTime)}`
+                                                            : 'Mon – Fri: 8:00 AM – 4:00 PM'}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Card>
+
+                                    {/* Staff Details Section */}
+                                    {selected.staff.length > 0 && (
+                                        <div>
+                                            <div className="mb-4 flex items-center justify-between">
+                                                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                                                    Staff Details
+                                                </h3>
+                                                <span
+                                                    className="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold"
+                                                    style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
+                                                >
+                                                    {selected.staff.length} Staff Member{selected.staff.length !== 1 ? 's' : ''}
+                                                </span>
+                                            </div>
+                                            <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
+                                                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                                    {selected.staff.map((staff) => (
+                                                        <div key={staff.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 sm:px-6 gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                                            <div className="flex items-center gap-4">
+                                                                <div
+                                                                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white shadow-inner"
+                                                                    style={{ backgroundColor: primaryColor }}
+                                                                >
+                                                                    {staff.fullName?.charAt(0) || <UserCircle2 className="h-6 w-6" />}
+                                                                </div>
+                                                                <div>
+                                                                    <div className="text-base font-bold text-slate-900 dark:text-slate-100">
+                                                                        {staff.fullName}
+                                                                    </div>
+                                                                    <div className="mt-1 text-sm font-medium text-slate-500 flex flex-wrap items-center gap-x-4 gap-y-1">
+                                                                        <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 opacity-60" /> {staff.email || 'staff@university.edu'}</span>
+                                                                        <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 opacity-60" /> {staff.phone || '+234 ...'}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <button
+                                                                className="shrink-0 inline-flex items-center justify-center rounded-lg border px-4 py-2 text-sm font-semibold shadow-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+                                                                style={{ borderColor: withAlpha(primaryColor, 0.3), color: primaryColor }}
+                                                            >
+                                                                View Profile
+                                                                <ChevronRight className="ml-1 h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </Card>
+                                        </div>
+                                    )}
+
+                                    {/* Services List */}
+                                    <div>
+                                        <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
+                                            Services Offered
+                                        </h3>
+                                        {selected.services.length === 0 ? (
+                                            <EmptyState
+                                                icon={ListOrdered}
+                                                size="sm"
+                                                title="No services yet"
+                                                description="This office hasn't opened any services."
+                                            />
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {selected.services.map((service) => {
+                                                    const isLive = service.isOpen === true
+                                                    const isLocked = isFresher && service.matricRequired
+                                                    return (
+                                                        <Card key={service.id} className="group flex flex-col justify-between transition-all hover:border-slate-300 hover:shadow-md bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                                                            <div>
+                                                                <div className="flex items-start justify-between gap-3 mb-2">
+                                                                    <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                                                                        {service.name}
+                                                                    </h4>
+                                                                    <Badge variant={isLive ? 'success' : 'default'} className="shrink-0">
+                                                                        {isLive ? 'Live' : 'Closed'}
+                                                                    </Badge>
+                                                                </div>
+                                                                <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 min-h-[2.5rem]">
+                                                                    {service.description || 'No description provided.'}
+                                                                </p>
+
+                                                                <div className="mt-4 flex items-center gap-4 text-xs font-semibold">
+                                                                    <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                                                                        <Users className="h-3.5 w-3.5 opacity-50" />
+                                                                        {service.waitingCount ?? 0} waiting
+                                                                    </span>
+                                                                    <span className={`flex items-center gap-1.5 ${isLive ? 'text-amber-600' : 'text-slate-400'}`}>
+                                                                        <Clock className="h-3.5 w-3.5 opacity-50" />
+                                                                        ~{service.estimatedMinutes ?? 0} min
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                                                {isLocked ? (
+                                                                    <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-400 dark:bg-slate-800/50 dark:text-slate-500 cursor-not-allowed">
+                                                                        Update profile to join
+                                                                    </div>
+                                                                ) : isLive ? (
+                                                                    <button
+                                                                        onClick={() => navigate('/student/queues')}
+                                                                        className="flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all shadow-sm hover:shadow-md"
+                                                                        style={{ backgroundColor: primaryColor }}
+                                                                    >
+                                                                        Join this queue
+                                                                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                                                                    </button>
+                                                                ) : (
+                                                                    <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400 cursor-not-allowed">
+                                                                        Currently Closed
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </Card>
+                                                    )
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            ) : (
+                                <Card className="h-full min-h-[500px] flex items-center justify-center border-dashed border-2 bg-slate-50/50 dark:bg-slate-900/20">
+                                    <EmptyState
+                                        icon={Info}
+                                        variant="info"
+                                        size="lg"
+                                        bordered={false}
+                                        title="Select an office to view details"
+                                        description="Pick an office from the list on the left to see its staff, contact information, and available services."
+                                    />
+                                </Card>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                )}
+            </div>
         </div>
     )
 }
