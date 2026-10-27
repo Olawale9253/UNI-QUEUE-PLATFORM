@@ -34,7 +34,7 @@ function getServiceIcon(name) {
     return FileText
 }
 
-// 👇 NEW: Dynamically generate the next 7 days
+// Dynamically generate the next 7 days
 function generateDates(numDays = 7) {
     const dates = []
     const today = new Date()
@@ -72,7 +72,6 @@ export default function AppointmentsTab() {
 
     const [selectedOfficeId, setSelectedOfficeId] = useState(null)
 
-    // 👇 Use the dynamically generated dates
     const DATES = useMemo(() => generateDates(7), [])
 
     const [selectedDate, setSelectedDate] = useState(DATES[0].value)
@@ -165,36 +164,37 @@ export default function AppointmentsTab() {
         )
     }
 
-    // 👇 NEW: Dashboard Split-Pane Layout
+    // Standard page scroll
     return (
-        <div className="bg-white h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 p-6 border-b border-slate-200 shrink-0">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">Appointments</h1>
-                    <p className="mt-1 text-sm text-slate-500 max-w-2xl">
-                        Book or join appointments with university offices and staff. Choose from available slots, or join an existing appointment queue.
-                    </p>
-                </div>
-                <div
-                    className="hidden md:flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
-                    style={{ borderColor: withAlpha(primaryColor, 0.2), backgroundColor: withAlpha(primaryColor, 0.05) }}
-                    onClick={() => push({ type: 'info', message: 'Contact support at support@uniqueue.com' })}
-                >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm" style={{ color: primaryColor }}>
-                        <Calendar className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <div className="text-sm font-bold text-slate-900">Need help?</div>
-                        <div className="text-xs font-medium text-slate-500">Check office details or contact support.</div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 ml-2" />
-                </div>
-            </div>
+        <div className="bg-white dark:bg-slate-950 min-h-screen -m-4 p-4 sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
+            <div className="max-w-[1600px] mx-auto pb-12">
 
-            {/* Top Tabs */}
-            <div className="px-6 pt-4 shrink-0">
-                <div className="inline-flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-xl">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Appointments</h1>
+                        <p className="mt-1 text-sm text-slate-500 max-w-2xl">
+                            Book or join appointments with university offices and staff. Choose from available slots, or join an existing appointment queue.
+                        </p>
+                    </div>
+                    <div
+                        className="hidden md:flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
+                        style={{ borderColor: withAlpha(primaryColor, 0.2), backgroundColor: withAlpha(primaryColor, 0.05) }}
+                        onClick={() => push({ type: 'info', message: 'Contact support at support@uniqueue.com' })}
+                    >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm" style={{ color: primaryColor }}>
+                            <Calendar className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <div className="text-sm font-bold text-slate-900">Need help?</div>
+                            <div className="text-xs font-medium text-slate-500">Check office details or contact support.</div>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-slate-400 ml-2" />
+                    </div>
+                </div>
+
+                {/* Top Tabs */}
+                <div className="inline-flex items-center gap-1 p-1 mb-6 bg-slate-50 border border-slate-200 rounded-xl">
                     {[
                         { id: 'available', label: 'Available Appointments', icon: Calendar },
                         { id: 'mine', label: 'My Appointments', icon: UserCircle2 },
@@ -213,16 +213,14 @@ export default function AppointmentsTab() {
                         </button>
                     ))}
                 </div>
-            </div>
 
-            {/* Main Content Area - Split Pane */}
-            <div className="flex-1 overflow-hidden p-6">
+                {/* Main Content */}
                 {activeTopTab === 'available' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-6 h-full">
+                    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
 
-                        {/* LEFT COLUMN: Scrollable List */}
-                        <div className="flex flex-col h-full space-y-4">
-                            <div className="flex items-center gap-3 shrink-0">
+                        {/* LEFT COLUMN: Sticky List */}
+                        <div className="space-y-4 lg:sticky lg:top-24">
+                            <div className="flex items-center gap-3">
                                 <div className="relative flex-1">
                                     <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                                     <input
@@ -239,17 +237,16 @@ export default function AppointmentsTab() {
                                 </button>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-                                {filteredOffices.length === 0 ? (
-                                    <EmptyState icon={Search} title="No offices found" description="Try a different search term." />
-                                ) : (
-                                    filteredOffices.map(office => {
+                            {filteredOffices.length === 0 ? (
+                                <EmptyState icon={Search} title="No offices found" description="Try a different search term." />
+                            ) : (
+                                <div className="space-y-3">
+                                    {filteredOffices.map(office => {
                                         const isSelected = String(selectedOfficeId) === String(office.id)
                                         const Icon = getOfficeIcon(office.name)
                                         return (
                                             <Card
                                                 key={office.id}
-                                                // 👇 NEW: School color rounded border on selection
                                                 className={`cursor-pointer transition-all duration-200 rounded-2xl ${
                                                     isSelected ? 'border-2 shadow-md' : 'border border-slate-200 hover:border-slate-300'
                                                 }`}
@@ -295,13 +292,13 @@ export default function AppointmentsTab() {
                                                 </div>
                                             </Card>
                                         )
-                                    })
-                                )}
-                            </div>
+                                    })}
+                                </div>
+                            )}
                         </div>
 
-                        {/* RIGHT COLUMN: Scrollable Details */}
-                        <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
+                        {/* RIGHT COLUMN: Standard Flow */}
+                        <div>
                             {selectedOffice ? (
                                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={selectedOffice.id}>
                                     <Card padded={false} className="overflow-hidden shadow-sm bg-white border-slate-200 rounded-2xl">
@@ -333,7 +330,7 @@ export default function AppointmentsTab() {
                                             </div>
                                         </div>
 
-                                        {/* 3-Column Info Grid */}
+                                        {/* 3-Column Info Grid - Fixed breaking text */}
                                         <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 border-b border-slate-100 bg-white">
                                             <div className="flex items-start gap-3 p-4">
                                                 <MapPin className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
@@ -353,6 +350,7 @@ export default function AppointmentsTab() {
                                                 <Clock className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
                                                 <div>
                                                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Working Hours</div>
+                                                    {/* 👇 FIX: Using whitespace-nowrap to force one line */}
                                                     <div className="mt-1 text-sm font-semibold text-slate-900 whitespace-nowrap">Mon – Fri: 8:00 AM – 4:00 PM</div>
                                                 </div>
                                             </div>
@@ -399,7 +397,6 @@ export default function AppointmentsTab() {
                                                                     onChange={(e) => setSelectedDate(e.target.value)}
                                                                     style={{ '--tw-ring-color': withAlpha(primaryColor, 0.2) }}
                                                                 >
-                                                                    {/* 👇 DYNAMIC DATES */}
                                                                     {DATES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
                                                                 </select>
                                                                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -561,43 +558,41 @@ export default function AppointmentsTab() {
                 )}
 
                 {(activeTopTab === 'mine' || activeTopTab === 'history') && (
-                    <div className="max-w-4xl mx-auto h-full overflow-y-auto">
-                        <Card className="bg-white border-slate-200 rounded-2xl">
-                            <div className="flex items-center gap-2 mb-6">
-                                {activeTopTab === 'mine' ? <UserCircle2 className="h-5 w-5 text-slate-400" /> : <Clock className="h-5 w-5 text-slate-400" />}
-                                <h2 className="text-lg font-bold text-slate-900">
-                                    {activeTopTab === 'mine' ? 'My Appointments' : 'Appointment History'}
-                                </h2>
-                            </div>
+                    <Card className="bg-white border-slate-200 rounded-2xl max-w-4xl mx-auto">
+                        <div className="flex items-center gap-2 mb-6">
+                            {activeTopTab === 'mine' ? <UserCircle2 className="h-5 w-5 text-slate-400" /> : <Clock className="h-5 w-5 text-slate-400" />}
+                            <h2 className="text-lg font-bold text-slate-900">
+                                {activeTopTab === 'mine' ? 'My Appointments' : 'Appointment History'}
+                            </h2>
+                        </div>
 
-                            {myAppointments.length === 0 ? (
-                                <div className="py-12 text-center">
-                                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
-                                        <Calendar className="h-6 w-6 text-slate-400" />
-                                    </div>
-                                    <p className="text-sm font-bold text-slate-900">No appointments yet</p>
-                                    <p className="mt-1 text-xs text-slate-500">Book a slot from the Available tab to get started.</p>
+                        {myAppointments.length === 0 ? (
+                            <div className="py-12 text-center">
+                                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+                                    <Calendar className="h-6 w-6 text-slate-400" />
                                 </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {myAppointments.map(appt => (
-                                        <div key={appt.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-slate-200 rounded-xl gap-4">
-                                            <div className="flex items-center gap-4">
-                                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
-                                                    <Calendar className="h-5 w-5" />
-                                                </div>
-                                                <div>
-                                                    <div className="text-sm font-bold text-slate-900">{appt.serviceName || 'Appointment'}</div>
-                                                    <div className="text-xs text-slate-500 mt-0.5">{appt.officeName} • {appt.date} at {appt.time}</div>
-                                                </div>
+                                <p className="text-sm font-bold text-slate-900">No appointments yet</p>
+                                <p className="mt-1 text-xs text-slate-500">Book a slot from the Available tab to get started.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {myAppointments.map(appt => (
+                                    <div key={appt.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-slate-200 rounded-xl gap-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                                                <Calendar className="h-5 w-5" />
                                             </div>
-                                            <Badge variant={appt.status === 'CONFIRMED' ? 'success' : 'warning'}>{appt.status}</Badge>
+                                            <div>
+                                                <div className="text-sm font-bold text-slate-900">{appt.serviceName || 'Appointment'}</div>
+                                                <div className="text-xs text-slate-500 mt-0.5">{appt.officeName} • {appt.date} at {appt.time}</div>
+                                            </div>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-                        </Card>
-                    </div>
+                                        <Badge variant={appt.status === 'CONFIRMED' ? 'success' : 'warning'}>{appt.status}</Badge>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </Card>
                 )}
             </div>
         </div>
