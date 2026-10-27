@@ -1,15 +1,16 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
     ArrowRight, Check, Clock3, LogOut, Ticket, History,
-    RotateCcw, SkipForward, ArrowUpRight, Copy
+    RotateCcw, SkipForward, ArrowUpRight, Copy, Star, CheckCircle2
 } from 'lucide-react'
 import api from '../../api/axios'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { formatDateTime } from '../../lib/format'
 import Card from '../../components/ui/Card'
+import RatingModal from '../../components/student/RatingModal' // 👈 Import RatingModal
 
 const QUEUE_STEPS = ['Joined', 'Waiting', 'In Service', 'Completed']
 
@@ -68,10 +69,15 @@ function CopyButton({ text }) {
 export default function MyTicketsPage() {
     const { push } = useToastStore()
     const navigate = useNavigate()
+
     const [activeTicket, setActiveTicket] = useState(null)
     const [history, setHistory] = useState([])
     const [loading, setLoading] = useState(true)
     const [acting, setActing] = useState(null)
+
+    // 👇 States for the Rating Modal
+    const [ratingTicket, setRatingTicket] = useState(null)
+    const shownRatingForTicket = useRef(null) // Prevents popup from showing twice for the same ticket
 
     const loadData = useCallback(async () => {
         try {
@@ -89,6 +95,17 @@ export default function MyTicketsPage() {
     }, [])
 
     useAdaptivePoll(loadData, { fastMs: 5000, slowMs: 15000 })
+
+    // 👇 AUTO-POPUP LOGIC
+    useEffect(() => {
+        if (activeTicket && activeTicket.status === 'COMPLETED') {
+            // Only auto-trigger if we haven't shown it for this ticket yet in this session
+            if (shownRatingForTicket.current !== activeTicket.id) {
+                setRatingTicket(activeTicket)
+                shownRatingForTicket.current = activeTicket.id
+            }
+        }
+    }, [activeTicket])
 
     const leaveQueue = async () => {
         if (!activeTicket) return
@@ -133,6 +150,14 @@ export default function MyTicketsPage() {
         }
     }
 
+    // 👇 Handle successful rating
+    const handleRated = (ticketId, rating) => {
+        setRatingTicket(null)
+        setActiveTicket(null) // Clear it from the active view immediately
+        push({ type: 'success', message: 'Thank you for your feedback!' })
+        loadData() // Refresh from backend to confirm
+    }
+
     // LIMIT: Only show the most recent 3 past tickets to keep it clean
     const pastTickets = history.filter((ticket) => ticket.status !== 'WAITING').slice(0, 3)
 
@@ -147,6 +172,7 @@ export default function MyTicketsPage() {
     const position = activeTicket?.position ?? 1
     const activeStep = getActiveStep(activeTicket?.status)
     const isActionable = activeTicket?.status === 'WAITING' || activeTicket?.status === 'CALLED'
+    const isCompleted = activeTicket?.status === 'COMPLETED'
 
     return (
         <div className="space-y-8 pb-12">
@@ -162,11 +188,11 @@ export default function MyTicketsPage() {
 
             {activeTicket ? (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                    <Card className="border-brand-200 dark:border-brand-900/50">
+                    <Card className={`border-brand-200 dark:border-brand-900/50 ${isCompleted ? 'ring-2 ring-emerald-500/20' : ''}`}>
                         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-5 dark:border-slate-800">
                             <div className="flex min-w-0 items-center gap-3">
-                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
-                                    <Ticket className="h-6 w-6" />
+                                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${isCompleted ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40' : 'bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400'}`}>
+                                    {isCompleted ? <CheckCircle2 className="h-6 w-6" /> : <Ticket className="h-6 w-6" />}
                                 </div>
                                 <div className="min-w-0">
                                     <h3 className="truncate text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -180,79 +206,99 @@ export default function MyTicketsPage() {
                             <StatusBadge status={activeTicket.status} />
                         </div>
 
-                        <div className="mt-6 grid gap-4 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_auto]">
-                            <div className="flex flex-col items-center justify-center rounded-xl border border-slate-100 bg-slate-50/50 p-6 dark:border-slate-800 dark:bg-slate-900/50">
-                                <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">Your Position</p>
-                                <p className="mt-2 text-5xl font-extrabold tracking-tight text-brand-600 dark:text-brand-400">{position}</p>
-                                <p className="mt-1 text-sm font-medium text-slate-500">in queue</p>
-                            </div>
-
-                            <div className="flex flex-col justify-center rounded-xl border border-slate-100 p-6 dark:border-slate-800">
-                                <div className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-400">
-                                    <Clock3 className="h-4 w-4" /> Est. Wait Time
+                        {/* 👇 CONDITIONAL RENDERING: If completed, show rating prompt. Else show position/wait time */}
+                        {isCompleted ? (
+                            <div className="mt-6 flex flex-col items-center justify-center rounded-xl bg-emerald-50/50 p-8 text-center dark:bg-emerald-950/20">
+                                <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400">
+                                    <Star className="h-7 w-7" />
                                 </div>
-                                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
-                                    ~{activeTicket.estimatedMinutes ?? 10} min
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Service Completed</h3>
+                                <p className="mt-1 max-w-sm text-sm text-slate-600 dark:text-slate-400">
+                                    Your transaction is complete. How was your experience today?
                                 </p>
-                                <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
-                                    <span className="font-bold text-slate-700 dark:text-slate-300">{Math.max(0, position - 1)}</span> people ahead of you
-                                </p>
-                            </div>
-
-                            <div className="flex flex-col gap-2 items-center justify-center sm:justify-end">
-                                {isActionable && (
-                                    <div className="flex w-full flex-col gap-2">
-                                        <button
-                                            onClick={rescheduleTurn}
-                                            disabled={!!acting}
-                                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-50"
-                                        >
-                                            <RotateCcw className="h-4 w-4" />
-                                            {acting === 'reschedule' ? 'Rescheduling...' : 'Reschedule'}
-                                        </button>
-                                        <button
-                                            onClick={skipTurn}
-                                            disabled={!!acting}
-                                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-50"
-                                        >
-                                            <SkipForward className="h-4 w-4" />
-                                            {acting === 'skip' ? 'Skipping...' : 'Skip Turn'}
-                                        </button>
-                                    </div>
-                                )}
                                 <button
-                                    onClick={leaveQueue}
-                                    disabled={!!acting}
-                                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 py-2 text-sm font-bold text-rose-700 transition-colors hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60 disabled:opacity-50"
+                                    onClick={() => setRatingTicket(activeTicket)}
+                                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-brand-700 hover:shadow-lg"
                                 >
-                                    <LogOut className="h-4 w-4" />
-                                    {acting === 'leave' ? 'Leaving...' : 'Leave Queue'}
+                                    <Star className="h-4 w-4 fill-white" />
+                                    Rate this service
                                 </button>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="mt-6 grid gap-4 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_auto]">
+                                <div className="flex flex-col items-center justify-center rounded-xl border border-slate-100 bg-slate-50/50 p-6 dark:border-slate-800 dark:bg-slate-900/50">
+                                    <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">Your Position</p>
+                                    <p className="mt-2 text-5xl font-extrabold tracking-tight text-brand-600 dark:text-brand-400">{position}</p>
+                                    <p className="mt-1 text-sm font-medium text-slate-500">in queue</p>
+                                </div>
+
+                                <div className="flex flex-col justify-center rounded-xl border border-slate-100 p-6 dark:border-slate-800">
+                                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-400">
+                                        <Clock3 className="h-4 w-4" /> Est. Wait Time
+                                    </div>
+                                    <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
+                                        ~{activeTicket.estimatedMinutes ?? 10} min
+                                    </p>
+                                    <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+                                        <span className="font-bold text-slate-700 dark:text-slate-300">{Math.max(0, position - 1)}</span> people ahead of you
+                                    </p>
+                                </div>
+
+                                <div className="flex flex-col gap-2 items-center justify-center sm:justify-end">
+                                    {isActionable && (
+                                        <div className="flex w-full flex-col gap-2">
+                                            <button
+                                                onClick={rescheduleTurn}
+                                                disabled={!!acting}
+                                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-50"
+                                            >
+                                                <RotateCcw className="h-4 w-4" />
+                                                {acting === 'reschedule' ? 'Rescheduling...' : 'Reschedule'}
+                                            </button>
+                                            <button
+                                                onClick={skipTurn}
+                                                disabled={!!acting}
+                                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-50"
+                                            >
+                                                <SkipForward className="h-4 w-4" />
+                                                {acting === 'skip' ? 'Skipping...' : 'Skip Turn'}
+                                            </button>
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={leaveQueue}
+                                        disabled={!!acting}
+                                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 py-2 text-sm font-bold text-rose-700 transition-colors hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60 disabled:opacity-50"
+                                    >
+                                        <LogOut className="h-4 w-4" />
+                                        {acting === 'leave' ? 'Leaving...' : 'Leave Queue'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Progress Bar */}
-                        <div className="mt-8 px-2 sm:px-6">
+                        <div className="mt-8 px-2 sm:px-6 pb-2">
                             <div className="relative flex items-start justify-between">
                                 <div className="absolute left-0 right-0 top-3 h-1 bg-slate-200 dark:bg-slate-700 rounded-full" />
                                 <div
-                                    className="absolute left-0 top-3 h-1 bg-brand-600 rounded-full transition-all duration-500"
+                                    className={`absolute left-0 top-3 h-1 rounded-full transition-all duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-brand-600'}`}
                                     style={{ width: `${(activeStep / (QUEUE_STEPS.length - 1)) * 100}%` }}
                                 />
                                 {QUEUE_STEPS.map((step, index) => {
-                                    const isComplete = index < activeStep
+                                    const isStepComplete = index < activeStep
                                     const isCurrent = index === activeStep
                                     return (
                                         <div key={step} className="relative z-10 flex w-16 flex-col items-center gap-2 text-center sm:w-24">
                                             <span className={`flex h-7 w-7 items-center justify-center rounded-full border-2 transition-colors ${
-                                                isComplete || isCurrent
-                                                    ? 'border-brand-600 bg-brand-600 text-white'
+                                                isStepComplete || isCurrent
+                                                    ? isCompleted ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-brand-600 bg-brand-600 text-white'
                                                     : 'border-slate-300 bg-white text-transparent dark:border-slate-700 dark:bg-slate-900'
                                             }`}>
-                                                {isComplete ? <Check className="h-4 w-4" /> : <span className="h-1.5 w-1.5 rounded-full bg-current" />}
+                                                {isStepComplete ? <Check className="h-4 w-4" /> : <span className="h-1.5 w-1.5 rounded-full bg-current" />}
                                             </span>
                                             <span className={`text-[11px] font-bold uppercase tracking-wider ${
-                                                isCurrent ? 'text-brand-700 dark:text-brand-300' : 'text-slate-500 dark:text-slate-400'
+                                                isCurrent ? (isCompleted ? 'text-emerald-700 dark:text-emerald-300' : 'text-brand-700 dark:text-brand-300') : 'text-slate-500 dark:text-slate-400'
                                             }`}>
                                                 {step}
                                             </span>
@@ -281,7 +327,7 @@ export default function MyTicketsPage() {
                 </Card>
             )}
 
-            {/* 👇 UPGRADED RECENT TICKETS SECTION */}
+            {/* UPGRADED RECENT TICKETS SECTION */}
             <div>
                 <div className="mb-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -351,6 +397,17 @@ export default function MyTicketsPage() {
                     </div>
                 )}
             </div>
+
+            {/* 👇 Rating Modal Render */}
+            <AnimatePresence>
+                {ratingTicket && (
+                    <RatingModal
+                        ticket={ratingTicket}
+                        onClose={() => setRatingTicket(null)}
+                        onRated={handleRated}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     )
 }
