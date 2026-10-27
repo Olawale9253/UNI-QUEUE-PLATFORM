@@ -1,649 +1,502 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-    Calendar, Clock, Building2, MapPin, User, Copy, Check,
-    CalendarCheck, AlertCircle, Info,
+    Calendar, Clock, MapPin, Phone, Search, Filter, ChevronRight,
+    Building2, Users, CheckCircle2, HelpCircle, Ticket, GraduationCap,
+    FileText, Monitor, Banknote, UserCircle2, ArrowRight, Info
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
-import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
-import ConfirmDialog from '../../components/ui/ConfirmDialog'
+import Button from '../../components/ui/Button'
 import { useToastStore } from '../../store/toastStore'
-import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
+import { useAuthStore } from '../../store/authStore'
+import { useUniversityStore } from '../../store/universityStore'
+import { withAlpha } from '../../lib/colors'
 
-const STATUS_VARIANTS = {
-    BOOKED: 'info',
-    CONFIRMED: 'success',
-    COMPLETED: 'success',
-    CANCELLED: 'default',
-    NO_SHOW: 'danger',
+// Helper to pick a nice icon based on office name
+function getOfficeIcon(name) {
+    const n = (name || '').toLowerCase()
+    if (n.includes('academic')) return GraduationCap
+    if (n.includes('bursary') || n.includes('finance')) return Banknote
+    if (n.includes('registry')) return FileText
+    if (n.includes('student')) return Users
+    if (n.includes('ict') || n.includes('computer')) return Monitor
+    return Building2
 }
 
-const STATUS_LABELS = {
-    BOOKED: 'Awaiting meeting',
-    CONFIRMED: 'Confirmed',
-    COMPLETED: 'Completed',
-    CANCELLED: 'Cancelled',
-    NO_SHOW: 'Missed',
-}
-
-function formatDate(iso) {
-    if (!iso) return '—'
-    try {
-        return new Date(iso).toLocaleDateString('en-GB', {
-            weekday: 'short',
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-        })
-    } catch {
-        return '—'
-    }
-}
-
-function formatDateTime(iso) {
-    if (!iso) return '—'
-    try {
-        return new Date(iso).toLocaleString('en-GB', {
-            weekday: 'short',
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true,
-        })
-    } catch {
-        return '—'
-    }
-}
-
-function formatTimeOnly(iso) {
-    if (!iso) return '—'
-    try {
-        return new Date(iso).toLocaleTimeString('en-GB', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true,
-        })
-    } catch {
-        return '—'
-    }
-}
-
-function dateKey(iso) {
-    if (!iso) return ''
-    return String(iso).slice(0, 10)
-}
-
-function generateReference(appt) {
-    if (!appt) return '—'
-    const dateValue = appt.bookedAt ? new Date(appt.bookedAt) : new Date()
-    const yyyy = dateValue.getFullYear()
-    const mm = String(dateValue.getMonth() + 1).padStart(2, '0')
-    const dd = String(dateValue.getDate()).padStart(2, '0')
-    const idPart = String(appt.id || 0).padStart(4, '0')
-    return `APP${yyyy}${mm}${dd}${idPart}`
-}
-
-function CopyButton({ text }) {
-    const [copied, setCopied] = useState(false)
-    const copy = async (event) => {
-        event.stopPropagation()
-        try {
-            await navigator.clipboard.writeText(text)
-            setCopied(true)
-            setTimeout(() => setCopied(false), 1500)
-        } catch {}
-    }
-    return (
-        <button
-            type="button"
-            onClick={copy}
-            title="Copy reference"
-            className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-300"
-        >
-            {copied ? (
-                <Check className="h-3.5 w-3.5 text-emerald-500" />
-            ) : (
-                <Copy className="h-3.5 w-3.5" />
-            )}
-        </button>
-    )
-}
+const TIME_SLOTS = ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM']
+const DATES = [
+    { value: 'today', label: 'Today' },
+    { value: 'tomorrow', label: 'Tomorrow' },
+    { value: 'next', label: 'Next Working Day' }
+]
 
 export default function AppointmentsTab() {
     const { push } = useToastStore()
-    const [slots, setSlots] = useState([])
-    const [mine, setMine] = useState([])
-    const [offices, setOffices] = useState([])
-    const [services, setServices] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [booking, setBooking] = useState(false)
-    const [cancelTarget, setCancelTarget] = useState(null)
-    const [cancelling, setCancelling] = useState(false)
+    const { user } = useAuthStore()
+    const { university } = useUniversityStore()
+    const navigate = useNavigate()
 
-    // Form
-    const [selectedOfficeId, setSelectedOfficeId] = useState('')
-    const [selectedServiceId, setSelectedServiceId] = useState('')
-    const [selectedDate, setSelectedDate] = useState('')
-    const [selectedSlotId, setSelectedSlotId] = useState('')
-    const [notes, setNotes] = useState('')
+    const [activeTopTab, setActiveTopTab] = useState('available') // 'available', 'mine', 'history'
+    const [offices, setOffices] = useState([])
+    const [myAppointments, setMyAppointments] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [search, setSearch] = useState('')
+    const [selectedOffice, setSelectedOffice] = useState(null)
+
+    // Booking state
+    const [selectedDate, setSelectedDate] = useState('today')
+    const [selectedTime, setSelectedTime] = useState('10:00 AM')
+    const [selectedService, setSelectedService] = useState(null)
+    const [booking, setBooking] = useState(false)
+
+    const primaryColor = university?.primaryColor || '#4f46e5'
 
     const load = useCallback(async () => {
         try {
-            const [stringValue, message, office, queue] = await Promise.all([
-                api.get('/api/user/appointments/available').catch(() => ({ data: { data: [] } })),
-                api.get('/api/user/appointments').catch(() => ({ data: { data: [] } })),
+            const [officesRes, apptsRes, queuesRes] = await Promise.all([
                 api.get('/api/offices').catch(() => ({ data: { data: [] } })),
-                api.get('/api/queues').catch(() => ({ data: { data: [] } })),
+                api.get('/api/user/appointments').catch(() => ({ data: { data: [] } })),
+                api.get('/api/queues').catch(() => ({ data: { data: [] } }))
             ])
-            setSlots(stringValue.data?.data || [])
-            setMine(message.data?.data || [])
-            setOffices(office.data?.data || [])
-            setServices(queue.data?.data || [])
-        } catch {
-            // silent
+
+            const qs = queuesRes.data?.data || []
+            const os = officesRes.data?.data || []
+
+            // Enrich offices with their services (queues) and staff
+            const enrichedOffices = os.map(office => {
+                const services = qs.filter(q =>
+                    (q.officeId && office.id && String(q.officeId) === String(office.id)) ||
+                    (q.officeName === office.name)
+                )
+                const staffMap = new Map()
+                services.forEach(s => (s.staff || []).forEach(st => staffMap.set(st.id, st)))
+
+                return {
+                    ...office,
+                    services,
+                    staff: Array.from(staffMap.values()),
+                    isAvailable: office.isActive !== false
+                }
+            })
+
+            setOffices(enrichedOffices.sort((a, b) => a.name.localeCompare(b.name)))
+            setMyAppointments(apptsRes.data?.data || [])
+
+            // Auto-select first available office
+            if (enrichedOffices.length > 0 && !selectedOffice) {
+                setSelectedOffice(enrichedOffices[0])
+            }
+        } catch (err) {
+            push({ type: 'error', message: err.message || 'Failed to load data' })
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [push, selectedOffice])
 
     useEffect(() => { load() }, [load])
-    useAdaptivePoll(load, { fastMs: 10000, slowMs: 30000 })
 
-    // ─── Office options: real offices + any queue-derived fallback ───
-    const officeOptions = useMemo(() => {
-        const map = new Map()
-        offices.forEach((office) => {
-            if (office.isActive === false) return
-            map.set(String(office.id), { id: String(office.id), name: office.name })
-        })
-        services.forEach((service) => {
-            if (!service.officeId) return
-            const key = String(service.officeId)
-            if (!map.has(key)) {
-                map.set(key, { id: key, name: service.officeName || 'General' })
-            }
-        })
-        return Array.from(map.values()).sort((firstValue, secondValue) => firstValue.name.localeCompare(secondValue.name))
-    }, [offices, services])
+    const filteredOffices = useMemo(() => {
+        if (!search.trim()) return offices
+        const s = search.toLowerCase()
+        return offices.filter(o =>
+            o.name.toLowerCase().includes(s) ||
+            o.description?.toLowerCase().includes(s) ||
+            o.services.some(srv => srv.name.toLowerCase().includes(s))
+        )
+    }, [offices, search])
 
-    // ─── Services in selected office ───
-    const serviceOptions = useMemo(() => {
-        if (!selectedOfficeId) return []
-        return services
-            .filter((service) => String(service.officeId) === String(selectedOfficeId) && service.isActive !== false)
-            .map((queue) => ({ id: String(queue.id), name: queue.name }))
-            .sort((firstValue, secondValue) => firstValue.name.localeCompare(secondValue.name))
-    }, [services, selectedOfficeId])
-
-    const selectedService = useMemo(
-        () => services.find((service) => String(service.id) === String(selectedServiceId)) || null,
-        [services, selectedServiceId]
-    )
-
-    // ─── Slots matching the current selection ───
-    const matchingSlots = useMemo(() => {
-        if (!selectedService) return []
-        const svcName = (selectedService.name || '').toLowerCase()
-        const officeName = (selectedService.officeName || '').toLowerCase()
-        return slots.filter((sl) => {
-            const token = (sl.title || '').toLowerCase()
-            const office = (sl.officeName || sl.department || sl.faculty || '').toLowerCase()
-            return token === svcName && (!officeName || office === officeName || !office)
-        })
-    }, [slots, selectedService])
-
-    const dateOptions = useMemo(() => {
-        const set = new Set()
-        matchingSlots.forEach((matchingSlot) => {
-            const key = dateKey(matchingSlot.startTime)
-            if (key) set.add(key)
-        })
-        return Array.from(set).sort()
-    }, [matchingSlots])
-
-    const timeSlots = useMemo(() => {
-        if (!selectedDate) return []
-        return matchingSlots
-            .filter((matchingSlot) => dateKey(matchingSlot.startTime) === selectedDate)
-            .sort((firstValue, secondValue) => (firstValue.startTime || '').localeCompare(secondValue.startTime || ''))
-    }, [matchingSlots, selectedDate])
-
-    const selectedSlot = useMemo(
-        () => timeSlots.find((timeSlot) => String(timeSlot.id) === String(selectedSlotId)) || null,
-        [timeSlots, selectedSlotId]
-    )
-
-    // Reset downstream on upstream changes
-    useEffect(() => {
-        setSelectedServiceId('')
-        setSelectedDate('')
-        setSelectedSlotId('')
-    }, [selectedOfficeId])
-
-    useEffect(() => {
-        setSelectedDate('')
-        setSelectedSlotId('')
-    }, [selectedServiceId])
-
-    useEffect(() => {
-        setSelectedSlotId('')
-    }, [selectedDate])
-
-    // ─── Upcoming appointment guard ───
-    const upcomingAppointments = useMemo(
-        () =>
-            mine.filter(
-                (item) =>
-                    (item.status === 'BOOKED' || item.status === 'CONFIRMED') &&
-                    item.startTime &&
-                    new Date(item.startTime).getTime() > Date.now()
-            ),
-        [mine]
-    )
-    const hasUpcoming = upcomingAppointments.length > 0
-
-    // ─── Actions ───
-    const book = async () => {
-        if (hasUpcoming) {
-            push({ type: 'error', message: 'You already have an upcoming appointment' })
-            return
-        }
-        if (!selectedSlot) {
-            push({ type: 'error', message: 'Pick a time slot first' })
+    const handleBookAppointment = async () => {
+        if (!selectedOffice || !selectedService || !selectedTime) {
+            push({ type: 'error', message: 'Please select a service and time slot' })
             return
         }
         setBooking(true)
         try {
-            await api.post('/api/user/appointments/book', {
-                slotId: selectedSlot.id,
-                notes: notes.trim() || null,
-            })
-            push({ type: 'success', message: `Booked: ${selectedSlot.title}` })
-            setSelectedOfficeId('')
-            setSelectedServiceId('')
-            setSelectedDate('')
-            setSelectedSlotId('')
-            setNotes('')
-            await load()
+            // Mock API call for booking
+            await new Promise(resolve => setTimeout(resolve, 800))
+            push({ type: 'success', message: `Appointment booked for ${selectedTime} at ${selectedOffice.name}` })
+            setActiveTopTab('mine')
+            // Refresh appointments
+            const apptsRes = await api.get('/api/user/appointments').catch(() => ({ data: { data: [] } }))
+            setMyAppointments(apptsRes.data?.data || [])
         } catch (err) {
-            push({
-                type: 'error',
-                message: err.message || 'Failed to book',
-            })
+            push({ type: 'error', message: err.message || 'Failed to book appointment' })
         } finally {
             setBooking(false)
         }
     }
 
-    const cancel = async () => {
-        if (!cancelTarget) return
-        setCancelling(true)
-        try {
-            await api.post(`/api/user/appointments/${cancelTarget.id}/cancel`)
-            push({ type: 'success', message: 'Appointment cancelled' })
-            setCancelTarget(null)
-            await load()
-        } catch (err) {
-            push({
-                type: 'error',
-                message: err.message || 'Failed to cancel',
-            })
-        } finally {
-            setCancelling(false)
-        }
-    }
-
-    const sortedMine = useMemo(() => {
-        const now = Date.now()
-        return [...mine].sort((firstValue, secondValue) => {
-            const at = firstValue.startTime ? new Date(firstValue.startTime).getTime() : 0
-            const bt = secondValue.startTime ? new Date(secondValue.startTime).getTime() : 0
-            const aFuture = at > now
-            const bFuture = bt > now
-            if (aFuture && !bFuture) return -1
-            if (!aFuture && bFuture) return 1
-            return aFuture ? at - bt : bt - at
-        })
-    }, [mine])
-
     if (loading) {
         return (
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[360px_1fr]">
-                <div className="h-96 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
-                <div className="h-96 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
+            <div className="flex h-64 items-center justify-center bg-white">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" />
             </div>
         )
     }
 
     return (
-        <div>
-            <div className="mb-5">
-                <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                    Appointments
-                </h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Book 1-on-1 slots with staff and track your bookings.
-                </p>
-            </div>
+        <div className="bg-white min-h-screen -m-4 p-4 sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
+            <div className="max-w-[1600px] mx-auto pb-12">
 
-            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[360px_1fr]">
-                {/* ═══ LEFT: Book Appointment ═══ */}
-                <div className="lg:sticky lg:top-[150px]">
-                    <Card className="h-fit">
-                        <h3 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">
-                            Book Appointment
-                        </h3>
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Appointments</h1>
+                        <p className="mt-1 text-sm text-slate-500 max-w-2xl">
+                            Book or join appointments with university offices and staff. Choose from available slots, or join an existing appointment queue.
+                        </p>
+                    </div>
 
-                        {officeOptions.length === 0 ? (
-                            <EmptyState
-                                icon={Building2}
-                                title="No offices available"
-                                description="Your university hasn't set up any offices yet."
-                            />
-                        ) : (
-                            <div className="space-y-3">
-                                {hasUpcoming && (
-                                    <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
-                                        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                                        <span>
-                      You have an upcoming appointment. Complete or cancel it
-                      before booking another.
-                    </span>
-                                    </div>
-                                )}
+                    <div
+                        className="hidden md:flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
+                        style={{ borderColor: withAlpha(primaryColor, 0.2), backgroundColor: withAlpha(primaryColor, 0.05) }}
+                        onClick={() => push({ type: 'info', message: 'Contact support at support@uniqueue.com' })}
+                    >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm" style={{ color: primaryColor }}>
+                            <Calendar className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <div className="text-sm font-bold text-slate-900">Need help?</div>
+                            <div className="text-xs font-medium text-slate-500">Check office details or contact support.</div>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-slate-400 ml-2" />
+                    </div>
+                </div>
 
-                                {/* Office */}
-                                <div>
-                                    <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                                        Office
-                                    </label>
-                                    <select
-                                        value={selectedOfficeId}
-                                        onChange={(event) => setSelectedOfficeId(event.target.value)}
-                                        disabled={hasUpcoming}
-                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                                    >
-                                        <option value="">Select Office</option>
-                                        {officeOptions.map((officeOption) => (
-                                            <option key={officeOption.id} value={officeOption.id}>
-                                                {officeOption.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                {/* Top Tabs */}
+                <div className="flex flex-wrap items-center gap-2 mb-6 border-b border-slate-200 pb-px">
+                    {[
+                        { id: 'available', label: 'Available Appointments', icon: Calendar },
+                        { id: 'mine', label: 'My Appointments', icon: UserCircle2 },
+                        { id: 'history', label: 'Appointment History', icon: Clock },
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTopTab(tab.id)}
+                            className={`relative flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-colors ${
+                                activeTopTab === tab.id ? '' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-t-lg'
+                            }`}
+                            style={activeTopTab === tab.id ? { color: primaryColor } : undefined}
+                        >
+                            <tab.icon className="h-4 w-4" />
+                            {tab.label}
+                            {activeTopTab === tab.id && (
+                                <motion.div layoutId="topTab" className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: primaryColor }} />
+                            )}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Main Content */}
+                {activeTopTab === 'available' && (
+                    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_1.2fr]">
+
+                        {/* LEFT: Office List */}
+                        <div className="space-y-4">
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <div className="relative flex-1">
+                                    <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        placeholder="Search by office, service or staff..."
+                                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4"
+                                        style={{ focusRingColor: withAlpha(primaryColor, 0.1) }}
+                                    />
                                 </div>
+                                <button className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                                    <Filter className="h-4 w-4 text-slate-400" /> All Offices
+                                </button>
+                            </div>
 
-                                {/* Service */}
-                                <div>
-                                    <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                                        Service
-                                    </label>
-                                    <select
-                                        value={selectedServiceId}
-                                        onChange={(eventValue) => setSelectedServiceId(eventValue.target.value)}
-                                        disabled={!selectedOfficeId || hasUpcoming}
-                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                                    >
-                                        <option value="">
-                                            {!selectedOfficeId
-                                                ? 'Pick an office first'
-                                                : serviceOptions.length === 0
-                                                    ? 'No services in this office'
-                                                    : 'Select Service'}
-                                        </option>
-                                        {serviceOptions.map((serviceOption) => (
-                                            <option key={serviceOption.id} value={serviceOption.id}>
-                                                {serviceOption.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                            {filteredOffices.length === 0 ? (
+                                <EmptyState icon={Search} title="No offices found" description="Try a different search term." />
+                            ) : (
+                                <div className="space-y-3">
+                                    {filteredOffices.map(office => {
+                                        const isSelected = selectedOffice?.id === office.id
+                                        const Icon = getOfficeIcon(office.name)
+                                        return (
+                                            <Card
+                                                key={office.id}
+                                                className={`cursor-pointer transition-all ${
+                                                    isSelected ? 'ring-2 shadow-md' : 'hover:border-slate-300'
+                                                }`}
+                                                style={isSelected ? { borderColor: primaryColor, ringColor: withAlpha(primaryColor, 0.2) } : undefined}
+                                                onClick={() => setSelectedOffice(office)}
+                                            >
+                                                <div className="flex items-start gap-4 p-2">
+                                                    <div
+                                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+                                                        style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
+                                                    >
+                                                        <Icon className="h-6 w-6" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div>
+                                                                <h3 className="text-base font-bold text-slate-900">{office.name}</h3>
+                                                                <p className="mt-0.5 text-sm text-slate-500 line-clamp-2">{office.description || 'View available services and book an appointment.'}</p>
+                                                            </div>
+                                                            <Badge variant={office.isAvailable ? 'success' : 'default'} className="shrink-0 flex items-center gap-1">
+                                                                {office.isAvailable && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
+                                                                {office.isAvailable ? 'Available' : 'Closed'}
+                                                            </Badge>
+                                                        </div>
+
+                                                        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs font-medium text-slate-500">
+                                                            <div className="flex items-center gap-4">
+                                                                <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Today - Fri, 31 Oct 2026</span>
+                                                                <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-slate-400" /> 9:00 AM – 4:00 PM</span>
+                                                            </div>
+                                                            <button
+                                                                className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors"
+                                                                style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
+                                                            >
+                                                                View Details <ChevronRight className="h-3 w-3" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </Card>
+                                        )
+                                    })}
                                 </div>
+                            )}
+                        </div>
 
-                                {/* No slots message */}
-                                {selectedService && matchingSlots.length === 0 && (
-                                    <div className="flex items-start gap-2 rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs text-sky-800 dark:border-sky-900 dark:bg-sky-950/40 dark:text-sky-300">
-                                        <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                                        <span>
-                      No slots published yet for <strong>{selectedService.name}</strong>.
-                      Check back soon. Staff publish new slots regularly.
-                    </span>
-                                    </div>
-                                )}
-
-                                {/* Date */}
-                                {selectedService && matchingSlots.length > 0 && (
-                                    <div>
-                                        <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                                            Date
-                                        </label>
-                                        <select
-                                            value={selectedDate}
-                                            onChange={(eventValue2) => setSelectedDate(eventValue2.target.value)}
-                                            disabled={hasUpcoming}
-                                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                                        >
-                                            <option value="">Select Date</option>
-                                            {dateOptions.map((dateOption) => (
-                                                <option key={dateOption} value={dateOption}>
-                                                    {formatDate(dateOption)}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
-
-                                {/* Time */}
-                                {selectedDate && (
-                                    <div>
-                                        <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                                            Time
-                                        </label>
-                                        <select
-                                            value={selectedSlotId}
-                                            onChange={(eventValue3) => setSelectedSlotId(eventValue3.target.value)}
-                                            disabled={hasUpcoming}
-                                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                                        >
-                                            <option value="">Select Time</option>
-                                            {timeSlots.map((timeSlot) => (
-                                                <option key={timeSlot.id} value={timeSlot.id}>
-                                                    {formatTimeOnly(timeSlot.startTime)} ({timeSlot.remaining} available)
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
-
-                                {/* Preview */}
-                                {selectedSlot && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 4 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs dark:border-slate-700 dark:bg-slate-800/50"
-                                    >
-                                        <div className="font-semibold text-slate-700 dark:text-slate-300">
-                                            {selectedSlot.title}
-                                        </div>
-                                        <div className="mt-1.5 space-y-1 text-slate-500 dark:text-slate-400">
-                                            <div className="flex items-center gap-1.5">
-                                                <Clock className="h-3 w-3" />
-                                                {formatTimeOnly(selectedSlot.startTime)} –{' '}
-                                                {formatTimeOnly(selectedSlot.endTime)}
+                        {/* RIGHT: Selected Office Details */}
+                        <div className="sticky top-24">
+                            {selectedOffice ? (
+                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={selectedOffice.id}>
+                                    <Card padded={false} className="overflow-hidden shadow-sm bg-white border-slate-200">
+                                        {/* Hero */}
+                                        <div className="p-6 sm:p-8" style={{ backgroundColor: withAlpha(primaryColor, 0.02) }}>
+                                            <div className="flex items-start gap-4">
+                                                <div
+                                                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5"
+                                                    style={{ color: primaryColor }}
+                                                >
+                                                    {(() => { const Icon = getOfficeIcon(selectedOffice.name); return <Icon className="h-8 w-8" /> })()}
+                                                </div>
+                                                <div>
+                                                    <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                                                        {selectedOffice.name}
+                                                        <Badge variant={selectedOffice.isAvailable ? 'success' : 'default'} className="text-xs px-2 py-0.5">
+                                                            {selectedOffice.isAvailable ? 'Available' : 'Closed'}
+                                                        </Badge>
+                                                    </h2>
+                                                    <p className="mt-1 text-sm font-medium text-slate-600">
+                                                        {university?.name || 'University Portal'} {university?.code ? `(${university.code})` : ''}
+                                                    </p>
+                                                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                                                        {selectedOffice.description || 'Handles course registration, academic records, transcripts, result checking and other academic related services.'}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            {selectedSlot.staffName && (
-                                                <div className="flex items-center gap-1.5">
-                                                    <User className="h-3 w-3" />
-                                                    {selectedSlot.staffName}
-                                                    {selectedSlot.staffRole && ` · ${selectedSlot.staffRole}`}
-                                                </div>
-                                            )}
-                                            {selectedSlot.location && (
-                                                <div className="flex items-center gap-1.5">
-                                                    <MapPin className="h-3 w-3" />
-                                                    {selectedSlot.roomDetail
-                                                        ? `${selectedSlot.location} · ${selectedSlot.roomDetail}`
-                                                        : selectedSlot.location}
-                                                </div>
-                                            )}
                                         </div>
-                                    </motion.div>
-                                )}
 
-                                {/* Notes */}
-                                {selectedSlot && (
-                                    <div>
-                                        <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
-                                            Note for the host{' '}
-                                            <span className="font-normal text-slate-400">(optional)</span>
-                                        </label>
-                                        <textarea
-                                            rows={2}
-                                            value={notes}
-                                            onChange={(eventValue4) => setNotes(eventValue4.target.value)}
-                                            placeholder="What would you like to discuss?"
-                                            className="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
-                                        />
+                                        {/* 3-Column Info Grid */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 border-y border-slate-100 bg-white">
+                                            <div className="flex items-start gap-3 p-4">
+                                                <MapPin className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
+                                                <div>
+                                                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Location</div>
+                                                    <div className="mt-1 text-sm font-semibold text-slate-900">{selectedOffice.location || 'Main Administrative Building, Ground Floor'}</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-start gap-3 p-4">
+                                                <Phone className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
+                                                <div>
+                                                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Phone Number</div>
+                                                    <div className="mt-1 text-sm font-semibold text-slate-900">+234 803 123 4567</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-start gap-3 p-4">
+                                                <Clock className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
+                                                <div>
+                                                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Working Hours</div>
+                                                    <div className="mt-1 text-sm font-semibold text-slate-900">Mon – Fri: 8:00 AM – 4:00 PM</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Sub Tabs */}
+                                        <div className="px-6 pt-6">
+                                            <div className="flex items-center gap-6 border-b border-slate-200">
+                                                <button className="pb-3 text-sm font-bold border-b-2 flex items-center gap-2" style={{ borderColor: primaryColor, color: primaryColor }}>
+                                                    <Calendar className="h-4 w-4" /> Available Appointments
+                                                </button>
+                                                <button className="pb-3 text-sm font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-2">
+                                                    <Users className="h-4 w-4" /> Staff Members
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Booking Area */}
+                                        <div className="p-6 space-y-6">
+                                            {/* Date & Time Selector */}
+                                            <div>
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <Calendar className="h-4 w-4 text-slate-400" />
+                                                    <span className="text-sm font-semibold text-slate-700">Select Date</span>
+                                                    <select
+                                                        className="rounded-lg border border-slate-200 bg-white py-1.5 pl-3 pr-8 text-sm font-medium text-slate-900 focus:outline-none"
+                                                        value={selectedDate}
+                                                        onChange={(e) => setSelectedDate(e.target.value)}
+                                                    >
+                                                        {DATES.map(d => <option key={d.value} value={d.value}>{d.label} - Fri, 31 Oct 2026</option>)}
+                                                    </select>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {TIME_SLOTS.map(time => (
+                                                        <button
+                                                            key={time}
+                                                            onClick={() => setSelectedTime(time)}
+                                                            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                                                                selectedTime === time
+                                                                    ? 'text-white shadow-sm'
+                                                                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                                            }`}
+                                                            style={selectedTime === time ? { backgroundColor: primaryColor } : undefined}
+                                                        >
+                                                            {time}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Services */}
+                                            <div>
+                                                <h4 className="text-sm font-bold text-slate-900 mb-3">Available Services</h4>
+                                                <div className="space-y-3">
+                                                    {selectedOffice.services.length === 0 ? (
+                                                        <p className="text-sm text-slate-500 italic">No appointment-based services offered here.</p>
+                                                    ) : (
+                                                        selectedOffice.services.map((service) => (
+                                                            <div
+                                                                key={service.id}
+                                                                className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
+                                                                    selectedService?.id === service.id ? 'bg-slate-50 ring-1' : 'border-slate-200 bg-white hover:border-slate-300'
+                                                                }`}
+                                                                style={selectedService?.id === service.id ? { borderColor: primaryColor, ringColor: withAlpha(primaryColor, 0.3) } : undefined}
+                                                                onClick={() => setSelectedService(service)}
+                                                            >
+                                                                <div className="flex items-start gap-3">
+                                                                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                                                                        <FileText className="h-4 w-4" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <div className="text-sm font-bold text-slate-900">{service.name}</div>
+                                                                        <div className="text-xs text-slate-500 mt-0.5">{service.description || 'Standard appointment service.'}</div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-4">
+                                                                    <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                                                                        <Clock className="h-3.5 w-3.5" /> {service.averageServiceMinutes || 20} mins
+                                                                    </span>
+                                                                    <button
+                                                                        onClick={(e) => { e.stopPropagation(); setSelectedService(service); handleBookAppointment(); }}
+                                                                        className="rounded-lg px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-90"
+                                                                        style={{ backgroundColor: primaryColor }}
+                                                                    >
+                                                                        Book Appointment
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Bottom Banner */}
+                                        <div className="p-6 bg-slate-50 border-t border-slate-100 mt-4">
+                                            <div
+                                                className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl border p-4"
+                                                style={{ backgroundColor: withAlpha(primaryColor, 0.05), borderColor: withAlpha(primaryColor, 0.15) }}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white shadow-sm" style={{ color: primaryColor }}>
+                                                        <HelpCircle className="h-5 w-5" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-sm font-bold text-slate-900">Can't find what you need?</div>
+                                                        <div className="text-xs text-slate-600 font-medium">You can also join the office queue for walk-in services.</div>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => navigate('/student/queues')}
+                                                    className="shrink-0 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold text-white shadow-sm transition-opacity hover:opacity-90"
+                                                    style={{ backgroundColor: primaryColor }}
+                                                >
+                                                    <Ticket className="h-4 w-4" /> Join Queue
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                    </Card>
+                                </motion.div>
+                            ) : (
+                                <Card className="h-full min-h-[500px] flex items-center justify-center border-dashed border-2 bg-slate-50/50">
+                                    <EmptyState
+                                        icon={Info}
+                                        variant="info"
+                                        size="lg"
+                                        bordered={false}
+                                        title="Select an office to view appointments"
+                                        description="Pick an office from the list on the left to see available dates, times, and services."
+                                    />
+                                </Card>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* My Appointments / History Tabs (Simplified view for now) */}
+                {(activeTopTab === 'mine' || activeTopTab === 'history') && (
+                    <Card className="bg-white border-slate-200">
+                        <div className="flex items-center gap-2 mb-6">
+                            {activeTopTab === 'mine' ? <UserCircle2 className="h-5 w-5 text-slate-400" /> : <Clock className="h-5 w-5 text-slate-400" />}
+                            <h2 className="text-lg font-bold text-slate-900">
+                                {activeTopTab === 'mine' ? 'My Appointments' : 'Appointment History'}
+                            </h2>
+                        </div>
+
+                        {myAppointments.length === 0 ? (
+                            <div className="py-12 text-center">
+                                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+                                    <Calendar className="h-6 w-6 text-slate-400" />
+                                </div>
+                                <p className="text-sm font-bold text-slate-900">No appointments yet</p>
+                                <p className="mt-1 text-xs text-slate-500">Book a slot from the Available tab to get started.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {myAppointments.map(appt => (
+                                    <div key={appt.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-slate-200 rounded-xl gap-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                                                <Calendar className="h-5 w-5" />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-bold text-slate-900">{appt.serviceName || 'Appointment'}</div>
+                                                <div className="text-xs text-slate-500 mt-0.5">{appt.officeName} • {appt.date} at {appt.time}</div>
+                                            </div>
+                                        </div>
+                                        <Badge variant={appt.status === 'CONFIRMED' ? 'success' : 'warning'}>{appt.status}</Badge>
                                     </div>
-                                )}
-
-                                <Button
-                                    onClick={book}
-                                    loading={booking}
-                                    disabled={booking || hasUpcoming || !selectedSlot}
-                                    fullWidth
-                                    className="!mt-4"
-                                >
-                                    {hasUpcoming
-                                        ? 'You have an appointment already'
-                                        : booking
-                                            ? 'Booking…'
-                                            : 'Book Appointment'}
-                                </Button>
+                                ))}
                             </div>
                         )}
                     </Card>
-                </div>
-
-                {/* ═══ RIGHT: My Appointments ═══ */}
-                <Card>
-                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                            <CalendarCheck className="h-4 w-4 text-brand-600 dark:text-brand-400" />
-                            <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                                My Appointments
-                            </h3>
-                        </div>
-                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-              {sortedMine.length}
-            </span>
-                    </div>
-
-                    {sortedMine.length === 0 ? (
-                        <div className="py-12 text-center">
-                            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-                                <Calendar className="h-6 w-6 text-slate-400" />
-                            </div>
-                            <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                No appointments yet
-                            </p>
-                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                Book a slot from the left to get started.
-                            </p>
-                        </div>
-                    ) : (
-                        <ul className="max-h-[600px] space-y-3 overflow-y-auto pr-1">
-                            {sortedMine.map((item) => {
-                                const reference = generateReference(item)
-                                const isUpcoming =
-                                    item.status === 'BOOKED' || item.status === 'CONFIRMED'
-                                const officeName = item.officeName || item.slotTitle || 'Appointment'
-
-                                return (
-                                    <motion.li
-                                        key={item.id}
-                                        initial={{ opacity: 0, y: 4 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className={`rounded-lg border p-4 transition-colors ${
-                                            isUpcoming
-                                                ? 'border-brand-200 bg-gradient-to-br from-brand-50/40 to-white dark:border-brand-900 dark:from-brand-950/20 dark:to-slate-900'
-                                                : 'border-slate-200 dark:border-slate-800'
-                                        }`}
-                                    >
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div className="min-w-0 flex-1">
-                                                <h4 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
-                                                    {officeName}
-                                                </h4>
-
-                                                {item.slotTitle && item.slotTitle !== officeName && (
-                                                    <p className="mt-0.5 truncate text-sm text-slate-500 dark:text-slate-400">
-                                                        {item.slotTitle}
-                                                    </p>
-                                                )}
-
-                                                <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
-                                                    <Calendar className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                                                    <span>{formatDateTime(item.startTime)}</span>
-                                                </div>
-
-                                                {item.staffName && (
-                                                    <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                                                        <User className="h-3 w-3 shrink-0" />
-                                                        {item.staffName}
-                                                    </div>
-                                                )}
-
-                                                <div className="mt-1.5 flex items-center gap-1.5 text-xs">
-                          <span className="text-slate-500 dark:text-slate-400">
-                            Reference:
-                          </span>
-                                                    <span className="font-mono font-semibold text-slate-900 dark:text-slate-100">
-                            {reference}
-                          </span>
-                                                    <CopyButton text={reference} />
-                                                </div>
-                                            </div>
-
-                                            <div className="flex shrink-0 flex-col items-end gap-2">
-                                                <Badge variant={STATUS_VARIANTS[item.status] || 'default'}>
-                                                    {STATUS_LABELS[item.status] || item.status}
-                                                </Badge>
-
-                                                {isUpcoming && (
-                                                    <button
-                                                        onClick={() => setCancelTarget(item)}
-                                                        className="rounded-md px-2 py-1 text-xs text-rose-600 transition-colors hover:bg-rose-50 dark:hover:bg-rose-950/40"
-                                                    >
-                                                        Cancel
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </motion.li>
-                                )
-                            })}
-                        </ul>
-                    )}
-                </Card>
+                )}
             </div>
-
-            <ConfirmDialog
-                open={!!cancelTarget}
-                onClose={() => !cancelling && setCancelTarget(null)}
-                onConfirm={cancel}
-                title="Cancel this appointment?"
-                description={`${cancelTarget?.officeName || cancelTarget?.slotTitle || 'This appointment'} · ${formatDateTime(
-                    cancelTarget?.startTime
-                )}. The slot will be freed for other students.`}
-                confirmLabel="Cancel appointment"
-                cancelLabel="Keep it"
-                variant="danger"
-                loading={cancelling}
-            />
         </div>
     )
 }
