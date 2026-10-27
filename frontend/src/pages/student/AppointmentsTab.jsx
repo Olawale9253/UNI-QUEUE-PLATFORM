@@ -106,7 +106,6 @@ export default function AppointmentsTab() {
         )
     }, [offices, search])
 
-    // 👇 FIXED: Accept service as an argument to avoid React state delay bug
     const handleBookAppointment = async (serviceToBook) => {
         if (!selectedOffice || !serviceToBook || !selectedTime) {
             push({ type: 'error', message: 'Please select a time slot first' })
@@ -204,7 +203,7 @@ export default function AppointmentsTab() {
                                         onChange={(e) => setSearch(e.target.value)}
                                         placeholder="Search by office, service or staff..."
                                         className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2"
-                                        style={{ focusRingColor: withAlpha(primaryColor, 0.2) }}
+                                        style={{ '--tw-ring-color': withAlpha(primaryColor, 0.2) }}
                                     />
                                 </div>
                                 <button className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
@@ -253,7 +252,6 @@ export default function AppointmentsTab() {
                                                                 <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-slate-400" /> 9:00 AM – 4:00 PM</span>
                                                             </div>
 
-                                                            {/* 👇 FIXED: Explicit onClick handler */}
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); setSelectedOffice(office); }}
                                                                 className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors"
@@ -347,13 +345,12 @@ export default function AppointmentsTab() {
                                                     <Calendar className="h-4 w-4 text-slate-400" />
                                                     <span className="text-sm font-semibold text-slate-700">Select Date</span>
 
-                                                    {/* 👇 FIXED: Custom chevron for select */}
                                                     <div className="relative">
                                                         <select
                                                             className="appearance-none rounded-lg border border-slate-200 bg-white py-1.5 pl-3 pr-10 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2"
                                                             value={selectedDate}
                                                             onChange={(e) => setSelectedDate(e.target.value)}
-                                                            style={{ focusRingColor: withAlpha(primaryColor, 0.2) }}
+                                                            style={{ '--tw-ring-color': withAlpha(primaryColor, 0.2) }}
                                                         >
                                                             {DATES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
                                                         </select>
@@ -393,7 +390,7 @@ export default function AppointmentsTab() {
                                                                         ? 'bg-slate-50 shadow-sm'
                                                                         : 'border-slate-200 bg-white hover:border-slate-300'
                                                                 }`}
-                                                                style={selectedService?.id === service.id ? { borderColor: primaryColor, boxShadow: \`0 0 0 1px \${withAlpha(primaryColor, 0.5)}\` } : undefined}
+                                                                style={selectedService?.id === service.id ? { borderColor: primaryColor, boxShadow: '0 0 0 1px ' + withAlpha(primaryColor, 0.5) } : undefined}
                                                                 onClick={() => setSelectedService(service)}
                                                             >
                                                                 <div className="flex items-start gap-3">
@@ -413,7 +410,6 @@ export default function AppointmentsTab() {
                                                                         <Clock className="h-3.5 w-3.5" /> {service.averageServiceMinutes || 20} mins
                                                                     </span>
 
-                                                                    {/* 👇 FIXED: Pass service directly to avoid state batching bug */}
                                                                     <button
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
