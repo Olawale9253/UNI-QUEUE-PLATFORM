@@ -354,8 +354,8 @@ export default function AppointmentsTab() {
                                         <div className="p-6 space-y-6">
                                             {activeSubTab === 'appointments' && (
                                                 <>
-                                                    {/* Inline Date & Time */}
-                                                    <div className="flex flex-col gap-4 mb-6">
+                                                    {/* Horizontal Date & Time bar */}
+                                                    <div className="flex flex-wrap items-center gap-4 mb-6 border-b border-slate-100 pb-4">
                                                         <div className="flex items-center gap-2 shrink-0">
                                                             <Calendar className="h-4 w-4 text-slate-400" />
                                                             <span className="text-sm font-semibold text-slate-700">Select Date</span>
@@ -372,7 +372,7 @@ export default function AppointmentsTab() {
                                                             </div>
                                                         </div>
 
-                                                        <div className="flex flex-wrap gap-2">
+                                                        <div className="flex flex-wrap gap-2 overflow-x-auto">
                                                             {TIME_SLOTS.map(time => (
                                                                 <button
                                                                     key={time}
@@ -395,8 +395,12 @@ export default function AppointmentsTab() {
                                                         <h4 className="text-sm font-bold text-slate-900 mb-3">Available Services</h4>
                                                         <div className="space-y-3">
                                                             {selectedOffice.services.length === 0 ? (
-                                                                <div className="p-6 text-center border border-dashed rounded-xl bg-slate-50">
-                                                                    <p className="text-sm text-slate-500">No appointment services created for this office yet.</p>
+                                                                <div className="p-8 text-center border border-dashed rounded-xl bg-slate-50 flex flex-col items-center justify-center">
+                                                                    <div className="h-10 w-10 text-slate-300 mb-2">
+                                                                        <FileText className="h-full w-full" />
+                                                                    </div>
+                                                                    <p className="text-sm font-bold text-slate-600">No Services Available</p>
+                                                                    <p className="text-xs text-slate-500 mt-1 max-w-xs">The administrator hasn't set up any appointment services for this office yet.</p>
                                                                 </div>
                                                             ) : (
                                                                 selectedOffice.services.map((service) => {
@@ -454,8 +458,9 @@ export default function AppointmentsTab() {
                                                 <div>
                                                     <h4 className="text-sm font-bold text-slate-900 mb-3">Staff Members for {selectedOffice.name}</h4>
                                                     {selectedOffice.staff.length === 0 ? (
-                                                        <div className="p-6 text-center border border-dashed rounded-xl bg-slate-50">
-                                                            <p className="text-sm text-slate-500">No staff members assigned to this office yet.</p>
+                                                        <div className="p-8 text-center border border-dashed rounded-xl bg-slate-50">
+                                                            <p className="text-sm font-bold text-slate-600">No staff assigned</p>
+                                                            <p className="text-xs text-slate-500 mt-1">No staff members have been assigned to this office yet.</p>
                                                         </div>
                                                     ) : (
                                                         <div className="space-y-3">
@@ -501,6 +506,7 @@ export default function AppointmentsTab() {
                                                 </button>
                                             </div>
                                         </div>
+
                                     </Card>
                                 </motion.div>
                             ) : (
