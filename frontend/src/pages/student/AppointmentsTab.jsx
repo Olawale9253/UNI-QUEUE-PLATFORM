@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     Calendar, Clock, MapPin, Phone, Search, Filter, ChevronRight,
     Building2, Users, CheckCircle2, HelpCircle, Ticket, GraduationCap,
-    FileText, Monitor, Banknote, UserCircle2, ArrowRight, Info, ChevronDown
+    FileText, Monitor, Banknote, UserCircle2, ArrowRight, Info, ChevronDown,
+    Mail, Award, ClipboardList
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -15,7 +16,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useUniversityStore } from '../../store/universityStore'
 import { withAlpha } from '../../lib/colors'
 
-// Helper to pick a nice icon based on office name
+// Helper to pick an icon based on office name
 function getOfficeIcon(name) {
     const n = (name || '').toLowerCase()
     if (n.includes('academic')) return GraduationCap
@@ -26,7 +27,17 @@ function getOfficeIcon(name) {
     return Building2
 }
 
-const TIME_SLOTS = ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM']
+// Helper to pick an icon based on service name
+function getServiceIcon(name) {
+    const n = (name || '').toLowerCase()
+    if (n.includes('register') || n.includes('registration')) return ClipboardList
+    if (n.includes('transcript')) return Award
+    if (n.includes('result')) return FileText
+    if (n.includes('consult') || n.includes('guidance')) return Users
+    return FileText
+}
+
+const TIME_SLOTS = ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '2:00 PM', '3:00 PM']
 const DATES = [
     { value: 'today', label: 'Today - Fri, 31 Oct 2026' },
     { value: 'tomorrow', label: 'Tomorrow - Sat, 01 Nov 2026' },
@@ -35,11 +46,12 @@ const DATES = [
 
 export default function AppointmentsTab() {
     const { push } = useToastStore()
-    const { user } = useAuthStore()
     const { university } = useUniversityStore()
     const navigate = useNavigate()
 
     const [activeTopTab, setActiveTopTab] = useState('available')
+    const [activeSubTab, setActiveSubTab] = useState('appointments') // 'appointments' | 'staff'
+
     const [offices, setOffices] = useState([])
     const [myAppointments, setMyAppointments] = useState([])
     const [loading, setLoading] = useState(true)
@@ -117,7 +129,6 @@ export default function AppointmentsTab() {
             push({ type: 'success', message: `Appointment booked for ${serviceToBook.name} at ${selectedTime}` })
             setActiveTopTab('mine')
 
-            // Refresh
             const apptsRes = await api.get('/api/user/appointments').catch(() => ({ data: { data: [] } }))
             setMyAppointments(apptsRes.data?.data || [])
         } catch (err) {
@@ -251,7 +262,6 @@ export default function AppointmentsTab() {
                                                                 <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Today - Fri, 31 Oct 2026</span>
                                                                 <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-slate-400" /> 9:00 AM – 4:00 PM</span>
                                                             </div>
-
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); setSelectedOffice(office); }}
                                                                 className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors"
@@ -328,106 +338,156 @@ export default function AppointmentsTab() {
                                         {/* Sub Tabs */}
                                         <div className="px-6 pt-6">
                                             <div className="flex items-center gap-6 border-b border-slate-200">
-                                                <button className="pb-3 text-sm font-bold border-b-2 flex items-center gap-2" style={{ borderColor: primaryColor, color: primaryColor }}>
+                                                <button
+                                                    onClick={() => setActiveSubTab('appointments')}
+                                                    className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors`}
+                                                    style={{
+                                                        borderColor: activeSubTab === 'appointments' ? primaryColor : 'transparent',
+                                                        color: activeSubTab === 'appointments' ? primaryColor : '#64748b'
+                                                    }}
+                                                >
                                                     <Calendar className="h-4 w-4" /> Available Appointments
                                                 </button>
-                                                <button className="pb-3 text-sm font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-2">
+                                                <button
+                                                    onClick={() => setActiveSubTab('staff')}
+                                                    className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors`}
+                                                    style={{
+                                                        borderColor: activeSubTab === 'staff' ? primaryColor : 'transparent',
+                                                        color: activeSubTab === 'staff' ? primaryColor : '#64748b'
+                                                    }}
+                                                >
                                                     <Users className="h-4 w-4" /> Staff Members
                                                 </button>
                                             </div>
                                         </div>
 
-                                        {/* Booking Area */}
+                                        {/* Content Area */}
                                         <div className="p-6 space-y-6">
-                                            {/* Date & Time Selector */}
-                                            <div>
-                                                <div className="flex items-center gap-3 mb-3">
-                                                    <Calendar className="h-4 w-4 text-slate-400" />
-                                                    <span className="text-sm font-semibold text-slate-700">Select Date</span>
 
-                                                    <div className="relative">
-                                                        <select
-                                                            className="appearance-none rounded-lg border border-slate-200 bg-white py-1.5 pl-3 pr-10 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2"
-                                                            value={selectedDate}
-                                                            onChange={(e) => setSelectedDate(e.target.value)}
-                                                            style={{ '--tw-ring-color': withAlpha(primaryColor, 0.2) }}
-                                                        >
-                                                            {DATES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-                                                        </select>
-                                                        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {TIME_SLOTS.map(time => (
-                                                        <button
-                                                            key={time}
-                                                            onClick={() => setSelectedTime(time)}
-                                                            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                                                                selectedTime === time
-                                                                    ? 'text-white shadow-sm'
-                                                                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                                                            }`}
-                                                            style={selectedTime === time ? { backgroundColor: primaryColor } : undefined}
-                                                        >
-                                                            {time}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            {/* Services */}
-                                            <div>
-                                                <h4 className="text-sm font-bold text-slate-900 mb-3">Available Services</h4>
-                                                <div className="space-y-3">
-                                                    {selectedOffice.services.length === 0 ? (
-                                                        <p className="text-sm text-slate-500 italic">No appointment-based services offered here.</p>
-                                                    ) : (
-                                                        selectedOffice.services.map((service) => (
-                                                            <div
-                                                                key={service.id}
-                                                                className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${
-                                                                    selectedService?.id === service.id
-                                                                        ? 'bg-slate-50 shadow-sm'
-                                                                        : 'border-slate-200 bg-white hover:border-slate-300'
-                                                                }`}
-                                                                style={selectedService?.id === service.id ? { borderColor: primaryColor, boxShadow: '0 0 0 1px ' + withAlpha(primaryColor, 0.5) } : undefined}
-                                                                onClick={() => setSelectedService(service)}
-                                                            >
-                                                                <div className="flex items-start gap-3">
-                                                                    <div
-                                                                        className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                                                                        style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
-                                                                    >
-                                                                        <FileText className="h-4 w-4" />
-                                                                    </div>
-                                                                    <div>
-                                                                        <div className="text-sm font-bold text-slate-900">{service.name}</div>
-                                                                        <div className="text-xs text-slate-500 mt-0.5">{service.description || 'Standard appointment service.'}</div>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="flex items-center gap-4 mt-3 sm:mt-0">
-                                                                    <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                                                                        <Clock className="h-3.5 w-3.5" /> {service.averageServiceMinutes || 20} mins
-                                                                    </span>
-
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setSelectedService(service);
-                                                                            handleBookAppointment(service);
-                                                                        }}
-                                                                        disabled={booking}
-                                                                        className="rounded-lg px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
-                                                                        style={{ backgroundColor: primaryColor }}
-                                                                    >
-                                                                        {booking ? 'Booking...' : 'Book Appointment'}
-                                                                    </button>
-                                                                </div>
+                                            {activeSubTab === 'appointments' && (
+                                                <>
+                                                    {/* Date & Time Selector - Inline */}
+                                                    <div className="flex flex-col xl:flex-row xl:items-center gap-4 mb-6">
+                                                        <div className="flex items-center gap-2 shrink-0">
+                                                            <Calendar className="h-4 w-4 text-slate-400" />
+                                                            <span className="text-sm font-semibold text-slate-700">Select Date</span>
+                                                            <div className="relative">
+                                                                <select
+                                                                    className="appearance-none rounded-lg border border-slate-200 bg-white py-1.5 pl-3 pr-10 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2"
+                                                                    value={selectedDate}
+                                                                    onChange={(e) => setSelectedDate(e.target.value)}
+                                                                    style={{ '--tw-ring-color': withAlpha(primaryColor, 0.2) }}
+                                                                >
+                                                                    {DATES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                                                                </select>
+                                                                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                                                             </div>
-                                                        ))
+                                                        </div>
+
+                                                        <div className="flex flex-wrap gap-2 overflow-x-auto pb-1">
+                                                            {TIME_SLOTS.map(time => (
+                                                                <button
+                                                                    key={time}
+                                                                    onClick={() => setSelectedTime(time)}
+                                                                    className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors whitespace-nowrap ${
+                                                                        selectedTime === time
+                                                                            ? 'text-white shadow-sm'
+                                                                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                                                    }`}
+                                                                    style={selectedTime === time ? { backgroundColor: primaryColor } : undefined}
+                                                                >
+                                                                    {time}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Services List */}
+                                                    <div>
+                                                        <h4 className="text-sm font-bold text-slate-900 mb-3">Available Services</h4>
+                                                        <div className="space-y-3">
+                                                            {selectedOffice.services.length === 0 ? (
+                                                                <div className="p-6 text-center border border-dashed rounded-xl bg-slate-50">
+                                                                    <p className="text-sm text-slate-500">No appointment services created for this office yet.</p>
+                                                                </div>
+                                                            ) : (
+                                                                selectedOffice.services.map((service) => {
+                                                                    const SIcon = getServiceIcon(service.name)
+                                                                    return (
+                                                                        <div
+                                                                            key={service.id}
+                                                                            className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${
+                                                                                selectedService?.id === service.id
+                                                                                    ? 'bg-slate-50 shadow-sm'
+                                                                                    : 'border-slate-200 bg-white hover:border-slate-300'
+                                                                            }`}
+                                                                            style={selectedService?.id === service.id ? { borderColor: primaryColor, boxShadow: '0 0 0 1px ' + withAlpha(primaryColor, 0.5) } : undefined}
+                                                                            onClick={() => setSelectedService(service)}
+                                                                        >
+                                                                            <div className="flex items-start gap-4">
+                                                                                <div
+                                                                                    className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+                                                                                    style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
+                                                                                >
+                                                                                    <SIcon className="h-5 w-5" />
+                                                                                </div>
+                                                                                <div>
+                                                                                    <div className="text-sm font-bold text-slate-900">{service.name}</div>
+                                                                                    <div className="text-xs text-slate-500 mt-0.5 line-clamp-1">{service.description || 'Standard appointment service.'}</div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="flex items-center gap-4 mt-3 sm:mt-0">
+                                                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                                                                                    <Clock className="h-3.5 w-3.5" /> {service.averageServiceMinutes || 20} mins
+                                                                                </span>
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        setSelectedService(service);
+                                                                                        handleBookAppointment(service);
+                                                                                    }}
+                                                                                    disabled={booking}
+                                                                                    className="rounded-lg px-5 py-2 text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                                                                                    style={{ backgroundColor: primaryColor }}
+                                                                                >
+                                                                                    {booking ? 'Booking...' : 'Book Appointment'}
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    )
+                                                                })
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            )}
+
+                                            {activeSubTab === 'staff' && (
+                                                <div>
+                                                    <h4 className="text-sm font-bold text-slate-900 mb-3">Staff Members for {selectedOffice.name}</h4>
+                                                    {selectedOffice.staff.length === 0 ? (
+                                                        <div className="p-6 text-center border border-dashed rounded-xl bg-slate-50">
+                                                            <p className="text-sm text-slate-500">No staff members assigned to this office yet.</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-3">
+                                                            {selectedOffice.staff.map(staff => (
+                                                                <div key={staff.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white" style={{ backgroundColor: primaryColor }}>
+                                                                            {staff.fullName?.charAt(0) || 'S'}
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="text-sm font-bold text-slate-900">{staff.fullName}</div>
+                                                                            <div className="text-xs text-slate-500">{staff.email || 'staff@university.edu'}</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                     )}
                                                 </div>
-                                            </div>
+                                            )}
                                         </div>
 
                                         {/* Bottom Banner */}
