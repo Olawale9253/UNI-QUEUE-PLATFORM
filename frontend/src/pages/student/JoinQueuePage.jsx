@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Search, Building2, Ticket, ArrowRight } from 'lucide-react'
+import { Search, Building2, Ticket, ArrowRight, Lock } from 'lucide-react'
 import api from '../../api/axios'
 import { useToastStore } from '../../store/toastStore'
+import { useAuthStore } from '../../store/authStore'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
@@ -11,11 +12,14 @@ import { stagger, staggerItem } from '../../lib/motion'
 
 export default function JoinQueuePage() {
     const { push } = useToastStore()
+    const { user } = useAuthStore()
     const navigate = useNavigate()
     const [queues, setQueues] = useState([])
     const [search, setSearch] = useState('')
     const [loading, setLoading] = useState(true)
     const [joining, setJoining] = useState(null)
+
+    const isFresher = user?.role === 'FRESHER'
 
     useEffect(() => {
         api.get('/api/queues')
@@ -87,38 +91,56 @@ export default function JoinQueuePage() {
                     animate="animate"
                     className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
                 >
-                    {filtered.map(queue => (
-                        <motion.div key={queue.id} variants={staggerItem} className="h-full">
-                            <Card className="flex h-full flex-col justify-between">
-                                <div>
-                                    <div className="mb-4 flex items-start justify-between">
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
-                                            <Building2 className="h-5 w-5" />
+                    {filtered.map(queue => {
+                        const matricLocked = isFresher && queue.matricRequired
+                        const isDisabled = !queue.isOpen || matricLocked || joining === queue.id
+
+                        return (
+                            <motion.div key={queue.id} variants={staggerItem} className="h-full">
+                                <Card className="flex h-full flex-col justify-between">
+                                    <div>
+                                        <div className="mb-4 flex items-start justify-between">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
+                                                <Building2 className="h-5 w-5" />
+                                            </div>
+                                            <div className="flex flex-wrap justify-end gap-2">
+                                                {matricLocked && (
+                                                    <Badge variant="warning" className="flex items-center gap-1">
+                                                        <Lock className="h-3 w-3" /> Matric Required
+                                                    </Badge>
+                                                )}
+                                                <Badge variant={queue.isOpen ? 'success' : 'default'}>
+                                                    {queue.isOpen ? 'Live' : 'Closed'}
+                                                </Badge>
+                                            </div>
                                         </div>
-                                        <Badge variant={queue.isOpen ? 'success' : 'default'}>
-                                            {queue.isOpen ? 'Live' : 'Closed'}
-                                        </Badge>
+                                        <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">{queue.name}</h3>
+                                        <p className="mt-1 line-clamp-2 text-sm text-slate-500 dark:text-slate-400">
+                                            {queue.description || 'No description provided'}
+                                        </p>
                                     </div>
-                                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">{queue.name}</h3>
-                                    <p className="mt-1 line-clamp-2 text-sm text-slate-500 dark:text-slate-400">
-                                        {queue.description || 'No description provided'}
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={() => joinQueue(queue.id)}
-                                    disabled={!queue.isOpen || joining === queue.id}
-                                    className={`mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-colors ${
-                                        queue.isOpen
-                                            ? 'bg-brand-600 text-white hover:bg-brand-700 shadow-sm'
-                                            : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed'
-                                    }`}
-                                >
-                                    {joining === queue.id ? 'Joining...' : queue.isOpen ? 'Join Queue' : 'Closed'}
-                                    {queue.isOpen && joining !== queue.id && <ArrowRight className="h-4 w-4" />}
-                                </button>
-                            </Card>
-                        </motion.div>
-                    ))}
+                                    <button
+                                        onClick={() => joinQueue(queue.id)}
+                                        disabled={isDisabled}
+                                        className={`mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-colors ${
+                                            !isDisabled
+                                                ? 'bg-brand-600 text-white hover:bg-brand-700 shadow-sm'
+                                                : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed'
+                                        }`}
+                                    >
+                                        {joining === queue.id
+                                            ? 'Joining...'
+                                            : matricLocked
+                                                ? 'Matric Required'
+                                                : queue.isOpen
+                                                    ? 'Join Queue'
+                                                    : 'Closed'}
+                                        {!isDisabled && <ArrowRight className="h-4 w-4" />}
+                                    </button>
+                                </Card>
+                            </motion.div>
+                        )
+                    })}
                 </motion.div>
             )}
         </div>
