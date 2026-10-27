@@ -1,12 +1,16 @@
 import { useState, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, Check, Clock3, LogOut, Ticket, History } from 'lucide-react'
+import {
+    ArrowRight, Check, Clock3, LogOut, Ticket, History,
+    RotateCcw, SkipForward, ArrowUpRight
+} from 'lucide-react'
 import api from '../../api/axios'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { formatDateTime } from '../../lib/format'
 import Card from '../../components/ui/Card'
+import Button from '../../components/ui/Button'
 
 const QUEUE_STEPS = ['Joined', 'Waiting', 'In Service', 'Completed']
 
@@ -39,9 +43,11 @@ function StatusBadge({ status }) {
 
 export default function MyTicketsPage() {
     const { push } = useToastStore()
+    const navigate = useNavigate()
     const [activeTicket, setActiveTicket] = useState(null)
     const [history, setHistory] = useState([])
     const [loading, setLoading] = useState(true)
+    const [acting, setActing] = useState(null)
 
     const loadData = useCallback(async () => {
         try {
@@ -62,6 +68,7 @@ export default function MyTicketsPage() {
 
     const leaveQueue = async () => {
         if (!activeTicket) return
+        setActing('leave')
         try {
             await api.post(`/api/user/tickets/${activeTicket.id}/leave`)
             setActiveTicket(null)
@@ -69,10 +76,41 @@ export default function MyTicketsPage() {
             loadData()
         } catch (err) {
             push({ type: 'error', message: err.message })
+        } finally {
+            setActing(null)
         }
     }
 
-    const pastTickets = history.filter((ticket) => ticket.status !== 'WAITING')
+    const rescheduleTurn = async () => {
+        if (!activeTicket) return
+        setActing('reschedule')
+        try {
+            await api.post(`/api/user/tickets/${activeTicket.id}/reschedule`)
+            push({ type: 'success', message: 'Turn rescheduled. You are now at the end of the queue.' })
+            loadData()
+        } catch (err) {
+            push({ type: 'error', message: err.message || 'Reschedule not available yet' })
+        } finally {
+            setActing(null)
+        }
+    }
+
+    const skipTurn = async () => {
+        if (!activeTicket) return
+        setActing('skip')
+        try {
+            await api.post(`/api/user/tickets/${activeTicket.id}/skip`)
+            push({ type: 'success', message: 'Turn skipped' })
+            loadData()
+        } catch (err) {
+            push({ type: 'error', message: err.message || 'Skip not available yet' })
+        } finally {
+            setActing(null)
+        }
+    }
+
+    // 👇 LIMIT: Only show the most recent 3 past tickets to keep it clean
+    const pastTickets = history.filter((ticket) => ticket.status !== 'WAITING').slice(0, 3)
 
     if (loading && !activeTicket) {
         return (
@@ -84,6 +122,7 @@ export default function MyTicketsPage() {
 
     const position = activeTicket?.position ?? 1
     const activeStep = getActiveStep(activeTicket?.status)
+    const isActionable = activeTicket?.status === 'WAITING' || activeTicket?.status === 'CALLED'
 
     return (
         <div className="space-y-8 pb-12">
@@ -136,12 +175,35 @@ export default function MyTicketsPage() {
                                 </p>
                             </div>
 
-                            <div className="flex items-center justify-center sm:justify-end">
+                            {/* 👇 PREMIUM ACTION BUTTONS */}
+                            <div className="flex flex-col gap-2 items-center justify-center sm:justify-end">
+                                {isActionable && (
+                                    <div className="flex w-full flex-col gap-2">
+                                        <button
+                                            onClick={rescheduleTurn}
+                                            disabled={!!acting}
+                                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-50"
+                                        >
+                                            <RotateCcw className="h-4 w-4" />
+                                            {acting === 'reschedule' ? 'Rescheduling...' : 'Reschedule'}
+                                        </button>
+                                        <button
+                                            onClick={skipTurn}
+                                            disabled={!!acting}
+                                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-50"
+                                        >
+                                            <SkipForward className="h-4 w-4" />
+                                            {acting === 'skip' ? 'Skipping...' : 'Skip Turn'}
+                                        </button>
+                                    </div>
+                                )}
                                 <button
                                     onClick={leaveQueue}
-                                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-5 py-3 text-sm font-bold text-rose-700 transition-colors hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 sm:w-auto"
+                                    disabled={!!acting}
+                                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 py-2 text-sm font-bold text-rose-700 transition-colors hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60 disabled:opacity-50"
                                 >
-                                    <LogOut className="h-4 w-4" /> Leave Queue
+                                    <LogOut className="h-4 w-4" />
+                                    {acting === 'leave' ? 'Leaving...' : 'Leave Queue'}
                                 </button>
                             </div>
                         </div>
@@ -189,18 +251,28 @@ export default function MyTicketsPage() {
                     </p>
                     <Link
                         to="/student/queues"
-                        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+                        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 shadow-sm"
                     >
                         Join a Service <ArrowRight className="h-4 w-4" />
                     </Link>
                 </Card>
             )}
 
-            {/* History */}
+            {/* 👇 PAST TICKETS SECTION WITH NAVIGATION */}
             <div>
-                <div className="mb-4 flex items-center gap-2">
-                    <History className="h-5 w-5 text-slate-400" />
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Past Tickets</h2>
+                <div className="mb-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <History className="h-5 w-5 text-slate-400" />
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Recent Tickets</h2>
+                    </div>
+                    {pastTickets.length > 0 && (
+                        <Link
+                            to="/student/history"
+                            className="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400"
+                        >
+                            View full history <ArrowUpRight className="h-4 w-4" />
+                        </Link>
+                    )}
                 </div>
 
                 <Card padded={false}>
