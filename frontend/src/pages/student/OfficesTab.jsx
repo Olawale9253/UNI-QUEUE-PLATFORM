@@ -142,7 +142,6 @@ export default function OfficesTab() {
         )
     }
 
-    // Force a pure white background wrapper
     return (
         <div className="bg-white dark:bg-slate-950 min-h-screen -m-4 p-4 sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
             <div className="space-y-6 pb-12 max-w-[1600px] mx-auto">
@@ -284,8 +283,11 @@ export default function OfficesTab() {
                                                         <Building2 className="h-8 w-8" />
                                                     </div>
                                                     <div>
-                                                        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                                                        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-3">
                                                             {selected.office.name}
+                                                            <Badge variant={selected.office.isActive === false ? 'default' : 'success'} className="text-xs px-2 py-0.5">
+                                                                {selected.office.isActive === false ? 'Inactive' : 'Active'}
+                                                            </Badge>
                                                         </h2>
                                                         <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-400">
                                                             {university?.name || 'University Portal'} {university?.code ? `(${university.code})` : ''}
@@ -296,8 +298,9 @@ export default function OfficesTab() {
                                                     </div>
                                                 </div>
 
+                                                {/* 👇 REPLACED BUTTON: Contact Office */}
                                                 <button
-                                                    onClick={() => navigate('/student/queues')}
+                                                    onClick={() => push({ type: 'info', message: `Office Contact: ${selected.office.email || 'office@university.edu'} | ${selected.office.phone || '+234 803 123 4567'}` })}
                                                     className="shrink-0 inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors hover:opacity-80"
                                                     style={{
                                                         borderColor: primaryColor,
@@ -305,8 +308,8 @@ export default function OfficesTab() {
                                                         backgroundColor: withAlpha(primaryColor, 0.05)
                                                     }}
                                                 >
-                                                    <Ticket className="h-4 w-4" />
-                                                    View Services & Queues
+                                                    <Phone className="h-4 w-4" />
+                                                    Contact Office
                                                 </button>
                                             </div>
                                         </div>
@@ -327,7 +330,7 @@ export default function OfficesTab() {
                                                 <div>
                                                     <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Phone Number</div>
                                                     <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                        +234 803 123 4567
+                                                        {selected.office.phone || '+234 803 123 4567'}
                                                     </div>
                                                 </div>
                                             </div>
@@ -345,7 +348,7 @@ export default function OfficesTab() {
                                         </div>
                                     </Card>
 
-                                    {/* Staff Details Section (Forced to always render) */}
+                                    {/* Staff Details Section */}
                                     <div>
                                         <div className="mb-4 flex items-center justify-between">
                                             <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -385,7 +388,9 @@ export default function OfficesTab() {
                                                                 </div>
                                                             </div>
 
+                                                            {/* 👇 FIXED BUTTON: Triggers a toast with staff details */}
                                                             <button
+                                                                onClick={() => push({ type: 'info', message: `Staff Profile: ${staff.fullName} | Email: ${staff.email || 'N/A'} | Phone: ${staff.phone || 'N/A'}` })}
                                                                 className="shrink-0 inline-flex items-center justify-center rounded-lg border px-4 py-2 text-sm font-semibold shadow-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                                                                 style={{ borderColor: withAlpha(primaryColor, 0.3), color: primaryColor }}
                                                             >
@@ -471,7 +476,6 @@ export default function OfficesTab() {
                                     </div>
                                 </motion.div>
                             ) : (
-                                // 👇 CUSTOM EMPTY STATE (Matching School Color)
                                 <Card className="h-full min-h-[500px] flex items-center justify-center border-dashed border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
                                     <div className="flex flex-col items-center justify-center p-8 text-center">
                                         <div
