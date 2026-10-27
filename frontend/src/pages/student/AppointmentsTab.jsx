@@ -1,22 +1,20 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
     Calendar, Clock, MapPin, Phone, Search, Filter, ChevronRight,
-    Building2, Users, CheckCircle2, HelpCircle, Ticket, GraduationCap,
-    FileText, Monitor, Banknote, UserCircle2, ArrowRight, Info, ChevronDown,
-    Mail, Award, ClipboardList
+    Building2, Users, HelpCircle, Ticket, GraduationCap,
+    FileText, Monitor, Banknote, UserCircle2, Info, ChevronDown,
+    Award, ClipboardList
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import { useToastStore } from '../../store/toastStore'
-import { useAuthStore } from '../../store/authStore'
 import { useUniversityStore } from '../../store/universityStore'
 import { withAlpha } from '../../lib/colors'
 
-// Helper to pick an icon based on office name
 function getOfficeIcon(name) {
     const n = (name || '').toLowerCase()
     if (n.includes('academic')) return GraduationCap
@@ -27,7 +25,6 @@ function getOfficeIcon(name) {
     return Building2
 }
 
-// Helper to pick an icon based on service name
 function getServiceIcon(name) {
     const n = (name || '').toLowerCase()
     if (n.includes('register') || n.includes('registration')) return ClipboardList
@@ -50,7 +47,7 @@ export default function AppointmentsTab() {
     const navigate = useNavigate()
 
     const [activeTopTab, setActiveTopTab] = useState('available')
-    const [activeSubTab, setActiveSubTab] = useState('appointments') // 'appointments' | 'staff'
+    const [activeSubTab, setActiveSubTab] = useState('appointments')
 
     const [offices, setOffices] = useState([])
     const [myAppointments, setMyAppointments] = useState([])
@@ -58,7 +55,6 @@ export default function AppointmentsTab() {
     const [search, setSearch] = useState('')
     const [selectedOffice, setSelectedOffice] = useState(null)
 
-    // Booking state
     const [selectedDate, setSelectedDate] = useState('today')
     const [selectedTime, setSelectedTime] = useState('10:00 AM')
     const [selectedService, setSelectedService] = useState(null)
@@ -125,10 +121,9 @@ export default function AppointmentsTab() {
         }
         setBooking(true)
         try {
-            await new Promise(resolve => setTimeout(resolve, 800)) // Simulate API
+            await new Promise(resolve => setTimeout(resolve, 800))
             push({ type: 'success', message: `Appointment booked for ${serviceToBook.name} at ${selectedTime}` })
             setActiveTopTab('mine')
-
             const apptsRes = await api.get('/api/user/appointments').catch(() => ({ data: { data: [] } }))
             setMyAppointments(apptsRes.data?.data || [])
         } catch (err) {
@@ -158,7 +153,6 @@ export default function AppointmentsTab() {
                             Book or join appointments with university offices and staff. Choose from available slots, or join an existing appointment queue.
                         </p>
                     </div>
-
                     <div
                         className="hidden md:flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
                         style={{ borderColor: withAlpha(primaryColor, 0.2), backgroundColor: withAlpha(primaryColor, 0.05) }}
@@ -202,8 +196,7 @@ export default function AppointmentsTab() {
                 {/* Main Content */}
                 {activeTopTab === 'available' && (
                     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_1.2fr]">
-
-                        {/* LEFT: Office List */}
+                        {/* LEFT COLUMN */}
                         <div className="space-y-4">
                             <div className="flex flex-col sm:flex-row gap-3">
                                 <div className="relative flex-1">
@@ -279,12 +272,11 @@ export default function AppointmentsTab() {
                             )}
                         </div>
 
-                        {/* RIGHT: Selected Office Details */}
+                        {/* RIGHT COLUMN */}
                         <div className="sticky top-24">
                             {selectedOffice ? (
                                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={selectedOffice.id}>
                                     <Card padded={false} className="overflow-hidden shadow-sm bg-white border-slate-200">
-                                        {/* Hero */}
                                         <div className="p-6 sm:p-8" style={{ backgroundColor: withAlpha(primaryColor, 0.02) }}>
                                             <div className="flex items-start gap-4">
                                                 <div
@@ -310,7 +302,6 @@ export default function AppointmentsTab() {
                                             </div>
                                         </div>
 
-                                        {/* 3-Column Info Grid */}
                                         <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 border-y border-slate-100 bg-white">
                                             <div className="flex items-start gap-3 p-4">
                                                 <MapPin className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
@@ -335,7 +326,6 @@ export default function AppointmentsTab() {
                                             </div>
                                         </div>
 
-                                        {/* Sub Tabs */}
                                         <div className="px-6 pt-6">
                                             <div className="flex items-center gap-6 border-b border-slate-200">
                                                 <button
@@ -361,13 +351,11 @@ export default function AppointmentsTab() {
                                             </div>
                                         </div>
 
-                                        {/* Content Area */}
                                         <div className="p-6 space-y-6">
-
                                             {activeSubTab === 'appointments' && (
                                                 <>
-                                                    {/* Date & Time Selector - Inline */}
-                                                    <div className="flex flex-col xl:flex-row xl:items-center gap-4 mb-6">
+                                                    {/* Inline Date & Time */}
+                                                    <div className="flex flex-col gap-4 mb-6">
                                                         <div className="flex items-center gap-2 shrink-0">
                                                             <Calendar className="h-4 w-4 text-slate-400" />
                                                             <span className="text-sm font-semibold text-slate-700">Select Date</span>
@@ -384,12 +372,12 @@ export default function AppointmentsTab() {
                                                             </div>
                                                         </div>
 
-                                                        <div className="flex flex-wrap gap-2 overflow-x-auto pb-1">
+                                                        <div className="flex flex-wrap gap-2">
                                                             {TIME_SLOTS.map(time => (
                                                                 <button
                                                                     key={time}
                                                                     onClick={() => setSelectedTime(time)}
-                                                                    className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors whitespace-nowrap ${
+                                                                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                                                                         selectedTime === time
                                                                             ? 'text-white shadow-sm'
                                                                             : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -402,7 +390,7 @@ export default function AppointmentsTab() {
                                                         </div>
                                                     </div>
 
-                                                    {/* Services List */}
+                                                    {/* Services */}
                                                     <div>
                                                         <h4 className="text-sm font-bold text-slate-900 mb-3">Available Services</h4>
                                                         <div className="space-y-3">
@@ -447,7 +435,7 @@ export default function AppointmentsTab() {
                                                                                         handleBookAppointment(service);
                                                                                     }}
                                                                                     disabled={booking}
-                                                                                    className="rounded-lg px-5 py-2 text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                                                                                    className="rounded-lg px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
                                                                                     style={{ backgroundColor: primaryColor }}
                                                                                 >
                                                                                     {booking ? 'Booking...' : 'Book Appointment'}
@@ -490,7 +478,6 @@ export default function AppointmentsTab() {
                                             )}
                                         </div>
 
-                                        {/* Bottom Banner */}
                                         <div className="p-6 bg-slate-50 border-t border-slate-100 mt-4">
                                             <div
                                                 className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl border p-4"
@@ -514,7 +501,6 @@ export default function AppointmentsTab() {
                                                 </button>
                                             </div>
                                         </div>
-
                                     </Card>
                                 </motion.div>
                             ) : (
@@ -533,7 +519,6 @@ export default function AppointmentsTab() {
                     </div>
                 )}
 
-                {/* My Appointments / History Tabs */}
                 {(activeTopTab === 'mine' || activeTopTab === 'history') && (
                     <Card className="bg-white border-slate-200">
                         <div className="flex items-center gap-2 mb-6">
