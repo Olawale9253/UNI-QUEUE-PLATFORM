@@ -28,10 +28,18 @@ export default function JoinQueuePage() {
             .finally(() => setLoading(false))
     }, [push])
 
-    const filtered = queues.filter(q =>
-        q.name.toLowerCase().includes(search.toLowerCase()) ||
-        q.officeName?.toLowerCase().includes(search.toLowerCase())
-    )
+    // 👇 ADDED: Sorting logic to push matric-locked queues to the bottom for freshers
+    const filtered = queues
+        .filter(q =>
+            q.name.toLowerCase().includes(search.toLowerCase()) ||
+            q.officeName?.toLowerCase().includes(search.toLowerCase())
+        )
+        .sort((a, b) => {
+            if (!isFresher) return 0 // Keep default order for non-freshers
+            const aLocked = a.matricRequired ? 1 : 0
+            const bLocked = b.matricRequired ? 1 : 0
+            return aLocked - bLocked // Locked queues (1) go to the bottom, unlocked (0) stay on top
+        })
 
     const joinQueue = async (id) => {
         setJoining(id)

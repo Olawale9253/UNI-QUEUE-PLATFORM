@@ -3,12 +3,13 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     Calendar, Ticket, FileText, CheckCircle2, Building2,
-    Route as RouteIcon, ArrowRight, Clock,
+    Route as RouteIcon, ArrowRight, Clock, Lock,
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { groupQueuesByOffice } from '../../lib/groupQueues'
+import { useAuthStore } from '../../store/authStore'
 
 function StatTile({ label, value, icon: Icon, accent, valueColor, to, ctaLabel, delay }) {
     return (
@@ -46,9 +47,10 @@ function StatTile({ label, value, icon: Icon, accent, valueColor, to, ctaLabel, 
     )
 }
 
-function LiveQueueCard({ office }) {
+function LiveQueueCard({ office, isFresher }) {
     const hasQueue = office.queue != null
     const isOpen = hasQueue && office.queue?.isOpen === true
+    const matricLocked = hasQueue && isFresher && office.queue?.matricRequired
     const waitingCount = office.queue?.waitingCount ?? 0
     const currentlyServing = office.queue?.currentlyServing || 'None'
     const avgWait = office.queue?.estimatedMinutes ?? 0
@@ -59,22 +61,30 @@ function LiveQueueCard({ office }) {
                 <h3 className="min-w-0 flex-1 text-base font-semibold text-slate-900 dark:text-slate-100">
                     {office.name}
                 </h3>
-                {hasQueue && (
-                    isOpen ? (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
-                            <span className="relative flex h-1.5 w-1.5">
-                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                            </span>
-                            Live
-                        </span>
-                    ) : (
+                <div className="flex flex-wrap justify-end gap-2 shrink-0">
+                    {matricLocked && (
                         <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
-                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                            Closed
+                            <Lock className="h-2.5 w-2.5" />
+                            Matric
                         </span>
-                    )
-                )}
+                    )}
+                    {hasQueue && (
+                        isOpen ? (
+                            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+                                <span className="relative flex h-1.5 w-1.5">
+                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                </span>
+                                Live
+                            </span>
+                        ) : (
+                            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                                <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                                Closed
+                            </span>
+                        )
+                    )}
+                </div>
             </div>
 
             <div className="text-sm text-slate-600 dark:text-slate-400">
@@ -109,19 +119,24 @@ function LiveQueueCard({ office }) {
                 </div>
             </div>
 
-            {/* 🔧 BULLETPROOF BUTTON: Using direct Tailwind styles so it always renders as a button */}
             <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800">
-                <Link
-                    to="/student/queues"
-                    className={`flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-all ${
-                        isOpen
-                            ? 'bg-brand-600 text-white hover:bg-brand-700'
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-                    }`}
-                >
-                    {isOpen ? 'Join this queue' : 'View service details'}
-                    <ArrowRight className="h-4 w-4" />
-                </Link>
+                {matricLocked ? (
+                    <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-400 cursor-not-allowed dark:bg-slate-800 dark:text-slate-500">
+                        <Lock className="h-4 w-4" /> Matric Required
+                    </div>
+                ) : (
+                    <Link
+                        to="/student/queues"
+                        className={`flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-all ${
+                            isOpen
+                                ? 'bg-brand-600 text-white hover:bg-brand-700'
+                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                        }`}
+                    >
+                        {isOpen ? 'Join this queue' : 'View service details'}
+                        <ArrowRight className="h-4 w-4" />
+                    </Link>
+                )}
             </div>
         </Card>
     )
@@ -220,6 +235,9 @@ function ActiveClearanceCard({ data }) {
 }
 
 export default function StudentHome() {
+    const { user } = useAuthStore()
+    const isFresher = user?.role === 'FRESHER'
+
     const [queues, setQueues] = useState([])
     const [stats, setStats] = useState(null)
     const [appointments, setAppointments] = useState([])
@@ -279,8 +297,16 @@ export default function StudentHome() {
                     queue: sorted[0] || null,
                 }
             })
-            .sort((firstValue, secondValue) => firstValue.name.localeCompare(secondValue.name))
-    }, [queues])
+            // 👇 ADDED SORTING LOGIC: Freshers see accessible queues first
+            .sort((a, b) => {
+                if (isFresher) {
+                    const aLocked = a.queue?.matricRequired ? 1 : 0
+                    const bLocked = b.queue?.matricRequired ? 1 : 0
+                    if (aLocked !== bLocked) return aLocked - bLocked
+                }
+                return a.name.localeCompare(b.name)
+            })
+    }, [queues, isFresher])
 
     const myAppointments = appointments.filter(
         (appointment) => appointment.status === 'BOOKED' || appointment.status === 'CONFIRMED'
@@ -406,7 +432,8 @@ export default function StudentHome() {
                                 key={liveQueue.key}
                                 variants={{ initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 } }}
                             >
-                                <LiveQueueCard office={liveQueue} />
+                                {/* 👇 PASSED isFresher to the card */}
+                                <LiveQueueCard office={liveQueue} isFresher={isFresher} />
                             </motion.div>
                         ))}
                     </motion.div>
