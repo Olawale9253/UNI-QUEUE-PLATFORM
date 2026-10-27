@@ -54,7 +54,6 @@ export default function AppointmentsTab() {
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
 
-    // 👇 FIXED: Using ID instead of object to prevent stale closures
     const [selectedOfficeId, setSelectedOfficeId] = useState(null)
 
     const [selectedDate, setSelectedDate] = useState('today')
@@ -64,6 +63,7 @@ export default function AppointmentsTab() {
 
     const primaryColor = university?.primaryColor || '#4f46e5'
 
+    // 👇 FIX 1: Removed 'selectedOffice' from the dependency array to prevent infinite reloads
     const load = useCallback(async () => {
         try {
             const [officesRes, apptsRes, queuesRes] = await Promise.all([
@@ -94,7 +94,6 @@ export default function AppointmentsTab() {
             setOffices(enrichedOffices.sort((a, b) => a.name.localeCompare(b.name)))
             setMyAppointments(apptsRes.data?.data || [])
 
-            // 👇 FIXED: Only auto-select if nothing is selected yet
             setSelectedOfficeId(prev => prev ?? (enrichedOffices.length > 0 ? enrichedOffices[0].id : null))
         } catch (err) {
             push({ type: 'error', message: err.message || 'Failed to load data' })
@@ -105,8 +104,12 @@ export default function AppointmentsTab() {
 
     useEffect(() => { load() }, [load])
 
-    // 👇 FIXED: Derive the selected office object from the ID
     const selectedOffice = offices.find(o => String(o.id) === String(selectedOfficeId))
+
+    // 👇 FIX 2: Reset to "appointments" tab whenever the selected office changes
+    useEffect(() => {
+        setActiveSubTab('appointments')
+    }, [selectedOfficeId])
 
     const filteredOffices = useMemo(() => {
         if (!search.trim()) return offices
@@ -199,8 +202,8 @@ export default function AppointmentsTab() {
 
                 {/* Main Content */}
                 {activeTopTab === 'available' && (
-                    /* 👇 FIXED: Widened right column to 1.6fr */
-                    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_1.6fr]">
+                    /* 👇 FIX 3: Widened right column significantly to 2.2fr to prevent breaks */
+                    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_2.2fr]">
                         {/* LEFT COLUMN */}
                         <div className="space-y-4">
                             <div className="flex flex-col sm:flex-row gap-3">
@@ -327,7 +330,7 @@ export default function AppointmentsTab() {
                                                 <Clock className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
                                                 <div>
                                                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Working Hours</div>
-                                                    {/* 👇 FIXED: Added whitespace-nowrap to prevent breaking */}
+                                                    {/* 👇 FIX 4: Added whitespace-nowrap to prevent text wrapping */}
                                                     <div className="mt-1 text-sm font-semibold text-slate-900 whitespace-nowrap">Mon – Fri: 8:00 AM – 4:00 PM</div>
                                                 </div>
                                             </div>
@@ -379,12 +382,13 @@ export default function AppointmentsTab() {
                                                             </div>
                                                         </div>
 
-                                                        <div className="flex flex-wrap gap-2 overflow-x-auto">
+                                                        {/* 👇 FIX 5: Removed flex-wrap to keep all times on one line */}
+                                                        <div className="flex items-center gap-2 overflow-x-auto pb-1 w-full">
                                                             {TIME_SLOTS.map(time => (
                                                                 <button
                                                                     key={time}
                                                                     onClick={() => setSelectedTime(time)}
-                                                                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                                                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
                                                                         selectedTime === time
                                                                             ? 'text-white shadow-sm'
                                                                             : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -436,7 +440,7 @@ export default function AppointmentsTab() {
                                                                                 </div>
                                                                             </div>
                                                                             <div className="flex items-center gap-4 mt-3 sm:mt-0">
-                                                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                                                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 whitespace-nowrap">
                                                                                     <Clock className="h-3.5 w-3.5" /> {service.averageServiceMinutes || 20} mins
                                                                                 </span>
                                                                                 <button
@@ -446,7 +450,7 @@ export default function AppointmentsTab() {
                                                                                         handleBookAppointment(service);
                                                                                     }}
                                                                                     disabled={booking}
-                                                                                    className="rounded-lg px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                                                                                    className="rounded-lg px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
                                                                                     style={{ backgroundColor: primaryColor }}
                                                                                 >
                                                                                     {booking ? 'Booking...' : 'Book Appointment'}
