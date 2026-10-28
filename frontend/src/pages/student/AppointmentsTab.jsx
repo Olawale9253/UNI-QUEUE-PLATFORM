@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     Calendar, Clock, MapPin, Phone, Search, Filter, ChevronRight,
-    Building2, Users, HelpCircle, Ticket, GraduationCap,
-    FileText, Monitor, Banknote, UserCircle2, Info, ChevronDown,
-    Award, ClipboardList, AlertCircle
+    Building2, Users, HelpCircle, GraduationCap, FileText, Monitor,
+    Banknote, UserCircle2, Info, ChevronDown, Award, ClipboardList,
+    AlertCircle, Mail, CheckCircle2, XCircle
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -13,7 +13,7 @@ import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import { useToastStore } from '../../store/toastStore'
 import { useUniversityStore } from '../../store/universityStore'
-import { useAdaptivePoll } from '../../hooks/useAdaptivePoll' // 👈 ADDED for fast updates
+import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { withAlpha } from '../../lib/colors'
 
 function getOfficeIcon(name) {
@@ -35,7 +35,6 @@ function getServiceIcon(name) {
     return FileText
 }
 
-// Helper to format backend date strings (YYYY-MM-DD) into "Today - Mon, 28 Oct 2026"
 function formatSlotDate(dateStr) {
     if (!dateStr) return ''
     const d = new Date(dateStr)
@@ -52,7 +51,6 @@ function formatSlotDate(dateStr) {
     return label
 }
 
-// Helper to format time from backend (09:00:00) to (9:00 AM)
 function formatSlotTime(timeStr) {
     if (!timeStr) return ''
     const [hours, minutes] = timeStr.split(':')
@@ -125,7 +123,6 @@ export default function AppointmentsTab() {
         }
     }, [push])
 
-    // 👇 REPLACED with useAdaptivePoll for fast auto-updates
     useAdaptivePoll(load, { fastMs: 5000, slowMs: 15000 })
 
     const selectedOffice = offices.find(o => String(o.id) === String(selectedOfficeId))
@@ -135,6 +132,15 @@ export default function AppointmentsTab() {
         setSelectedDate('')
         setSelectedSlot(null)
     }, [selectedOfficeId])
+
+    // Filter for Upcoming vs Past Appointments
+    const upcomingAppointments = useMemo(() => {
+        return myAppointments.filter(a => ['BOOKED', 'CONFIRMED'].includes(a.status))
+    }, [myAppointments])
+
+    const pastAppointments = useMemo(() => {
+        return myAppointments.filter(a => !['BOOKED', 'CONFIRMED'].includes(a.status))
+    }, [myAppointments])
 
     const filteredOffices = useMemo(() => {
         if (!search.trim()) return offices
@@ -202,20 +208,22 @@ export default function AppointmentsTab() {
                             Book or join appointments with university offices and staff. Choose from available slots, or join an existing appointment queue.
                         </p>
                     </div>
-                    <div
-                        className="hidden md:flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
-                        style={{ borderColor: withAlpha(primaryColor, 0.2), backgroundColor: withAlpha(primaryColor, 0.05) }}
-                        onClick={() => push({ type: 'info', message: 'Contact support at support@uniqueue.com' })}
+
+                    {/* 👇 UPDATED: Premium Contact Support Card */}
+                    <a
+                        href="mailto:support@uniqueue.com"
+                        className="hidden md:flex items-center gap-3 rounded-xl border px-4 py-3 transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer bg-white"
+                        style={{ borderColor: withAlpha(primaryColor, 0.3), boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}
                     >
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm" style={{ color: primaryColor }}>
-                            <Calendar className="h-5 w-5" />
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}>
+                            <HelpCircle className="h-5 w-5" />
                         </div>
                         <div>
                             <div className="text-sm font-bold text-slate-900">Need help?</div>
-                            <div className="text-xs font-medium text-slate-500">Check office details or contact support.</div>
+                            <div className="text-xs font-medium text-slate-500">Contact our support team</div>
                         </div>
-                        <ChevronRight className="h-4 w-4 text-slate-400 ml-2" />
-                    </div>
+                        <ChevronRight className="h-4 w-4 text-slate-300 ml-2" />
+                    </a>
                 </div>
 
                 {/* Top Tabs */}
@@ -269,6 +277,10 @@ export default function AppointmentsTab() {
                                     {filteredOffices.map(office => {
                                         const isSelected = String(selectedOfficeId) === String(office.id)
                                         const Icon = getOfficeIcon(office.name)
+
+                                        // 👇 Check if this office actually has slots in the DB
+                                        const hasSlots = slots.some(s => String(s.officeId) === String(office.id))
+
                                         return (
                                             <Card
                                                 key={office.id}
@@ -292,10 +304,10 @@ export default function AppointmentsTab() {
                                                                 <p className="mt-1 text-sm text-slate-500 line-clamp-2">{office.description || 'View available services and book an appointment.'}</p>
                                                             </div>
 
-                                                            {/* 👇 RENAMED BADGE */}
-                                                            <Badge variant={office.isAvailable ? 'success' : 'default'} className="shrink-0 flex items-center gap-1">
-                                                                {office.isAvailable && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
-                                                                {office.isAvailable ? 'Bookable' : 'Closed'}
+                                                            {/* 👇 RED FLAG for no appointments */}
+                                                            <Badge variant={hasSlots ? 'success' : 'danger'} className="shrink-0 flex items-center gap-1">
+                                                                {hasSlots ? <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> : <AlertCircle className="h-3 w-3" />}
+                                                                {hasSlots ? 'Bookable' : 'No Appointments'}
                                                             </Badge>
                                                         </div>
 
@@ -343,8 +355,8 @@ export default function AppointmentsTab() {
                                                         <h2 className="text-2xl font-bold text-slate-900">
                                                             {selectedOffice.name}
                                                         </h2>
-                                                        <Badge variant={selectedOffice.isAvailable ? 'success' : 'default'} className="text-xs px-2 py-0.5">
-                                                            {selectedOffice.isAvailable ? 'Bookable' : 'Closed'}
+                                                        <Badge variant={officeSlots.length > 0 ? 'success' : 'danger'} className="text-xs px-2 py-0.5">
+                                                            {officeSlots.length > 0 ? 'Bookable' : 'No Appointments'}
                                                         </Badge>
                                                     </div>
                                                     <p className="mt-1 text-sm font-medium text-slate-600">
@@ -357,7 +369,7 @@ export default function AppointmentsTab() {
                                             </div>
                                         </div>
 
-                                        {/* 3-Column Info Grid - Fixed breaking text */}
+                                        {/* 3-Column Info Grid */}
                                         <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 border-b border-slate-100 bg-white">
                                             <div className="flex items-start gap-3 p-4">
                                                 <MapPin className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
@@ -370,14 +382,13 @@ export default function AppointmentsTab() {
                                                 <Phone className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
                                                 <div>
                                                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Phone Number</div>
-                                                    <div className="mt-1 text-sm font-semibold text-slate-900 whitespace-nowrap">{selectedOffice.phone || '+234 803 123 4567'}</div>
+                                                    <div className="mt-1 text-sm font-semibold text-slate-900 whitespace-nowrap">{selectedOffice.phone || 'Not assigned'}</div>
                                                 </div>
                                             </div>
                                             <div className="flex items-start gap-3 p-4">
                                                 <Clock className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
                                                 <div>
                                                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Working Hours</div>
-                                                    {/* 👇 FIX: Reduced font size to text-[13px] and added whitespace-nowrap to prevent breaking */}
                                                     <div className="mt-1 text-[13px] font-semibold text-slate-900 whitespace-nowrap">Mon – Fri: 8:00 AM – 4:00 PM</div>
                                                 </div>
                                             </div>
@@ -535,10 +546,10 @@ export default function AppointmentsTab() {
                                                                         </div>
                                                                         <div>
                                                                             <div className="text-sm font-bold text-slate-900">{staff.fullName}</div>
-                                                                            {/* 👇 FIX: Added real phone number and email for staff */}
-                                                                            <div className="text-xs text-slate-500 mt-1 flex items-center gap-3">
-                                                                                <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {staff.email || 'staff@university.edu'}</span>
-                                                                                <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {staff.phone || '+234 803 123 4567'}</span>
+                                                                            {/* 👇 REAL STAFF CONTACT INFO */}
+                                                                            <div className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+                                                                                <span className="flex items-center gap-1"><Mail className="h-3 w-3 opacity-70" /> {staff.email || 'Not assigned'}</span>
+                                                                                <span className="flex items-center gap-1"><Phone className="h-3 w-3 opacity-70" /> {staff.phone || 'Not assigned'}</span>
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -549,8 +560,6 @@ export default function AppointmentsTab() {
                                                 </div>
                                             )}
                                         </div>
-
-                                        {/* 👇 REMOVED: Bottom Join Queue Banner */}
 
                                     </Card>
                                 </motion.div>
@@ -570,29 +579,28 @@ export default function AppointmentsTab() {
                     </div>
                 )}
 
-                {(activeTopTab === 'mine' || activeTopTab === 'history') && (
+                {/* 👇 UPDATED: MY APPOINTMENTS (Upcoming) */}
+                {activeTopTab === 'mine' && (
                     <Card className="bg-white border-slate-200 rounded-2xl max-w-4xl mx-auto">
                         <div className="flex items-center gap-2 mb-6">
-                            {activeTopTab === 'mine' ? <UserCircle2 className="h-5 w-5 text-slate-400" /> : <Clock className="h-5 w-5 text-slate-400" />}
-                            <h2 className="text-lg font-bold text-slate-900">
-                                {activeTopTab === 'mine' ? 'My Appointments' : 'Appointment History'}
-                            </h2>
+                            <UserCircle2 className="h-5 w-5 text-slate-400" />
+                            <h2 className="text-lg font-bold text-slate-900">My Appointments</h2>
                         </div>
 
-                        {myAppointments.length === 0 ? (
+                        {upcomingAppointments.length === 0 ? (
                             <div className="py-12 text-center">
                                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
                                     <Calendar className="h-6 w-6 text-slate-400" />
                                 </div>
-                                <p className="text-sm font-bold text-slate-900">No appointments yet</p>
+                                <p className="text-sm font-bold text-slate-900">No upcoming appointments</p>
                                 <p className="mt-1 text-xs text-slate-500">Book a slot from the Available tab to get started.</p>
                             </div>
                         ) : (
                             <div className="space-y-4">
-                                {myAppointments.map(appt => (
-                                    <div key={appt.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-slate-200 rounded-xl gap-4">
+                                {upcomingAppointments.map(appt => (
+                                    <div key={appt.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-slate-200 rounded-xl gap-4 hover:border-slate-300 transition-colors">
                                         <div className="flex items-center gap-4">
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}>
                                                 <Calendar className="h-5 w-5" />
                                             </div>
                                             <div>
@@ -601,6 +609,48 @@ export default function AppointmentsTab() {
                                             </div>
                                         </div>
                                         <Badge variant={appt.status === 'CONFIRMED' ? 'success' : 'warning'}>{appt.status}</Badge>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </Card>
+                )}
+
+                {/* 👇 UPDATED: APPOINTMENT HISTORY (Past) */}
+                {activeTopTab === 'history' && (
+                    <Card className="bg-white border-slate-200 rounded-2xl max-w-4xl mx-auto">
+                        <div className="flex items-center gap-2 mb-6">
+                            <Clock className="h-5 w-5 text-slate-400" />
+                            <h2 className="text-lg font-bold text-slate-900">Appointment History</h2>
+                        </div>
+
+                        {pastAppointments.length === 0 ? (
+                            <div className="py-12 text-center">
+                                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+                                    <Clock className="h-6 w-6 text-slate-400" />
+                                </div>
+                                <p className="text-sm font-bold text-slate-900">No past appointments</p>
+                                <p className="mt-1 text-xs text-slate-500">Your completed or cancelled appointments will appear here.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {pastAppointments.map(appt => (
+                                    <div key={appt.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-slate-200 rounded-xl gap-4 bg-slate-50/50">
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-200 text-slate-500">
+                                                <Clock className="h-5 w-5" />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-bold text-slate-900">{appt.serviceName || 'Appointment'}</div>
+                                                <div className="text-xs text-slate-500 mt-0.5">{appt.officeName} • {appt.date} at {appt.time}</div>
+                                            </div>
+                                        </div>
+                                        <Badge variant={
+                                                   appt.status === 'COMPLETED' ? 'success' :
+                                                       appt.status === 'CANCELLED' ? 'danger' : 'default'
+                                               }>
+                                            {appt.status}
+                                        </Badge>
                                     </div>
                                 ))}
                             </div>
