@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     Search, ChevronRight, HelpCircle, GraduationCap,
-    Users, Building2, Banknote, Clock, MapPin, Phone,
+    Users, Building2, Banknote, Clock, MapPin, Phone, Mail,
     ArrowRight, CheckCircle2,
     FileText, BookOpen, Monitor, ListOrdered, Info, Lock
 } from 'lucide-react'
@@ -53,6 +53,7 @@ export default function QueuesTab() {
     const navigate = useNavigate()
 
     const [queues, setQueues] = useState([])
+    const [offices, setOffices] = useState([]) // 👈 ADDED: To store office data (phone/email)
     const [activeTicket, setActiveTicket] = useState(null)
     const [loading, setLoading] = useState(true)
 
@@ -66,12 +67,16 @@ export default function QueuesTab() {
 
     const load = useCallback(async () => {
         try {
-            const [queueRes, tokenRes] = await Promise.all([
+            const [queueRes, tokenRes, officeRes] = await Promise.all([
                 api.get('/api/queues').catch(() => ({ data: { data: [] } })),
-                api.get('/api/user/tickets/active').catch(() => ({ data: { data: null } }))
+                api.get('/api/user/tickets/active').catch(() => ({ data: { data: null } })),
+                api.get('/api/offices').catch(() => ({ data: { data: [] } })) // 👈 ADDED
             ])
             const fetchedQueues = queueRes.data?.data || []
+            const fetchedOffices = officeRes.data?.data || []
+
             setQueues(fetchedQueues)
+            setOffices(fetchedOffices)
             setActiveTicket(tokenRes.data?.data || null)
 
             setSelectedQueueId(prev => {
@@ -124,6 +129,15 @@ export default function QueuesTab() {
     }, [enrichedQueues, activeCategory, search, isFresher])
 
     const selectedQueue = filteredQueues.find(q => String(q.id) === String(selectedQueueId))
+
+    // 👇 ADDED: Find the matching office to get contact details
+    const selectedOffice = useMemo(() => {
+        if (!selectedQueue) return null
+        return offices.find(o =>
+            (o.id && selectedQueue.officeId && String(o.id) === String(selectedQueue.officeId)) ||
+            o.name === selectedQueue.officeName
+        )
+    }, [selectedQueue, offices])
 
     const handleJoinQueue = async (queueToJoin) => {
         if (activeTicket) {
@@ -343,12 +357,11 @@ export default function QueuesTab() {
                                     className="overflow-hidden shadow-lg border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900"
                                 >
 
-                                    {/* 👇 UPDATED: School Color Background with Subtle Overlay (Same as Offices Page) */}
+                                    {/* School Color Background with Subtle Overlay */}
                                     <div
                                         className="p-6 relative overflow-hidden text-white"
                                         style={{ backgroundColor: primaryColor }}
                                     >
-                                        {/* Subtle dark overlay to ensure text readability */}
                                         <div className="absolute inset-0 bg-black/15" />
 
                                         <div className="flex items-start justify-between gap-4 relative z-10">
@@ -405,7 +418,7 @@ export default function QueuesTab() {
                                                 <div>
                                                     <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Location</div>
                                                     <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                                        {selectedQueue.location || 'Main Administrative Building'}
+                                                        {selectedOffice?.location || selectedQueue.location || 'Main Administrative Building'}
                                                     </div>
                                                 </div>
                                             </div>
@@ -424,13 +437,20 @@ export default function QueuesTab() {
                                                 <Phone className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
                                                 <div>
                                                     <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Contact</div>
+                                                    {/* 👇 FIXED: Pulls real data from backend */}
                                                     <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                                        +234 803 123 4567
+                                                        {selectedOffice?.phone || selectedQueue.phone || 'Not assigned'}
                                                     </div>
+                                                    {(selectedOffice?.email || selectedQueue.email) && (
+                                                        <div className="text-xs text-slate-500 mt-0.5">
+                                                            {selectedOffice?.email || selectedQueue.email}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
 
+                                        {/* 👇 FIXED: Services Included pulled from backend */}
                                         <div className="pt-5 border-t border-slate-100 dark:border-slate-800">
                                             <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3">Services Included</h4>
                                             <ul className="space-y-2">
@@ -438,14 +458,18 @@ export default function QueuesTab() {
                                                     <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
                                                     {selectedQueue.name} processing
                                                 </li>
-                                                <li className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
-                                                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
-                                                    Add and drop requests
-                                                </li>
-                                                <li className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
-                                                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
-                                                    Academic advice and support
-                                                </li>
+                                                {selectedQueue.description && (
+                                                    <li className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+                                                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                                                        {selectedQueue.description}
+                                                    </li>
+                                                )}
+                                                {selectedOffice?.name && (
+                                                    <li className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+                                                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                                                        Managed by {selectedOffice.name}
+                                                    </li>
+                                                )}
                                             </ul>
                                         </div>
                                     </div>
