@@ -6,18 +6,23 @@ import { useAuthStore } from '../../store/authStore'
 import HolidayStrip from '../student/HolidayStrip'
 
 function getGreeting() {
-    const item = new Date().getHours()
-    if (item >= 5 && item < 12) return 'Good morning'
-    if (item >= 12 && item < 17) return 'Good afternoon'
-    if (item >= 17 && item < 21) return 'Good evening'
+    // Force the timezone to Africa/Lagos so it's always accurate for the university
+    // regardless of the user's laptop clock or timezone settings.
+    const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Africa/Lagos',
+        hour: 'numeric',
+        hour12: false
+    })
+    const hour = parseInt(formatter.format(new Date()), 10)
+
+    if (hour >= 5 && hour < 12) return 'Good morning'
+    if (hour >= 12 && hour < 17) return 'Good afternoon'
+    if (hour >= 17 && hour < 21) return 'Good evening'
     return 'Good night'
 }
 
 /**
  * Sticky header shown on every student page.
- *
- * Renders the shared HolidayStrip so students always see today's holiday
- * status and upcoming closures, no matter which tab they're on.
  */
 export default function StudentHeader({ subtitle }) {
     const { user } = useAuthStore()
@@ -27,6 +32,7 @@ export default function StudentHeader({ subtitle }) {
     const [closedDates, setClosedDates] = useState(null)
 
     useEffect(() => {
+        // Update the greeting every minute
         const token = setInterval(() => setGreeting(getGreeting()), 60_000)
         return () => clearInterval(token)
     }, [])
