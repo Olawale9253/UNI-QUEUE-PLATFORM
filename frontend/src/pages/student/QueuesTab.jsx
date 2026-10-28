@@ -1,768 +1,461 @@
-import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-    Ticket, MapPin, Clock, ListOrdered, Users,
-    CheckCircle2, Lock, ArrowRight, Route as RouteIcon, Building2,
-    GraduationCap, Search, Copy, Check, Info,
+    Search, Filter, ChevronRight, HelpCircle, GraduationCap,
+    Users, Building2, Banknote, Clock, MapPin, Phone,
+    ArrowRight, CheckCircle2, Ticket, AlertCircle, RefreshCw,
+    FileText, BookOpen, Monitor, ListOrdered
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
-import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
-import ConfirmDialog from '../../components/ui/ConfirmDialog'
-import EnablePushPrompt from '../../components/student/EnablePushPrompt'
 import { useAuthStore } from '../../store/authStore'
 import { useUniversityStore } from '../../store/universityStore'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
-import { useStudentTicketAlerts } from '../../hooks/useNotificationSound'
-import { groupQueuesByOffice } from '../../lib/groupQueues'
 import { withAlpha } from '../../lib/colors'
-import { syncBus } from '../../lib/syncBus'
 
-const STATUS_VARIANTS = {
-    WAITING: 'warning',
-    WAITLISTED: 'info',
-    CALLED: 'indigo',
-    SERVING: 'indigo',
-    COMPLETED: 'success',
-    NO_SHOW: 'danger',
-    CANCELLED: 'default',
-    TRANSFERRED: 'default',
+// Helper to infer category from queue/office name
+function inferCategory(queueName, officeName) {
+    const name = `${queueName} ${officeName}`.toLowerCase()
+    if (name.includes('bursary') || name.includes('finance') || name.includes('fee') || name.includes('payment')) return 'Financial'
+    if (name.includes('register') || name.includes('transcript') || name.includes('result') || name.includes('exam') || name.includes('academic')) return 'Academic'
+    if (name.includes('student') || name.includes('welfare') || name.includes('counsel') || name.includes('library')) return 'Student Support'
+    if (name.includes('ict') || name.includes('computer') || name.includes('portal')) return 'Administrative'
+    return 'Other'
 }
 
-const STATUS_LABELS = {
-    WAITING: 'Waiting',
-    WAITLISTED: 'Waitlisted',
-    CALLED: 'Called',
-    SERVING: 'Serving',
-    COMPLETED: 'Completed',
-    NO_SHOW: 'No-show',
-    CANCELLED: 'Cancelled',
-    TRANSFERRED: 'Transferred',
-}
+// Helper to get icon based on category
+function getCategoryIcon(category, name) {
+    const n = (name || '').toLowerCase()
+    if (n.includes('register')) return FileText
+    if (n.includes('transcript')) return BookOpen
+    if (n.includes('library')) return BookOpen
+    if (n.includes('ict') || n.includes('computer')) return Monitor
 
-const STATUS_FILTERS = [
-    { value: 'ALL', label: 'All statuses' },
-    { value: 'WAITING', label: 'Waiting' },
-    { value: 'CALLED', label: 'Called' },
-    { value: 'SERVING', label: 'Serving' },
-    { value: 'COMPLETED', label: 'Completed' },
-    { value: 'NO_SHOW', label: 'No-show' },
-    { value: 'CANCELLED', label: 'Cancelled' },
-    { value: 'WAITLISTED', label: 'Waitlisted' },
-    { value: 'TRANSFERRED', label: 'Transferred' },
-]
-
-function CopyButton({ text }) {
-    const [copied, setCopied] = useState(false)
-    const copy = async (event) => {
-        event.stopPropagation()
-        try {
-            await navigator.clipboard.writeText(text)
-            setCopied(true)
-            setTimeout(() => setCopied(false), 1500)
-        } catch {}
+    switch (category) {
+        case 'Academic': return GraduationCap
+        case 'Financial': return Banknote
+        case 'Student Support': return Users
+        case 'Administrative': return Building2
+        default: return ListOrdered
     }
-    return (
-        <button
-            type="button"
-            onClick={copy}
-            title="Copy ticket ID"
-            className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-300"
-        >
-            {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-        </button>
-    )
 }
+
+const CATEGORIES = ['All Queues', 'Academic', 'Administrative', 'Student Support', 'Financial', 'Other']
 
 export default function QueuesTab() {
+    const { push } = useToastStore()
     const { user } = useAuthStore()
     const { university } = useUniversityStore()
-    const { push } = useToastStore()
     const navigate = useNavigate()
-    const { checkTicket } = useStudentTicketAlerts()
 
     const [queues, setQueues] = useState([])
     const [activeTicket, setActiveTicket] = useState(null)
-    const [history, setHistory] = useState([])
-    const [workflows, setWorkflows] = useState([])
-    const [availableWorkflows, setAvailableWorkflows] = useState([])
-    const [closedDates, setClosedDates] = useState({
-        todayClosed: false,
-        todayReason: null,
-        upcoming: [],
-    })
     const [loading, setLoading] = useState(true)
+    const [refreshing, setRefreshing] = useState(false)
+
+    const [search, setSearch] = useState('')
+    const [activeCategory, setActiveCategory] = useState('All Queues')
+    const [selectedQueueId, setSelectedQueueId] = useState(null)
     const [joining, setJoining] = useState(false)
-    const [confirmLeave, setConfirmLeave] = useState(false)
-    const [leaving, setLeaving] = useState(false)
-    const [acting, setActing] = useState(null)
 
-    const [selectedOfficeId, setSelectedOfficeId] = useState('')
-    const [selectedServiceId, setSelectedServiceId] = useState('')
-    const [statusFilter, setStatusFilter] = useState('ALL')
-    const [ticketSearch, setTicketSearch] = useState('')
-
-    const isFresher = user?.role === 'FRESHER'
-    const showPushPrompt = !!activeTicket
     const primaryColor = university?.primaryColor || '#4f46e5'
 
-    const lastLocalActionAtRef = useRef(0)
-
-    const load = useCallback(async () => {
+    const load = useCallback(async (isManual = false) => {
+        if (isManual) setRefreshing(true)
         try {
-            const [queue, token, item, aw, itemValue, cd] = await Promise.all([
-                api.get('/api/queues'),
-                api.get('/api/user/tickets/active'),
-                api.get('/api/user/workflows').catch(() => ({ data: { data: [] } })),
-                api.get('/api/user/workflows/available').catch(() => ({ data: { data: [] } })),
-                api.get('/api/user/tickets/history').catch(() => ({ data: { data: [] } })),
-                api.get('/api/closed-dates').catch(() => ({ data: { data: null } })),
+            const [queueRes, tokenRes] = await Promise.all([
+                api.get('/api/queues').catch(() => ({ data: { data: [] } })),
+                api.get('/api/user/tickets/active').catch(() => ({ data: { data: null } }))
             ])
-            setQueues(queue.data.data || [])
-            setActiveTicket(token.data.data || null)
-            setWorkflows(item.data.data || [])
-            setAvailableWorkflows(aw.data.data || [])
-            setHistory(itemValue.data.data || [])
-            setClosedDates(cd.data?.data || { todayClosed: false, todayReason: null, upcoming: [] })
+            const fetchedQueues = queueRes.data?.data || []
+            setQueues(fetchedQueues)
+            setActiveTicket(tokenRes.data?.data || null)
+
+            // Auto-select the first queue if none is selected and list is not empty
+            setSelectedQueueId(prev => {
+                if (prev) return prev
+                return fetchedQueues.length > 0 ? fetchedQueues[0].id : null
+            })
         } catch (err) {
-            push({ type: 'error', message: err.message || 'Failed to load' })
+            push({ type: 'error', message: err.message || 'Failed to load queues' })
         } finally {
             setLoading(false)
+            setRefreshing(false)
         }
     }, [push])
 
-    useEffect(() => { load() }, [load])
-    useAdaptivePoll(load, { fastMs: 5000, slowMs: 30000 })
+    useAdaptivePoll(() => load(false), { fastMs: 5000, slowMs: 15000 })
 
-    useEffect(() => {
-        const unsub = syncBus.subscribe('data-changed', (payload) => {
-            if (payload?.source === 'student-queue') return
-            if (Date.now() - lastLocalActionAtRef.current < 2000) return
-            load()
-        })
-        return unsub
-    }, [load])
-
-    const activeWorkflow = workflows.find((workflow) => workflow.status === 'IN_PROGRESS')
-
-    const workflowByQueueId = useMemo(() => {
-        const map = new Map()
-        const ingest = (item) => {
-            const steps = item.steps || []
-            const total = item.totalSteps || steps.length || 0
-            steps.forEach((step) => {
-                if (!step.queueId) return
-                if (map.has(step.queueId)) return
-                map.set(step.queueId, {
-                    workflowId: item.workflowId ?? item.id,
-                    workflowName: item.workflowName ?? item.name ?? 'Clearance',
-                    stepOrder: step.order ?? step.stepOrder,
-                    totalSteps: total,
-                })
-            })
-        }
-        workflows.forEach(ingest)
-        availableWorkflows.forEach(ingest)
-        return map
-    }, [workflows, availableWorkflows])
-
-    const lockedQueueIds = useMemo(() => {
-        const set = new Set()
-        if (activeWorkflow) {
-            activeWorkflow.steps.forEach((item) => {
-                if (item.state === 'LOCKED') set.add(item.queueId)
-            })
-        }
-        return set
-    }, [activeWorkflow])
-
-    const officeGroups = useMemo(() => {
-        const groups = groupQueuesByOffice(queues)
-        return groups.map((group) => ({
-            ...group,
-            officeId: group.queues[0]?.officeId ?? null,
+    // Enrich queues with category
+    const enrichedQueues = useMemo(() => {
+        return queues.map(q => ({
+            ...q,
+            category: inferCategory(q.name, q.officeName)
         }))
     }, [queues])
 
-    useEffect(() => {
-        if (!selectedOfficeId && officeGroups.length > 0) {
-            setSelectedOfficeId(String(officeGroups[0].officeId ?? officeGroups[0].key))
+    // Filter queues based on search and category
+    const filteredQueues = useMemo(() => {
+        let result = enrichedQueues
+        if (activeCategory !== 'All Queues') {
+            result = result.filter(q => q.category === activeCategory)
         }
-    }, [officeGroups, selectedOfficeId])
+        if (search.trim()) {
+            const s = search.toLowerCase()
+            result = result.filter(q =>
+                q.name.toLowerCase().includes(s) ||
+                q.officeName?.toLowerCase().includes(s) ||
+                q.description?.toLowerCase().includes(s)
+            )
+        }
+        return result
+    }, [enrichedQueues, activeCategory, search])
 
-    const activeOfficeGroup = officeGroups.find(
-        (officeGroup) => String(officeGroup.officeId ?? officeGroup.key) === String(selectedOfficeId)
-    )
-    const servicesInOffice = activeOfficeGroup?.queues ?? []
+    const selectedQueue = filteredQueues.find(q => String(q.id) === String(selectedQueueId))
 
-    const selectedService = servicesInOffice.find(
-        (item) => String(item.id) === String(selectedServiceId)
-    )
-
-    useEffect(() => { setSelectedServiceId('') }, [selectedOfficeId])
-
-    const lastActiveTicketRef = useRef(null)
-
-    useEffect(() => {
+    const handleJoinQueue = async (queueToJoin) => {
         if (activeTicket) {
-            lastActiveTicketRef.current = {
-                id: activeTicket.id,
-                status: activeTicket.status,
-            }
-            const event = checkTicket(activeTicket)
-            if (event) {
-                push({ type: event.severity, message: event.message })
-            }
+            push({ type: 'error', message: 'You already have an active ticket. Complete it before joining another queue.' })
             return
         }
-        const prev = lastActiveTicketRef.current
-        if (!prev) return
-        const finished = (history || []).find((itemValue) => itemValue.id === prev.id)
-        if (finished && finished.status !== prev.status) {
-            const event = checkTicket(finished)
-            if (event) {
-                push({ type: event.severity, message: event.message })
-            }
+        if (!queueToJoin.isOpen) {
+            push({ type: 'error', message: 'This queue is currently closed.' })
+            return
         }
-        lastActiveTicketRef.current = null
-    }, [activeTicket, history, checkTicket, push])
 
-    const joinQueue = async () => {
-        if (!selectedService) {
-            push({ type: 'error', message: 'Select a service to join' })
-            return
-        }
-        if (lockedQueueIds.has(selectedService.id)) {
-            push({ type: 'error', message: 'This service is locked by your workflow' })
-            return
-        }
-        if (isFresher && selectedService.matricRequired) {
-            push({ type: 'error', message: 'This service requires a matric number' })
-            return
-        }
         setJoining(true)
         try {
-            const res = await api.post('/api/user/tickets/join', { queueId: selectedService.id })
-            lastLocalActionAtRef.current = Date.now()
-            syncBus.publish('data-changed', { source: 'student-queue', at: Date.now() })
-            push({ type: 'success', message: `Joined. Ticket: ${res.data.data.ticketNumber}` })
-            setSelectedServiceId('')
-            await load()
+            await api.post('/api/user/tickets/join', { queueId: queueToJoin.id })
+            push({ type: 'success', message: `Successfully joined ${queueToJoin.name}!` })
+            navigate('/student/my-tickets')
         } catch (err) {
-            push({ type: 'error', message: err.message || 'Failed to join' })
+            push({ type: 'error', message: err.message || 'Failed to join queue' })
         } finally {
             setJoining(false)
         }
     }
 
-    const leaveQueue = async () => {
-        if (!activeTicket) return
-        setLeaving(true)
-        try {
-            await api.delete(`/api/user/tickets/${activeTicket.id}`)
-            lastLocalActionAtRef.current = Date.now()
-            syncBus.publish('data-changed', { source: 'student-queue', at: Date.now() })
-            push({ type: 'success', message: 'You left the queue' })
-            setConfirmLeave(false)
-            await load()
-        } catch (err) {
-            push({ type: 'error', message: err.message || 'Failed to leave' })
-        } finally {
-            setLeaving(false)
-        }
-    }
-
-    const rescheduleTurn = async (ticket) => {
-        setActing(`reschedule-${ticket.id}`)
-        try {
-            await api.post(`/api/user/tickets/${ticket.id}/reschedule`)
-            lastLocalActionAtRef.current = Date.now()
-            syncBus.publish('data-changed', { source: 'student-queue', at: Date.now() })
-            push({ type: 'success', message: 'Turn rescheduled. You are now at the end of the queue.' })
-            await load()
-        } catch (err) {
-            push({ type: 'error', message: err.message || 'Reschedule not available yet' })
-        } finally {
-            setActing(null)
-        }
-    }
-
-    const skipTurn = async (ticket) => {
-        setActing(`skip-${ticket.id}`)
-        try {
-            await api.post(`/api/user/tickets/${ticket.id}/skip`)
-            lastLocalActionAtRef.current = Date.now()
-            syncBus.publish('data-changed', { source: 'student-queue', at: Date.now() })
-            push({ type: 'success', message: 'Turn skipped' })
-            await load()
-        } catch (err) {
-            push({ type: 'error', message: err.message || 'Skip not available yet' })
-        } finally {
-            setActing(null)
-        }
-    }
-
-    const ticketList = useMemo(() => {
-        const list = []
-        if (activeTicket) list.push({ ...activeTicket, _isActive: true })
-        const recent = (history || []).filter(
-            (token) => !activeTicket || token.id !== activeTicket.id
-        )
-        list.push(...recent)
-
-        let sorted = list.sort((leftValue, rightValue) => {
-            const at = leftValue.joinedAt ? new Date(leftValue.joinedAt).getTime() : 0
-            const bt = rightValue.joinedAt ? new Date(rightValue.joinedAt).getTime() : 0
-            return bt - at
-        })
-
-        if (statusFilter !== 'ALL') {
-            sorted = sorted.filter((itemValue) => itemValue.status === statusFilter)
-        }
-        if (ticketSearch.trim()) {
-            const stringValue = ticketSearch.trim().toLowerCase()
-            sorted = sorted.filter((itemValue) => (itemValue.ticketNumber || '').toLowerCase().includes(stringValue))
-        }
-        return sorted
-    }, [activeTicket, history, statusFilter, ticketSearch])
-
     if (loading) {
         return (
-            <div className="space-y-6 pb-12">
-                <div className="h-10 w-1/3 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[360px_1fr]">
-                    <div className="h-96 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
-                    <div className="h-96 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
-                </div>
+            <div className="flex h-64 items-center justify-center bg-white">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" />
             </div>
         )
     }
 
     return (
-        <div className="space-y-6 pb-12">
-            {/* Premium Header */}
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                    Queue Management
-                </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Join a service and track your live position.
-                </p>
-            </div>
+        <div className="bg-white dark:bg-slate-950 min-h-screen -m-4 p-4 sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
+            <div className="max-w-[1600px] mx-auto pb-12">
 
-            {showPushPrompt && <EnablePushPrompt className="mb-6" />}
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Browse Queues</h1>
+                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
+                            View available queues across different offices and join the one you need. Get your place in line, save time and avoid unnecessary waiting.
+                        </p>
+                    </div>
 
-            {isFresher && (
-                <motion.div
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 flex items-start gap-3 rounded-xl border p-4"
-                    style={{
-                        backgroundColor: withAlpha(primaryColor, 0.08),
-                        borderColor: withAlpha(primaryColor, 0.28),
-                    }}
-                >
                     <div
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-                        style={{ backgroundColor: primaryColor }}
+                        className="hidden md:flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors bg-white dark:bg-slate-900"
+                        style={{ borderColor: withAlpha(primaryColor, 0.3), boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}
+                        onClick={() => push({ type: 'info', message: 'Check queue rules and FAQs at support@uniqueue.com' })}
                     >
-                        <GraduationCap className="h-5 w-5 text-white" />
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}>
+                            <HelpCircle className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Need help?</div>
+                            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Check queue rules and FAQs.</div>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-slate-300 ml-2" />
                     </div>
-                    <div className="flex-1 text-sm">
-                        <p className="font-semibold text-slate-900 dark:text-slate-100">
-                            You're registered as a fresher
-                        </p>
-                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                            Some services require a matric number. Once you receive yours,
-                            update your profile to unlock everything.
-                        </p>
-                        <button
-                            onClick={() => navigate('/student/profile')} // 👈 FIXED: Navigating to student profile
-                            className="mt-3 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
-                            style={{ backgroundColor: primaryColor }}
-                        >
-                            Go to profile
-                            <ArrowRight className="h-3 w-3" />
-                        </button>
-                    </div>
-                </motion.div>
-            )}
-
-            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[360px_1fr]">
-                <div className="lg:sticky lg:top-24">
-                    <Card className="h-fit">
-                        <h3 className="mb-4 text-base font-bold text-slate-900 dark:text-slate-100">
-                            Join Queue
-                        </h3>
-
-                        {queues.length === 0 ? (
-                            <EmptyState
-                                icon={Ticket}
-                                title="No services available"
-                                description="Your university hasn't opened any services yet."
-                            />
-                        ) : (
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                        Office
-                                    </label>
-                                    <select
-                                        value={selectedOfficeId}
-                                        onChange={(event) => setSelectedOfficeId(event.target.value)}
-                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                                    >
-                                        {officeGroups.map((officeGroupValue) => (
-                                            <option key={officeGroupValue.key} value={String(officeGroupValue.officeId ?? officeGroupValue.key)}>
-                                                {officeGroupValue.label} ({officeGroupValue.queues.length})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                        Service
-                                    </label>
-                                    <select
-                                        value={selectedServiceId}
-                                        onChange={(eventValue) => setSelectedServiceId(eventValue.target.value)}
-                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                                    >
-                                        <option value="">Select Service</option>
-                                        {servicesInOffice.map((itemValue) => {
-                                            const isLocked = lockedQueueIds.has(itemValue.id)
-                                            const matricLocked = isFresher && itemValue.matricRequired
-                                            const closed = itemValue.isOpen === false
-                                            const suffix = isLocked
-                                                ? ' (locked)'
-                                                : matricLocked
-                                                    ? ' (matric required)'
-                                                    : closed
-                                                        ? ' (closed)'
-                                                        : ''
-                                            return (
-                                                <option key={itemValue.id} value={itemValue.id} disabled={isLocked || matricLocked}>
-                                                    {itemValue.name}{suffix}
-                                                </option>
-                                            )
-                                        })}
-                                    </select>
-                                </div>
-
-                                {selectedService && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 4 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="rounded-xl border p-4"
-                                        style={{
-                                            borderColor: withAlpha(primaryColor, 0.28),
-                                            backgroundColor: withAlpha(primaryColor, 0.06),
-                                        }}
-                                    >
-                                        {workflowByQueueId.has(selectedService.id) && (
-                                            <div
-                                                className="mb-3 flex items-start gap-2 rounded-lg border bg-white/80 px-3 py-2 dark:bg-slate-900/70"
-                                                style={{ borderColor: withAlpha(primaryColor, 0.25) }}
-                                            >
-                                                <RouteIcon
-                                                    className="mt-0.5 h-3.5 w-3.5 shrink-0"
-                                                    style={{ color: primaryColor }}
-                                                />
-                                                <div className="min-w-0">
-                                                    <div
-                                                        className="text-[11px] font-bold uppercase tracking-wider"
-                                                        style={{ color: primaryColor }}
-                                                    >
-                                                        Part of {workflowByQueueId.get(selectedService.id).workflowName}
-                                                    </div>
-                                                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                                                        Step {workflowByQueueId.get(selectedService.id).stepOrder} of{' '}
-                                                        {workflowByQueueId.get(selectedService.id).totalSteps}
-                                                        {' '}· joining here alone won't start the workflow
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {selectedService.isOpen !== false ? (
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div className="rounded-lg bg-white/70 p-3 shadow-sm dark:bg-slate-800/60">
-                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                                        <Users className="h-3 w-3" />
-                                                        Waiting
-                                                    </div>
-                                                    <div
-                                                        className="mt-1 text-2xl font-bold"
-                                                        style={{ color: primaryColor }}
-                                                    >
-                                                        {selectedService.waitingCount ?? 0}
-                                                    </div>
-                                                </div>
-                                                <div className="rounded-lg bg-white/70 p-3 shadow-sm dark:bg-slate-800/60">
-                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                                        <Clock className="h-3 w-3" />
-                                                        Est. wait
-                                                    </div>
-                                                    <div className="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">
-                                                        {selectedService.estimatedMinutes ?? 0}
-                                                        <span className="ml-0.5 text-sm font-semibold">min</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="flex flex-col items-center justify-center rounded-lg bg-slate-100 py-4 text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-                                                <Info className="mb-1 h-5 w-5" />
-                                                <span className="text-sm font-medium">Queue is currently closed</span>
-                                            </div>
-                                        )}
-
-                                        {selectedService.location && (
-                                            <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                                                <MapPin className="h-3 w-3" />
-                                                {selectedService.location}
-                                            </div>
-                                        )}
-
-                                        {selectedService.isOpen !== false && selectedService.currentlyServing && (
-                                            <div className="mt-3 flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50/60 px-3 py-2 dark:border-emerald-900 dark:bg-emerald-950/30">
-                                                <span className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
-                                                    Now serving
-                                                </span>
-                                                <span className="font-mono text-sm font-bold text-emerald-700 dark:text-emerald-300">
-                                                    {selectedService.currentlyServing}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </motion.div>
-                                )}
-
-                                {selectedService && selectedService.isOpen === false && (
-                                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
-                                        {closedDates.todayClosed ? (
-                                            <>
-                                                This service is closed today
-                                                {closedDates.todayReason && (
-                                                    <> for <strong>{closedDates.todayReason}</strong></>
-                                                )}
-                                                {' '}— it reopens on the next working day.
-                                            </>
-                                        ) : (
-                                            <>
-                                                This service is closed
-                                                {selectedService.opensAt && (
-                                                    <>
-                                                        {' '}— it reopens at{' '}
-                                                        <strong>{String(selectedService.opensAt).slice(0, 5)}</strong>
-                                                    </>
-                                                )}
-                                                .
-                                            </>
-                                        )}
-                                    </div>
-                                )}
-
-                                <Button
-                                    onClick={joinQueue}
-                                    disabled={
-                                        !selectedService ||
-                                        !!activeTicket ||
-                                        joining ||
-                                        selectedService?.isOpen === false
-                                    }
-                                    loading={joining}
-                                    fullWidth
-                                    className="!mt-4"
-                                    style={selectedService?.isOpen !== false ? { backgroundColor: primaryColor } : {}}
-                                >
-                                    {activeTicket
-                                        ? 'Queue turn is near'
-                                        : selectedService?.isOpen === false
-                                            ? 'Closed'
-                                            : joining
-                                                ? 'Joining…'
-                                                : 'Join Queue'}
-                                </Button>
-
-                                {activeTicket && (
-                                    <p className="text-center text-xs font-medium text-amber-600 dark:text-amber-400">
-                                        Complete your current queue turn before joining another queue.
-                                    </p>
-                                )}
-                            </div>
-                        )}
-                    </Card>
                 </div>
 
-                <Card className="min-w-0">
-                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                        <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                            My Queue Tickets
-                        </h3>
-                        <div className="flex flex-wrap items-center gap-2">
-                            <div className="relative">
-                                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                                <input
-                                    type="text"
-                                    value={ticketSearch}
-                                    onChange={(eventValue2) => setTicketSearch(eventValue2.target.value)}
-                                    placeholder="Search ticket ID"
-                                    className="w-40 rounded-lg border border-slate-200 bg-white py-1.5 pl-8 pr-2 text-xs font-medium text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
-                                />
-                            </div>
-                            <select
-                                value={statusFilter}
-                                onChange={(eventValue3) => setStatusFilter(eventValue3.target.value)}
-                                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                            >
-                                {STATUS_FILTERS.map((itemValue2) => (
-                                    <option key={itemValue2.value} value={itemValue2.value}>
-                                        {itemValue2.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
+                {/* Filter Tabs */}
+                <div className="flex flex-wrap items-center gap-2 mb-6">
+                    {CATEGORIES.map(cat => (
+                        <button
+                            key={cat}
+                            onClick={() => setActiveCategory(cat)}
+                            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
+                                activeCategory === cat
+                                    ? 'bg-slate-900 text-white shadow-sm dark:bg-white dark:text-slate-900'
+                                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800'
+                            }`}
+                        >
+                            {cat === 'All Queues' && <ListOrdered className="h-4 w-4" />}
+                            {cat === 'Academic' && <GraduationCap className="h-4 w-4" />}
+                            {cat === 'Administrative' && <Building2 className="h-4 w-4" />}
+                            {cat === 'Student Support' && <Users className="h-4 w-4" />}
+                            {cat === 'Financial' && <Banknote className="h-4 w-4" />}
+                            {cat === 'Other' && <Clock className="h-4 w-4" />}
+                            {cat}
+                        </button>
+                    ))}
+                </div>
 
-                    {ticketList.length === 0 ? (
-                        <div className="py-12 text-center">
-                            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-                                <Ticket className="h-6 w-6 text-slate-400" />
-                            </div>
-                            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                                {ticketSearch.trim()
-                                    ? 'No tickets match your search'
-                                    : statusFilter === 'ALL'
-                                        ? 'No queue tickets yet'
-                                        : `No ${STATUS_LABELS[statusFilter]?.toLowerCase() || ''} tickets`}
-                            </p>
-                            <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
-                                {ticketSearch.trim()
-                                    ? 'Check the ticket ID and try again.'
-                                    : statusFilter === 'ALL'
-                                        ? 'Join a service from the left to get started.'
-                                        : 'Try a different filter.'}
-                            </p>
+                {/* Main Content Grid */}
+                <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_400px]">
+
+                    {/* LEFT COLUMN: Queue List */}
+                    <div className="space-y-4">
+                        {/* Search Bar */}
+                        <div className="relative">
+                            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search by queue name, office or service..."
+                                className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                                style={{ '--tw-ring-color': withAlpha(primaryColor, 0.2) }}
+                            />
                         </div>
-                    ) : (
-                        <div className="max-h-[600px] overflow-y-auto pr-1">
-                            <ul className="space-y-3">
-                                {ticketList.slice(0, 20).map((token) => {
-                                    const isActive = token._isActive
-                                    const isActionable = token.status === 'WAITING' || token.status === 'CALLED'
+
+                        {/* List */}
+                        {filteredQueues.length === 0 ? (
+                            <EmptyState icon={Search} title="No queues found" description="Try adjusting your search or category filter." />
+                        ) : (
+                            <div className="space-y-3">
+                                {filteredQueues.map(queue => {
+                                    const isSelected = String(selectedQueueId) === String(queue.id)
+                                    const Icon = getCategoryIcon(queue.category, queue.name)
+                                    const isOpen = queue.isOpen === true
+
                                     return (
-                                        <motion.li
-                                            key={token.id}
-                                            initial={{ opacity: 0, y: 4 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className={`rounded-xl border p-4 transition-colors ${
-                                                isActive
-                                                    ? 'bg-white shadow-sm dark:bg-slate-900'
-                                                    : 'border-slate-200 dark:border-slate-800'
+                                        <button
+                                            key={queue.id}
+                                            type="button"
+                                            onClick={() => setSelectedQueueId(queue.id)}
+                                            className={`w-full text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl transition-all duration-200 border-2 bg-white dark:bg-slate-900 ${
+                                                isSelected
+                                                    ? 'border-slate-900 shadow-md dark:border-white'
+                                                    : 'border-slate-100 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700'
                                             }`}
-                                            style={
-                                                isActive
-                                                    ? {
-                                                        borderColor: withAlpha(primaryColor, 0.4),
-                                                        backgroundColor: withAlpha(primaryColor, 0.03),
-                                                    }
-                                                    : undefined
-                                            }
+                                            style={isSelected ? { borderColor: primaryColor } : undefined}
                                         >
-                                            <div className="flex items-start justify-between gap-3">
+                                            <div className="flex items-start gap-4 flex-1">
+                                                <div
+                                                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+                                                    style={{
+                                                        backgroundColor: isSelected ? withAlpha(primaryColor, 0.15) : '#f1f5f9',
+                                                        color: isSelected ? primaryColor : '#64748b'
+                                                    }}
+                                                >
+                                                    <Icon className="h-6 w-6" />
+                                                </div>
+
                                                 <div className="min-w-0 flex-1">
-                                                    <h4 className="truncate text-base font-bold text-slate-900 dark:text-slate-100">
-                                                        {token.queueName || token.officeName || 'Service'}
-                                                    </h4>
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">{queue.name}</h3>
+                                                        <Badge variant="default" className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                            {queue.category}
+                                                        </Badge>
+                                                        <Badge variant={isOpen ? 'success' : 'danger'} className="flex items-center gap-1">
+                                                            {isOpen && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                                                            {isOpen ? 'Open' : 'Closed'}
+                                                        </Badge>
+                                                    </div>
+                                                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 line-clamp-1">
+                                                        {queue.description || 'No description provided.'}
+                                                    </p>
+                                                    <div className="mt-3 flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                                        <span className="flex items-center gap-1.5">
+                                                            <Clock className="h-3.5 w-3.5" />
+                                                            {queue.estimatedMinutes || 0} mins (est.)
+                                                        </span>
+                                                        <span className="flex items-center gap-1.5">
+                                                            <Users className="h-3.5 w-3.5" />
+                                                            {queue.waitingCount || 0} people ahead
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <Badge variant={STATUS_VARIANTS[token.status] || 'default'}>
-                                                    {STATUS_LABELS[token.status] || token.status}
-                                                </Badge>
                                             </div>
 
-                                            <div className="mt-2 flex items-center gap-1.5 text-sm">
-                                                <span className="font-medium text-slate-500 dark:text-slate-400">Ticket:</span>
-                                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
-                                                    {token.ticketNumber}
-                                                </span>
-                                                <CopyButton text={token.ticketNumber} />
+                                            <div className="shrink-0 flex items-center justify-end sm:pl-4 sm:border-l sm:border-slate-100 dark:sm:border-slate-800 mt-4 sm:mt-0">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        if (!isSelected) setSelectedQueueId(queue.id)
+                                                        else handleJoinQueue(queue)
+                                                    }}
+                                                    disabled={!isOpen || joining}
+                                                    className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    style={{ backgroundColor: primaryColor }}
+                                                >
+                                                    Join Queue
+                                                    <ArrowRight className="h-4 w-4" />
+                                                </button>
                                             </div>
-
-                                            {token.position != null && (
-                                                <div className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-400">
-                                                    <span className="text-slate-500">Position:</span>{' '}
-                                                    <span className="font-bold text-slate-900 dark:text-slate-100">
-                                                        {token.position}
-                                                    </span>
-                                                </div>
-                                            )}
-
-                                            {token.estimatedMinutesRemaining != null && (
-                                                <div className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-400">
-                                                    <span className="text-slate-500">Est. Wait:</span>{' '}
-                                                    <span className="font-bold text-slate-900 dark:text-slate-100">
-                                                        {token.estimatedMinutesRemaining} min
-                                                    </span>
-                                                </div>
-                                            )}
-
-                                            {isActive && isActionable && (
-                                                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-200 pt-3 text-xs font-semibold dark:border-slate-700">
-                                                    <button
-                                                        onClick={() => rescheduleTurn(token)}
-                                                        disabled={acting === `reschedule-${token.id}`}
-                                                        className="transition-opacity disabled:opacity-50"
-                                                        style={{ color: primaryColor }}
-                                                    >
-                                                        {acting === `reschedule-${token.id}` ? 'Rescheduling…' : 'Reschedule turn'}
-                                                    </button>
-                                                    <button
-                                                        onClick={() => skipTurn(token)}
-                                                        disabled={acting === `skip-${token.id}`}
-                                                        className="text-rose-600 transition-colors hover:text-rose-700 disabled:opacity-50 dark:text-rose-400"
-                                                    >
-                                                        {acting === `skip-${token.id}` ? 'Skipping…' : 'Skip'}
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setConfirmLeave(true)}
-                                                        className="text-slate-500 transition-colors hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
-                                                    >
-                                                        Leave queue
-                                                    </button>
-                                                </div>
-                                            )}
-
-                                            {isActive && !isActionable && (
-                                                <div className="mt-3 border-t border-slate-200 pt-3 text-xs font-medium text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                                                    {token.status === 'SERVING'
-                                                        ? 'You are being served.'
-                                                        : 'No actions available for this ticket.'}
-                                                </div>
-                                            )}
-                                        </motion.li>
+                                        </button>
                                     )
                                 })}
-                            </ul>
-                        </div>
-                    )}
-                </Card>
-            </div>
+                            </div>
+                        )}
+                    </div>
 
-            <ConfirmDialog
-                open={confirmLeave}
-                onClose={() => !leaving && setConfirmLeave(false)}
-                onConfirm={leaveQueue}
-                title="Leave the queue?"
-                description={`You'll lose your current position for ticket ${activeTicket?.ticketNumber}. You can rejoin later, but you'll go to the end of the line.`}
-                confirmLabel="Leave queue"
-                cancelLabel="Keep my spot"
-                variant="danger"
-                loading={leaving}
-            />
+                    {/* RIGHT COLUMN: Selected Queue Details */}
+                    <div className="sticky top-24">
+                        {selectedQueue ? (
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={selectedQueue.id}>
+                                <Card padded={false} className="overflow-hidden shadow-lg border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900">
+
+                                    {/* Hero Header */}
+                                    <div
+                                        className="p-6 relative overflow-hidden"
+                                        style={{
+                                            backgroundColor: withAlpha(primaryColor, 0.05),
+                                            borderBottom: `1px solid ${withAlpha(primaryColor, 0.1)}`
+                                        }}
+                                    >
+                                        <div className="flex items-start gap-4 relative z-10">
+                                            <div
+                                                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm"
+                                                style={{ color: primaryColor }}
+                                            >
+                                                {(() => { const Icon = getCategoryIcon(selectedQueue.category, selectedQueue.name); return <Icon className="h-7 w-7" /> })()}
+                                            </div>
+                                            <div>
+                                                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                                                    {selectedQueue.name}
+                                                </h2>
+                                                <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-400">
+                                                    {selectedQueue.officeName || 'University Office'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <p className="mt-4 text-sm text-slate-600 dark:text-slate-400 relative z-10">
+                                            {selectedQueue.description || 'Join this queue to get served.'}
+                                        </p>
+                                    </div>
+
+                                    {/* Live Stats */}
+                                    <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100 dark:divide-slate-800 dark:border-slate-800 bg-white dark:bg-slate-900">
+                                        <div className="p-4 text-center">
+                                            <div className="flex justify-center mb-1 text-slate-400"><Clock className="h-4 w-4" /></div>
+                                            <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{selectedQueue.estimatedMinutes || 0} mins</div>
+                                            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Est. Wait</div>
+                                        </div>
+                                        <div className="p-4 text-center">
+                                            <div className="flex justify-center mb-1 text-slate-400"><Users className="h-4 w-4" /></div>
+                                            <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{selectedQueue.waitingCount || 0}</div>
+                                            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Ahead</div>
+                                        </div>
+                                        <div className="p-4 text-center">
+                                            <div className="flex justify-center mb-1 text-slate-400"><CheckCircle2 className="h-4 w-4" /></div>
+                                            <Badge variant={selectedQueue.isOpen ? 'success' : 'danger'} className="text-xs">
+                                                {selectedQueue.isOpen ? 'Open' : 'Closed'}
+                                            </Badge>
+                                            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mt-1">Status</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Details List */}
+                                    <div className="p-6 space-y-5">
+                                        <div className="space-y-3">
+                                            <div className="flex items-start gap-3">
+                                                <MapPin className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
+                                                <div>
+                                                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Location</div>
+                                                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                                        {selectedQueue.location || 'Main Administrative Building'}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-start gap-3">
+                                                <Clock className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
+                                                <div>
+                                                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Working Hours</div>
+                                                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                                        {selectedQueue.workingHours || 'Mon – Fri: 8:00 AM – 4:00 PM'}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-start gap-3">
+                                                <Phone className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
+                                                <div>
+                                                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Contact</div>
+                                                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                                        +234 803 123 4567
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Services Included */}
+                                        <div className="pt-5 border-t border-slate-100 dark:border-slate-800">
+                                            <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3">Services Included</h4>
+                                            <ul className="space-y-2">
+                                                <li className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+                                                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                                                    {selectedQueue.name} processing
+                                                </li>
+                                                <li className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+                                                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                                                    Add and drop requests
+                                                </li>
+                                                <li className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+                                                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                                                    Academic advice and support
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                                        <button
+                                            onClick={() => handleJoinQueue(selectedQueue)}
+                                            disabled={!selectedQueue.isOpen || joining || !!activeTicket}
+                                            className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-md transition-all hover:shadow-lg disabled:opacity-50"
+                                            style={{ backgroundColor: primaryColor }}
+                                        >
+                                            <Users className="h-4 w-4" />
+                                            {activeTicket ? 'Already in a Queue' : joining ? 'Joining...' : 'Join Queue'}
+                                            {!activeTicket && !joining && <ChevronRight className="h-4 w-4" />}
+                                        </button>
+
+                                        <button
+                                            onClick={() => navigate('/student/offices')}
+                                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                                        >
+                                            <Building2 className="h-4 w-4" />
+                                            View Office Details
+                                            <ChevronRight className="h-4 w-4" />
+                                        </button>
+                                    </div>
+
+                                    {/* Footer */}
+                                    <div className="p-4 text-center border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                                        <button onClick={() => navigate('/student/my-tickets')} className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200">
+                                            Already in the queue? <span style={{ color: primaryColor }} className="underline">View My Queues</span>
+                                        </button>
+                                    </div>
+
+                                </Card>
+                            </motion.div>
+                        ) : (
+                            <Card className="h-full min-h-[500px] flex items-center justify-center border-dashed border-2 border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20 rounded-2xl">
+                                <EmptyState
+                                    icon={Info}
+                                    variant="info"
+                                    size="lg"
+                                    bordered={false}
+                                    title="Select a queue"
+                                    description="Pick a queue from the list to see its details and join."
+                                />
+                            </Card>
+                        )}
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }
