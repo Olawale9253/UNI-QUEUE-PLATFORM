@@ -13,6 +13,7 @@ import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import { useToastStore } from '../../store/toastStore'
 import { useUniversityStore } from '../../store/universityStore'
+import { useAdaptivePoll } from '../../hooks/useAdaptivePoll' // 👈 ADDED for fast updates
 import { withAlpha } from '../../lib/colors'
 
 function getOfficeIcon(name) {
@@ -71,15 +72,14 @@ export default function AppointmentsTab() {
 
     const [offices, setOffices] = useState([])
     const [myAppointments, setMyAppointments] = useState([])
-    const [slots, setSlots] = useState([]) // 👈 Real slots from backend
+    const [slots, setSlots] = useState([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
 
     const [selectedOfficeId, setSelectedOfficeId] = useState(null)
 
-    // Selection states based on real data
     const [selectedDate, setSelectedDate] = useState('')
-    const [selectedSlot, setSelectedSlot] = useState(null) // 👈 Store the whole slot object
+    const [selectedSlot, setSelectedSlot] = useState(null)
     const [booking, setBooking] = useState(false)
 
     const primaryColor = university?.primaryColor || '#4f46e5'
@@ -90,12 +90,12 @@ export default function AppointmentsTab() {
                 api.get('/api/offices').catch(() => ({ data: { data: [] } })),
                 api.get('/api/user/appointments').catch(() => ({ data: { data: [] } })),
                 api.get('/api/queues').catch(() => ({ data: { data: [] } })),
-                api.get('/api/user/appointments/available').catch(() => ({ data: { data: [] } })) // 👈 Fetch real slots
+                api.get('/api/user/appointments/available').catch(() => ({ data: { data: [] } }))
             ])
 
             const qs = queuesRes.data?.data || []
             const os = officesRes.data?.data || []
-            const fetchedSlots = slotsRes.data?.data || [] // 👈 Save slots
+            const fetchedSlots = slotsRes.data?.data || []
 
             const enrichedOffices = os.map(office => {
                 const services = qs.filter(q =>
@@ -125,11 +125,11 @@ export default function AppointmentsTab() {
         }
     }, [push])
 
-    useEffect(() => { load() }, [load])
+    // 👇 REPLACED with useAdaptivePoll for fast auto-updates
+    useAdaptivePoll(load, { fastMs: 5000, slowMs: 15000 })
 
     const selectedOffice = offices.find(o => String(o.id) === String(selectedOfficeId))
 
-    // Reset the sub-tab and date when a new office is selected
     useEffect(() => {
         setActiveSubTab('appointments')
         setSelectedDate('')
@@ -146,7 +146,6 @@ export default function AppointmentsTab() {
         )
     }, [offices, search])
 
-    // 👇 DERIVE DATES & TIMES from real slots
     const officeSlots = useMemo(() => {
         return slots.filter(s => String(s.officeId) === String(selectedOfficeId))
     }, [slots, selectedOfficeId])
@@ -155,7 +154,6 @@ export default function AppointmentsTab() {
         return [...new Set(officeSlots.map(s => s.date))].sort()
     }, [officeSlots])
 
-    // Auto-select the first available date when the user picks an office
     useEffect(() => {
         if (uniqueDates.length > 0 && !selectedDate) {
             setSelectedDate(uniqueDates[0])
@@ -173,11 +171,10 @@ export default function AppointmentsTab() {
         }
         setBooking(true)
         try {
-            // Assuming backend expects slotId
             await api.post('/api/user/appointments/book', { slotId: selectedSlot.id })
             push({ type: 'success', message: `Appointment booked successfully for ${formatSlotTime(selectedSlot.startTime)}` })
             setActiveTopTab('mine')
-            await load() // Reload to update available slots and my appointments
+            await load()
         } catch (err) {
             push({ type: 'error', message: err.message || 'Failed to book appointment' })
         } finally {
@@ -294,9 +291,11 @@ export default function AppointmentsTab() {
                                                                 <h3 className="text-base font-bold text-slate-900">{office.name}</h3>
                                                                 <p className="mt-1 text-sm text-slate-500 line-clamp-2">{office.description || 'View available services and book an appointment.'}</p>
                                                             </div>
+
+                                                            {/* 👇 RENAMED BADGE */}
                                                             <Badge variant={office.isAvailable ? 'success' : 'default'} className="shrink-0 flex items-center gap-1">
                                                                 {office.isAvailable && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
-                                                                {office.isAvailable ? 'Available' : 'Closed'}
+                                                                {office.isAvailable ? 'Bookable' : 'Closed'}
                                                             </Badge>
                                                         </div>
 
@@ -345,7 +344,7 @@ export default function AppointmentsTab() {
                                                             {selectedOffice.name}
                                                         </h2>
                                                         <Badge variant={selectedOffice.isAvailable ? 'success' : 'default'} className="text-xs px-2 py-0.5">
-                                                            {selectedOffice.isAvailable ? 'Available' : 'Closed'}
+                                                            {selectedOffice.isAvailable ? 'Bookable' : 'Closed'}
                                                         </Badge>
                                                     </div>
                                                     <p className="mt-1 text-sm font-medium text-slate-600">
@@ -358,7 +357,7 @@ export default function AppointmentsTab() {
                                             </div>
                                         </div>
 
-                                        {/* 3-Column Info Grid */}
+                                        {/* 3-Column Info Grid - Fixed breaking text */}
                                         <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 border-b border-slate-100 bg-white">
                                             <div className="flex items-start gap-3 p-4">
                                                 <MapPin className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
@@ -371,14 +370,15 @@ export default function AppointmentsTab() {
                                                 <Phone className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
                                                 <div>
                                                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Phone Number</div>
-                                                    <div className="mt-1 text-sm font-semibold text-slate-900 whitespace-nowrap">+234 803 123 4567</div>
+                                                    <div className="mt-1 text-sm font-semibold text-slate-900 whitespace-nowrap">{selectedOffice.phone || '+234 803 123 4567'}</div>
                                                 </div>
                                             </div>
                                             <div className="flex items-start gap-3 p-4">
                                                 <Clock className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
                                                 <div>
                                                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Working Hours</div>
-                                                    <div className="mt-1 text-sm font-semibold text-slate-900 whitespace-nowrap">Mon – Fri: 8:00 AM – 4:00 PM</div>
+                                                    {/* 👇 FIX: Reduced font size to text-[13px] and added whitespace-nowrap to prevent breaking */}
+                                                    <div className="mt-1 text-[13px] font-semibold text-slate-900 whitespace-nowrap">Mon – Fri: 8:00 AM – 4:00 PM</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -424,7 +424,7 @@ export default function AppointmentsTab() {
                                                                         value={selectedDate}
                                                                         onChange={(e) => {
                                                                             setSelectedDate(e.target.value)
-                                                                            setSelectedSlot(null) // Reset selected slot when date changes
+                                                                            setSelectedSlot(null)
                                                                         }}
                                                                         style={{ '--tw-ring-color': withAlpha(primaryColor, 0.2) }}
                                                                     >
@@ -454,7 +454,6 @@ export default function AppointmentsTab() {
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        /* 👇 Empty state if NO slots are created by staff */
                                                         <div className="p-8 text-center border border-dashed rounded-xl bg-slate-50 flex flex-col items-center justify-center mb-6">
                                                             <AlertCircle className="h-10 w-10 text-amber-500 mb-3" />
                                                             <p className="text-sm font-bold text-slate-600">No Appointment Slots Available</p>
@@ -502,7 +501,7 @@ export default function AppointmentsTab() {
                                                                                 </span>
                                                                                 <button
                                                                                     onClick={() => handleBookAppointment()}
-                                                                                    disabled={!selectedSlot || booking} // 👈 Disable if no slot is selected or no slots exist
+                                                                                    disabled={!selectedSlot || booking}
                                                                                     className="rounded-lg px-5 py-2 text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap disabled:cursor-not-allowed"
                                                                                     style={{ backgroundColor: primaryColor }}
                                                                                 >
@@ -536,7 +535,11 @@ export default function AppointmentsTab() {
                                                                         </div>
                                                                         <div>
                                                                             <div className="text-sm font-bold text-slate-900">{staff.fullName}</div>
-                                                                            <div className="text-xs text-slate-500">{staff.email || 'staff@university.edu'}</div>
+                                                                            {/* 👇 FIX: Added real phone number and email for staff */}
+                                                                            <div className="text-xs text-slate-500 mt-1 flex items-center gap-3">
+                                                                                <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {staff.email || 'staff@university.edu'}</span>
+                                                                                <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {staff.phone || '+234 803 123 4567'}</span>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -547,30 +550,7 @@ export default function AppointmentsTab() {
                                             )}
                                         </div>
 
-                                        {/* Bottom Banner */}
-                                        <div className="p-6 bg-slate-50 border-t border-slate-100">
-                                            <div
-                                                className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl border p-4"
-                                                style={{ backgroundColor: withAlpha(primaryColor, 0.05), borderColor: withAlpha(primaryColor, 0.15) }}
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white shadow-sm" style={{ color: primaryColor }}>
-                                                        <HelpCircle className="h-6 w-6" />
-                                                    </div>
-                                                    <div>
-                                                        <div className="text-sm font-bold text-slate-900">Can't find what you need?</div>
-                                                        <div className="text-xs text-slate-600 font-medium">You can also join the office queue for walk-in services.</div>
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    onClick={() => navigate('/student/queues')}
-                                                    className="shrink-0 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-opacity hover:opacity-90"
-                                                    style={{ backgroundColor: primaryColor }}
-                                                >
-                                                    <Ticket className="h-4 w-4" /> Join Queue
-                                                </button>
-                                            </div>
-                                        </div>
+                                        {/* 👇 REMOVED: Bottom Join Queue Banner */}
 
                                     </Card>
                                 </motion.div>
