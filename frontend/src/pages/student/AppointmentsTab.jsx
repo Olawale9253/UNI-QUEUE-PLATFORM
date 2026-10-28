@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     Calendar, Clock, MapPin, Phone, Search, Filter, ChevronRight,
-    Building2, Users, HelpCircle, GraduationCap, FileText, Monitor,
-    Banknote, UserCircle2, Info, ChevronDown, Award, ClipboardList,
-    AlertCircle, Mail, CheckCircle2, XCircle
+    Building2, Users, HelpCircle, GraduationCap,
+    FileText, Monitor, Banknote, UserCircle2, Info, ChevronDown,
+    Award, ClipboardList, AlertCircle, Mail
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -66,7 +66,6 @@ export default function AppointmentsTab() {
     const navigate = useNavigate()
 
     const [activeTopTab, setActiveTopTab] = useState('available')
-    const [activeSubTab, setActiveSubTab] = useState('appointments')
 
     const [offices, setOffices] = useState([])
     const [myAppointments, setMyAppointments] = useState([])
@@ -127,13 +126,12 @@ export default function AppointmentsTab() {
 
     const selectedOffice = offices.find(o => String(o.id) === String(selectedOfficeId))
 
+    // Reset date/slot when office changes
     useEffect(() => {
-        setActiveSubTab('appointments')
         setSelectedDate('')
         setSelectedSlot(null)
     }, [selectedOfficeId])
 
-    // Filter for Upcoming vs Past Appointments
     const upcomingAppointments = useMemo(() => {
         return myAppointments.filter(a => ['BOOKED', 'CONFIRMED'].includes(a.status))
     }, [myAppointments])
@@ -209,7 +207,6 @@ export default function AppointmentsTab() {
                         </p>
                     </div>
 
-                    {/* 👇 UPDATED: Premium Contact Support Card */}
                     <a
                         href="mailto:support@uniqueue.com"
                         className="hidden md:flex items-center gap-3 rounded-xl border px-4 py-3 transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer bg-white"
@@ -277,13 +274,12 @@ export default function AppointmentsTab() {
                                     {filteredOffices.map(office => {
                                         const isSelected = String(selectedOfficeId) === String(office.id)
                                         const Icon = getOfficeIcon(office.name)
-
-                                        // 👇 Check if this office actually has slots in the DB
                                         const hasSlots = slots.some(s => String(s.officeId) === String(office.id))
 
                                         return (
                                             <Card
                                                 key={office.id}
+                                                // 👇 CLEAN LIST ALIGNMENT
                                                 className={`cursor-pointer transition-all duration-200 rounded-2xl ${
                                                     isSelected ? 'border-2 shadow-md' : 'border border-slate-200 hover:border-slate-300'
                                                 }`}
@@ -304,28 +300,21 @@ export default function AppointmentsTab() {
                                                                 <p className="mt-1 text-sm text-slate-500 line-clamp-2">{office.description || 'View available services and book an appointment.'}</p>
                                                             </div>
 
-                                                            {/* 👇 RED FLAG for no appointments */}
-                                                            <Badge variant={hasSlots ? 'success' : 'danger'} className="shrink-0 flex items-center gap-1">
+                                                            {/* 👇 RENAMED BADGE */}
+                                                            <Badge variant={hasSlots ? 'success' : 'danger'} className="shrink-0 flex items-center gap-1 whitespace-nowrap">
                                                                 {hasSlots ? <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> : <AlertCircle className="h-3 w-3" />}
-                                                                {hasSlots ? 'Bookable' : 'No Appointments'}
+                                                                {hasSlots ? 'Bookable' : 'No Slot'}
                                                             </Badge>
                                                         </div>
 
-                                                        <div className="mt-4 flex flex-col gap-2">
-                                                            <div className="flex items-center gap-4 text-xs font-medium text-slate-500">
-                                                                <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-slate-400" /> Today - Fri, 31 Oct 2026</span>
-                                                                <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-slate-400" /> 9:00 AM – 4:00 PM</span>
-                                                            </div>
-
-                                                            <div className="flex justify-end mt-1">
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); setSelectedOfficeId(office.id); }}
-                                                                    className="flex items-center gap-1 rounded-lg px-4 py-2 text-xs font-bold transition-colors hover:opacity-80"
-                                                                    style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
-                                                                >
-                                                                    View Details <ChevronRight className="h-3 w-3" />
-                                                                </button>
-                                                            </div>
+                                                        <div className="mt-4 flex justify-end">
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); setSelectedOfficeId(office.id); }}
+                                                                className="flex items-center gap-1 rounded-lg px-4 py-2 text-xs font-bold transition-colors hover:opacity-80"
+                                                                style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
+                                                            >
+                                                                View Details <ChevronRight className="h-3 w-3" />
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -336,11 +325,12 @@ export default function AppointmentsTab() {
                             )}
                         </div>
 
-                        {/* RIGHT COLUMN: Standard Flow */}
+                        {/* RIGHT COLUMN: Match Offices Page Layout */}
                         <div>
                             {selectedOffice ? (
                                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={selectedOffice.id}>
                                     <Card padded={false} className="overflow-hidden shadow-sm bg-white border-slate-200 rounded-2xl">
+
                                         {/* Hero Header */}
                                         <div className="p-6 sm:p-8" style={{ backgroundColor: withAlpha(primaryColor, 0.03), borderBottom: `1px solid ${withAlpha(primaryColor, 0.1)}` }}>
                                             <div className="flex items-start gap-5">
@@ -356,7 +346,7 @@ export default function AppointmentsTab() {
                                                             {selectedOffice.name}
                                                         </h2>
                                                         <Badge variant={officeSlots.length > 0 ? 'success' : 'danger'} className="text-xs px-2 py-0.5">
-                                                            {officeSlots.length > 0 ? 'Bookable' : 'No Appointments'}
+                                                            {officeSlots.length > 0 ? 'Bookable' : 'No Slot'}
                                                         </Badge>
                                                     </div>
                                                     <p className="mt-1 text-sm font-medium text-slate-600">
@@ -389,116 +379,109 @@ export default function AppointmentsTab() {
                                                 <Clock className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
                                                 <div>
                                                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Working Hours</div>
-                                                    <div className="mt-1 text-[13px] font-semibold text-slate-900 whitespace-nowrap">Mon – Fri: 8:00 AM – 4:00 PM</div>
+                                                    {/* 👇 FIXED: Days on top, Time on bottom */}
+                                                    <div className="mt-1 text-sm font-semibold text-slate-900">
+                                                        <div>Mon – Fri</div>
+                                                        <div className="text-xs text-slate-500 mt-0.5">8:00 AM – 4:00 PM</div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Sub Tabs */}
-                                        <div className="px-6 pt-6">
-                                            <div className="flex items-center gap-6 border-b border-slate-200">
-                                                <button
-                                                    onClick={() => setActiveSubTab('appointments')}
-                                                    className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors`}
-                                                    style={{
-                                                        borderColor: activeSubTab === 'appointments' ? primaryColor : 'transparent',
-                                                        color: activeSubTab === 'appointments' ? primaryColor : '#64748b'
-                                                    }}
-                                                >
-                                                    <Calendar className="h-4 w-4" /> Available Appointments
-                                                </button>
-                                                <button
-                                                    onClick={() => setActiveSubTab('staff')}
-                                                    className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors`}
-                                                    style={{
-                                                        borderColor: activeSubTab === 'staff' ? primaryColor : 'transparent',
-                                                        color: activeSubTab === 'staff' ? primaryColor : '#64748b'
-                                                    }}
-                                                >
-                                                    <Users className="h-4 w-4" /> Staff Members
-                                                </button>
+                                        {/* Staff Members (Always Visible) */}
+                                        <div className="p-6 border-b border-slate-100">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h4 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                                    <Users className="h-4 w-4 text-slate-400" /> Staff Details
+                                                </h4>
                                             </div>
-                                        </div>
-
-                                        <div className="p-6 space-y-6">
-                                            {activeSubTab === 'appointments' && (
-                                                <>
-                                                    {/* Dynamic Date & Time bar based on backend slots */}
-                                                    {uniqueDates.length > 0 ? (
-                                                        <div className="flex flex-wrap items-center gap-4 mb-6 border-b border-slate-100 pb-5">
-                                                            <div className="flex items-center gap-2 shrink-0">
-                                                                <Calendar className="h-4 w-4 text-slate-400" />
-                                                                <span className="text-sm font-semibold text-slate-700">Select Date</span>
-                                                                <div className="relative">
-                                                                    <select
-                                                                        className="appearance-none rounded-lg border border-slate-200 bg-white py-1.5 pl-3 pr-10 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2"
-                                                                        value={selectedDate}
-                                                                        onChange={(e) => {
-                                                                            setSelectedDate(e.target.value)
-                                                                            setSelectedSlot(null)
-                                                                        }}
-                                                                        style={{ '--tw-ring-color': withAlpha(primaryColor, 0.2) }}
-                                                                    >
-                                                                        {uniqueDates.map(date => (
-                                                                            <option key={date} value={date}>{formatSlotDate(date)}</option>
-                                                                        ))}
-                                                                    </select>
-                                                                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                            {selectedOffice.staff.length === 0 ? (
+                                                <div className="p-6 text-center border border-dashed rounded-xl bg-slate-50">
+                                                    <p className="text-sm font-bold text-slate-600">No staff assigned</p>
+                                                    <p className="text-xs text-slate-500 mt-1">No staff members have been assigned to this office yet.</p>
+                                                </div>
+                                            ) : (
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    {selectedOffice.staff.map(staff => (
+                                                        <div key={staff.id} className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 bg-white">
+                                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white" style={{ backgroundColor: primaryColor }}>
+                                                                {staff.fullName?.charAt(0) || 'S'}
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <div className="text-sm font-bold text-slate-900 truncate">{staff.fullName}</div>
+                                                                <div className="text-xs text-slate-500 mt-1 flex flex-col gap-1">
+                                                                    <span className="flex items-center gap-1"><Mail className="h-3 w-3 opacity-70" /> {staff.email || 'Not assigned'}</span>
+                                                                    <span className="flex items-center gap-1"><Phone className="h-3 w-3 opacity-70" /> {staff.phone || 'Not assigned'}</span>
                                                                 </div>
                                                             </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
 
-                                                            <div className="flex items-center gap-2 overflow-x-auto pb-1 w-full lg:w-auto">
-                                                                {availableSlotsForDate.map(slot => (
-                                                                    <button
-                                                                        key={slot.id}
-                                                                        onClick={() => setSelectedSlot(slot)}
-                                                                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
-                                                                            selectedSlot?.id === slot.id
-                                                                                ? 'text-white shadow-sm'
-                                                                                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                                                                        }`}
-                                                                        style={selectedSlot?.id === slot.id ? { backgroundColor: primaryColor } : undefined}
-                                                                    >
-                                                                        {formatSlotTime(slot.startTime)}
-                                                                    </button>
-                                                                ))}
+                                        {/* Appointment Booking Section */}
+                                        <div className="p-6 bg-slate-50/50">
+                                            <h4 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                                <Calendar className="h-4 w-4 text-slate-400" /> Available Appointment Slots
+                                            </h4>
+
+                                            {uniqueDates.length > 0 ? (
+                                                <div className="space-y-6">
+                                                    <div className="flex flex-wrap items-center gap-4">
+                                                        <div className="flex items-center gap-2 shrink-0">
+                                                            <span className="text-sm font-semibold text-slate-700">Select Date</span>
+                                                            <div className="relative">
+                                                                <select
+                                                                    className="appearance-none rounded-lg border border-slate-200 bg-white py-1.5 pl-3 pr-10 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2"
+                                                                    value={selectedDate}
+                                                                    onChange={(e) => {
+                                                                        setSelectedDate(e.target.value)
+                                                                        setSelectedSlot(null)
+                                                                    }}
+                                                                    style={{ '--tw-ring-color': withAlpha(primaryColor, 0.2) }}
+                                                                >
+                                                                    {uniqueDates.map(date => (
+                                                                        <option key={date} value={date}>{formatSlotDate(date)}</option>
+                                                                    ))}
+                                                                </select>
+                                                                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                                                             </div>
                                                         </div>
-                                                    ) : (
-                                                        <div className="p-8 text-center border border-dashed rounded-xl bg-slate-50 flex flex-col items-center justify-center mb-6">
-                                                            <AlertCircle className="h-10 w-10 text-amber-500 mb-3" />
-                                                            <p className="text-sm font-bold text-slate-600">No Appointment Slots Available</p>
-                                                            <p className="text-xs text-slate-500 mt-1 max-w-sm">
-                                                                The staff has not created any appointment slots for this office yet. Please check back later.
-                                                            </p>
-                                                        </div>
-                                                    )}
 
-                                                    {/* Services */}
+                                                        <div className="flex items-center gap-2 overflow-x-auto pb-1 w-full lg:w-auto">
+                                                            {availableSlotsForDate.map(slot => (
+                                                                <button
+                                                                    key={slot.id}
+                                                                    onClick={() => setSelectedSlot(slot)}
+                                                                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
+                                                                        selectedSlot?.id === slot.id
+                                                                            ? 'text-white shadow-sm'
+                                                                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                                                    }`}
+                                                                    style={selectedSlot?.id === slot.id ? { backgroundColor: primaryColor } : undefined}
+                                                                >
+                                                                    {formatSlotTime(slot.startTime)}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Services to Book */}
                                                     <div>
-                                                        <h4 className="text-base font-bold text-slate-900 mb-4">Available Services</h4>
+                                                        <h4 className="text-sm font-bold text-slate-900 mb-3">Select a Service</h4>
                                                         <div className="space-y-3">
                                                             {selectedOffice.services.length === 0 ? (
-                                                                <div className="p-8 text-center border border-dashed rounded-xl bg-slate-50 flex flex-col items-center justify-center">
-                                                                    <div className="h-10 w-10 text-slate-300 mb-3">
-                                                                        <FileText className="h-full w-full" />
-                                                                    </div>
-                                                                    <p className="text-sm font-bold text-slate-600">No Services Available</p>
-                                                                    <p className="text-xs text-slate-500 mt-1 max-w-xs">The administrator hasn't set up any appointment services for this office yet.</p>
+                                                                <div className="p-6 text-center border border-dashed rounded-xl bg-white">
+                                                                    <p className="text-sm text-slate-500">No appointment services created for this office yet.</p>
                                                                 </div>
                                                             ) : (
                                                                 selectedOffice.services.map((service) => {
                                                                     const SIcon = getServiceIcon(service.name)
                                                                     return (
-                                                                        <div
-                                                                            key={service.id}
-                                                                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all"
-                                                                        >
+                                                                        <div key={service.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-slate-200 bg-white">
                                                                             <div className="flex items-start gap-4">
-                                                                                <div
-                                                                                    className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-                                                                                    style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
-                                                                                >
+                                                                                <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}>
                                                                                     <SIcon className="h-5 w-5" />
                                                                                 </div>
                                                                                 <div>
@@ -525,38 +508,14 @@ export default function AppointmentsTab() {
                                                             )}
                                                         </div>
                                                     </div>
-                                                </>
-                                            )}
-
-                                            {activeSubTab === 'staff' && (
-                                                <div>
-                                                    <h4 className="text-base font-bold text-slate-900 mb-4">Staff Members</h4>
-                                                    {selectedOffice.staff.length === 0 ? (
-                                                        <div className="p-8 text-center border border-dashed rounded-xl bg-slate-50">
-                                                            <p className="text-sm font-bold text-slate-600">No staff assigned</p>
-                                                            <p className="text-xs text-slate-500 mt-1">No staff members have been assigned to this office yet.</p>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="space-y-3">
-                                                            {selectedOffice.staff.map(staff => (
-                                                                <div key={staff.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white">
-                                                                    <div className="flex items-center gap-4">
-                                                                        <div className="flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold text-white" style={{ backgroundColor: primaryColor }}>
-                                                                            {staff.fullName?.charAt(0) || 'S'}
-                                                                        </div>
-                                                                        <div>
-                                                                            <div className="text-sm font-bold text-slate-900">{staff.fullName}</div>
-                                                                            {/* 👇 REAL STAFF CONTACT INFO */}
-                                                                            <div className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
-                                                                                <span className="flex items-center gap-1"><Mail className="h-3 w-3 opacity-70" /> {staff.email || 'Not assigned'}</span>
-                                                                                <span className="flex items-center gap-1"><Phone className="h-3 w-3 opacity-70" /> {staff.phone || 'Not assigned'}</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div className="p-8 text-center border border-dashed rounded-xl bg-white flex flex-col items-center justify-center">
+                                                    <AlertCircle className="h-10 w-10 text-amber-500 mb-3" />
+                                                    <p className="text-sm font-bold text-slate-600">No Appointment Slots Available</p>
+                                                    <p className="text-xs text-slate-500 mt-1 max-w-sm">
+                                                        The staff has not created any appointment slots for this office yet. Please check back later.
+                                                    </p>
                                                 </div>
                                             )}
                                         </div>
@@ -579,7 +538,7 @@ export default function AppointmentsTab() {
                     </div>
                 )}
 
-                {/* 👇 UPDATED: MY APPOINTMENTS (Upcoming) */}
+                {/* MY APPOINTMENTS */}
                 {activeTopTab === 'mine' && (
                     <Card className="bg-white border-slate-200 rounded-2xl max-w-4xl mx-auto">
                         <div className="flex items-center gap-2 mb-6">
@@ -616,7 +575,7 @@ export default function AppointmentsTab() {
                     </Card>
                 )}
 
-                {/* 👇 UPDATED: APPOINTMENT HISTORY (Past) */}
+                {/* APPOINTMENT HISTORY */}
                 {activeTopTab === 'history' && (
                     <Card className="bg-white border-slate-200 rounded-2xl max-w-4xl mx-auto">
                         <div className="flex items-center gap-2 mb-6">
