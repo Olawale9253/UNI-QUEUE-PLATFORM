@@ -110,7 +110,7 @@ export default function QueuesTab() {
             )
         }
 
-        // 👇 Sort: Freshers see accessible queues first
+        // Sort: Freshers see accessible queues first
         result.sort((a, b) => {
             if (isFresher) {
                 const aLocked = a.matricRequired ? 1 : 0
@@ -343,13 +343,13 @@ export default function QueuesTab() {
                                     className="overflow-hidden shadow-lg border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900"
                                 >
 
-                                    {/* 👇 UPDATED: School Color Background with Dark Overlay */}
+                                    {/* 👇 UPDATED: School Color Background with Subtle Overlay (Same as Offices Page) */}
                                     <div
                                         className="p-6 relative overflow-hidden text-white"
                                         style={{ backgroundColor: primaryColor }}
                                     >
-                                        {/* Subtle dark overlay to make text pop */}
-                                        <div className="absolute inset-0 bg-black/20" />
+                                        {/* Subtle dark overlay to ensure text readability */}
+                                        <div className="absolute inset-0 bg-black/15" />
 
                                         <div className="flex items-start justify-between gap-4 relative z-10">
                                             <div className="flex items-start gap-4">
