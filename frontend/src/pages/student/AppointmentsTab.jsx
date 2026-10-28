@@ -73,6 +73,7 @@ export default function AppointmentsTab() {
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
 
+    // 👇 Set initial state to null to prevent auto-selection
     const [selectedOfficeId, setSelectedOfficeId] = useState(null)
 
     const [selectedDate, setSelectedDate] = useState('')
@@ -113,6 +114,8 @@ export default function AppointmentsTab() {
             setOffices(enrichedOffices.sort((a, b) => a.name.localeCompare(b.name)))
             setMyAppointments(apptsRes.data?.data || [])
             setSlots(fetchedSlots)
+
+            // 👇 REMOVED: Auto-selection logic. It will now start empty.
         } catch (err) {
             push({ type: 'error', message: err.message || 'Failed to load data' })
         } finally {
@@ -276,6 +279,7 @@ export default function AppointmentsTab() {
                                         return (
                                             <Card
                                                 key={office.id}
+                                                // 👇 CLEAN LIST ALIGNMENT MATCHING OFFICES PAGE
                                                 className={`cursor-pointer transition-all duration-200 rounded-2xl ${
                                                     isSelected ? 'border-2 shadow-md' : 'border border-slate-200 hover:border-slate-300'
                                                 }`}
@@ -291,19 +295,19 @@ export default function AppointmentsTab() {
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-start justify-between gap-2">
-                                                            <div className="min-w-0">
+                                                            <div>
                                                                 <h3 className="text-base font-bold text-slate-900">{office.name}</h3>
                                                                 <p className="mt-1 text-sm text-slate-500 line-clamp-2">{office.description || 'View available services and book an appointment.'}</p>
                                                             </div>
 
-                                                            {/* 👇 FIXED BADGE: Added whitespace-nowrap and flex-shrink-0 so it never breaks */}
-                                                            <Badge variant={hasSlots ? 'success' : 'danger'} className="shrink-0 flex items-center gap-1 whitespace-nowrap text-[10px] px-2 py-0.5">
+                                                            {/* 👇 FIXED BADGE: whitespace-nowrap so it doesn't break */}
+                                                            <Badge variant={hasSlots ? 'success' : 'danger'} className="shrink-0 flex items-center gap-1 whitespace-nowrap">
                                                                 {hasSlots ? <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> : <AlertCircle className="h-3 w-3" />}
-                                                                {hasSlots ? 'Bookable' : 'No Slot'}
+                                                                {hasSlots ? 'Bookable' : 'No Slots'}
                                                             </Badge>
                                                         </div>
                                                     </div>
-                                                    {/* Removed the View Details button completely */}
+                                                    <ChevronRight className={`h-4 w-4 shrink-0 mt-1 transition-transform ${isSelected ? 'translate-x-0.5' : 'text-slate-300'}`} style={isSelected ? { color: primaryColor } : undefined} />
                                                 </div>
                                             </Card>
                                         )
@@ -333,7 +337,7 @@ export default function AppointmentsTab() {
                                                             {selectedOffice.name}
                                                         </h2>
                                                         <Badge variant={officeSlots.length > 0 ? 'success' : 'danger'} className="text-xs px-2 py-0.5 whitespace-nowrap">
-                                                            {officeSlots.length > 0 ? 'Bookable' : 'No Slot'}
+                                                            {officeSlots.length > 0 ? 'Bookable' : 'No Slots'}
                                                         </Badge>
                                                     </div>
                                                     <p className="mt-1 text-sm font-medium text-slate-600">
@@ -366,6 +370,7 @@ export default function AppointmentsTab() {
                                                 <Clock className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
                                                 <div>
                                                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Working Hours</div>
+                                                    {/* 👇 FIXED: Days on top, Time on bottom */}
                                                     <div className="mt-1 text-sm font-semibold text-slate-900">
                                                         <div>Mon – Fri</div>
                                                         <div className="text-xs text-slate-500 mt-0.5">8:00 AM – 4:00 PM</div>
@@ -509,6 +514,7 @@ export default function AppointmentsTab() {
                                     </Card>
                                 </motion.div>
                             ) : (
+                                // 👇 FIXED: Show this empty state on initial load instead of auto-selecting an office
                                 <Card className="h-full min-h-[500px] flex items-center justify-center border-dashed border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm rounded-2xl">
                                     <div className="flex flex-col items-center justify-center p-8 text-center">
                                         <div
