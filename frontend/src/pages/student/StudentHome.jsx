@@ -1,8 +1,8 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useCallback, useState, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import {
-    GraduationCap, Calendar, Building2, Ticket, Clock, CheckCircle2,
-    FileText, Users, ArrowRight, ChevronRight, User, Bell, ShieldAlert
+    Calendar, Building2, Ticket, CheckCircle2,
+    FileText, Users, ArrowRight, ChevronRight, User, Bell
 } from 'lucide-react'
 import api from '../../api/axios'
 import { useAuthStore } from '../../store/authStore'
@@ -19,21 +19,6 @@ export default function StudentHome() {
     const [queues, setQueues] = useState([])
     const [appointments, setAppointments] = useState([])
     const [notifications, setNotifications] = useState([])
-
-    const firstName = user?.fullName?.split(' ')[0] || 'Student'
-
-    // Dynamic Greeting (matches your original code)
-    const greeting = useMemo(() => {
-        const hour = new Date().getHours()
-        if (hour < 12) return 'Good morning'
-        if (hour < 18) return 'Good afternoon'
-        return 'Good night'
-    }, [])
-
-    // Current Date
-    const currentDate = useMemo(() => {
-        return new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-    }, [])
 
     const load = useCallback(async () => {
         try {
@@ -67,49 +52,9 @@ export default function StudentHome() {
 
     return (
         <div className="space-y-6">
-            {/* ORIGINAL HEADER (Unchanged) */}
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                <div>
-                    <div className="flex items-center gap-2 mb-2">
-                        <span className="inline-flex items-center gap-1.5 rounded-md bg-orange-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-orange-600 dark:bg-orange-500/20 dark:text-orange-400">
-                            <GraduationCap className="h-3 w-3" /> Student Workspace
-                        </span>
-                        <span className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
-                            <Calendar className="h-3.5 w-3.5" /> {currentDate}
-                        </span>
-                    </div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                        {greeting}, {firstName}
-                    </h1>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        Join a queue, track your position, and manage your tickets.
-                    </p>
-                </div>
-            </div>
-
-            {/* ORIGINAL NEXT CLOSURES BANNER (Unchanged) */}
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900 overflow-x-auto">
-                <span className="flex items-center gap-1.5 text-xs font-bold text-slate-500 whitespace-nowrap">
-                    <Calendar className="h-4 w-4" /> NEXT CLOSURES
-                </span>
-                <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-orange-500 px-3 py-1 text-xs font-bold text-white whitespace-nowrap">NOV 01</span>
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">National Youth Day</span>
-                </div>
-                <div className="flex items-center gap-2 ml-2">
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300 whitespace-nowrap">DEC 25</span>
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">Christmas Day</span>
-                </div>
-                <div className="flex items-center gap-2 ml-2">
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300 whitespace-nowrap">DEC 26</span>
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">Boxing Day</span>
-                </div>
-                <span className="text-xs font-bold text-slate-500 whitespace-nowrap ml-auto">+9</span>
-            </div>
-
-            {/* NEW CONTENT STARTS HERE */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
                 <div className="space-y-6">
+
                     {/* QUICK ACTIONS */}
                     <div>
                         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-3">Quick Actions</h2>
@@ -195,7 +140,7 @@ export default function StudentHome() {
                                     <div className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                         <div className="flex items-center gap-3">
                                             <div className="h-10 w-10 flex items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                                                <GraduationCap className="h-5 w-5" />
+                                                <Users className="h-5 w-5" />
                                             </div>
                                             <div>
                                                 <p className="text-sm font-bold text-slate-900 dark:text-white">{activeTicket.queueName}</p>
