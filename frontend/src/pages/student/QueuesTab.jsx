@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
     Search, Filter, ChevronRight, HelpCircle, GraduationCap,
     Users, Building2, Banknote, Clock, MapPin, Phone,
     ArrowRight, CheckCircle2, Ticket, AlertCircle, RefreshCw,
-    FileText, BookOpen, Monitor, ListOrdered
+    FileText, BookOpen, Monitor, ListOrdered, Info
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -20,9 +20,9 @@ import { withAlpha } from '../../lib/colors'
 // Helper to infer category from queue/office name
 function inferCategory(queueName, officeName) {
     const name = `${queueName} ${officeName}`.toLowerCase()
-    if (name.includes('bursary') || name.includes('finance') || name.includes('fee') || name.includes('payment')) return 'Financial'
-    if (name.includes('register') || name.includes('transcript') || name.includes('result') || name.includes('exam') || name.includes('academic')) return 'Academic'
-    if (name.includes('student') || name.includes('welfare') || name.includes('counsel') || name.includes('library')) return 'Student Support'
+    if (name.includes('bursary') || name.includes('finance') || name.includes('fee') || name.includes('payment') || name.includes('tuition')) return 'Financial'
+    if (name.includes('register') || name.includes('transcript') || name.includes('result') || name.includes('exam') || name.includes('academic') || name.includes('clearance')) return 'Academic'
+    if (name.includes('student') || name.includes('welfare') || name.includes('counsel') || name.includes('library') || name.includes('hostel')) return 'Student Support'
     if (name.includes('ict') || name.includes('computer') || name.includes('portal')) return 'Administrative'
     return 'Other'
 }
@@ -200,7 +200,7 @@ export default function QueuesTab() {
                 </div>
 
                 {/* Main Content Grid */}
-                <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_400px]">
+                <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.2fr_1fr]">
 
                     {/* LEFT COLUMN: Queue List */}
                     <div className="space-y-4">
@@ -303,7 +303,12 @@ export default function QueuesTab() {
                     <div className="sticky top-24">
                         {selectedQueue ? (
                             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={selectedQueue.id}>
-                                <Card padded={false} className="overflow-hidden shadow-lg border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900">
+                                {/* 👇 ADDED: Slight background tint to the entire card */}
+                                <Card
+                                    padded={false}
+                                    className="overflow-hidden shadow-lg border-slate-200 dark:border-slate-800 rounded-2xl"
+                                    style={{ backgroundColor: withAlpha(primaryColor, 0.02) }}
+                                >
 
                                     {/* Hero Header */}
                                     <div
@@ -335,7 +340,7 @@ export default function QueuesTab() {
                                     </div>
 
                                     {/* Live Stats */}
-                                    <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100 dark:divide-slate-800 dark:border-slate-800 bg-white dark:bg-slate-900">
+                                    <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100 dark:divide-slate-800 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
                                         <div className="p-4 text-center">
                                             <div className="flex justify-center mb-1 text-slate-400"><Clock className="h-4 w-4" /></div>
                                             <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{selectedQueue.estimatedMinutes || 0} mins</div>
@@ -410,7 +415,7 @@ export default function QueuesTab() {
                                     </div>
 
                                     {/* Actions */}
-                                    <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                                    <div className="p-6 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 space-y-3">
                                         <button
                                             onClick={() => handleJoinQueue(selectedQueue)}
                                             disabled={!selectedQueue.isOpen || joining || !!activeTicket}
@@ -433,7 +438,7 @@ export default function QueuesTab() {
                                     </div>
 
                                     {/* Footer */}
-                                    <div className="p-4 text-center border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                                    <div className="p-4 text-center border-t border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
                                         <button onClick={() => navigate('/student/my-tickets')} className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200">
                                             Already in the queue? <span style={{ color: primaryColor }} className="underline">View My Queues</span>
                                         </button>
