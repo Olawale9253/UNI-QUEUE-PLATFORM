@@ -73,6 +73,7 @@ export default function AppointmentsTab() {
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
 
+    // 👇 Set initial state to null to prevent auto-selection
     const [selectedOfficeId, setSelectedOfficeId] = useState(null)
 
     const [selectedDate, setSelectedDate] = useState('')
@@ -114,7 +115,7 @@ export default function AppointmentsTab() {
             setMyAppointments(apptsRes.data?.data || [])
             setSlots(fetchedSlots)
 
-            setSelectedOfficeId(prev => prev ?? (enrichedOffices.length > 0 ? enrichedOffices[0].id : null))
+            // 👇 REMOVED: Auto-selection logic. It will now start empty.
         } catch (err) {
             push({ type: 'error', message: err.message || 'Failed to load data' })
         } finally {
@@ -126,7 +127,6 @@ export default function AppointmentsTab() {
 
     const selectedOffice = offices.find(o => String(o.id) === String(selectedOfficeId))
 
-    // Reset date/slot when office changes
     useEffect(() => {
         setSelectedDate('')
         setSelectedSlot(null)
@@ -257,7 +257,7 @@ export default function AppointmentsTab() {
                                         type="text"
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
-                                        placeholder="Search by office..."
+                                        placeholder="Search for an office..."
                                         className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2"
                                         style={{ '--tw-ring-color': withAlpha(primaryColor, 0.2) }}
                                     />
@@ -279,7 +279,7 @@ export default function AppointmentsTab() {
                                         return (
                                             <Card
                                                 key={office.id}
-                                                // 👇 CLEAN LIST ALIGNMENT
+                                                // 👇 CLEAN LIST ALIGNMENT MATCHING OFFICES PAGE
                                                 className={`cursor-pointer transition-all duration-200 rounded-2xl ${
                                                     isSelected ? 'border-2 shadow-md' : 'border border-slate-200 hover:border-slate-300'
                                                 }`}
@@ -300,23 +300,14 @@ export default function AppointmentsTab() {
                                                                 <p className="mt-1 text-sm text-slate-500 line-clamp-2">{office.description || 'View available services and book an appointment.'}</p>
                                                             </div>
 
-                                                            {/* 👇 RENAMED BADGE */}
+                                                            {/* 👇 FIXED BADGE: whitespace-nowrap so it doesn't break */}
                                                             <Badge variant={hasSlots ? 'success' : 'danger'} className="shrink-0 flex items-center gap-1 whitespace-nowrap">
                                                                 {hasSlots ? <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> : <AlertCircle className="h-3 w-3" />}
-                                                                {hasSlots ? 'Bookable' : 'No Slot'}
+                                                                {hasSlots ? 'Bookable' : 'No Slots'}
                                                             </Badge>
                                                         </div>
-
-                                                        <div className="mt-4 flex justify-end">
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); setSelectedOfficeId(office.id); }}
-                                                                className="flex items-center gap-1 rounded-lg px-4 py-2 text-xs font-bold transition-colors hover:opacity-80"
-                                                                style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
-                                                            >
-                                                                View Details <ChevronRight className="h-3 w-3" />
-                                                            </button>
-                                                        </div>
                                                     </div>
+                                                    <ChevronRight className={`h-4 w-4 shrink-0 mt-1 transition-transform ${isSelected ? 'translate-x-0.5' : 'text-slate-300'}`} style={isSelected ? { color: primaryColor } : undefined} />
                                                 </div>
                                             </Card>
                                         )
@@ -325,7 +316,7 @@ export default function AppointmentsTab() {
                             )}
                         </div>
 
-                        {/* RIGHT COLUMN: Match Offices Page Layout */}
+                        {/* RIGHT COLUMN */}
                         <div>
                             {selectedOffice ? (
                                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={selectedOffice.id}>
@@ -345,8 +336,8 @@ export default function AppointmentsTab() {
                                                         <h2 className="text-2xl font-bold text-slate-900">
                                                             {selectedOffice.name}
                                                         </h2>
-                                                        <Badge variant={officeSlots.length > 0 ? 'success' : 'danger'} className="text-xs px-2 py-0.5">
-                                                            {officeSlots.length > 0 ? 'Bookable' : 'No Slot'}
+                                                        <Badge variant={officeSlots.length > 0 ? 'success' : 'danger'} className="text-xs px-2 py-0.5 whitespace-nowrap">
+                                                            {officeSlots.length > 0 ? 'Bookable' : 'No Slots'}
                                                         </Badge>
                                                     </div>
                                                     <p className="mt-1 text-sm font-medium text-slate-600">
@@ -388,7 +379,7 @@ export default function AppointmentsTab() {
                                             </div>
                                         </div>
 
-                                        {/* Staff Members (Always Visible) */}
+                                        {/* Staff Members */}
                                         <div className="p-6 border-b border-slate-100">
                                             <div className="flex items-center justify-between mb-4">
                                                 <h4 className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -523,15 +514,20 @@ export default function AppointmentsTab() {
                                     </Card>
                                 </motion.div>
                             ) : (
-                                <Card className="h-full min-h-[500px] flex items-center justify-center border-dashed border-2 bg-slate-50/50 rounded-2xl">
-                                    <EmptyState
-                                        icon={Info}
-                                        variant="info"
-                                        size="lg"
-                                        bordered={false}
-                                        title="Select an office to view appointments"
-                                        description="Pick an office from the list on the left to see available dates, times, and services."
-                                    />
+                                // 👇 FIXED: Show this empty state on initial load instead of auto-selecting an office
+                                <Card className="h-full min-h-[500px] flex items-center justify-center border-dashed border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm rounded-2xl">
+                                    <div className="flex flex-col items-center justify-center p-8 text-center">
+                                        <div
+                                            className="mb-4 flex h-16 w-16 items-center justify-center rounded-full"
+                                            style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
+                                        >
+                                            <Info className="h-8 w-8" />
+                                        </div>
+                                        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Select an office to view details</h3>
+                                        <p className="mt-2 max-w-sm text-sm text-slate-500 dark:text-slate-400">
+                                            Pick an office from the list on the left to see its staff, contact information, and available services.
+                                        </p>
+                                    </div>
                                 </Card>
                             )}
                         </div>
