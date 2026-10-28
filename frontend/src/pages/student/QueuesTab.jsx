@@ -87,7 +87,6 @@ export default function QueuesTab() {
 
     useAdaptivePoll(load, { fastMs: 5000, slowMs: 15000 })
 
-    // Enrich queues with category
     const enrichedQueues = useMemo(() => {
         return queues.map(q => ({
             ...q,
@@ -95,16 +94,13 @@ export default function QueuesTab() {
         }))
     }, [queues])
 
-    // Filter and SORT queues based on search, category, and access
     const filteredQueues = useMemo(() => {
         let result = [...enrichedQueues]
 
-        // 1. Filter by Category
         if (activeCategory !== 'All Queues') {
             result = result.filter(q => q.category === activeCategory)
         }
 
-        // 2. Filter by Search
         if (search.trim()) {
             const s = search.toLowerCase()
             result = result.filter(q =>
@@ -114,7 +110,7 @@ export default function QueuesTab() {
             )
         }
 
-        // 3. Sort by Access (Freshers see accessible queues first)
+        // 👇 Sort: Freshers see accessible queues first
         result.sort((a, b) => {
             if (isFresher) {
                 const aLocked = a.matricRequired ? 1 : 0
@@ -347,30 +343,35 @@ export default function QueuesTab() {
                                     className="overflow-hidden shadow-lg border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900"
                                 >
 
-                                    {/* 👇 UPDATED: Dark Premium Hero Header */}
-                                    <div className="p-6 relative overflow-hidden bg-slate-900 text-white">
+                                    {/* 👇 UPDATED: School Color Background with Dark Overlay */}
+                                    <div
+                                        className="p-6 relative overflow-hidden text-white"
+                                        style={{ backgroundColor: primaryColor }}
+                                    >
+                                        {/* Subtle dark overlay to make text pop */}
+                                        <div className="absolute inset-0 bg-black/20" />
+
                                         <div className="flex items-start justify-between gap-4 relative z-10">
                                             <div className="flex items-start gap-4">
                                                 <div
-                                                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm shadow-inner"
-                                                    style={{ color: primaryColor }}
+                                                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm shadow-inner text-white"
                                                 >
                                                     {(() => { const Icon = getCategoryIcon(selectedQueue.category, selectedQueue.name); return <Icon className="h-8 w-8" /> })()}
                                                 </div>
                                                 <div>
-                                                    <h2 className="text-2xl font-bold text-white leading-tight">
+                                                    <h2 className="text-2xl font-bold text-white leading-tight drop-shadow-md">
                                                         {selectedQueue.name}
                                                     </h2>
-                                                    <p className="mt-1 text-sm font-medium text-slate-300">
+                                                    <p className="mt-1 text-sm font-medium text-white/80">
                                                         {selectedQueue.officeName || 'University Office'}
                                                     </p>
                                                 </div>
                                             </div>
-                                            <Badge className="bg-white/20 text-white border-0 shrink-0">
+                                            <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 shrink-0 backdrop-blur-sm">
                                                 {selectedQueue.category}
                                             </Badge>
                                         </div>
-                                        <p className="mt-4 text-sm text-slate-300 relative z-10 max-w-md">
+                                        <p className="mt-4 text-sm text-white/90 relative z-10 max-w-md">
                                             {selectedQueue.description || 'Join this queue to get served.'}
                                         </p>
                                     </div>
@@ -430,7 +431,6 @@ export default function QueuesTab() {
                                             </div>
                                         </div>
 
-                                        {/* Services Included */}
                                         <div className="pt-5 border-t border-slate-100 dark:border-slate-800">
                                             <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3">Services Included</h4>
                                             <ul className="space-y-2">
