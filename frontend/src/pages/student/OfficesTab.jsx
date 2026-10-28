@@ -298,28 +298,34 @@ export default function OfficesTab() {
                                     transition={{ duration: 0.2 }}
                                     className="space-y-6"
                                 >
-                                    {/* Hero Card */}
+                                    {/* 👇 UPDATED: School Color Hero Header */}
                                     <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-2xl">
-                                        <div className="p-6 sm:p-8" style={{ backgroundColor: withAlpha(primaryColor, 0.03), borderBottom: `1px solid ${withAlpha(primaryColor, 0.1)}` }}>
-                                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+
+                                        <div
+                                            className="p-6 sm:p-8 relative overflow-hidden text-white"
+                                            style={{ backgroundColor: primaryColor }}
+                                        >
+                                            {/* Subtle dark overlay to ensure text readability */}
+                                            <div className="absolute inset-0 bg-black/15" />
+
+                                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 relative z-10">
                                                 <div className="flex items-start gap-5">
                                                     <div
-                                                        className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10"
-                                                        style={{ color: primaryColor }}
+                                                        className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm shadow-inner text-white"
                                                     >
                                                         <Building2 className="h-8 w-8" />
                                                     </div>
                                                     <div>
-                                                        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-3">
+                                                        <h2 className="text-2xl font-bold text-white flex items-center gap-3 drop-shadow-md">
                                                             {selected.office.name}
-                                                            <Badge variant={selected.office.isActive === false ? 'default' : 'success'} className="text-xs px-2 py-0.5">
+                                                            <Badge variant={selected.office.isActive === false ? 'default' : 'success'} className="text-xs px-2 py-0.5 border-0 bg-white/20 text-white">
                                                                 {selected.office.isActive === false ? 'Inactive' : 'Active'}
                                                             </Badge>
                                                         </h2>
-                                                        <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-400">
+                                                        <p className="mt-1 text-sm font-medium text-white/80">
                                                             {university?.name || 'University Portal'} {university?.code ? `(${university.code})` : ''}
                                                         </p>
-                                                        <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                                                        <p className="mt-3 max-w-lg text-sm leading-relaxed text-white/90">
                                                             {selected.office.description || 'Course registration, academic records, and more.'}
                                                         </p>
                                                     </div>
@@ -327,12 +333,7 @@ export default function OfficesTab() {
 
                                                 <button
                                                     onClick={() => setContactModalOpen(true)}
-                                                    className="shrink-0 inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors hover:opacity-80"
-                                                    style={{
-                                                        borderColor: primaryColor,
-                                                        color: primaryColor,
-                                                        backgroundColor: withAlpha(primaryColor, 0.05)
-                                                    }}
+                                                    className="shrink-0 inline-flex items-center gap-2 rounded-lg border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
                                                 >
                                                     <Phone className="h-4 w-4" />
                                                     Contact Office
@@ -340,7 +341,7 @@ export default function OfficesTab() {
                                             </div>
                                         </div>
 
-                                        {/* 👇 UPDATED: 3-Column Info Grid matching Appointment Page */}
+                                        {/* 3-Column Info Grid */}
                                         <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 border-b border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-900">
                                             <div className="flex items-start gap-3 p-4">
                                                 <MapPin className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
@@ -364,7 +365,6 @@ export default function OfficesTab() {
                                                 <Clock className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
                                                 <div>
                                                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Working Hours</div>
-                                                    {/* 👇 UPDATED: Days on top, Time on bottom */}
                                                     <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
                                                         <div>Mon – Fri</div>
                                                         <div className="text-xs text-slate-500 mt-0.5">
