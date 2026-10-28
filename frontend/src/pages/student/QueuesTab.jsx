@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     Search, ChevronRight, HelpCircle, GraduationCap,
-    Users, Building2, Banknote, Clock, MapPin, Phone, Mail,
+    Users, Building2, Banknote, Clock, MapPin, Phone,
     ArrowRight, CheckCircle2,
     FileText, BookOpen, Monitor, ListOrdered, Info, Lock
 } from 'lucide-react'
@@ -53,7 +53,7 @@ export default function QueuesTab() {
     const navigate = useNavigate()
 
     const [queues, setQueues] = useState([])
-    const [offices, setOffices] = useState([]) // 👈 ADDED: To store office data (phone/email)
+    const [offices, setOffices] = useState([])
     const [activeTicket, setActiveTicket] = useState(null)
     const [loading, setLoading] = useState(true)
 
@@ -70,7 +70,7 @@ export default function QueuesTab() {
             const [queueRes, tokenRes, officeRes] = await Promise.all([
                 api.get('/api/queues').catch(() => ({ data: { data: [] } })),
                 api.get('/api/user/tickets/active').catch(() => ({ data: { data: null } })),
-                api.get('/api/offices').catch(() => ({ data: { data: [] } })) // 👈 ADDED
+                api.get('/api/offices').catch(() => ({ data: { data: [] } }))
             ])
             const fetchedQueues = queueRes.data?.data || []
             const fetchedOffices = officeRes.data?.data || []
@@ -115,7 +115,6 @@ export default function QueuesTab() {
             )
         }
 
-        // Sort: Freshers see accessible queues first
         result.sort((a, b) => {
             if (isFresher) {
                 const aLocked = a.matricRequired ? 1 : 0
@@ -130,7 +129,6 @@ export default function QueuesTab() {
 
     const selectedQueue = filteredQueues.find(q => String(q.id) === String(selectedQueueId))
 
-    // 👇 ADDED: Find the matching office to get contact details
     const selectedOffice = useMemo(() => {
         if (!selectedQueue) return null
         return offices.find(o =>
@@ -255,13 +253,21 @@ export default function QueuesTab() {
                                     const Icon = getCategoryIcon(queue.category, queue.name)
                                     const isOpen = queue.isOpen === true
                                     const isLocked = isFresher && queue.matricRequired
+                                    const isDisabled = !isOpen || isLocked
 
                                     return (
-                                        <button
+                                        <div
                                             key={queue.id}
-                                            type="button"
+                                            role="button"
+                                            tabIndex={0}
                                             onClick={() => setSelectedQueueId(queue.id)}
-                                            className={`w-full text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl transition-all duration-200 border-2 bg-white dark:bg-slate-900 ${
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault()
+                                                    setSelectedQueueId(queue.id)
+                                                }
+                                            }}
+                                            className={`w-full text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl transition-all duration-200 border-2 bg-white dark:bg-slate-900 cursor-pointer focus:outline-none focus-visible:ring-2 ${
                                                 isSelected
                                                     ? 'shadow-md'
                                                     : 'border-slate-100 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700'
@@ -314,26 +320,29 @@ export default function QueuesTab() {
 
                                             <div className="shrink-0 flex items-center justify-end sm:pl-4 sm:border-l sm:border-slate-100 dark:sm:border-slate-800 mt-4 sm:mt-0">
                                                 <button
+                                                    type="button"
                                                     onClick={(e) => {
                                                         e.stopPropagation()
                                                         if (!isSelected) {
                                                             setSelectedQueueId(queue.id)
-                                                        } else if (!isLocked) {
+                                                        } else if (!isDisabled) {
                                                             handleJoinQueue(queue)
                                                         }
                                                     }}
-                                                    disabled={!isOpen || joining || isLocked}
+                                                    disabled={isDisabled || joining}
                                                     className={`inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold shadow-sm transition-all disabled:cursor-not-allowed ${
-                                                        isLocked
+                                                        isDisabled
                                                             ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
                                                             : 'text-white hover:shadow-md'
                                                     }`}
-                                                    style={!isLocked ? { backgroundColor: primaryColor } : undefined}
+                                                    style={!isDisabled ? { backgroundColor: primaryColor } : undefined}
                                                 >
                                                     {isLocked ? (
                                                         <>
                                                             <Lock className="h-4 w-4" /> Update Profile
                                                         </>
+                                                    ) : !isOpen ? (
+                                                        'Closed'
                                                     ) : (
                                                         <>
                                                             Join Queue <ArrowRight className="h-4 w-4" />
@@ -341,7 +350,7 @@ export default function QueuesTab() {
                                                     )}
                                                 </button>
                                             </div>
-                                        </button>
+                                        </div>
                                     )
                                 })}
                             </div>
@@ -437,7 +446,6 @@ export default function QueuesTab() {
                                                 <Phone className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
                                                 <div>
                                                     <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Contact</div>
-                                                    {/* 👇 FIXED: Pulls real data from backend */}
                                                     <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
                                                         {selectedOffice?.phone || selectedQueue.phone || 'Not assigned'}
                                                     </div>
@@ -450,7 +458,6 @@ export default function QueuesTab() {
                                             </div>
                                         </div>
 
-                                        {/* 👇 FIXED: Services Included pulled from backend */}
                                         <div className="pt-5 border-t border-slate-100 dark:border-slate-800">
                                             <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3">Services Included</h4>
                                             <ul className="space-y-2">
@@ -478,16 +485,26 @@ export default function QueuesTab() {
                                     <div className="p-6 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 space-y-3">
                                         {isFresher && selectedQueue.matricRequired ? (
                                             <button
+                                                type="button"
                                                 onClick={() => navigate('/student/profile')}
                                                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700 shadow-sm transition-all hover:bg-amber-100 border border-amber-200"
                                             >
                                                 <Lock className="h-4 w-4" />
                                                 Update Profile to Join
                                             </button>
+                                        ) : !selectedQueue.isOpen ? (
+                                            <button
+                                                type="button"
+                                                disabled
+                                                className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-400 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed"
+                                            >
+                                                Queue is Closed
+                                            </button>
                                         ) : (
                                             <button
+                                                type="button"
                                                 onClick={() => handleJoinQueue(selectedQueue)}
-                                                disabled={!selectedQueue.isOpen || joining || !!activeTicket}
+                                                disabled={joining || !!activeTicket}
                                                 className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-md transition-all hover:shadow-lg disabled:opacity-50"
                                                 style={{ backgroundColor: primaryColor }}
                                             >
@@ -498,6 +515,7 @@ export default function QueuesTab() {
                                         )}
 
                                         <button
+                                            type="button"
                                             onClick={() => navigate('/student/offices')}
                                             className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                                         >
@@ -509,7 +527,11 @@ export default function QueuesTab() {
 
                                     {/* Footer */}
                                     <div className="p-4 text-center border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-                                        <button onClick={() => navigate('/student/my-tickets')} className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200">
+                                        <button
+                                            type="button"
+                                            onClick={() => navigate('/student/my-tickets')}
+                                            className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                                        >
                                             Already in the queue? <span style={{ color: primaryColor }} className="underline">View My Queues</span>
                                         </button>
                                     </div>
