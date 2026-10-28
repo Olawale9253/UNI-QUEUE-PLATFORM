@@ -1,444 +1,308 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-    Calendar, Ticket, FileText, CheckCircle2, Building2,
-    Route as RouteIcon, ArrowRight, Clock, Lock,
+    Search, Bell, ChevronRight, GraduationCap, Calendar, Building2, Ticket,
+    Clock, CheckCircle2, AlertCircle, FileText, Banknote, Users, ArrowRight, User
 } from 'lucide-react'
 import api from '../../api/axios'
-import Card from '../../components/ui/Card'
-import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
-import { groupQueuesByOffice } from '../../lib/groupQueues'
 import { useAuthStore } from '../../store/authStore'
+import { useUniversityStore } from '../../store/universityStore'
+import { useToastStore } from '../../store/toastStore'
+import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
+import { withAlpha } from '../../lib/colors'
 
-function StatTile({ label, value, icon: Icon, accent, valueColor, to, ctaLabel, delay }) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay }}
-        >
-            <Card className="flex h-full flex-col">
-                <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                            {label}
-                        </div>
-                        <div className={`mt-2 text-3xl font-bold tracking-tight ${valueColor}`}>
-                            {value}
-                        </div>
-                    </div>
-                    {Icon && (
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${accent}`}>
-                            <Icon className="h-5 w-5" />
-                        </div>
-                    )}
-                </div>
-                {to && (
-                    <Link
-                        to={to}
-                        className="mt-auto pt-3 text-xs font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400"
-                    >
-                        {ctaLabel || 'View all'} →
-                    </Link>
-                )}
-            </Card>
-        </motion.div>
-    )
-}
-
-function LiveQueueCard({ office, isFresher }) {
-    const hasQueue = office.queue != null
-    const isOpen = hasQueue && office.queue?.isOpen === true
-    const matricLocked = hasQueue && isFresher && office.queue?.matricRequired
-    const waitingCount = office.queue?.waitingCount ?? 0
-    const currentlyServing = office.queue?.currentlyServing || 'None'
-    const avgWait = office.queue?.estimatedMinutes ?? 0
-
-    return (
-        <Card className="flex h-full flex-col">
-            <div className="mb-3 flex items-start justify-between gap-2">
-                <h3 className="min-w-0 flex-1 text-base font-semibold text-slate-900 dark:text-slate-100">
-                    {office.name}
-                </h3>
-                <div className="flex flex-wrap justify-end gap-2 shrink-0">
-                    {matricLocked && (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
-                            <Lock className="h-2.5 w-2.5" />
-                            Matric
-                        </span>
-                    )}
-                    {hasQueue && (
-                        isOpen ? (
-                            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
-                                <span className="relative flex h-1.5 w-1.5">
-                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                </span>
-                                Live
-                            </span>
-                        ) : (
-                            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                                <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                                Closed
-                            </span>
-                        )
-                    )}
-                </div>
-            </div>
-
-            <div className="text-sm text-slate-600 dark:text-slate-400">
-                Waiting:{' '}
-                <span className={`font-bold ${isOpen ? 'text-brand-600 dark:text-brand-400' : 'text-slate-400'}`}>
-                    {waitingCount}
-                </span>
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-3">
-                <div>
-                    <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        Now Serving
-                    </div>
-                    <div
-                        className={`mt-1 truncate text-sm font-bold ${
-                            isOpen && currentlyServing && currentlyServing !== 'None'
-                                ? 'font-mono text-emerald-600 dark:text-emerald-400'
-                                : 'text-slate-400 dark:text-slate-500'
-                        }`}
-                    >
-                        {isOpen ? currentlyServing : '—'}
-                    </div>
-                </div>
-                <div>
-                    <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        Avg Wait
-                    </div>
-                    <div className={`mt-1 text-sm font-bold ${isOpen ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}`}>
-                        {isOpen ? `${avgWait} min` : '—'}
-                    </div>
-                </div>
-            </div>
-
-            <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800">
-                {matricLocked ? (
-                    <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-400 cursor-not-allowed dark:bg-slate-800 dark:text-slate-500">
-                        <Lock className="h-4 w-4" /> Matric Required
-                    </div>
-                ) : (
-                    <Link
-                        to="/student/queues"
-                        className={`flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-all ${
-                            isOpen
-                                ? 'bg-brand-600 text-white hover:bg-brand-700'
-                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-                        }`}
-                    >
-                        {isOpen ? 'Join this queue' : 'View service details'}
-                        <ArrowRight className="h-4 w-4" />
-                    </Link>
-                )}
-            </div>
-        </Card>
-    )
-}
-
-function ActiveClearanceCard({ data }) {
-    const pct = data.progressPercent ?? 0
-    const next = data.nextAction
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="relative overflow-hidden rounded-xl border border-brand-300 bg-gradient-to-br from-brand-50 to-white p-5 dark:border-brand-700 dark:from-brand-950/40 dark:to-slate-900"
-        >
-            <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-sm">
-                        <RouteIcon className="h-5 w-5" />
-                    </div>
-
-                    <div className="min-w-0">
-                        <div className="text-[10px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">
-                            Active progress
-                        </div>
-                        <h3 className="mt-0.5 truncate text-base font-semibold text-slate-900 dark:text-slate-100">
-                            {data.workflowName}
-                        </h3>
-                        {data.session && (
-                            <div className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
-                                <Clock className="h-3 w-3" />
-                                Session {data.session}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <span className="shrink-0 rounded-full bg-brand-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">
-                    {pct}%
-                </span>
-            </div>
-
-            <div className="mt-4">
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                    <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                        className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-600"
-                    />
-                </div>
-                <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                    <strong className="text-slate-700 dark:text-slate-300">{data.completedSteps}</strong>
-                    {' '}of{' '}
-                    <strong className="text-slate-700 dark:text-slate-300">{data.totalSteps}</strong>
-                    {' '}steps complete
-                </div>
-            </div>
-
-            {next && (
-                <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-brand-200 bg-white/70 px-3 py-2.5 dark:border-brand-800 dark:bg-slate-900/60">
-                    <div className="min-w-0">
-                        <div className="text-[10px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">
-                            Next step
-                        </div>
-                        <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                            {next.label || next.queueName}
-                        </div>
-                        {next.officeName && (
-                            <div className="truncate text-[11px] text-slate-500 dark:text-slate-400">
-                                {next.officeName}
-                            </div>
-                        )}
-                    </div>
-                    <Link
-                        to="/student/clearance"
-                        className="shrink-0 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-brand-700"
-                    >
-                        Continue
-                    </Link>
-                </div>
-            )}
-
-            <div className="mt-3 flex justify-end">
-                <Link
-                    to="/student/workflows"
-                    className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 transition-colors hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400"
-                >
-                    All workflows
-                    <ArrowRight className="h-3 w-3" />
-                </Link>
-            </div>
-        </motion.div>
-    )
-}
-
-export default function StudentHome() {
+export default function HomeTab() {
     const { user } = useAuthStore()
-    const isFresher = user?.role === 'FRESHER'
+    const { university } = useUniversityStore()
+    const { push } = useToastStore()
+    const navigate = useNavigate()
 
-    const [queues, setQueues] = useState([])
-    const [stats, setStats] = useState(null)
-    const [appointments, setAppointments] = useState([])
-    const [documents, setDocuments] = useState([])
-    const [activeClearance, setActiveClearance] = useState(null)
     const [loading, setLoading] = useState(true)
+    const [activeTicket, setActiveTicket] = useState(null)
+    const [queues, setQueues] = useState([])
+    const [appointments, setAppointments] = useState([])
+    const [notifications, setNotifications] = useState([])
 
-    const sawInProgressRef = useRef(false)
+    const primaryColor = university?.primaryColor || '#0ea5e9'
+    const firstName = user?.fullName?.split(' ')[0] || 'Student'
+
+    // Dynamic Greeting
+    const greeting = useMemo(() => {
+        const hour = new Date().getHours()
+        if (hour < 12) return 'Good Morning'
+        if (hour < 18) return 'Good Afternoon'
+        return 'Good Evening'
+    }, [])
 
     const load = useCallback(async () => {
         try {
-            const [queue, stringValue, firstValue, dateValue, mp] = await Promise.all([
+            const [ticketRes, queueRes, apptRes, notifRes] = await Promise.all([
+                api.get('/api/user/tickets/active').catch(() => ({ data: { data: null } })),
                 api.get('/api/queues').catch(() => ({ data: { data: [] } })),
-                api.get('/api/user/stats').catch(() => ({ data: { data: null } })),
-                api.get('/api/user/appointments').catch(() => ({ data: { data: [] } })),
-                api.get('/api/user/documents').catch(() => ({ data: { data: [] } })),
-                api.get('/api/student/workflows/my-progress').catch(() => ({ data: { data: null } })),
+                api.get('/api/appointments').catch(() => ({ data: { data: [] } })),
+                api.get('/api/notifications').catch(() => ({ data: { data: [] } }))
             ])
-            setQueues(queue.data?.data || [])
-            setStats(stringValue.data?.data || null)
-            setAppointments(firstValue.data?.data || [])
-            setDocuments(dateValue.data?.data || [])
 
-            const mpData = mp.data?.data || null
-            if (mpData && mpData.status === 'IN_PROGRESS') {
-                sawInProgressRef.current = true
-                setActiveClearance(mpData)
-            } else if (mpData && mpData.status === 'COMPLETED') {
-                if (sawInProgressRef.current) {
-                    setActiveClearance(mpData)
-                } else {
-                    setActiveClearance(null)
-                }
-            } else {
-                setActiveClearance(null)
-            }
-        } catch {
-            // silent
+            setActiveTicket(ticketRes.data?.data)
+            setQueues(queueRes.data?.data || [])
+            setAppointments(apptRes.data?.data || [])
+            setNotifications(notifRes.data?.data || [])
+        } catch (err) {
+            console.error("Dashboard load error", err)
         } finally {
             setLoading(false)
         }
     }, [])
 
-    useEffect(() => { load() }, [load])
-    useAdaptivePoll(load, { fastMs: 5000, slowMs: 15000 })
+    useAdaptivePoll(load, { fastMs: 10000, slowMs: 30000 })
 
-    const liveQueues = useMemo(() => {
-        const groups = groupQueuesByOffice(queues.filter((queue) => queue.isActive !== false))
-        return groups
-            .map((group) => {
-                const sorted = [...group.queues].sort(
-                    (firstValue, secondValue) => (secondValue.waitingCount ?? 0) - (firstValue.waitingCount ?? 0)
-                )
-                return {
-                    key: group.key,
-                    name: group.label,
-                    queue: sorted[0] || null,
-                }
-            })
-            // 👇 ADDED SORTING LOGIC: Freshers see accessible queues first
-            .sort((a, b) => {
-                if (isFresher) {
-                    const aLocked = a.queue?.matricRequired ? 1 : 0
-                    const bLocked = b.queue?.matricRequired ? 1 : 0
-                    if (aLocked !== bLocked) return aLocked - bLocked
-                }
-                return a.name.localeCompare(b.name)
-            })
-    }, [queues, isFresher])
+    const unreadNotifs = notifications.filter(n => !n.isRead).length
+    const upcomingAppts = appointments.filter(a => new Date(a.date) >= new Date()).length
 
-    const myAppointments = appointments.filter(
-        (appointment) => appointment.status === 'BOOKED' || appointment.status === 'CONFIRMED'
-    ).length
-    const myQueueTickets = stats?.hasActiveTicket ? 1 : stats?.todayJoined ?? 0
-    const myDocuments = documents.length
-    const completedTasks = stats?.totalCompleted ?? 0
+    // Top 3 queues for the summary sidebar
+    const topQueues = queues.slice(0, 3)
+
+    if (loading) {
+        return <div className="flex h-64 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" /></div>
+    }
 
     return (
-        <>
-            <div className="mb-7 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-                <StatTile
-                    label="My Appointments"
-                    value={myAppointments}
-                    icon={Calendar}
-                    accent="bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400"
-                    valueColor="text-violet-600 dark:text-violet-400"
-                    to="/student/appointments"
-                    ctaLabel="View all"
-                    delay={0}
-                />
-                <StatTile
-                    label="My Queue Tickets"
-                    value={myQueueTickets}
-                    icon={Ticket}
-                    accent="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                    valueColor="text-emerald-600 dark:text-emerald-400"
-                    to="/student/queues"
-                    ctaLabel="View all"
-                    delay={0.05}
-                />
-                <StatTile
-                    label="My Documents"
-                    value={myDocuments}
-                    icon={FileText}
-                    accent="bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400"
-                    valueColor="text-purple-600 dark:text-purple-400"
-                    to="/student/documents"
-                    ctaLabel="View all"
-                    delay={0.1}
-                />
-                <StatTile
-                    label="Completed Tasks"
-                    value={completedTasks}
-                    icon={CheckCircle2}
-                    accent="bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
-                    valueColor="text-amber-600 dark:text-amber-400"
-                    delay={0.15}
-                />
-            </div>
-
-            {activeClearance && (
-                <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.18 }}
-                    className="mb-7"
-                >
-                    <div className="mb-4 flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                            My Progress
-                        </h2>
-                        <Link
-                            to="/student/workflows"
-                            className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
-                        >
-                            View all →
-                        </Link>
-                    </div>
-                    <ActiveClearanceCard data={activeClearance} />
-                </motion.div>
-            )}
-
-            <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-            >
-                <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                        Campus Queues
-                    </h2>
-                    <Link to="/student/queues">
-                        <button className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
-                            View my queues
-                            <ArrowRight className="h-3.5 w-3.5" />
-                        </button>
-                    </Link>
+        <div className="space-y-6 pb-12">
+            {/* HERO BANNER */}
+            <div className="relative overflow-hidden rounded-2xl bg-slate-900 text-white shadow-lg">
+                {/* Background Image Overlay */}
+                <div className="absolute inset-0">
+                    <img
+                        src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80"
+                        alt="Campus"
+                        className="h-full w-full object-cover opacity-30 mix-blend-overlay"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/80 to-transparent" />
                 </div>
 
-                {loading ? (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {Array.from({ length: 6 }).map((unusedValue, index) => (
-                            <div
-                                key={index}
-                                className="h-44 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"
-                            />
-                        ))}
+                <div className="relative z-10 flex flex-col md:flex-row items-start justify-between p-8 sm:p-10 gap-6">
+                    <div>
+                        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2">
+                            {greeting}, {firstName} 👋
+                        </h1>
+                        <p className="text-slate-300 font-medium max-w-md">
+                            Your university journey, made easier. Access queues, book appointments, find offices and stay updated — all in one place.
+                        </p>
                     </div>
-                ) : liveQueues.length === 0 ? (
-                    <Card>
-                        <div className="py-12 text-center">
-                            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-                                <Building2 className="h-6 w-6 text-slate-400" />
-                            </div>
-                            <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                No queues available
-                            </p>
-                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                Check back soon. Your university hasn't opened any queues yet.
-                            </p>
+                    {/* Decorative text */}
+                    <div className="hidden lg:block text-right italic text-white/50 font-serif text-lg">
+                        <p>Same School</p>
+                        <p>Bigger Dreams</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
+
+                {/* LEFT COLUMN */}
+                <div className="space-y-6">
+                    {/* QUICK ACTIONS (TOP ROW) */}
+                    <div>
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-3">Quick Actions</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                            {[
+                                { label: 'Browse Queues', desc: 'Join a queue for any service', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', path: '/student/queues' },
+                                { label: 'Book Appointment', desc: 'Schedule a time with staff', icon: Calendar, color: 'text-emerald-600', bg: 'bg-emerald-50', path: '/student/appointments' },
+                                { label: 'Find Offices', desc: 'View offices and details', icon: Building2, color: 'text-purple-600', bg: 'bg-purple-50', path: '/student/offices' },
+                                { label: 'My Queues', desc: 'Track your queue position', icon: Ticket, color: 'text-orange-600', bg: 'bg-orange-50', path: '/student/my-tickets' },
+                            ].map((action, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => navigate(action.path)}
+                                    className="group flex flex-col items-start p-5 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all text-left dark:bg-slate-900 dark:border-slate-800"
+                                >
+                                    <div className={`flex h-12 w-12 items-center justify-center rounded-xl mb-4 ${action.bg} ${action.color}`}>
+                                        <action.icon className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="font-bold text-slate-900 dark:text-slate-100">{action.label}</h3>
+                                    <p className="text-xs text-slate-500 mt-1 mb-4">{action.desc}</p>
+                                    <ChevronRight className="h-4 w-4 text-slate-400 mt-auto group-hover:translate-x-1 transition-transform" />
+                                </button>
+                            ))}
                         </div>
-                    </Card>
-                ) : (
-                    <motion.div
-                        initial="initial"
-                        animate="animate"
-                        variants={{ initial: {}, animate: { transition: { staggerChildren: 0.04 } } }}
-                        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-                    >
-                        {liveQueues.map((liveQueue) => (
-                            <motion.div
-                                key={liveQueue.key}
-                                variants={{ initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 } }}
-                            >
-                                {/* 👇 PASSED isFresher to the card */}
-                                <LiveQueueCard office={liveQueue} isFresher={isFresher} />
-                            </motion.div>
-                        ))}
-                    </motion.div>
-                )}
-            </motion.div>
-        </>
+                    </div>
+
+                    {/* STATS ROW */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-semibold text-slate-500 uppercase">Active Queues</p>
+                                <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{activeTicket ? 1 : 0}</p>
+                                <p className="text-[11px] text-slate-400 mt-1">{activeTicket ? 'You are in 1 queue' : 'No active queues'}</p>
+                            </div>
+                            <div className="h-10 w-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                                <Ticket className="h-5 w-5" />
+                            </div>
+                        </div>
+                        <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-semibold text-slate-500 uppercase">Upcoming Appts</p>
+                                <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{upcomingAppts}</p>
+                                <p className="text-[11px] text-slate-400 mt-1">Next: {appointments[0]?.date || 'None'}</p>
+                            </div>
+                            <div className="h-10 w-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                <Calendar className="h-5 w-5" />
+                            </div>
+                        </div>
+                        <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-semibold text-slate-500 uppercase">Services</p>
+                                <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">8</p>
+                                <p className="text-[11px] text-slate-400 mt-1">This semester</p>
+                            </div>
+                            <div className="h-10 w-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center">
+                                <FileText className="h-5 w-5" />
+                            </div>
+                        </div>
+                        <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-semibold text-slate-500 uppercase">Notifications</p>
+                                <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{unreadNotifs}</p>
+                                <p className="text-[11px] text-slate-400 mt-1">Check for updates</p>
+                            </div>
+                            <div className="h-10 w-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
+                                <Bell className="h-5 w-5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* UPCOMING QUEUES & RECENT ACTIVITY */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Your Upcoming Queues */}
+                        <div className="rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+                            <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
+                                <div>
+                                    <h3 className="font-bold text-slate-900 dark:text-white">Your Upcoming Queues</h3>
+                                    <p className="text-xs text-slate-500">View and manage your active queues.</p>
+                                </div>
+                                <Link to="/student/my-tickets" className="text-xs font-semibold text-blue-600 hover:underline">View All</Link>
+                            </div>
+                            <div className="p-2">
+                                {activeTicket ? (
+                                    <div className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-10 w-10 flex items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                                                <GraduationCap className="h-5 w-5" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-slate-900 dark:text-white">{activeTicket.queueName}</p>
+                                                <p className="text-xs text-slate-500">{activeTicket.officeName}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="inline-block px-2 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-full mb-1">Open</span>
+                                            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Position: {activeTicket.position}</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="p-6 text-center text-sm text-slate-500">No active queues right now.</div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Recent Activity */}
+                        <div className="rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+                            <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
+                                <div>
+                                    <h3 className="font-bold text-slate-900 dark:text-white">Recent Activity</h3>
+                                    <p className="text-xs text-slate-500">Your latest actions and updates.</p>
+                                </div>
+                                <Link to="/student/history" className="text-xs font-semibold text-blue-600 hover:underline">View All</Link>
+                            </div>
+                            <div className="p-2">
+                                <div className="flex items-start gap-3 p-3">
+                                    <div className="mt-0.5 h-8 w-8 flex items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                                        <CheckCircle2 className="h-4 w-4" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">Joined {activeTicket?.queueName || 'a Queue'}</p>
+                                        <p className="text-xs text-slate-500">{activeTicket?.officeName || 'Academic Office'}</p>
+                                    </div>
+                                    <span className="ml-auto text-[10px] text-slate-400">2 hours ago</span>
+                                </div>
+                                <div className="flex items-start gap-3 p-3">
+                                    <div className="mt-0.5 h-8 w-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                                        <Calendar className="h-4 w-4" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">Booked appointment</p>
+                                        <p className="text-xs text-slate-500">With Dr. Johnson</p>
+                                    </div>
+                                    <span className="ml-auto text-[10px] text-slate-400">Yesterday</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* RIGHT COLUMN */}
+                <div className="space-y-6">
+                    {/* Profile Card */}
+                    <div className="p-6 rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 flex flex-col items-center text-center">
+                        <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
+                            <User className="h-8 w-8" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">{user?.fullName}</h3>
+                        <p className="text-xs text-slate-500 mb-4">{user?.role} • {university?.code || 'LAUTECH'}</p>
+                        <Link to="/student/profile" className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300">
+                            View Profile <ChevronRight className="h-4 w-4" />
+                        </Link>
+                    </div>
+
+                    {/* Live Queue Summary */}
+                    <div className="rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+                        <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
+                            <h3 className="font-bold text-slate-900 dark:text-white">Live Queue Summary</h3>
+                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
+                            </span>
+                        </div>
+                        <div className="p-2">
+                            {topQueues.length > 0 ? topQueues.map(q => (
+                                <div key={q.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-8 w-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                                            <Users className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-slate-900 dark:text-white">{q.name}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{q.waitingCount || 0} / {q.capacity || 20}</p>
+                                        <span className={`text-[10px] font-bold ${q.isOpen ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                            {q.isOpen ? 'Open' : 'Closed'}
+                                        </span>
+                                    </div>
+                                </div>
+                            )) : (
+                                <div className="p-4 text-center text-xs text-slate-500">No queues active.</div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Useful Links */}
+                    <div className="rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-5">
+                        <h3 className="font-bold text-slate-900 dark:text-white mb-3">Useful Links</h3>
+                        <ul className="space-y-3">
+                            {['LAUTECH Website', 'Academic Calendar', 'Student Handbook', 'IT Support'].map((link, i) => (
+                                <li key={i}>
+                                    <a href="#" className="flex items-center justify-between text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200">
+                                        {link}
+                                        <ArrowRight className="h-3 w-3" />
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
     )
 }
