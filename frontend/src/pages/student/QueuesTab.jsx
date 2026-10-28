@@ -17,6 +17,7 @@ import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { withAlpha } from '../../lib/colors'
 
+// Helper to infer category from queue/office name
 function inferCategory(queueName, officeName) {
     const name = `${queueName} ${officeName}`.toLowerCase()
     if (name.includes('bursary') || name.includes('finance') || name.includes('fee') || name.includes('payment') || name.includes('tuition')) return 'Financial'
@@ -26,6 +27,7 @@ function inferCategory(queueName, officeName) {
     return 'Other'
 }
 
+// Helper to get icon based on category
 function getCategoryIcon(category, name) {
     const n = (name || '').toLowerCase()
     if (n.includes('register')) return FileText
@@ -85,6 +87,7 @@ export default function QueuesTab() {
 
     useAdaptivePoll(load, { fastMs: 5000, slowMs: 15000 })
 
+    // Enrich queues with category
     const enrichedQueues = useMemo(() => {
         return queues.map(q => ({
             ...q,
@@ -92,11 +95,16 @@ export default function QueuesTab() {
         }))
     }, [queues])
 
+    // Filter and SORT queues based on search, category, and access
     const filteredQueues = useMemo(() => {
-        let result = enrichedQueues
+        let result = [...enrichedQueues]
+
+        // 1. Filter by Category
         if (activeCategory !== 'All Queues') {
             result = result.filter(q => q.category === activeCategory)
         }
+
+        // 2. Filter by Search
         if (search.trim()) {
             const s = search.toLowerCase()
             result = result.filter(q =>
@@ -105,8 +113,19 @@ export default function QueuesTab() {
                 q.description?.toLowerCase().includes(s)
             )
         }
+
+        // 3. Sort by Access (Freshers see accessible queues first)
+        result.sort((a, b) => {
+            if (isFresher) {
+                const aLocked = a.matricRequired ? 1 : 0
+                const bLocked = b.matricRequired ? 1 : 0
+                if (aLocked !== bLocked) return aLocked - bLocked
+            }
+            return a.name.localeCompare(b.name)
+        })
+
         return result
-    }, [enrichedQueues, activeCategory, search])
+    }, [enrichedQueues, activeCategory, search, isFresher])
 
     const selectedQueue = filteredQueues.find(q => String(q.id) === String(selectedQueueId))
 
@@ -325,41 +344,39 @@ export default function QueuesTab() {
                             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={selectedQueue.id}>
                                 <Card
                                     padded={false}
-                                    className="overflow-hidden shadow-lg border-slate-200 dark:border-slate-800 rounded-2xl"
-                                    style={{ backgroundColor: withAlpha(primaryColor, 0.02) }}
+                                    className="overflow-hidden shadow-lg border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900"
                                 >
 
-                                    {/* Hero Header */}
-                                    <div
-                                        className="p-6 relative overflow-hidden"
-                                        style={{
-                                            backgroundColor: withAlpha(primaryColor, 0.05),
-                                            borderBottom: `1px solid ${withAlpha(primaryColor, 0.1)}`
-                                        }}
-                                    >
-                                        <div className="flex items-start gap-4 relative z-10">
-                                            <div
-                                                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm"
-                                                style={{ color: primaryColor }}
-                                            >
-                                                {(() => { const Icon = getCategoryIcon(selectedQueue.category, selectedQueue.name); return <Icon className="h-7 w-7" /> })()}
+                                    {/* 👇 UPDATED: Dark Premium Hero Header */}
+                                    <div className="p-6 relative overflow-hidden bg-slate-900 text-white">
+                                        <div className="flex items-start justify-between gap-4 relative z-10">
+                                            <div className="flex items-start gap-4">
+                                                <div
+                                                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm shadow-inner"
+                                                    style={{ color: primaryColor }}
+                                                >
+                                                    {(() => { const Icon = getCategoryIcon(selectedQueue.category, selectedQueue.name); return <Icon className="h-8 w-8" /> })()}
+                                                </div>
+                                                <div>
+                                                    <h2 className="text-2xl font-bold text-white leading-tight">
+                                                        {selectedQueue.name}
+                                                    </h2>
+                                                    <p className="mt-1 text-sm font-medium text-slate-300">
+                                                        {selectedQueue.officeName || 'University Office'}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 leading-tight">
-                                                    {selectedQueue.name}
-                                                </h2>
-                                                <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-400">
-                                                    {selectedQueue.officeName || 'University Office'}
-                                                </p>
-                                            </div>
+                                            <Badge className="bg-white/20 text-white border-0 shrink-0">
+                                                {selectedQueue.category}
+                                            </Badge>
                                         </div>
-                                        <p className="mt-4 text-sm text-slate-600 dark:text-slate-400 relative z-10">
+                                        <p className="mt-4 text-sm text-slate-300 relative z-10 max-w-md">
                                             {selectedQueue.description || 'Join this queue to get served.'}
                                         </p>
                                     </div>
 
                                     {/* Live Stats */}
-                                    <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100 dark:divide-slate-800 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+                                    <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100 dark:divide-slate-800 dark:border-slate-800 bg-white dark:bg-slate-900">
                                         <div className="p-4 text-center">
                                             <div className="flex justify-center mb-1 text-slate-400"><Clock className="h-4 w-4" /></div>
                                             <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{selectedQueue.estimatedMinutes || 0} mins</div>
@@ -413,6 +430,7 @@ export default function QueuesTab() {
                                             </div>
                                         </div>
 
+                                        {/* Services Included */}
                                         <div className="pt-5 border-t border-slate-100 dark:border-slate-800">
                                             <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3">Services Included</h4>
                                             <ul className="space-y-2">
@@ -465,7 +483,8 @@ export default function QueuesTab() {
                                         </button>
                                     </div>
 
-                                    <div className="p-4 text-center border-t border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+                                    {/* Footer */}
+                                    <div className="p-4 text-center border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                                         <button onClick={() => navigate('/student/my-tickets')} className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200">
                                             Already in the queue? <span style={{ color: primaryColor }} className="underline">View My Queues</span>
                                         </button>
