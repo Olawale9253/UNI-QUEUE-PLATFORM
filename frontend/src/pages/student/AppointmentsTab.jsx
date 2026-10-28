@@ -5,7 +5,7 @@ import {
     Calendar, Clock, MapPin, Phone, Search, Filter, ChevronRight,
     Building2, Users, HelpCircle, GraduationCap,
     FileText, Monitor, Banknote, UserCircle2, Info, ChevronDown,
-    Award, ClipboardList, AlertCircle, Mail
+    Award, ClipboardList, AlertCircle, Mail, RefreshCw
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -71,6 +71,7 @@ export default function AppointmentsTab() {
     const [myAppointments, setMyAppointments] = useState([])
     const [slots, setSlots] = useState([])
     const [loading, setLoading] = useState(true)
+    const [refreshing, setRefreshing] = useState(false)
     const [search, setSearch] = useState('')
 
     const [selectedOfficeId, setSelectedOfficeId] = useState(null)
@@ -81,7 +82,8 @@ export default function AppointmentsTab() {
 
     const primaryColor = university?.primaryColor || '#4f46e5'
 
-    const load = useCallback(async () => {
+    const load = useCallback(async (isManual = false) => {
+        if (isManual) setRefreshing(true)
         try {
             const [officesRes, apptsRes, queuesRes, slotsRes] = await Promise.all([
                 api.get('/api/offices').catch(() => ({ data: { data: [] } })),
@@ -93,6 +95,9 @@ export default function AppointmentsTab() {
             const qs = queuesRes.data?.data || []
             const os = officesRes.data?.data || []
             const fetchedSlots = slotsRes.data?.data || []
+
+            // 👇 DEBUG LOG: Check the browser console to see the raw data from the backend
+            console.log('--- RAW AVAILABLE SLOTS FROM BACKEND ---', fetchedSlots)
 
             const enrichedOffices = os.map(office => {
                 const services = qs.filter(q =>
@@ -117,10 +122,11 @@ export default function AppointmentsTab() {
             push({ type: 'error', message: err.message || 'Failed to load data' })
         } finally {
             setLoading(false)
+            setRefreshing(false)
         }
     }, [push])
 
-    useAdaptivePoll(load, { fastMs: 5000, slowMs: 15000 })
+    useAdaptivePoll(() => load(false), { fastMs: 5000, slowMs: 15000 })
 
     const selectedOffice = offices.find(o => String(o.id) === String(selectedOfficeId))
 
@@ -147,6 +153,7 @@ export default function AppointmentsTab() {
         )
     }, [offices, search])
 
+    // 👇 Filter slots matching the selected office
     const officeSlots = useMemo(() => {
         return slots.filter(s => String(s.officeId) === String(selectedOfficeId))
     }, [slots, selectedOfficeId])
@@ -175,7 +182,7 @@ export default function AppointmentsTab() {
             await api.post('/api/user/appointments/book', { slotId: selectedSlot.id })
             push({ type: 'success', message: `Appointment booked successfully for ${formatSlotTime(selectedSlot.startTime)}` })
             setActiveTopTab('mine')
-            await load()
+            await load(false)
         } catch (err) {
             push({ type: 'error', message: err.message || 'Failed to book appointment' })
         } finally {
@@ -259,7 +266,16 @@ export default function AppointmentsTab() {
                                         style={{ '--tw-ring-color': withAlpha(primaryColor, 0.2) }}
                                     />
                                 </div>
-                                <button className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors shrink-0">
+                                {/* 👇 NEW MANUAL REFRESH BUTTON */}
+                                <button
+                                    onClick={() => load(true)}
+                                    disabled={refreshing}
+                                    title="Refresh slots"
+                                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 transition-colors shrink-0 disabled:opacity-50"
+                                >
+                                    <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                                </button>
+                                <button className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors shrink-0 hidden sm:flex">
                                     <Filter className="h-4 w-4 text-slate-400" /> All Offices
                                 </button>
                             </div>
@@ -271,6 +287,8 @@ export default function AppointmentsTab() {
                                     {filteredOffices.map(office => {
                                         const isSelected = String(selectedOfficeId) === String(office.id)
                                         const Icon = getOfficeIcon(office.name)
+
+                                        // This checks if the office has ANY slots
                                         const hasSlots = slots.some(s => String(s.officeId) === String(office.id))
 
                                         return (
@@ -514,7 +532,6 @@ export default function AppointmentsTab() {
                                         >
                                             <Info className="h-8 w-8" />
                                         </div>
-                                        {/* 👇 UPDATED TEXT */}
                                         <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Select an office to view appointments</h3>
                                         <p className="mt-2 max-w-sm text-sm text-slate-500 dark:text-slate-400">
                                             Pick an office from the list on the left to see its staff, contact information, and available services.
