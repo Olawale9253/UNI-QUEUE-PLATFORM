@@ -5,7 +5,7 @@ import {
     Calendar, Clock, MapPin, Phone, Search, ChevronRight,
     Building2, Users, HelpCircle, GraduationCap,
     FileText, Monitor, Banknote, UserCircle2, Info, ChevronDown,
-    Award, ClipboardList, AlertCircle, Mail, RefreshCw
+    Award, ClipboardList, AlertCircle, Mail, RefreshCw, CalendarPlus
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -74,8 +74,6 @@ export default function AppointmentsTab() {
             ])
 
             const fetchedSlots = slotsRes.data?.data || []
-            console.log('--- RAW SLOTS FROM BACKEND ---', fetchedSlots)
-
             setSlots(fetchedSlots)
             setMyAppointments(apptsRes.data?.data || [])
         } catch (err) {
@@ -88,7 +86,7 @@ export default function AppointmentsTab() {
 
     useAdaptivePoll(() => load(false), { fastMs: 5000, slowMs: 15000 })
 
-    // 👇 Group slots by officeName (which is what backend sends)
+    // Group slots by officeName (which is what backend sends)
     const slotGroups = useMemo(() => {
         const groups = new Map()
         slots.forEach(slot => {
@@ -132,17 +130,14 @@ export default function AppointmentsTab() {
         )
     }, [slotGroups, search])
 
-    // Reset sub state when group changes
     useEffect(() => {
         setSelectedSlot(null)
     }, [selectedGroupKey])
 
     const selectedGroup = filteredGroups.find(g => g.key === selectedGroupKey)
 
-    // All slots in selected group
     const allSlotsInGroup = selectedGroup?.slots || []
 
-    // Unique dates from slots
     const uniqueDates = useMemo(() => {
         const dates = allSlotsInGroup.map(s => s.startTime?.split('T')[0]).filter(Boolean)
         return [...new Set(dates)].sort()
@@ -159,10 +154,7 @@ export default function AppointmentsTab() {
     }, [allSlotsInGroup, selectedDate])
 
     const handleBookAppointment = async (slotToBook) => {
-        if (!slotToBook) {
-            push({ type: 'error', message: 'Please select an available time slot first.' })
-            return
-        }
+        if (!slotToBook) return
         setBooking(true)
         try {
             await api.post('/api/user/appointments/book', { slotId: slotToBook.id })
@@ -411,7 +403,7 @@ export default function AppointmentsTab() {
                                             </div>
                                         </div>
 
-                                        {/* Booking Section */}
+                                        {/* 👇 PREMIUM BOOKING SECTION */}
                                         <div className="p-6 bg-slate-50/50">
                                             <h4 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
                                                 <Calendar className="h-4 w-4 text-slate-400" /> Available Slots
@@ -441,7 +433,7 @@ export default function AppointmentsTab() {
                                                     </div>
                                                 )}
 
-                                                {/* Slots list */}
+                                                {/* 👇 PREMIUM SLOTS LIST */}
                                                 <div className="space-y-3">
                                                     {availableSlotsForDate.map(slot => {
                                                         const isFull = slot.status === 'FULL'
@@ -450,48 +442,75 @@ export default function AppointmentsTab() {
                                                         return (
                                                             <div
                                                                 key={slot.id}
-                                                                className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border bg-white transition-all ${
-                                                                    isSelected ? 'ring-2' : ''
+                                                                className={`group relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border bg-white transition-all duration-200 ${
+                                                                    isFull
+                                                                        ? 'opacity-60 border-slate-200'
+                                                                        : 'hover:border-slate-300 hover:shadow-md cursor-pointer'
                                                                 }`}
-                                                                style={isSelected ? { borderColor: primaryColor, boxShadow: `0 0 0 2px ${withAlpha(primaryColor, 0.3)}` } : { borderColor: '#e2e8f0' }}
+                                                                style={isSelected ? { borderColor: primaryColor, boxShadow: `0 0 0 2px ${withAlpha(primaryColor, 0.2)}` } : { borderColor: '#e2e8f0' }}
+                                                                onClick={() => !isFull && setSelectedSlot(slot)}
                                                             >
-                                                                <div className="flex items-start gap-4">
-                                                                    <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}>
-                                                                        <Clock className="h-5 w-5" />
+                                                                <div className="flex items-start gap-4 flex-1 min-w-0">
+                                                                    <div
+                                                                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors ${
+                                                                            isFull ? 'bg-slate-100 text-slate-400' : 'bg-slate-50 text-slate-500 group-hover:bg-brand-50 group-hover:text-brand-600'
+                                                                        }`}
+                                                                        style={!isFull ? { '--tw-bg-opacity': 1 } : undefined}
+                                                                    >
+                                                                        <Calendar className="h-6 w-6" />
                                                                     </div>
-                                                                    <div>
-                                                                        <div className="text-sm font-bold text-slate-900">{slot.title}</div>
-                                                                        <div className="text-xs text-slate-500 mt-1 line-clamp-1">{slot.description || 'Standard appointment'}</div>
-                                                                        <div className="flex flex-wrap items-center gap-3 mt-2 text-xs font-medium text-slate-500">
-                                                                            <span className="flex items-center gap-1">
-                                                                                <Calendar className="h-3 w-3" />
+
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <h5 className="text-base font-bold text-slate-900 truncate">
+                                                                                {slot.title}
+                                                                            </h5>
+                                                                            <Badge variant={slot.remaining > 0 ? 'success' : 'danger'} className="text-[10px] px-1.5 py-0">
+                                                                                {slot.remaining} / {slot.capacity} left
+                                                                            </Badge>
+                                                                        </div>
+                                                                        <p className="mt-1 text-sm text-slate-500 line-clamp-1">
+                                                                            {slot.description || 'Standard appointment'}
+                                                                        </p>
+
+                                                                        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-semibold text-slate-600">
+                                                                            <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md">
+                                                                                <Calendar className="h-3.5 w-3.5 text-slate-400" />
                                                                                 {formatSlotDate(slot.startTime)}
                                                                             </span>
-                                                                            <span className="flex items-center gap-1">
-                                                                                <Clock className="h-3 w-3" />
+                                                                            <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md">
+                                                                                <Clock className="h-3.5 w-3.5 text-slate-400" />
                                                                                 {formatSlotTime(slot.startTime)} – {formatSlotTime(slot.endTime)}
                                                                             </span>
-                                                                            <span className="flex items-center gap-1">
-                                                                                <Users className="h-3 w-3" />
-                                                                                {slot.remaining}/{slot.capacity} left
+                                                                            <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md">
+                                                                                <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                                                                                {slot.location || selectedGroup.location}
                                                                             </span>
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <div className="mt-3 sm:mt-0 shrink-0">
+
+                                                                <div className="shrink-0 flex items-center justify-end sm:pl-4 sm:border-l sm:border-slate-100 sm:mt-0 mt-4">
                                                                     {isFull ? (
                                                                         <span className="text-xs font-bold text-slate-400 uppercase px-4 py-2">FULL</span>
                                                                     ) : (
                                                                         <button
-                                                                            onClick={() => {
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation()
                                                                                 setSelectedSlot(slot)
                                                                                 handleBookAppointment(slot)
                                                                             }}
-                                                                            disabled={booking}
-                                                                            className="rounded-lg px-5 py-2 text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+                                                                            disabled={booking && isSelected}
+                                                                            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
                                                                             style={{ backgroundColor: primaryColor }}
                                                                         >
-                                                                            {booking && isSelected ? 'Booking...' : 'Book'}
+                                                                            {booking && isSelected ? (
+                                                                                'Booking...'
+                                                                            ) : (
+                                                                                <>
+                                                                                    <CalendarPlus className="h-4 w-4" /> Book Now
+                                                                                </>
+                                                                            )}
                                                                         </button>
                                                                     )}
                                                                 </div>
