@@ -1,4 +1,4 @@
-import { useCallback, useState, useMemo } from 'react'
+import { useCallback, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import {
     Calendar, Building2, Ticket, CheckCircle2,
@@ -19,20 +19,23 @@ export default function StudentHome() {
     const [queues, setQueues] = useState([])
     const [appointments, setAppointments] = useState([])
     const [notifications, setNotifications] = useState([])
+    const [history, setHistory] = useState([]) // 👈 Added history state
 
     const load = useCallback(async () => {
         try {
-            const [ticketRes, queueRes, apptRes, notifRes] = await Promise.all([
+            const [ticketRes, queueRes, apptRes, notifRes, historyRes] = await Promise.all([
                 api.get('/api/user/tickets/active').catch(() => ({ data: { data: null } })),
                 api.get('/api/queues').catch(() => ({ data: { data: [] } })),
                 api.get('/api/appointments').catch(() => ({ data: { data: [] } })),
-                api.get('/api/notifications').catch(() => ({ data: { data: [] } }))
+                api.get('/api/notifications').catch(() => ({ data: { data: [] } })),
+                api.get('/api/user/tickets/history').catch(() => ({ data: { data: [] } })) // 👈 Fetch real history
             ])
 
             setActiveTicket(ticketRes.data?.data)
             setQueues(queueRes.data?.data || [])
             setAppointments(apptRes.data?.data || [])
             setNotifications(notifRes.data?.data || [])
+            setHistory(historyRes.data?.data || []) // 👈 Save history
         } catch (err) {
             console.error("Dashboard load error", err)
         } finally {
@@ -45,6 +48,7 @@ export default function StudentHome() {
     const unreadNotifs = notifications.filter(n => !n.isRead).length
     const upcomingAppts = appointments.filter(a => new Date(a.date) >= new Date()).length
     const topQueues = queues.slice(0, 3)
+    const recentActivity = history.slice(0, 3) // 👈 Grab the 3 most recent activities
 
     if (loading) {
         return <div className="flex h-64 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" /></div>
@@ -106,8 +110,8 @@ export default function StudentHome() {
                         <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 flex items-center justify-between">
                             <div>
                                 <p className="text-xs font-semibold text-slate-500 uppercase">Services</p>
-                                <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">8</p>
-                                <p className="text-[11px] text-slate-400 mt-1">This semester</p>
+                                <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{queues.length}</p>
+                                <p className="text-[11px] text-slate-400 mt-1">Available on campus</p>
                             </div>
                             <div className="h-10 w-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center">
                                 <FileText className="h-5 w-5" />
@@ -127,6 +131,8 @@ export default function StudentHome() {
 
                     {/* BOTTOM GRID */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        {/* YOUR UPCOMING QUEUES */}
                         <div className="rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
                             <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
                                 <div>
@@ -158,6 +164,7 @@ export default function StudentHome() {
                             </div>
                         </div>
 
+                        {/* RECENT ACTIVITY (NOW DYNAMIC) */}
                         <div className="rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
                             <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
                                 <div>
@@ -167,26 +174,26 @@ export default function StudentHome() {
                                 <Link to="/student/history" className="text-xs font-semibold text-blue-600 hover:underline">View All</Link>
                             </div>
                             <div className="p-2">
-                                <div className="flex items-start gap-3 p-3">
-                                    <div className="mt-0.5 h-8 w-8 flex items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                                        <CheckCircle2 className="h-4 w-4" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">Joined {activeTicket?.queueName || 'a Queue'}</p>
-                                        <p className="text-xs text-slate-500">{activeTicket?.officeName || 'Academic Office'}</p>
-                                    </div>
-                                    <span className="ml-auto text-[10px] text-slate-400">2 hours ago</span>
-                                </div>
-                                <div className="flex items-start gap-3 p-3">
-                                    <div className="mt-0.5 h-8 w-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                                        <Calendar className="h-4 w-4" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">Booked appointment</p>
-                                        <p className="text-xs text-slate-500">With Dr. Johnson</p>
-                                    </div>
-                                    <span className="ml-auto text-[10px] text-slate-400">Yesterday</span>
-                                </div>
+                                {recentActivity.length > 0 ? (
+                                    recentActivity.map((item, index) => (
+                                        <div key={index} className="flex items-start gap-3 p-3">
+                                            <div className="mt-0.5 h-8 w-8 flex items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                                                <CheckCircle2 className="h-4 w-4" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                                    {item.status === 'COMPLETED' ? 'Completed' : 'Joined'} {item.queueName || 'a Queue'}
+                                                </p>
+                                                <p className="text-xs text-slate-500">{item.officeName || 'Office'}</p>
+                                            </div>
+                                            <span className="ml-auto text-[10px] text-slate-400 whitespace-nowrap">
+                                                {new Date(item.createdAt || item.joinedAt || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                            </span>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="p-6 text-center text-sm text-slate-500">No recent activity found.</div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -205,6 +212,7 @@ export default function StudentHome() {
                         </Link>
                     </div>
 
+                    {/* LIVE QUEUE SUMMARY (NOW DYNAMIC) */}
                     <div className="rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
                         <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
                             <h3 className="font-bold text-slate-900 dark:text-white">Live Queue Summary</h3>
