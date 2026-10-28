@@ -274,38 +274,37 @@ export default function AppointmentsTab() {
                                         const hasSlots = slots.some(s => String(s.officeId) === String(office.id))
 
                                         return (
-                                            <Card
+                                            // 👇 FIX: Replaced Card with a native button to guarantee click works
+                                            <button
                                                 key={office.id}
-                                                className={`cursor-pointer transition-all duration-200 rounded-2xl ${
-                                                    isSelected ? 'border-2 shadow-md' : 'border border-slate-200 hover:border-slate-300'
+                                                type="button"
+                                                onClick={() => setSelectedOfficeId(office.id)}
+                                                className={`w-full text-left flex items-start gap-4 p-4 rounded-2xl cursor-pointer transition-all duration-200 border bg-white dark:bg-slate-900 ${
+                                                    isSelected ? 'border-2 shadow-md' : 'border-slate-200 hover:border-slate-300'
                                                 }`}
                                                 style={isSelected ? { borderColor: primaryColor, backgroundColor: withAlpha(primaryColor, 0.02) } : undefined}
-                                                onClick={() => setSelectedOfficeId(office.id)}
                                             >
-                                                <div className="flex items-start gap-4">
-                                                    <div
-                                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-                                                        style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
-                                                    >
-                                                        <Icon className="h-6 w-6" />
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-start justify-between gap-2">
-                                                            <div className="min-w-0">
-                                                                <h3 className="text-base font-bold text-slate-900">{office.name}</h3>
-                                                                <p className="mt-1 text-sm text-slate-500 line-clamp-2">{office.description || 'View available services and book an appointment.'}</p>
-                                                            </div>
-
-                                                            {/* 👇 FIXED BADGE: Added whitespace-nowrap and flex-shrink-0 so it never breaks */}
-                                                            <Badge variant={hasSlots ? 'success' : 'danger'} className="shrink-0 flex items-center gap-1 whitespace-nowrap text-[10px] px-2 py-0.5">
-                                                                {hasSlots ? <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> : <AlertCircle className="h-3 w-3" />}
-                                                                {hasSlots ? 'Bookable' : 'No Slot'}
-                                                            </Badge>
-                                                        </div>
-                                                    </div>
-                                                    {/* Removed the View Details button completely */}
+                                                <div
+                                                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+                                                    style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
+                                                >
+                                                    <Icon className="h-6 w-6" />
                                                 </div>
-                                            </Card>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div className="min-w-0">
+                                                            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">{office.name}</h3>
+                                                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{office.description || 'View available services and book an appointment.'}</p>
+                                                        </div>
+
+                                                        {/* 👇 FIX: Forced one line with whitespace-nowrap and smaller text */}
+                                                        <Badge variant={hasSlots ? 'success' : 'danger'} className="shrink-0 flex items-center gap-1 whitespace-nowrap text-[10px] px-2 py-0.5">
+                                                            {hasSlots ? <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> : <AlertCircle className="h-3 w-3" />}
+                                                            {hasSlots ? 'Bookable' : 'No Slot'}
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+                                            </button>
                                         )
                                     })}
                                 </div>
