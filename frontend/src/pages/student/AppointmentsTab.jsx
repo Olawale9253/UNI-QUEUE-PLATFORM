@@ -5,7 +5,7 @@ import {
     Calendar, Clock, MapPin, Phone, Search, Filter, ChevronRight,
     Building2, Users, HelpCircle, Ticket, GraduationCap,
     FileText, Monitor, Banknote, UserCircle2, Info, ChevronDown,
-    Award, ClipboardList
+    Award, ClipboardList, AlertCircle
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -34,28 +34,32 @@ function getServiceIcon(name) {
     return FileText
 }
 
-// Dynamically generate the next 7 days
-function generateDates(numDays = 7) {
-    const dates = []
+// Helper to format backend date strings (YYYY-MM-DD) into "Today - Mon, 28 Oct 2026"
+function formatSlotDate(dateStr) {
+    if (!dateStr) return ''
+    const d = new Date(dateStr)
     const today = new Date()
-    for (let i = 0; i < numDays; i++) {
-        const d = new Date(today)
-        d.setDate(today.getDate() + i)
-        const dayName = d.toLocaleDateString('en-US', { weekday: 'short' })
-        const month = d.toLocaleDateString('en-US', { month: 'short' })
-        const day = d.getDate()
-        const year = d.getFullYear()
 
-        let label = `${dayName}, ${day} ${month} ${year}`
-        if (i === 0) label = `Today - ${label}`
-        else if (i === 1) label = `Tomorrow - ${label}`
+    const isToday = d.toDateString() === today.toDateString()
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const isTomorrow = d.toDateString() === tomorrow.toDateString()
 
-        dates.push({ value: d.toISOString().split('T')[0], label })
-    }
-    return dates
+    const label = d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+    if (isToday) return `Today - ${label}`
+    if (isTomorrow) return `Tomorrow - ${label}`
+    return label
 }
 
-const TIME_SLOTS = ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '2:00 PM', '3:00 PM']
+// Helper to format time from backend (09:00:00) to (9:00 AM)
+function formatSlotTime(timeStr) {
+    if (!timeStr) return ''
+    const [hours, minutes] = timeStr.split(':')
+    const h = parseInt(hours)
+    const ampm = h >= 12 ? 'PM' : 'AM'
+    const h12 = h % 12 || 12
+    return `${h12}:${minutes} ${ampm}`
+}
 
 export default function AppointmentsTab() {
     const { push } = useToastStore()
@@ -67,30 +71,31 @@ export default function AppointmentsTab() {
 
     const [offices, setOffices] = useState([])
     const [myAppointments, setMyAppointments] = useState([])
+    const [slots, setSlots] = useState([]) // 👈 Real slots from backend
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
 
     const [selectedOfficeId, setSelectedOfficeId] = useState(null)
 
-    const DATES = useMemo(() => generateDates(7), [])
-
-    const [selectedDate, setSelectedDate] = useState(DATES[0].value)
-    const [selectedTime, setSelectedTime] = useState('10:00 AM')
-    const [selectedService, setSelectedService] = useState(null)
+    // Selection states based on real data
+    const [selectedDate, setSelectedDate] = useState('')
+    const [selectedSlot, setSelectedSlot] = useState(null) // 👈 Store the whole slot object
     const [booking, setBooking] = useState(false)
 
     const primaryColor = university?.primaryColor || '#4f46e5'
 
     const load = useCallback(async () => {
         try {
-            const [officesRes, apptsRes, queuesRes] = await Promise.all([
+            const [officesRes, apptsRes, queuesRes, slotsRes] = await Promise.all([
                 api.get('/api/offices').catch(() => ({ data: { data: [] } })),
                 api.get('/api/user/appointments').catch(() => ({ data: { data: [] } })),
-                api.get('/api/queues').catch(() => ({ data: { data: [] } }))
+                api.get('/api/queues').catch(() => ({ data: { data: [] } })),
+                api.get('/api/user/appointments/available').catch(() => ({ data: { data: [] } })) // 👈 Fetch real slots
             ])
 
             const qs = queuesRes.data?.data || []
             const os = officesRes.data?.data || []
+            const fetchedSlots = slotsRes.data?.data || [] // 👈 Save slots
 
             const enrichedOffices = os.map(office => {
                 const services = qs.filter(q =>
@@ -110,6 +115,7 @@ export default function AppointmentsTab() {
 
             setOffices(enrichedOffices.sort((a, b) => a.name.localeCompare(b.name)))
             setMyAppointments(apptsRes.data?.data || [])
+            setSlots(fetchedSlots)
 
             setSelectedOfficeId(prev => prev ?? (enrichedOffices.length > 0 ? enrichedOffices[0].id : null))
         } catch (err) {
@@ -123,8 +129,11 @@ export default function AppointmentsTab() {
 
     const selectedOffice = offices.find(o => String(o.id) === String(selectedOfficeId))
 
+    // Reset the sub-tab and date when a new office is selected
     useEffect(() => {
         setActiveSubTab('appointments')
+        setSelectedDate('')
+        setSelectedSlot(null)
     }, [selectedOfficeId])
 
     const filteredOffices = useMemo(() => {
@@ -137,18 +146,38 @@ export default function AppointmentsTab() {
         )
     }, [offices, search])
 
-    const handleBookAppointment = async (serviceToBook) => {
-        if (!selectedOffice || !serviceToBook || !selectedTime) {
-            push({ type: 'error', message: 'Please select a time slot first' })
+    // 👇 DERIVE DATES & TIMES from real slots
+    const officeSlots = useMemo(() => {
+        return slots.filter(s => String(s.officeId) === String(selectedOfficeId))
+    }, [slots, selectedOfficeId])
+
+    const uniqueDates = useMemo(() => {
+        return [...new Set(officeSlots.map(s => s.date))].sort()
+    }, [officeSlots])
+
+    // Auto-select the first available date when the user picks an office
+    useEffect(() => {
+        if (uniqueDates.length > 0 && !selectedDate) {
+            setSelectedDate(uniqueDates[0])
+        }
+    }, [uniqueDates, selectedDate])
+
+    const availableSlotsForDate = useMemo(() => {
+        return officeSlots.filter(s => s.date === selectedDate)
+    }, [officeSlots, selectedDate])
+
+    const handleBookAppointment = async () => {
+        if (!selectedOffice || !selectedSlot) {
+            push({ type: 'error', message: 'Please select an available time slot first.' })
             return
         }
         setBooking(true)
         try {
-            await new Promise(resolve => setTimeout(resolve, 800))
-            push({ type: 'success', message: `Appointment booked for ${serviceToBook.name} at ${selectedTime}` })
+            // Assuming backend expects slotId
+            await api.post('/api/user/appointments/book', { slotId: selectedSlot.id })
+            push({ type: 'success', message: `Appointment booked successfully for ${formatSlotTime(selectedSlot.startTime)}` })
             setActiveTopTab('mine')
-            const apptsRes = await api.get('/api/user/appointments').catch(() => ({ data: { data: [] } }))
-            setMyAppointments(apptsRes.data?.data || [])
+            await load() // Reload to update available slots and my appointments
         } catch (err) {
             push({ type: 'error', message: err.message || 'Failed to book appointment' })
         } finally {
@@ -164,7 +193,6 @@ export default function AppointmentsTab() {
         )
     }
 
-    // Standard page scroll
     return (
         <div className="bg-white dark:bg-slate-950 min-h-screen -m-4 p-4 sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
             <div className="max-w-[1600px] mx-auto pb-12">
@@ -330,7 +358,7 @@ export default function AppointmentsTab() {
                                             </div>
                                         </div>
 
-                                        {/* 3-Column Info Grid - Fixed breaking text */}
+                                        {/* 3-Column Info Grid */}
                                         <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 border-b border-slate-100 bg-white">
                                             <div className="flex items-start gap-3 p-4">
                                                 <MapPin className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
@@ -350,7 +378,6 @@ export default function AppointmentsTab() {
                                                 <Clock className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
                                                 <div>
                                                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Working Hours</div>
-                                                    {/* 👇 FIX: Using whitespace-nowrap to force one line */}
                                                     <div className="mt-1 text-sm font-semibold text-slate-900 whitespace-nowrap">Mon – Fri: 8:00 AM – 4:00 PM</div>
                                                 </div>
                                             </div>
@@ -385,41 +412,57 @@ export default function AppointmentsTab() {
                                         <div className="p-6 space-y-6">
                                             {activeSubTab === 'appointments' && (
                                                 <>
-                                                    {/* Horizontal Date & Time bar */}
-                                                    <div className="flex flex-wrap items-center gap-4 mb-6 border-b border-slate-100 pb-5">
-                                                        <div className="flex items-center gap-2 shrink-0">
-                                                            <Calendar className="h-4 w-4 text-slate-400" />
-                                                            <span className="text-sm font-semibold text-slate-700">Select Date</span>
-                                                            <div className="relative">
-                                                                <select
-                                                                    className="appearance-none rounded-lg border border-slate-200 bg-white py-1.5 pl-3 pr-10 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2"
-                                                                    value={selectedDate}
-                                                                    onChange={(e) => setSelectedDate(e.target.value)}
-                                                                    style={{ '--tw-ring-color': withAlpha(primaryColor, 0.2) }}
-                                                                >
-                                                                    {DATES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-                                                                </select>
-                                                                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                                    {/* Dynamic Date & Time bar based on backend slots */}
+                                                    {uniqueDates.length > 0 ? (
+                                                        <div className="flex flex-wrap items-center gap-4 mb-6 border-b border-slate-100 pb-5">
+                                                            <div className="flex items-center gap-2 shrink-0">
+                                                                <Calendar className="h-4 w-4 text-slate-400" />
+                                                                <span className="text-sm font-semibold text-slate-700">Select Date</span>
+                                                                <div className="relative">
+                                                                    <select
+                                                                        className="appearance-none rounded-lg border border-slate-200 bg-white py-1.5 pl-3 pr-10 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2"
+                                                                        value={selectedDate}
+                                                                        onChange={(e) => {
+                                                                            setSelectedDate(e.target.value)
+                                                                            setSelectedSlot(null) // Reset selected slot when date changes
+                                                                        }}
+                                                                        style={{ '--tw-ring-color': withAlpha(primaryColor, 0.2) }}
+                                                                    >
+                                                                        {uniqueDates.map(date => (
+                                                                            <option key={date} value={date}>{formatSlotDate(date)}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex items-center gap-2 overflow-x-auto pb-1 w-full lg:w-auto">
+                                                                {availableSlotsForDate.map(slot => (
+                                                                    <button
+                                                                        key={slot.id}
+                                                                        onClick={() => setSelectedSlot(slot)}
+                                                                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
+                                                                            selectedSlot?.id === slot.id
+                                                                                ? 'text-white shadow-sm'
+                                                                                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                                                        }`}
+                                                                        style={selectedSlot?.id === slot.id ? { backgroundColor: primaryColor } : undefined}
+                                                                    >
+                                                                        {formatSlotTime(slot.startTime)}
+                                                                    </button>
+                                                                ))}
                                                             </div>
                                                         </div>
-
-                                                        <div className="flex items-center gap-2 overflow-x-auto pb-1 w-full lg:w-auto">
-                                                            {TIME_SLOTS.map(time => (
-                                                                <button
-                                                                    key={time}
-                                                                    onClick={() => setSelectedTime(time)}
-                                                                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
-                                                                        selectedTime === time
-                                                                            ? 'text-white shadow-sm'
-                                                                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                                                                    }`}
-                                                                    style={selectedTime === time ? { backgroundColor: primaryColor } : undefined}
-                                                                >
-                                                                    {time}
-                                                                </button>
-                                                            ))}
+                                                    ) : (
+                                                        /* 👇 Empty state if NO slots are created by staff */
+                                                        <div className="p-8 text-center border border-dashed rounded-xl bg-slate-50 flex flex-col items-center justify-center mb-6">
+                                                            <AlertCircle className="h-10 w-10 text-amber-500 mb-3" />
+                                                            <p className="text-sm font-bold text-slate-600">No Appointment Slots Available</p>
+                                                            <p className="text-xs text-slate-500 mt-1 max-w-sm">
+                                                                The staff has not created any appointment slots for this office yet. Please check back later.
+                                                            </p>
                                                         </div>
-                                                    </div>
+                                                    )}
 
                                                     {/* Services */}
                                                     <div>
@@ -439,13 +482,7 @@ export default function AppointmentsTab() {
                                                                     return (
                                                                         <div
                                                                             key={service.id}
-                                                                            className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${
-                                                                                selectedService?.id === service.id
-                                                                                    ? 'bg-slate-50 shadow-sm'
-                                                                                    : 'border-slate-200 bg-white hover:border-slate-300'
-                                                                            }`}
-                                                                            style={selectedService?.id === service.id ? { borderColor: primaryColor, boxShadow: '0 0 0 1px ' + withAlpha(primaryColor, 0.5) } : undefined}
-                                                                            onClick={() => setSelectedService(service)}
+                                                                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all"
                                                                         >
                                                                             <div className="flex items-start gap-4">
                                                                                 <div
@@ -464,16 +501,12 @@ export default function AppointmentsTab() {
                                                                                     <Clock className="h-3.5 w-3.5" /> {service.averageServiceMinutes || 20} mins
                                                                                 </span>
                                                                                 <button
-                                                                                    onClick={(e) => {
-                                                                                        e.stopPropagation();
-                                                                                        setSelectedService(service);
-                                                                                        handleBookAppointment(service);
-                                                                                    }}
-                                                                                    disabled={booking}
-                                                                                    className="rounded-lg px-5 py-2 text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+                                                                                    onClick={() => handleBookAppointment()}
+                                                                                    disabled={!selectedSlot || booking} // 👈 Disable if no slot is selected or no slots exist
+                                                                                    className="rounded-lg px-5 py-2 text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap disabled:cursor-not-allowed"
                                                                                     style={{ backgroundColor: primaryColor }}
                                                                                 >
-                                                                                    {booking ? 'Booking...' : 'Book Appointment'}
+                                                                                    {booking ? 'Booking...' : selectedSlot ? 'Book Appointment' : 'Select a slot'}
                                                                                 </button>
                                                                             </div>
                                                                         </div>
