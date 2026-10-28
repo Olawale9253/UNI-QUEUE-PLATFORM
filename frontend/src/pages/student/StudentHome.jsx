@@ -1,21 +1,17 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import {
-    Search, Bell, ChevronRight, GraduationCap, Calendar, Building2, Ticket,
-    Clock, CheckCircle2, AlertCircle, FileText, Banknote, Users, ArrowRight, User
+    GraduationCap, Calendar, Building2, Ticket, Clock, CheckCircle2,
+    FileText, Users, ArrowRight, ChevronRight, User, Bell, ShieldAlert
 } from 'lucide-react'
 import api from '../../api/axios'
 import { useAuthStore } from '../../store/authStore'
 import { useUniversityStore } from '../../store/universityStore'
-import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
-import { withAlpha } from '../../lib/colors'
 
-export default function HomeTab() {
+export default function StudentHome() {
     const { user } = useAuthStore()
     const { university } = useUniversityStore()
-    const { push } = useToastStore()
     const navigate = useNavigate()
 
     const [loading, setLoading] = useState(true)
@@ -24,15 +20,19 @@ export default function HomeTab() {
     const [appointments, setAppointments] = useState([])
     const [notifications, setNotifications] = useState([])
 
-    const primaryColor = university?.primaryColor || '#0ea5e9'
     const firstName = user?.fullName?.split(' ')[0] || 'Student'
 
-    // Dynamic Greeting
+    // Dynamic Greeting (matches your original code)
     const greeting = useMemo(() => {
         const hour = new Date().getHours()
-        if (hour < 12) return 'Good Morning'
-        if (hour < 18) return 'Good Afternoon'
-        return 'Good Evening'
+        if (hour < 12) return 'Good morning'
+        if (hour < 18) return 'Good afternoon'
+        return 'Good night'
+    }, [])
+
+    // Current Date
+    const currentDate = useMemo(() => {
+        return new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
     }, [])
 
     const load = useCallback(async () => {
@@ -59,8 +59,6 @@ export default function HomeTab() {
 
     const unreadNotifs = notifications.filter(n => !n.isRead).length
     const upcomingAppts = appointments.filter(a => new Date(a.date) >= new Date()).length
-
-    // Top 3 queues for the summary sidebar
     const topQueues = queues.slice(0, 3)
 
     if (loading) {
@@ -68,41 +66,51 @@ export default function HomeTab() {
     }
 
     return (
-        <div className="space-y-6 pb-12">
-            {/* HERO BANNER */}
-            <div className="relative overflow-hidden rounded-2xl bg-slate-900 text-white shadow-lg">
-                {/* Background Image Overlay */}
-                <div className="absolute inset-0">
-                    <img
-                        src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80"
-                        alt="Campus"
-                        className="h-full w-full object-cover opacity-30 mix-blend-overlay"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/80 to-transparent" />
-                </div>
-
-                <div className="relative z-10 flex flex-col md:flex-row items-start justify-between p-8 sm:p-10 gap-6">
-                    <div>
-                        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2">
-                            {greeting}, {firstName} 👋
-                        </h1>
-                        <p className="text-slate-300 font-medium max-w-md">
-                            Your university journey, made easier. Access queues, book appointments, find offices and stay updated — all in one place.
-                        </p>
+        <div className="space-y-6">
+            {/* ORIGINAL HEADER (Unchanged) */}
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div>
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-md bg-orange-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-orange-600 dark:bg-orange-500/20 dark:text-orange-400">
+                            <GraduationCap className="h-3 w-3" /> Student Workspace
+                        </span>
+                        <span className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                            <Calendar className="h-3.5 w-3.5" /> {currentDate}
+                        </span>
                     </div>
-                    {/* Decorative text */}
-                    <div className="hidden lg:block text-right italic text-white/50 font-serif text-lg">
-                        <p>Same School</p>
-                        <p>Bigger Dreams</p>
-                    </div>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                        {greeting}, {firstName}
+                    </h1>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        Join a queue, track your position, and manage your tickets.
+                    </p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
+            {/* ORIGINAL NEXT CLOSURES BANNER (Unchanged) */}
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900 overflow-x-auto">
+                <span className="flex items-center gap-1.5 text-xs font-bold text-slate-500 whitespace-nowrap">
+                    <Calendar className="h-4 w-4" /> NEXT CLOSURES
+                </span>
+                <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-orange-500 px-3 py-1 text-xs font-bold text-white whitespace-nowrap">NOV 01</span>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">National Youth Day</span>
+                </div>
+                <div className="flex items-center gap-2 ml-2">
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300 whitespace-nowrap">DEC 25</span>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">Christmas Day</span>
+                </div>
+                <div className="flex items-center gap-2 ml-2">
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300 whitespace-nowrap">DEC 26</span>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">Boxing Day</span>
+                </div>
+                <span className="text-xs font-bold text-slate-500 whitespace-nowrap ml-auto">+9</span>
+            </div>
 
-                {/* LEFT COLUMN */}
+            {/* NEW CONTENT STARTS HERE */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
                 <div className="space-y-6">
-                    {/* QUICK ACTIONS (TOP ROW) */}
+                    {/* QUICK ACTIONS */}
                     <div>
                         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-3">Quick Actions</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -172,9 +180,8 @@ export default function HomeTab() {
                         </div>
                     </div>
 
-                    {/* UPCOMING QUEUES & RECENT ACTIVITY */}
+                    {/* BOTTOM GRID */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Your Upcoming Queues */}
                         <div className="rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
                             <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
                                 <div>
@@ -206,7 +213,6 @@ export default function HomeTab() {
                             </div>
                         </div>
 
-                        {/* Recent Activity */}
                         <div className="rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
                             <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
                                 <div>
@@ -241,9 +247,8 @@ export default function HomeTab() {
                     </div>
                 </div>
 
-                {/* RIGHT COLUMN */}
+                {/* RIGHT SIDEBAR */}
                 <div className="space-y-6">
-                    {/* Profile Card */}
                     <div className="p-6 rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 flex flex-col items-center text-center">
                         <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
                             <User className="h-8 w-8" />
@@ -255,7 +260,6 @@ export default function HomeTab() {
                         </Link>
                     </div>
 
-                    {/* Live Queue Summary */}
                     <div className="rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
                         <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
                             <h3 className="font-bold text-slate-900 dark:text-white">Live Queue Summary</h3>
@@ -287,7 +291,6 @@ export default function HomeTab() {
                         </div>
                     </div>
 
-                    {/* Useful Links */}
                     <div className="rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-5">
                         <h3 className="font-bold text-slate-900 dark:text-white mb-3">Useful Links</h3>
                         <ul className="space-y-3">
