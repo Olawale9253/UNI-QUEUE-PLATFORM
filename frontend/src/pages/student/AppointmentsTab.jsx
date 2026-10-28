@@ -301,7 +301,7 @@ export default function AppointmentsTab() {
                                                             </div>
 
                                                             {/* 👇 RENAMED BADGE */}
-                                                            <Badge variant={hasSlots ? 'success' : 'danger'} className="shrink-0 flex items-center gap-1 whitespace-nowrap">
+                                                            <Badge variant={hasSlots ? 'success' : 'danger'} className="shrink-0 flex items-center gap-1 whitespace-nowrap text-[10px] px-2 py-0.5">
                                                                 {hasSlots ? <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> : <AlertCircle className="h-3 w-3" />}
                                                                 {hasSlots ? 'Bookable' : 'No Slot'}
                                                             </Badge>
