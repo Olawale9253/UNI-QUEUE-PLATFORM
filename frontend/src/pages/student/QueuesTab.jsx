@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-    Search, Filter, ChevronRight, HelpCircle, GraduationCap,
+    Search, ChevronRight, HelpCircle, GraduationCap,
     Users, Building2, Banknote, Clock, MapPin, Phone,
-    ArrowRight, CheckCircle2, Ticket, AlertCircle, RefreshCw,
-    FileText, BookOpen, Monitor, ListOrdered, Info
+    ArrowRight, CheckCircle2,
+    FileText, BookOpen, Monitor, ListOrdered, Info, Lock
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -17,7 +17,6 @@ import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { withAlpha } from '../../lib/colors'
 
-// Helper to infer category from queue/office name
 function inferCategory(queueName, officeName) {
     const name = `${queueName} ${officeName}`.toLowerCase()
     if (name.includes('bursary') || name.includes('finance') || name.includes('fee') || name.includes('payment') || name.includes('tuition')) return 'Financial'
@@ -27,7 +26,6 @@ function inferCategory(queueName, officeName) {
     return 'Other'
 }
 
-// Helper to get icon based on category
 function getCategoryIcon(category, name) {
     const n = (name || '').toLowerCase()
     if (n.includes('register')) return FileText
@@ -55,7 +53,6 @@ export default function QueuesTab() {
     const [queues, setQueues] = useState([])
     const [activeTicket, setActiveTicket] = useState(null)
     const [loading, setLoading] = useState(true)
-    const [refreshing, setRefreshing] = useState(false)
 
     const [search, setSearch] = useState('')
     const [activeCategory, setActiveCategory] = useState('All Queues')
@@ -63,9 +60,9 @@ export default function QueuesTab() {
     const [joining, setJoining] = useState(false)
 
     const primaryColor = university?.primaryColor || '#4f46e5'
+    const isFresher = user?.role === 'FRESHER'
 
-    const load = useCallback(async (isManual = false) => {
-        if (isManual) setRefreshing(true)
+    const load = useCallback(async () => {
         try {
             const [queueRes, tokenRes] = await Promise.all([
                 api.get('/api/queues').catch(() => ({ data: { data: [] } })),
@@ -75,7 +72,6 @@ export default function QueuesTab() {
             setQueues(fetchedQueues)
             setActiveTicket(tokenRes.data?.data || null)
 
-            // Auto-select the first queue if none is selected and list is not empty
             setSelectedQueueId(prev => {
                 if (prev) return prev
                 return fetchedQueues.length > 0 ? fetchedQueues[0].id : null
@@ -84,13 +80,11 @@ export default function QueuesTab() {
             push({ type: 'error', message: err.message || 'Failed to load queues' })
         } finally {
             setLoading(false)
-            setRefreshing(false)
         }
     }, [push])
 
-    useAdaptivePoll(() => load(false), { fastMs: 5000, slowMs: 15000 })
+    useAdaptivePoll(load, { fastMs: 5000, slowMs: 15000 })
 
-    // Enrich queues with category
     const enrichedQueues = useMemo(() => {
         return queues.map(q => ({
             ...q,
@@ -98,7 +92,6 @@ export default function QueuesTab() {
         }))
     }, [queues])
 
-    // Filter queues based on search and category
     const filteredQueues = useMemo(() => {
         let result = enrichedQueues
         if (activeCategory !== 'All Queues') {
@@ -124,6 +117,10 @@ export default function QueuesTab() {
         }
         if (!queueToJoin.isOpen) {
             push({ type: 'error', message: 'This queue is currently closed.' })
+            return
+        }
+        if (isFresher && queueToJoin.matricRequired) {
+            push({ type: 'error', message: 'You must update your profile with a matric number to join this queue.' })
             return
         }
 
@@ -178,25 +175,29 @@ export default function QueuesTab() {
 
                 {/* Filter Tabs */}
                 <div className="flex flex-wrap items-center gap-2 mb-6">
-                    {CATEGORIES.map(cat => (
-                        <button
-                            key={cat}
-                            onClick={() => setActiveCategory(cat)}
-                            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
-                                activeCategory === cat
-                                    ? 'bg-slate-900 text-white shadow-sm dark:bg-white dark:text-slate-900'
-                                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800'
-                            }`}
-                        >
-                            {cat === 'All Queues' && <ListOrdered className="h-4 w-4" />}
-                            {cat === 'Academic' && <GraduationCap className="h-4 w-4" />}
-                            {cat === 'Administrative' && <Building2 className="h-4 w-4" />}
-                            {cat === 'Student Support' && <Users className="h-4 w-4" />}
-                            {cat === 'Financial' && <Banknote className="h-4 w-4" />}
-                            {cat === 'Other' && <Clock className="h-4 w-4" />}
-                            {cat}
-                        </button>
-                    ))}
+                    {CATEGORIES.map(cat => {
+                        const isActive = activeCategory === cat
+                        return (
+                            <button
+                                key={cat}
+                                onClick={() => setActiveCategory(cat)}
+                                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all border ${
+                                    isActive
+                                        ? 'text-white shadow-sm border-transparent'
+                                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800'
+                                }`}
+                                style={isActive ? { backgroundColor: primaryColor } : undefined}
+                            >
+                                {cat === 'All Queues' && <ListOrdered className="h-4 w-4" />}
+                                {cat === 'Academic' && <GraduationCap className="h-4 w-4" />}
+                                {cat === 'Administrative' && <Building2 className="h-4 w-4" />}
+                                {cat === 'Student Support' && <Users className="h-4 w-4" />}
+                                {cat === 'Financial' && <Banknote className="h-4 w-4" />}
+                                {cat === 'Other' && <Clock className="h-4 w-4" />}
+                                {cat}
+                            </button>
+                        )
+                    })}
                 </div>
 
                 {/* Main Content Grid */}
@@ -204,7 +205,6 @@ export default function QueuesTab() {
 
                     {/* LEFT COLUMN: Queue List */}
                     <div className="space-y-4">
-                        {/* Search Bar */}
                         <div className="relative">
                             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                             <input
@@ -217,7 +217,6 @@ export default function QueuesTab() {
                             />
                         </div>
 
-                        {/* List */}
                         {filteredQueues.length === 0 ? (
                             <EmptyState icon={Search} title="No queues found" description="Try adjusting your search or category filter." />
                         ) : (
@@ -226,6 +225,7 @@ export default function QueuesTab() {
                                     const isSelected = String(selectedQueueId) === String(queue.id)
                                     const Icon = getCategoryIcon(queue.category, queue.name)
                                     const isOpen = queue.isOpen === true
+                                    const isLocked = isFresher && queue.matricRequired
 
                                     return (
                                         <button
@@ -234,7 +234,7 @@ export default function QueuesTab() {
                                             onClick={() => setSelectedQueueId(queue.id)}
                                             className={`w-full text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl transition-all duration-200 border-2 bg-white dark:bg-slate-900 ${
                                                 isSelected
-                                                    ? 'border-slate-900 shadow-md dark:border-white'
+                                                    ? 'shadow-md'
                                                     : 'border-slate-100 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700'
                                             }`}
                                             style={isSelected ? { borderColor: primaryColor } : undefined}
@@ -260,6 +260,12 @@ export default function QueuesTab() {
                                                             {isOpen && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}
                                                             {isOpen ? 'Open' : 'Closed'}
                                                         </Badge>
+                                                        {isLocked && (
+                                                            <Badge variant="warning" className="flex items-center gap-1 bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                                                                <Lock className="h-3 w-3" />
+                                                                Matric Required
+                                                            </Badge>
+                                                        )}
                                                     </div>
                                                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 line-clamp-1">
                                                         {queue.description || 'No description provided.'}
@@ -281,15 +287,29 @@ export default function QueuesTab() {
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation()
-                                                        if (!isSelected) setSelectedQueueId(queue.id)
-                                                        else handleJoinQueue(queue)
+                                                        if (!isSelected) {
+                                                            setSelectedQueueId(queue.id)
+                                                        } else if (!isLocked) {
+                                                            handleJoinQueue(queue)
+                                                        }
                                                     }}
-                                                    disabled={!isOpen || joining}
-                                                    className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    style={{ backgroundColor: primaryColor }}
+                                                    disabled={!isOpen || joining || isLocked}
+                                                    className={`inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold shadow-sm transition-all disabled:cursor-not-allowed ${
+                                                        isLocked
+                                                            ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
+                                                            : 'text-white hover:shadow-md'
+                                                    }`}
+                                                    style={!isLocked ? { backgroundColor: primaryColor } : undefined}
                                                 >
-                                                    Join Queue
-                                                    <ArrowRight className="h-4 w-4" />
+                                                    {isLocked ? (
+                                                        <>
+                                                            <Lock className="h-4 w-4" /> Update Profile
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            Join Queue <ArrowRight className="h-4 w-4" />
+                                                        </>
+                                                    )}
                                                 </button>
                                             </div>
                                         </button>
@@ -303,7 +323,6 @@ export default function QueuesTab() {
                     <div className="sticky top-24">
                         {selectedQueue ? (
                             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={selectedQueue.id}>
-                                {/* 👇 ADDED: Slight background tint to the entire card */}
                                 <Card
                                     padded={false}
                                     className="overflow-hidden shadow-lg border-slate-200 dark:border-slate-800 rounded-2xl"
@@ -394,7 +413,6 @@ export default function QueuesTab() {
                                             </div>
                                         </div>
 
-                                        {/* Services Included */}
                                         <div className="pt-5 border-t border-slate-100 dark:border-slate-800">
                                             <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3">Services Included</h4>
                                             <ul className="space-y-2">
@@ -416,16 +434,26 @@ export default function QueuesTab() {
 
                                     {/* Actions */}
                                     <div className="p-6 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 space-y-3">
-                                        <button
-                                            onClick={() => handleJoinQueue(selectedQueue)}
-                                            disabled={!selectedQueue.isOpen || joining || !!activeTicket}
-                                            className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-md transition-all hover:shadow-lg disabled:opacity-50"
-                                            style={{ backgroundColor: primaryColor }}
-                                        >
-                                            <Users className="h-4 w-4" />
-                                            {activeTicket ? 'Already in a Queue' : joining ? 'Joining...' : 'Join Queue'}
-                                            {!activeTicket && !joining && <ChevronRight className="h-4 w-4" />}
-                                        </button>
+                                        {isFresher && selectedQueue.matricRequired ? (
+                                            <button
+                                                onClick={() => navigate('/student/profile')}
+                                                className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700 shadow-sm transition-all hover:bg-amber-100 border border-amber-200"
+                                            >
+                                                <Lock className="h-4 w-4" />
+                                                Update Profile to Join
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleJoinQueue(selectedQueue)}
+                                                disabled={!selectedQueue.isOpen || joining || !!activeTicket}
+                                                className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-md transition-all hover:shadow-lg disabled:opacity-50"
+                                                style={{ backgroundColor: primaryColor }}
+                                            >
+                                                <Users className="h-4 w-4" />
+                                                {activeTicket ? 'Already in a Queue' : joining ? 'Joining...' : 'Join Queue'}
+                                                {!activeTicket && !joining && <ChevronRight className="h-4 w-4" />}
+                                            </button>
+                                        )}
 
                                         <button
                                             onClick={() => navigate('/student/offices')}
@@ -437,7 +465,6 @@ export default function QueuesTab() {
                                         </button>
                                     </div>
 
-                                    {/* Footer */}
                                     <div className="p-4 text-center border-t border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
                                         <button onClick={() => navigate('/student/my-tickets')} className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200">
                                             Already in the queue? <span style={{ color: primaryColor }} className="underline">View My Queues</span>
