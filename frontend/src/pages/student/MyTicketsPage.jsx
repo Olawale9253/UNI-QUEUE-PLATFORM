@@ -16,6 +16,7 @@ import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import RatingModal from '../../components/student/RatingModal'
 
+// 👇 HELPER: Formats old long ticket IDs into short Q-XXXX format
 function formatTicketNumber(ticketNumber) {
     if (!ticketNumber) return 'T-0000'
     if (ticketNumber.includes('-')) return ticketNumber
@@ -27,6 +28,7 @@ function formatTicketNumber(ticketNumber) {
     return ticketNumber
 }
 
+// 👇 HELPER: Dynamically assign icons based on the service name
 function getServiceIcon(name = '') {
     const n = name.toLowerCase()
     if (n.includes('tuition') || n.includes('payment') || n.includes('fee') || n.includes('bursary') || n.includes('finance')) return Ticket
@@ -147,13 +149,17 @@ export default function MyTicketsPage() {
             loadData()
         } catch (err) {
             console.error("Leave queue error:", err)
-            // 👇 Handle expired session or backend crash
-            if (err.response?.status === 401 || err.response?.status === 500) {
+            // 👇 ONLY log out if the backend explicitly says 401 Unauthorized
+            if (err.response?.status === 401) {
                 push({ type: 'error', message: 'Your session expired. Please log in again.' })
                 logout()
                 navigate('/login')
             } else {
-                push({ type: 'error', message: err.response?.data?.message || err.message || 'Failed to leave queue' })
+                // 👇 If it's a 500 error, just show the error message and keep the user logged in
+                push({
+                    type: 'error',
+                    message: err.response?.data?.message || 'Server error while trying to leave the queue. Please try again later.'
+                })
             }
         } finally {
             setActing(null)
