@@ -17,7 +17,6 @@ import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { withAlpha } from '../../lib/colors'
 
-// Helper to infer category from queue/office name
 function inferCategory(queueName, officeName) {
     const name = `${queueName} ${officeName}`.toLowerCase()
     if (name.includes('bursary') || name.includes('finance') || name.includes('fee') || name.includes('payment') || name.includes('tuition')) return 'Financial'
@@ -27,7 +26,6 @@ function inferCategory(queueName, officeName) {
     return 'Other'
 }
 
-// Helper to get icon based on category
 function getCategoryIcon(category, name) {
     const n = (name || '').toLowerCase()
     if (n.includes('register')) return FileText
@@ -174,8 +172,6 @@ export default function QueuesTab() {
     return (
         <div className="bg-white dark:bg-slate-950 min-h-screen -m-4 p-4 sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
             <div className="max-w-[1600px] mx-auto pb-12">
-
-                {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Browse Queues</h1>
@@ -200,7 +196,6 @@ export default function QueuesTab() {
                     </div>
                 </div>
 
-                {/* Filter Tabs */}
                 <div className="flex flex-wrap items-center gap-2 mb-6">
                     {CATEGORIES.map(cat => {
                         const isActive = activeCategory === cat
@@ -227,10 +222,7 @@ export default function QueuesTab() {
                     })}
                 </div>
 
-                {/* Main Content Grid */}
                 <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.2fr_1fr]">
-
-                    {/* LEFT COLUMN: Queue List */}
                     <div className="space-y-4">
                         <div className="relative">
                             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -357,7 +349,6 @@ export default function QueuesTab() {
                         )}
                     </div>
 
-                    {/* RIGHT COLUMN: Selected Queue Details */}
                     <div className="sticky top-24">
                         {selectedQueue ? (
                             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={selectedQueue.id}>
@@ -365,42 +356,40 @@ export default function QueuesTab() {
                                     padded={false}
                                     className="overflow-hidden shadow-lg border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900"
                                 >
-
-                                    {/* 👇 SOFT COLOR BACKGROUND HEADER */}
+                                    {/* 👇 SOLID COLOR HEADER WITH DOT PATTERN */}
                                     <div
-                                        className="p-6 relative overflow-hidden border-b border-slate-100 dark:border-slate-800"
-                                        style={{ backgroundColor: withAlpha(primaryColor, 0.05) }}
+                                        className="p-6 relative overflow-hidden text-white"
+                                        style={{
+                                            backgroundColor: primaryColor,
+                                            backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px)',
+                                            backgroundSize: '16px 16px'
+                                        }}
                                     >
+                                        <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent pointer-events-none" />
+
                                         <div className="flex items-start justify-between gap-4 relative z-10">
                                             <div className="flex items-start gap-4">
-                                                <div
-                                                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl shadow-sm border border-white/50 dark:border-slate-800"
-                                                    style={{ backgroundColor: withAlpha(primaryColor, 0.15), color: primaryColor }}
-                                                >
+                                                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm shadow-inner text-white">
                                                     {(() => { const Icon = getCategoryIcon(selectedQueue.category, selectedQueue.name); return <Icon className="h-8 w-8" /> })()}
                                                 </div>
                                                 <div>
-                                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                                                    <h2 className="text-2xl font-bold text-white leading-tight drop-shadow-md">
                                                         {selectedQueue.name}
                                                     </h2>
-                                                    <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">
+                                                    <p className="mt-1 text-sm font-medium text-white/80">
                                                         {selectedQueue.officeName || 'University Office'}
                                                     </p>
                                                 </div>
                                             </div>
-                                            <Badge
-                                                style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor, borderColor: withAlpha(primaryColor, 0.2) }}
-                                                className="shrink-0 border"
-                                            >
+                                            <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 shrink-0 backdrop-blur-sm">
                                                 {selectedQueue.category}
                                             </Badge>
                                         </div>
-                                        <p className="mt-4 text-sm text-slate-600 dark:text-slate-400 relative z-10 max-w-md">
+                                        <p className="mt-4 text-sm text-white/90 relative z-10 max-w-md">
                                             {selectedQueue.description || 'Join this queue to get served.'}
                                         </p>
                                     </div>
 
-                                    {/* Live Stats */}
                                     <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100 dark:divide-slate-800 dark:border-slate-800 bg-white dark:bg-slate-900">
                                         <div className="p-4 text-center">
                                             <div className="flex justify-center mb-1 text-slate-400"><Clock className="h-4 w-4" /></div>
@@ -421,7 +410,6 @@ export default function QueuesTab() {
                                         </div>
                                     </div>
 
-                                    {/* Details List */}
                                     <div className="p-6 space-y-5">
                                         <div className="space-y-3">
                                             <div className="flex items-start gap-3">
@@ -483,7 +471,6 @@ export default function QueuesTab() {
                                         </div>
                                     </div>
 
-                                    {/* Actions */}
                                     <div className="p-6 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 space-y-3">
                                         {isFresher && selectedQueue.matricRequired ? (
                                             <button
@@ -527,7 +514,6 @@ export default function QueuesTab() {
                                         </button>
                                     </div>
 
-                                    {/* Footer */}
                                     <div className="p-4 text-center border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                                         <button
                                             type="button"

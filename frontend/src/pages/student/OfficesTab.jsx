@@ -22,20 +22,15 @@ function formatTime(token) {
     return String(token).slice(0, 5)
 }
 
-// 👇 ADDED: Helper to calculate if office is currently open
 function isOfficeOpenNow(openingTime, closingTime, isActive) {
     if (isActive === false) return false;
-    if (!openingTime || !closingTime) return true; // Default to open if no hours set
-
+    if (!openingTime || !closingTime) return true;
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
     const [openH, openM] = openingTime.split(':').map(Number);
     const openMinutes = openH * 60 + openM;
-
     const [closeH, closeM] = closingTime.split(':').map(Number);
     const closeMinutes = closeH * 60 + closeM;
-
     return currentMinutes >= openMinutes && currentMinutes <= closeMinutes;
 }
 
@@ -189,7 +184,6 @@ export default function OfficesTab() {
     return (
         <div className="bg-white dark:bg-slate-950 min-h-screen -m-4 p-4 sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
             <div className="space-y-6 pb-12 max-w-[1600px] mx-auto">
-                {/* Header Section with Top Right Banner */}
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
@@ -232,8 +226,6 @@ export default function OfficesTab() {
                     />
                 ) : (
                     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[380px_1fr]">
-
-                        {/* LEFT SIDEBAR (Office List) */}
                         <div className="lg:sticky lg:top-24">
                             <Card className="h-fit p-0 overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
                                 <div className="p-4 border-b border-slate-100 dark:border-slate-800">
@@ -307,7 +299,6 @@ export default function OfficesTab() {
                             </Card>
                         </div>
 
-                        {/* RIGHT PANEL (Office Details) */}
                         <AnimatePresence mode="wait">
                             {selected ? (
                                 <motion.div
@@ -318,33 +309,35 @@ export default function OfficesTab() {
                                     transition={{ duration: 0.2 }}
                                     className="space-y-6"
                                 >
-                                    {/* Hero Header */}
                                     <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-2xl">
 
-                                        {/* 👇 SOFT COLOR BACKGROUND HEADER */}
+                                        {/* 👇 SOLID COLOR HEADER WITH DOT PATTERN */}
                                         <div
-                                            className="p-6 sm:p-8 relative overflow-hidden border-b border-slate-100 dark:border-slate-800"
-                                            style={{ backgroundColor: withAlpha(primaryColor, 0.05) }}
+                                            className="p-6 sm:p-8 relative overflow-hidden text-white"
+                                            style={{
+                                                backgroundColor: primaryColor,
+                                                backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px)',
+                                                backgroundSize: '16px 16px'
+                                            }}
                                         >
+                                            <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent pointer-events-none" />
+
                                             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 relative z-10">
                                                 <div className="flex items-start gap-5">
-                                                    <div
-                                                        className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl shadow-sm border border-white/50 dark:border-slate-800"
-                                                        style={{ backgroundColor: withAlpha(primaryColor, 0.15), color: primaryColor }}
-                                                    >
+                                                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm shadow-inner text-white">
                                                         <Building2 className="h-8 w-8" />
                                                     </div>
                                                     <div>
-                                                        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-3">
+                                                        <h2 className="text-2xl font-bold text-white flex items-center gap-3 drop-shadow-md">
                                                             {selected.office.name}
-                                                            <Badge variant={isOfficeOpenNow(selected.office.openingTime, selected.office.closingTime, selected.office.isActive) ? 'success' : 'danger'} className="text-xs px-2 py-0.5 border-0">
+                                                            <Badge variant={isOfficeOpenNow(selected.office.openingTime, selected.office.closingTime, selected.office.isActive) ? 'success' : 'danger'} className="text-xs px-2 py-0.5 border-0 text-white bg-white/20">
                                                                 {isOfficeOpenNow(selected.office.openingTime, selected.office.closingTime, selected.office.isActive) ? 'Open' : 'Closed'}
                                                             </Badge>
                                                         </h2>
-                                                        <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">
+                                                        <p className="mt-1 text-sm font-medium text-white/80">
                                                             {university?.name || 'University Portal'} {university?.code ? `(${university.code})` : ''}
                                                         </p>
-                                                        <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                                        <p className="mt-3 max-w-lg text-sm leading-relaxed text-white/90">
                                                             {selected.office.description || 'Course registration, academic records, and more.'}
                                                         </p>
                                                     </div>
@@ -352,8 +345,7 @@ export default function OfficesTab() {
 
                                                 <button
                                                     onClick={() => setContactModalOpen(true)}
-                                                    className="shrink-0 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:opacity-90"
-                                                    style={{ backgroundColor: primaryColor }}
+                                                    className="shrink-0 inline-flex items-center gap-2 rounded-lg border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
                                                 >
                                                     <Phone className="h-4 w-4" />
                                                     Contact Office
@@ -361,7 +353,6 @@ export default function OfficesTab() {
                                             </div>
                                         </div>
 
-                                        {/* 3-Column Info Grid */}
                                         <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 border-b border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-900">
                                             <div className="flex items-start gap-3 p-4">
                                                 <MapPin className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
@@ -397,7 +388,6 @@ export default function OfficesTab() {
                                             </div>
                                         </div>
 
-                                        {/* Staff Details Section */}
                                         <div className="p-6">
                                             <div className="mb-4 flex items-center justify-between">
                                                 <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -452,7 +442,6 @@ export default function OfficesTab() {
                                             </Card>
                                         </div>
 
-                                        {/* Services List */}
                                         <div className="p-6 border-t border-slate-100 dark:border-slate-800">
                                             <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
                                                 Services Offered
@@ -545,7 +534,6 @@ export default function OfficesTab() {
                 )}
             </div>
 
-            {/* CONTACT MODAL */}
             <AnimatePresence>
                 {contactModalOpen && selected && (
                     <>
@@ -605,7 +593,6 @@ export default function OfficesTab() {
                 )}
             </AnimatePresence>
 
-            {/* STAFF PROFILE MODAL */}
             <AnimatePresence>
                 {profileStaff && (
                     <>
