@@ -165,7 +165,7 @@ export default function QueuesTab() {
 
     if (loading) {
         return (
-            <div className="flex h-64 items-center justify-center bg-white">
+            <div className="flex h-64 items-center justify-center bg-white dark:bg-slate-950">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" />
             </div>
         )
@@ -185,7 +185,7 @@ export default function QueuesTab() {
                     </div>
 
                     <div
-                        className="hidden md:flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors bg-white dark:bg-slate-900"
+                        className="hidden md:flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors bg-white dark:bg-slate-900 dark:border-slate-800"
                         style={{ borderColor: withAlpha(primaryColor, 0.3), boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}
                         onClick={() => push({ type: 'info', message: 'Check queue rules and FAQs at support@uniqueue.com' })}
                     >
@@ -366,34 +366,36 @@ export default function QueuesTab() {
                                     className="overflow-hidden shadow-lg border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900"
                                 >
 
-                                    {/* School Color Background with Subtle Overlay */}
+                                    {/* 👇 SOFT COLOR BACKGROUND HEADER */}
                                     <div
-                                        className="p-6 relative overflow-hidden text-white"
-                                        style={{ backgroundColor: primaryColor }}
+                                        className="p-6 relative overflow-hidden border-b border-slate-100 dark:border-slate-800"
+                                        style={{ backgroundColor: withAlpha(primaryColor, 0.05) }}
                                     >
-                                        <div className="absolute inset-0 bg-black/15" />
-
                                         <div className="flex items-start justify-between gap-4 relative z-10">
                                             <div className="flex items-start gap-4">
                                                 <div
-                                                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm shadow-inner text-white"
+                                                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl shadow-sm border border-white/50 dark:border-slate-800"
+                                                    style={{ backgroundColor: withAlpha(primaryColor, 0.15), color: primaryColor }}
                                                 >
                                                     {(() => { const Icon = getCategoryIcon(selectedQueue.category, selectedQueue.name); return <Icon className="h-8 w-8" /> })()}
                                                 </div>
                                                 <div>
-                                                    <h2 className="text-2xl font-bold text-white leading-tight drop-shadow-md">
+                                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 leading-tight">
                                                         {selectedQueue.name}
                                                     </h2>
-                                                    <p className="mt-1 text-sm font-medium text-white/80">
+                                                    <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">
                                                         {selectedQueue.officeName || 'University Office'}
                                                     </p>
                                                 </div>
                                             </div>
-                                            <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 shrink-0 backdrop-blur-sm">
+                                            <Badge
+                                                style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor, borderColor: withAlpha(primaryColor, 0.2) }}
+                                                className="shrink-0 border"
+                                            >
                                                 {selectedQueue.category}
                                             </Badge>
                                         </div>
-                                        <p className="mt-4 text-sm text-white/90 relative z-10 max-w-md">
+                                        <p className="mt-4 text-sm text-slate-600 dark:text-slate-400 relative z-10 max-w-md">
                                             {selectedQueue.description || 'Join this queue to get served.'}
                                         </p>
                                     </div>

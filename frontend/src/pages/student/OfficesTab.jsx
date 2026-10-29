@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     Building2, MapPin, Clock, Users, ListOrdered, Search, Ticket,
     ArrowRight, GraduationCap, UserCircle2, Info, ChevronRight, Activity,
-    Mail, Phone, X, Copy, Check
+    Mail, Phone, X, Copy, Check, Lock
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -20,6 +20,23 @@ import { withAlpha } from '../../lib/colors'
 function formatTime(token) {
     if (!token) return null
     return String(token).slice(0, 5)
+}
+
+// 👇 ADDED: Helper to calculate if office is currently open
+function isOfficeOpenNow(openingTime, closingTime, isActive) {
+    if (isActive === false) return false;
+    if (!openingTime || !closingTime) return true; // Default to open if no hours set
+
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const [openH, openM] = openingTime.split(':').map(Number);
+    const openMinutes = openH * 60 + openM;
+
+    const [closeH, closeM] = closingTime.split(':').map(Number);
+    const closeMinutes = closeH * 60 + closeM;
+
+    return currentMinutes >= openMinutes && currentMinutes <= closeMinutes;
 }
 
 function CopyButton({ text, primaryColor }) {
@@ -243,6 +260,8 @@ export default function OfficesTab() {
                                             {filtered.map((itemValue) => {
                                                 const id = itemValue.office.id ?? itemValue.office.name
                                                 const isSelected = String(id) === String(selectedOfficeId)
+                                                const isOpen = isOfficeOpenNow(itemValue.office.openingTime, itemValue.office.closingTime, itemValue.office.isActive)
+
                                                 return (
                                                     <li key={String(id)}>
                                                         <button
@@ -274,9 +293,10 @@ export default function OfficesTab() {
                                                                     {itemValue.office.description || `View services and staff for ${itemValue.office.name}.`}
                                                                 </div>
                                                             </div>
-                                                            <ChevronRight className={`h-4 w-4 shrink-0 mt-1 transition-transform ${isSelected ? 'translate-x-0.5' : 'text-slate-300 opacity-0 group-hover:opacity-100'}`}
-                                                                          style={isSelected ? { color: primaryColor } : undefined}
-                                                            />
+
+                                                            <Badge variant={isOpen ? 'success' : 'danger'} className="shrink-0 text-[9px] px-1.5 py-0">
+                                                                {isOpen ? 'Open' : 'Closed'}
+                                                            </Badge>
                                                         </button>
                                                     </li>
                                                 )
@@ -298,34 +318,33 @@ export default function OfficesTab() {
                                     transition={{ duration: 0.2 }}
                                     className="space-y-6"
                                 >
-                                    {/* 👇 UPDATED: School Color Hero Header */}
+                                    {/* Hero Header */}
                                     <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-2xl">
 
+                                        {/* 👇 SOFT COLOR BACKGROUND HEADER */}
                                         <div
-                                            className="p-6 sm:p-8 relative overflow-hidden text-white"
-                                            style={{ backgroundColor: primaryColor }}
+                                            className="p-6 sm:p-8 relative overflow-hidden border-b border-slate-100 dark:border-slate-800"
+                                            style={{ backgroundColor: withAlpha(primaryColor, 0.05) }}
                                         >
-                                            {/* Subtle dark overlay to ensure text readability */}
-                                            <div className="absolute inset-0 bg-black/15" />
-
                                             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 relative z-10">
                                                 <div className="flex items-start gap-5">
                                                     <div
-                                                        className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm shadow-inner text-white"
+                                                        className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl shadow-sm border border-white/50 dark:border-slate-800"
+                                                        style={{ backgroundColor: withAlpha(primaryColor, 0.15), color: primaryColor }}
                                                     >
                                                         <Building2 className="h-8 w-8" />
                                                     </div>
                                                     <div>
-                                                        <h2 className="text-2xl font-bold text-white flex items-center gap-3 drop-shadow-md">
+                                                        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-3">
                                                             {selected.office.name}
-                                                            <Badge variant={selected.office.isActive === false ? 'default' : 'success'} className="text-xs px-2 py-0.5 border-0 bg-white/20 text-white">
-                                                                {selected.office.isActive === false ? 'Inactive' : 'Active'}
+                                                            <Badge variant={isOfficeOpenNow(selected.office.openingTime, selected.office.closingTime, selected.office.isActive) ? 'success' : 'danger'} className="text-xs px-2 py-0.5 border-0">
+                                                                {isOfficeOpenNow(selected.office.openingTime, selected.office.closingTime, selected.office.isActive) ? 'Open' : 'Closed'}
                                                             </Badge>
                                                         </h2>
-                                                        <p className="mt-1 text-sm font-medium text-white/80">
+                                                        <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">
                                                             {university?.name || 'University Portal'} {university?.code ? `(${university.code})` : ''}
                                                         </p>
-                                                        <p className="mt-3 max-w-lg text-sm leading-relaxed text-white/90">
+                                                        <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                                                             {selected.office.description || 'Course registration, academic records, and more.'}
                                                         </p>
                                                     </div>
@@ -333,7 +352,8 @@ export default function OfficesTab() {
 
                                                 <button
                                                     onClick={() => setContactModalOpen(true)}
-                                                    className="shrink-0 inline-flex items-center gap-2 rounded-lg border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+                                                    className="shrink-0 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:opacity-90"
+                                                    style={{ backgroundColor: primaryColor }}
                                                 >
                                                     <Phone className="h-4 w-4" />
                                                     Contact Office
