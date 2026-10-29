@@ -11,6 +11,8 @@ import { useToastStore } from '../../store/toastStore'
 import { useUniversityStore } from '../../store/universityStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { withAlpha } from '../../lib/colors'
+import Card from '../../components/ui/Card'
+import Badge from '../../components/ui/Badge'
 import RatingModal from '../../components/student/RatingModal'
 
 // 👇 HELPER: Formats old long ticket IDs into short Q-XXXX format
@@ -49,7 +51,7 @@ function formatDateTime(dt) {
 
 function StatusBadge({ status }) {
     const s = status?.toUpperCase()
-    let colorClass = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' // Active/Completed
+    let colorClass = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
     let Icon = CheckCircle2
 
     if (s === 'COMPLETED') {
@@ -58,7 +60,7 @@ function StatusBadge({ status }) {
     } else if (s === 'CANCELLED' || s === 'NO_SHOW') {
         colorClass = 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
         Icon = XCircle
-    } else if (s === 'WAITING' || s === 'SERVING') {
+    } else if (s === 'WAITING' || s === 'SERVING' || s === 'CALLED') {
         colorClass = 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
         Icon = Clock
     }
@@ -157,10 +159,8 @@ export default function MyTicketsPage() {
         loadData()
     }
 
-    // Combine active and history for the table
     const allTickets = useMemo(() => {
         const combined = [...(activeTicket ? [activeTicket] : []), ...history]
-        // remove duplicates if active is also in history
         const unique = Array.from(new Map(combined.map(item => [item.id, item])).values())
         return unique.sort((a, b) => {
             const dateA = new Date(a.createdAt || a.joinedAt || Date.now())
@@ -169,7 +169,6 @@ export default function MyTicketsPage() {
         })
     }, [activeTicket, history])
 
-    // Filter based on tab
     const filteredTickets = useMemo(() => {
         if (activeTab === 'ALL') return allTickets
         if (activeTab === 'ACTIVE') return allTickets.filter(t => ['WAITING', 'SERVING', 'CALLED'].includes(t.status?.toUpperCase()))
@@ -187,14 +186,13 @@ export default function MyTicketsPage() {
     }
 
     const position = activeTicket?.position ?? 1
-    const maxPosition = activeTicket?.totalInQueue ?? Math.max(position + 5, 10) // fallback for progress bar
+    const maxPosition = activeTicket?.totalInQueue ?? Math.max(position + 5, 10)
     const progressPercent = Math.min(100, Math.max(5, (position / maxPosition) * 100))
     const isCompleted = activeTicket?.status === 'COMPLETED'
     const isActionable = activeTicket?.status === 'WAITING' || activeTicket?.status === 'CALLED'
 
     return (
         <div className="space-y-8 pb-12 max-w-[1400px] mx-auto">
-            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
@@ -228,10 +226,8 @@ export default function MyTicketsPage() {
                 </div>
             </div>
 
-            {/* Current Ticket Hero */}
             {activeTicket ? (
                 <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr_1fr] gap-4">
-                    {/* Col 1: Ticket Info */}
                     <Card className="p-6 relative overflow-hidden flex flex-col justify-between" style={{ backgroundColor: withAlpha(primaryColor, 0.03), borderColor: withAlpha(primaryColor, 0.15) }}>
                         <Badge className="absolute top-4 right-4 bg-emerald-50 text-emerald-700 border-emerald-200" variant="success">
                             <CheckCircle2 className="h-3 w-3 mr-1" /> Current Ticket
@@ -258,7 +254,6 @@ export default function MyTicketsPage() {
                         </p>
                     </Card>
 
-                    {/* Col 2: Ticket Number & Position */}
                     <Card className="p-6 flex flex-col justify-between bg-white dark:bg-slate-900">
                         <div>
                             <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Your Ticket Number</p>
@@ -286,7 +281,6 @@ export default function MyTicketsPage() {
                         </div>
                     </Card>
 
-                    {/* Col 3: Est Wait & Action */}
                     <Card className="p-6 flex flex-col justify-between bg-white dark:bg-slate-900">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
@@ -349,7 +343,6 @@ export default function MyTicketsPage() {
                 </Card>
             )}
 
-            {/* All My Tickets Section */}
             <div>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                     <div>
@@ -357,7 +350,6 @@ export default function MyTicketsPage() {
                         <p className="text-sm text-slate-500">Track the status of your past and current tickets.</p>
                     </div>
 
-                    {/* Tabs */}
                     <div className="flex flex-wrap items-center gap-1 bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl">
                         {['ALL', 'ACTIVE', 'COMPLETED', 'CANCELLED'].map(tab => (
                             <button
@@ -400,7 +392,6 @@ export default function MyTicketsPage() {
                                 filteredTickets.map((item, idx) => {
                                     const dt = formatDateTime(item.joinedAt || item.createdAt);
                                     const ServiceIcon = getServiceIcon(item.queueName || item.officeName);
-                                    const isQ = item.ticketNumber?.startsWith('Q');
 
                                     return (
                                         <tr key={item.id || idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
@@ -477,10 +468,4 @@ export default function MyTicketsPage() {
             </AnimatePresence>
         </div>
     )
-}
-
-// Simple fallback Badge component if you don't have it imported globally
-function Badge({ children, className, variant = 'default' }) {
-    const base = "inline-flex items-center rounded-full font-medium px-2.5 py-0.5 text-xs";
-    return <span className={`${base} ${className}`}>{children}</span>;
 }
