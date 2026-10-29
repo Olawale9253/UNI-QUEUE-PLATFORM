@@ -622,15 +622,23 @@ public class TicketService {
 
     private String generateTicketNumber(Queue queue) {
         String prefix = String.valueOf(queue.getName().charAt(0)).toUpperCase();
-        for (int attempt = 0; attempt < 5; attempt++) {
-            long value = RANDOM.nextLong(1_000_000_000_000_000L);
-            String candidate = prefix + String.format("%015d", value);
+
+        // Ensure prefix is a valid letter, fallback to 'T' for Ticket
+        if (!prefix.matches("[A-Z]")) {
+            prefix = "T";
+        }
+
+        for (int attempt = 0; attempt < 100; attempt++) {
+            // Generate a random number between 0 and 9999
+            int value = RANDOM.nextInt(10000);
+            // Format as Q-0245
+            String candidate = prefix + "-" + String.format("%04d", value);
+
             if (!ticketRepository.existsByTicketNumber(candidate)) {
                 return candidate;
             }
         }
-        throw new IllegalStateException(
-                "Could not generate a unique ticket number after 5 attempts");
+        throw new IllegalStateException("Could not generate a unique ticket number after 100 attempts");
     }
 
     private void ensureStaffOwnsQueue(Long staffUserId, Long queueId) {
