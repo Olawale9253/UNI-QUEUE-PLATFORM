@@ -311,20 +311,16 @@ export default function OfficesTab() {
                                 >
                                     <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-2xl">
 
-                                        {/* 👇 SOLID COLOR HEADER WITH DOT PATTERN */}
+                                        {/* 👇 SOLID COLOR HEADER WITH GRADIENT OVERLAY */}
                                         <div
                                             className="p-6 sm:p-8 relative overflow-hidden text-white"
-                                            style={{
-                                                backgroundColor: primaryColor,
-                                                backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px)',
-                                                backgroundSize: '16px 16px'
-                                            }}
+                                            style={{ backgroundColor: primaryColor }}
                                         >
-                                            <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent pointer-events-none" />
+                                            <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-transparent to-black/20 pointer-events-none" />
 
                                             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 relative z-10">
                                                 <div className="flex items-start gap-5">
-                                                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm shadow-inner text-white">
+                                                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md shadow-inner border border-white/20 text-white">
                                                         <Building2 className="h-8 w-8" />
                                                     </div>
                                                     <div>
@@ -345,7 +341,7 @@ export default function OfficesTab() {
 
                                                 <button
                                                     onClick={() => setContactModalOpen(true)}
-                                                    className="shrink-0 inline-flex items-center gap-2 rounded-lg border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+                                                    className="shrink-0 inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
                                                 >
                                                     <Phone className="h-4 w-4" />
                                                     Contact Office

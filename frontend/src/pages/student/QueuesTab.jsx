@@ -356,20 +356,16 @@ export default function QueuesTab() {
                                     padded={false}
                                     className="overflow-hidden shadow-lg border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900"
                                 >
-                                    {/* 👇 SOLID COLOR HEADER WITH DOT PATTERN */}
+                                    {/* 👇 SOLID COLOR HEADER WITH GRADIENT OVERLAY */}
                                     <div
                                         className="p-6 relative overflow-hidden text-white"
-                                        style={{
-                                            backgroundColor: primaryColor,
-                                            backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px)',
-                                            backgroundSize: '16px 16px'
-                                        }}
+                                        style={{ backgroundColor: primaryColor }}
                                     >
-                                        <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent pointer-events-none" />
+                                        <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-transparent to-black/20 pointer-events-none" />
 
                                         <div className="flex items-start justify-between gap-4 relative z-10">
                                             <div className="flex items-start gap-4">
-                                                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm shadow-inner text-white">
+                                                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md shadow-inner border border-white/20 text-white">
                                                     {(() => { const Icon = getCategoryIcon(selectedQueue.category, selectedQueue.name); return <Icon className="h-8 w-8" /> })()}
                                                 </div>
                                                 <div>
