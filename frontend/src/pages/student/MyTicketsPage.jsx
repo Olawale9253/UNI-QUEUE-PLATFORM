@@ -149,13 +149,11 @@ export default function MyTicketsPage() {
             loadData()
         } catch (err) {
             console.error("Leave queue error:", err)
-            // 👇 ONLY log out if the backend explicitly says 401 Unauthorized
             if (err.response?.status === 401) {
                 push({ type: 'error', message: 'Your session expired. Please log in again.' })
                 logout()
                 navigate('/login')
             } else {
-                // 👇 If it's a 500 error, just show the error message and keep the user logged in
                 push({
                     type: 'error',
                     message: err.response?.data?.message || 'Server error while trying to leave the queue. Please try again later.'
