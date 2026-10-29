@@ -1,15 +1,16 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-    ArrowRight, Check, Clock3, LogOut, Ticket, History,
-    RotateCcw, SkipForward, ArrowUpRight, Copy, Star, CheckCircle2
+    Ticket, Calendar, Clock, User, ArrowRight, Check, Copy, Star,
+    CheckCircle2, XCircle, ChevronRight, HelpCircle, Building2,
+    ListOrdered, RotateCcw, SkipForward, LogOut, Search
 } from 'lucide-react'
 import api from '../../api/axios'
 import { useToastStore } from '../../store/toastStore'
+import { useUniversityStore } from '../../store/universityStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
-import { formatDateTime } from '../../lib/format'
-import Card from '../../components/ui/Card'
+import { withAlpha } from '../../lib/colors'
 import RatingModal from '../../components/student/RatingModal'
 
 // 👇 HELPER: Formats old long ticket IDs into short Q-XXXX format
@@ -24,33 +25,47 @@ function formatTicketNumber(ticketNumber) {
     return ticketNumber
 }
 
-const QUEUE_STEPS = ['Joined', 'Waiting', 'In Service', 'Completed']
+// 👇 HELPER: Dynamically assign icons based on the service name
+function getServiceIcon(name = '') {
+    const n = name.toLowerCase()
+    if (n.includes('tuition') || n.includes('payment') || n.includes('fee') || n.includes('bursary') || n.includes('finance')) return Ticket
+    if (n.includes('medical') || n.includes('health') || n.includes('clinic') || n.includes('screen')) return User
+    if (n.includes('portal') || n.includes('ict') || n.includes('it ') || n.includes('computer')) return CheckCircle2
+    if (n.includes('password') || n.includes('transcript') || n.includes('document') || n.includes('result')) return ListOrdered
+    if (n.includes('library') || n.includes('book')) return ListOrdered
+    if (n.includes('register') || n.includes('academic') || n.includes('course')) return Calendar
+    return Building2
+}
 
-function getActiveStep(status) {
-    switch (status?.toUpperCase()) {
-        case 'IN_SERVICE':
-        case 'SERVING':
-            return 2
-        case 'COMPLETED':
-            return 3
-        case 'WAITING':
-        case 'ACTIVE':
-        default:
-            return 1
-    }
+function formatDateTime(dt) {
+    if (!dt) return { day: 'N/A', time: '' }
+    try {
+        const date = new Date(dt)
+        const day = date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+        const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        return { day, time }
+    } catch { return { day: 'N/A', time: '' } }
 }
 
 function StatusBadge({ status }) {
-    const isComplete = status?.toUpperCase() === 'COMPLETED'
-    const isCancelled = status?.toUpperCase() === 'CANCELLED'
-    const isNoShow = status?.toUpperCase() === 'NO_SHOW'
+    const s = status?.toUpperCase()
+    let colorClass = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' // Active/Completed
+    let Icon = CheckCircle2
 
-    let colorClass = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
-    if (isComplete) colorClass = 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-    if (isCancelled || isNoShow) colorClass = 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
+    if (s === 'COMPLETED') {
+        colorClass = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+        Icon = CheckCircle2
+    } else if (s === 'CANCELLED' || s === 'NO_SHOW') {
+        colorClass = 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
+        Icon = XCircle
+    } else if (s === 'WAITING' || s === 'SERVING') {
+        colorClass = 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
+        Icon = Clock
+    }
 
     return (
-        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider ${colorClass}`}>
+        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider ${colorClass}`}>
+            <Icon className="h-3 w-3" />
             {status?.replaceAll('_', ' ') || 'Active'}
         </span>
     )
@@ -80,15 +95,19 @@ function CopyButton({ text }) {
 
 export default function MyTicketsPage() {
     const { push } = useToastStore()
+    const { university } = useUniversityStore()
     const navigate = useNavigate()
 
     const [activeTicket, setActiveTicket] = useState(null)
     const [history, setHistory] = useState([])
     const [loading, setLoading] = useState(true)
     const [acting, setActing] = useState(null)
+    const [activeTab, setActiveTab] = useState('ALL')
 
     const [ratingTicket, setRatingTicket] = useState(null)
     const shownRatingForTicket = useRef(null)
+
+    const primaryColor = university?.primaryColor || '#4f46e5'
 
     const loadData = useCallback(async () => {
         try {
@@ -99,6 +118,7 @@ export default function MyTicketsPage() {
             setActiveTicket(activeRes.data?.data || null)
             setHistory(historyRes.data?.data || [])
         } catch {
+            // silent
         } finally {
             setLoading(false)
         }
@@ -130,34 +150,6 @@ export default function MyTicketsPage() {
         }
     }
 
-    const rescheduleTurn = async () => {
-        if (!activeTicket) return
-        setActing('reschedule')
-        try {
-            await api.post(`/api/user/tickets/${activeTicket.id}/reschedule`)
-            push({ type: 'success', message: 'Turn rescheduled. You are now at the end of the queue.' })
-            loadData()
-        } catch (err) {
-            push({ type: 'error', message: err.message || 'Reschedule not available yet' })
-        } finally {
-            setActing(null)
-        }
-    }
-
-    const skipTurn = async () => {
-        if (!activeTicket) return
-        setActing('skip')
-        try {
-            await api.post(`/api/user/tickets/${activeTicket.id}/skip`)
-            push({ type: 'success', message: 'Turn skipped' })
-            loadData()
-        } catch (err) {
-            push({ type: 'error', message: err.message || 'Skip not available yet' })
-        } finally {
-            setActing(null)
-        }
-    }
-
     const handleRated = (ticketId, rating) => {
         setRatingTicket(null)
         setActiveTicket(null)
@@ -165,7 +157,26 @@ export default function MyTicketsPage() {
         loadData()
     }
 
-    const pastTickets = history.filter((ticket) => ticket.status !== 'WAITING').slice(0, 3)
+    // Combine active and history for the table
+    const allTickets = useMemo(() => {
+        const combined = [...(activeTicket ? [activeTicket] : []), ...history]
+        // remove duplicates if active is also in history
+        const unique = Array.from(new Map(combined.map(item => [item.id, item])).values())
+        return unique.sort((a, b) => {
+            const dateA = new Date(a.createdAt || a.joinedAt || Date.now())
+            const dateB = new Date(b.createdAt || b.joinedAt || Date.now())
+            return dateB - dateA
+        })
+    }, [activeTicket, history])
+
+    // Filter based on tab
+    const filteredTickets = useMemo(() => {
+        if (activeTab === 'ALL') return allTickets
+        if (activeTab === 'ACTIVE') return allTickets.filter(t => ['WAITING', 'SERVING', 'CALLED'].includes(t.status?.toUpperCase()))
+        if (activeTab === 'COMPLETED') return allTickets.filter(t => t.status?.toUpperCase() === 'COMPLETED')
+        if (activeTab === 'CANCELLED') return allTickets.filter(t => ['CANCELLED', 'NO_SHOW'].includes(t.status?.toUpperCase()))
+        return allTickets
+    }, [allTickets, activeTab])
 
     if (loading && !activeTicket) {
         return (
@@ -176,142 +187,149 @@ export default function MyTicketsPage() {
     }
 
     const position = activeTicket?.position ?? 1
-    const activeStep = getActiveStep(activeTicket?.status)
-    const isActionable = activeTicket?.status === 'WAITING' || activeTicket?.status === 'CALLED'
+    const maxPosition = activeTicket?.totalInQueue ?? Math.max(position + 5, 10) // fallback for progress bar
+    const progressPercent = Math.min(100, Math.max(5, (position / maxPosition) * 100))
     const isCompleted = activeTicket?.status === 'COMPLETED'
+    const isActionable = activeTicket?.status === 'WAITING' || activeTicket?.status === 'CALLED'
 
     return (
-        <div className="space-y-8 pb-12">
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                    My Tickets
-                </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Track your live position in line and review your past tickets.
-                </p>
+        <div className="space-y-8 pb-12 max-w-[1400px] mx-auto">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                        My Ticket
+                    </h1>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        View your current ticket, track your queue position, and check the status of all your past tickets.
+                    </p>
+                </div>
+                <div
+                    className="hidden md:flex items-center gap-3 rounded-xl border px-4 py-3"
+                    style={{
+                        backgroundColor: withAlpha(primaryColor, 0.05),
+                        borderColor: withAlpha(primaryColor, 0.2)
+                    }}
+                >
+                    <div
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                        style={{
+                            backgroundColor: withAlpha(primaryColor, 0.15),
+                            color: primaryColor
+                        }}
+                    >
+                        <HelpCircle className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Need help?</div>
+                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Have a problem with your ticket? Get support.</div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-slate-400 ml-2" />
+                </div>
             </div>
 
+            {/* Current Ticket Hero */}
             {activeTicket ? (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                    <Card className={`border-brand-200 dark:border-brand-900/50 ${isCompleted ? 'ring-2 ring-emerald-500/20' : ''}`}>
-                        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-5 dark:border-slate-800">
-                            <div className="flex min-w-0 items-center gap-3">
-                                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${isCompleted ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40' : 'bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400'}`}>
-                                    {isCompleted ? <CheckCircle2 className="h-6 w-6" /> : <Ticket className="h-6 w-6" />}
+                <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr_1fr] gap-4">
+                    {/* Col 1: Ticket Info */}
+                    <Card className="p-6 relative overflow-hidden flex flex-col justify-between" style={{ backgroundColor: withAlpha(primaryColor, 0.03), borderColor: withAlpha(primaryColor, 0.15) }}>
+                        <Badge className="absolute top-4 right-4 bg-emerald-50 text-emerald-700 border-emerald-200" variant="success">
+                            <CheckCircle2 className="h-3 w-3 mr-1" /> Current Ticket
+                        </Badge>
+                        <div>
+                            <div className="flex items-center gap-4 mb-4 mt-2">
+                                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl" style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}>
+                                    <Ticket className="h-7 w-7" />
                                 </div>
-                                <div className="min-w-0">
-                                    <h3 className="truncate text-lg font-bold text-slate-900 dark:text-slate-100">
-                                        {activeTicket.queueName || 'Queue'}
-                                    </h3>
-                                    <p className="mt-0.5 text-sm font-medium text-slate-500 dark:text-slate-400">
-                                        Ticket {formatTicketNumber(activeTicket.ticketNumber || activeTicket.id)}
+                                <div>
+                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">{activeTicket.queueName}</h2>
+                                    <p className="text-sm font-medium text-slate-500 flex items-center gap-1.5 mt-0.5">
+                                        <Building2 className="h-3.5 w-3.5" /> {activeTicket.officeName || 'Academic Office'}
                                     </p>
                                 </div>
                             </div>
-                            <StatusBadge status={activeTicket.status} />
+                            <div className="flex items-center gap-4 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                                <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {formatDateTime(activeTicket.joinedAt || activeTicket.createdAt).day}</span>
+                                <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {formatDateTime(activeTicket.joinedAt || activeTicket.createdAt).time}</span>
+                            </div>
                         </div>
+                        <p className="text-sm font-medium mt-6" style={{ color: primaryColor }}>
+                            You are currently in the queue. Please wait for your turn.
+                        </p>
+                    </Card>
 
-                        {isCompleted ? (
-                            <div className="mt-6 flex flex-col items-center justify-center rounded-xl bg-emerald-50/50 p-8 text-center dark:bg-emerald-950/20">
-                                <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400">
-                                    <Star className="h-7 w-7" />
-                                </div>
-                                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Service Completed</h3>
-                                <p className="mt-1 max-w-sm text-sm text-slate-600 dark:text-slate-400">
-                                    Your transaction is complete. How was your experience today?
-                                </p>
-                                <button
-                                    onClick={() => setRatingTicket(activeTicket)}
-                                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-brand-700 hover:shadow-lg"
-                                >
-                                    <Star className="h-4 w-4 fill-white" />
-                                    Rate this service
-                                </button>
+                    {/* Col 2: Ticket Number & Position */}
+                    <Card className="p-6 flex flex-col justify-between bg-white dark:bg-slate-900">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Your Ticket Number</p>
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                                    {formatTicketNumber(activeTicket.ticketNumber)}
+                                </h2>
+                                <CopyButton text={formatTicketNumber(activeTicket.ticketNumber)} />
                             </div>
-                        ) : (
-                            <div className="mt-6 grid gap-4 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_auto]">
-                                <div className="flex flex-col items-center justify-center rounded-xl border border-slate-100 bg-slate-50/50 p-6 dark:border-slate-800 dark:bg-slate-900/50">
-                                    <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">Your Position</p>
-                                    <p className="mt-2 text-5xl font-extrabold tracking-tight text-brand-600 dark:text-brand-400">{position}</p>
-                                    <p className="mt-1 text-sm font-medium text-slate-500">in queue</p>
-                                </div>
-
-                                <div className="flex flex-col justify-center rounded-xl border border-slate-100 p-6 dark:border-slate-800">
-                                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-400">
-                                        <Clock3 className="h-4 w-4" /> Est. Wait Time
-                                    </div>
-                                    <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
-                                        ~{activeTicket.estimatedMinutes ?? 10} min
-                                    </p>
-                                    <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
-                                        <span className="font-bold text-slate-700 dark:text-slate-300">{Math.max(0, position - 1)}</span> people ahead of you
-                                    </p>
-                                </div>
-
-                                <div className="flex flex-col gap-2 items-center justify-center sm:justify-end">
-                                    {isActionable && (
-                                        <div className="flex w-full flex-col gap-2">
-                                            <button
-                                                onClick={rescheduleTurn}
-                                                disabled={!!acting}
-                                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-50"
-                                            >
-                                                <RotateCcw className="h-4 w-4" />
-                                                {acting === 'reschedule' ? 'Rescheduling...' : 'Reschedule'}
-                                            </button>
-                                            <button
-                                                onClick={skipTurn}
-                                                disabled={!!acting}
-                                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-50"
-                                            >
-                                                <SkipForward className="h-4 w-4" />
-                                                {acting === 'skip' ? 'Skipping...' : 'Skip Turn'}
-                                            </button>
-                                        </div>
-                                    )}
-                                    <button
-                                        onClick={leaveQueue}
-                                        disabled={!!acting}
-                                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 py-2 text-sm font-bold text-rose-700 transition-colors hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60 disabled:opacity-50"
-                                    >
-                                        <LogOut className="h-4 w-4" />
-                                        {acting === 'leave' ? 'Leaving...' : 'Leave Queue'}
-                                    </button>
-                                </div>
+                        </div>
+                        <div className="mt-6">
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Position</p>
+                            <div className="flex items-center justify-between text-sm font-bold text-slate-900 dark:text-white mb-2">
+                                <span>{position} / {maxPosition}</span>
                             </div>
-                        )}
-
-                        <div className="mt-8 px-2 sm:px-6 pb-2">
-                            <div className="relative flex items-start justify-between">
-                                <div className="absolute left-0 right-0 top-3 h-1 bg-slate-200 dark:bg-slate-700 rounded-full" />
+                            <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden dark:bg-slate-800">
                                 <div
-                                    className={`absolute left-0 top-3 h-1 rounded-full transition-all duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-brand-600'}`}
-                                    style={{ width: `${(activeStep / (QUEUE_STEPS.length - 1)) * 100}%` }}
+                                    className="h-full rounded-full transition-all duration-500"
+                                    style={{ width: `${progressPercent}%`, backgroundColor: primaryColor }}
                                 />
-                                {QUEUE_STEPS.map((step, index) => {
-                                    const isStepComplete = index < activeStep
-                                    const isCurrent = index === activeStep
-                                    return (
-                                        <div key={step} className="relative z-10 flex w-16 flex-col items-center gap-2 text-center sm:w-24">
-                                            <span className={`flex h-7 w-7 items-center justify-center rounded-full border-2 transition-colors ${
-                                                isStepComplete || isCurrent
-                                                    ? isCompleted ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-brand-600 bg-brand-600 text-white'
-                                                    : 'border-slate-300 bg-white text-transparent dark:border-slate-700 dark:bg-slate-900'
-                                            }`}>
-                                                {isStepComplete ? <Check className="h-4 w-4" /> : <span className="h-1.5 w-1.5 rounded-full bg-current" />}
-                                            </span>
-                                            <span className={`text-[11px] font-bold uppercase tracking-wider ${
-                                                isCurrent ? (isCompleted ? 'text-emerald-700 dark:text-emerald-300' : 'text-brand-700 dark:text-brand-300') : 'text-slate-500 dark:text-slate-400'
-                                            }`}>
-                                                {step}
-                                            </span>
-                                        </div>
-                                    )
-                                })}
                             </div>
+                            <p className="text-xs font-medium text-slate-500 mt-2">
+                                <span className="font-bold text-slate-700 dark:text-slate-300">{Math.max(0, position - 1)}</span> people ahead
+                            </p>
                         </div>
                     </Card>
-                </motion.div>
+
+                    {/* Col 3: Est Wait & Action */}
+                    <Card className="p-6 flex flex-col justify-between bg-white dark:bg-slate-900">
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <Clock className="h-4 w-4 text-slate-400" />
+                                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Estimated Wait Time</p>
+                            </div>
+                            <h2 className="text-3xl font-black text-slate-900 dark:text-white">
+                                {activeTicket.estimatedMinutes ?? 20} <span className="text-lg font-bold text-slate-500">mins</span>
+                            </h2>
+                            <p className="text-[11px] font-medium text-slate-400 mt-1">(Subject to change)</p>
+                        </div>
+
+                        <div className="mt-6 flex flex-col gap-2">
+                            {isActionable && (
+                                <button
+                                    onClick={() => navigate(`/student/queues`)}
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90"
+                                    style={{ backgroundColor: primaryColor }}
+                                >
+                                    <User className="h-4 w-4" /> View Queue Details <ChevronRight className="h-4 w-4 ml-auto" />
+                                </button>
+                            )}
+                            {isCompleted && (
+                                <button
+                                    onClick={() => setRatingTicket(activeTicket)}
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90"
+                                    style={{ backgroundColor: primaryColor }}
+                                >
+                                    <Star className="h-4 w-4" /> Rate Service
+                                </button>
+                            )}
+                            {isActionable && (
+                                <button
+                                    onClick={leaveQueue}
+                                    disabled={!!acting}
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300"
+                                >
+                                    {acting === 'leave' ? 'Leaving...' : 'Leave Queue'}
+                                </button>
+                            )}
+                        </div>
+                    </Card>
+                </div>
             ) : (
                 <Card className="py-16 text-center">
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
@@ -323,81 +341,129 @@ export default function MyTicketsPage() {
                     </p>
                     <Link
                         to="/student/queues"
-                        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 shadow-sm"
+                        className="mt-6 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:opacity-90"
+                        style={{ backgroundColor: primaryColor }}
                     >
                         Join a Service <ArrowRight className="h-4 w-4" />
                     </Link>
                 </Card>
             )}
 
+            {/* All My Tickets Section */}
             <div>
-                <div className="mb-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <History className="h-5 w-5 text-slate-400" />
-                        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Recent Tickets</h2>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">All My Tickets</h2>
+                        <p className="text-sm text-slate-500">Track the status of your past and current tickets.</p>
                     </div>
-                    {pastTickets.length > 0 && (
-                        <Link
-                            to="/student/history"
-                            className="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400"
-                        >
-                            View full history <ArrowUpRight className="h-4 w-4" />
-                        </Link>
-                    )}
-                </div>
 
-                {pastTickets.length === 0 ? (
-                    <Card>
-                        <p className="px-6 py-8 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
-                            You have no past tickets yet.
-                        </p>
-                    </Card>
-                ) : (
-                    <div className="space-y-3">
-                        {pastTickets.map((ticket) => (
-                            <motion.div
-                                key={ticket.id}
-                                initial={{ opacity: 0, y: 4 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/20"
+                    {/* Tabs */}
+                    <div className="flex flex-wrap items-center gap-1 bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl">
+                        {['ALL', 'ACTIVE', 'COMPLETED', 'CANCELLED'].map(tab => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                                    activeTab === tab
+                                        ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white'
+                                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
+                                }`}
                             >
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="min-w-0 flex-1">
-                                        <h4 className="truncate text-base font-bold text-slate-900 dark:text-slate-100">
-                                            {ticket.queueName || ticket.officeName || 'Service'}
-                                        </h4>
-                                    </div>
-                                    <StatusBadge status={ticket.status} />
-                                </div>
-
-                                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="font-medium text-slate-500 dark:text-slate-400">Ticket:</span>
-                                        <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
-                                            {formatTicketNumber(ticket.ticketNumber || ticket.id)}
-                                        </span>
-                                        <CopyButton text={formatTicketNumber(ticket.ticketNumber || String(ticket.id))} />
-                                    </div>
-
-                                    {ticket.position != null && (
-                                        <div className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                                            <span className="text-slate-500">Position:</span>{' '}
-                                            <span className="font-bold text-slate-900 dark:text-slate-100">
-                                                {ticket.position}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {ticket.createdAt && (
-                                        <div className="text-xs font-medium text-slate-400">
-                                            {formatDateTime(ticket.createdAt)}
-                                        </div>
-                                    )}
-                                </div>
-                            </motion.div>
+                                {tab === 'ALL' ? 'All Tickets' : tab.charAt(0) + tab.slice(1).toLowerCase()}
+                            </button>
                         ))}
                     </div>
-                )}
+                </div>
+
+                <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                            <tr className="bg-slate-50 border-b border-slate-200 dark:bg-slate-800/50 dark:border-slate-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                <th className="px-6 py-4">Date & Time</th>
+                                <th className="px-6 py-4">Service / Office</th>
+                                <th className="px-6 py-4">Ticket No.</th>
+                                <th className="px-6 py-4">Position</th>
+                                <th className="px-6 py-4">Wait Time</th>
+                                <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4 text-right">Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                            {filteredTickets.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-500">
+                                        No tickets found for this filter.
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredTickets.map((item, idx) => {
+                                    const dt = formatDateTime(item.joinedAt || item.createdAt);
+                                    const ServiceIcon = getServiceIcon(item.queueName || item.officeName);
+                                    const isQ = item.ticketNumber?.startsWith('Q');
+
+                                    return (
+                                        <tr key={item.id || idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                                                    {dt.day}
+                                                </div>
+                                                <div className="text-xs text-slate-500 font-medium">
+                                                    {dt.time}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div
+                                                        className="h-8 w-8 rounded-lg flex items-center justify-center"
+                                                        style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
+                                                    >
+                                                        <ServiceIcon className="h-4 w-4" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-sm font-bold text-slate-900 dark:text-white">
+                                                            {item.queueName || 'Appointment'}
+                                                        </div>
+                                                        <div className="text-xs text-slate-500">
+                                                            {item.officeName || item.staffName || 'University Office'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                    <span className="font-mono text-sm font-bold text-slate-900 dark:text-white">
+                                                        {formatTicketNumber(item.ticketNumber)}
+                                                    </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                                                        {item.position ? `${item.position} / ${item.totalInQueue || '—'}` : '—'}
+                                                    </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                                                        {item.estimatedMinutes ? `${item.estimatedMinutes} mins` : '—'}
+                                                    </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <StatusBadge status={item.status} />
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button
+                                                    onClick={() => navigate('/student/history')}
+                                                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 transition-colors"
+                                                >
+                                                    View Details <ChevronRight className="h-3 w-3" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    )
+                                })
+                            )}
+                            </tbody>
+                        </table>
+                    </div>
+                </Card>
             </div>
 
             <AnimatePresence>
@@ -411,4 +477,10 @@ export default function MyTicketsPage() {
             </AnimatePresence>
         </div>
     )
+}
+
+// Simple fallback Badge component if you don't have it imported globally
+function Badge({ children, className, variant = 'default' }) {
+    const base = "inline-flex items-center rounded-full font-medium px-2.5 py-0.5 text-xs";
+    return <span className={`${base} ${className}`}>{children}</span>;
 }
