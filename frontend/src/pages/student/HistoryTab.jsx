@@ -16,6 +16,18 @@ import RatingModal from '../../components/student/RatingModal'
 import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 
+// 👇 HELPER: Formats old long ticket IDs into short Q-XXXX format
+function formatTicketNumber(ticketNumber) {
+    if (!ticketNumber) return 'T-0000'
+    if (ticketNumber.includes('-')) return ticketNumber
+    if (ticketNumber.length > 8) {
+        const prefix = ticketNumber.charAt(0)
+        const lastFour = ticketNumber.slice(-4)
+        return `${prefix}-${lastFour}`
+    }
+    return ticketNumber
+}
+
 const STATUS_VARIANTS = {
     WAITING: 'warning',
     WAITLISTED: 'info',
@@ -93,7 +105,6 @@ export default function HistoryTab() {
         setRatingTicket(null)
     }
 
-    // Combine and standardize history items
     const combinedHistory = useMemo(() => {
         const queueItems = tickets.map(t => ({
             ...t,
@@ -108,7 +119,6 @@ export default function HistoryTab() {
         return [...queueItems, ...apptItems].sort((a, b) => b.dateObj - a.dateObj)
     }, [tickets, appointments])
 
-    // Calculate Stats
     const stats = useMemo(() => {
         const completedTickets = tickets.filter(t => t.status === 'COMPLETED').length
         const uniqueOffices = new Set(tickets.map(t => t.officeName).filter(Boolean)).size
@@ -122,13 +132,11 @@ export default function HistoryTab() {
         }
     }, [tickets, appointments])
 
-    // Filter Items based on Tab and Search
     const filtered = useMemo(() => {
         let list = combinedHistory
         if (activeTab === 'QUEUE') list = list.filter(i => i.historyType === 'QUEUE')
         if (activeTab === 'APPOINTMENT') list = list.filter(i => i.historyType === 'APPOINTMENT')
         if (activeTab === 'OFFICE') {
-            // Group by office for office visits tab
             const offices = new Map()
             list.forEach(i => {
                 if (i.officeName && !offices.has(i.officeName)) {
@@ -161,7 +169,6 @@ export default function HistoryTab() {
 
     return (
         <div className="space-y-6 pb-12">
-            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
@@ -182,7 +189,6 @@ export default function HistoryTab() {
                 </div>
             </div>
 
-            {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card className="flex items-center gap-4 p-5 bg-blue-50/30 border-blue-100 dark:bg-blue-950/20 dark:border-blue-900">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
@@ -226,7 +232,6 @@ export default function HistoryTab() {
                 </Card>
             </div>
 
-            {/* Tabs & Search Toolbar */}
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-2 rounded-2xl border border-slate-200 dark:bg-slate-900 dark:border-slate-800 shadow-sm">
                 <div className="flex flex-wrap items-center gap-1">
                     {TABS.map(tab => (
@@ -258,7 +263,6 @@ export default function HistoryTab() {
                 </div>
             </div>
 
-            {/* Data Table */}
             {filtered.length === 0 ? (
                 <EmptyState
                     icon={HistoryIcon}
@@ -315,7 +319,7 @@ export default function HistoryTab() {
                                         <td className="px-6 py-4">
                                             <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
                                                 {isQueue ? (
-                                                    <>Ticket No: <span className="font-mono text-slate-900 dark:text-white">{item.ticketNumber}</span></>
+                                                    <>Ticket No: <span className="font-mono text-slate-900 dark:text-white">{formatTicketNumber(item.ticketNumber)}</span></>
                                                 ) : (
                                                     <>Staff: <span className="text-slate-900 dark:text-white">{item.staffName || 'Assigned Staff'}</span></>
                                                 )}
@@ -350,7 +354,6 @@ export default function HistoryTab() {
                         </table>
                     </div>
 
-                    {/* Footer info */}
                     <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 dark:bg-slate-800/50 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 font-medium">
                         <div>Showing 1 - {filtered.length} of {filtered.length} results</div>
                     </div>

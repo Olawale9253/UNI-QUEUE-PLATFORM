@@ -10,7 +10,19 @@ import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { formatDateTime } from '../../lib/format'
 import Card from '../../components/ui/Card'
-import RatingModal from '../../components/student/RatingModal' // 👈 Import RatingModal
+import RatingModal from '../../components/student/RatingModal'
+
+// 👇 HELPER: Formats old long ticket IDs into short Q-XXXX format
+function formatTicketNumber(ticketNumber) {
+    if (!ticketNumber) return 'T-0000'
+    if (ticketNumber.includes('-')) return ticketNumber
+    if (ticketNumber.length > 8) {
+        const prefix = ticketNumber.charAt(0)
+        const lastFour = ticketNumber.slice(-4)
+        return `${prefix}-${lastFour}`
+    }
+    return ticketNumber
+}
 
 const QUEUE_STEPS = ['Joined', 'Waiting', 'In Service', 'Completed']
 
@@ -75,9 +87,8 @@ export default function MyTicketsPage() {
     const [loading, setLoading] = useState(true)
     const [acting, setActing] = useState(null)
 
-    // 👇 States for the Rating Modal
     const [ratingTicket, setRatingTicket] = useState(null)
-    const shownRatingForTicket = useRef(null) // Prevents popup from showing twice for the same ticket
+    const shownRatingForTicket = useRef(null)
 
     const loadData = useCallback(async () => {
         try {
@@ -88,7 +99,6 @@ export default function MyTicketsPage() {
             setActiveTicket(activeRes.data?.data || null)
             setHistory(historyRes.data?.data || [])
         } catch {
-            // Polling keeps the last successfully loaded data
         } finally {
             setLoading(false)
         }
@@ -96,10 +106,8 @@ export default function MyTicketsPage() {
 
     useAdaptivePoll(loadData, { fastMs: 5000, slowMs: 15000 })
 
-    // 👇 AUTO-POPUP LOGIC
     useEffect(() => {
         if (activeTicket && activeTicket.status === 'COMPLETED') {
-            // Only auto-trigger if we haven't shown it for this ticket yet in this session
             if (shownRatingForTicket.current !== activeTicket.id) {
                 setRatingTicket(activeTicket)
                 shownRatingForTicket.current = activeTicket.id
@@ -150,15 +158,13 @@ export default function MyTicketsPage() {
         }
     }
 
-    // 👇 Handle successful rating
     const handleRated = (ticketId, rating) => {
         setRatingTicket(null)
-        setActiveTicket(null) // Clear it from the active view immediately
+        setActiveTicket(null)
         push({ type: 'success', message: 'Thank you for your feedback!' })
-        loadData() // Refresh from backend to confirm
+        loadData()
     }
 
-    // LIMIT: Only show the most recent 3 past tickets to keep it clean
     const pastTickets = history.filter((ticket) => ticket.status !== 'WAITING').slice(0, 3)
 
     if (loading && !activeTicket) {
@@ -176,7 +182,6 @@ export default function MyTicketsPage() {
 
     return (
         <div className="space-y-8 pb-12">
-            {/* Header */}
             <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                     My Tickets
@@ -199,14 +204,13 @@ export default function MyTicketsPage() {
                                         {activeTicket.queueName || 'Queue'}
                                     </h3>
                                     <p className="mt-0.5 text-sm font-medium text-slate-500 dark:text-slate-400">
-                                        Ticket {activeTicket.ticketNumber || activeTicket.id}
+                                        Ticket {formatTicketNumber(activeTicket.ticketNumber || activeTicket.id)}
                                     </p>
                                 </div>
                             </div>
                             <StatusBadge status={activeTicket.status} />
                         </div>
 
-                        {/* 👇 CONDITIONAL RENDERING: If completed, show rating prompt. Else show position/wait time */}
                         {isCompleted ? (
                             <div className="mt-6 flex flex-col items-center justify-center rounded-xl bg-emerald-50/50 p-8 text-center dark:bg-emerald-950/20">
                                 <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400">
@@ -277,7 +281,6 @@ export default function MyTicketsPage() {
                             </div>
                         )}
 
-                        {/* Progress Bar */}
                         <div className="mt-8 px-2 sm:px-6 pb-2">
                             <div className="relative flex items-start justify-between">
                                 <div className="absolute left-0 right-0 top-3 h-1 bg-slate-200 dark:bg-slate-700 rounded-full" />
@@ -327,7 +330,6 @@ export default function MyTicketsPage() {
                 </Card>
             )}
 
-            {/* UPGRADED RECENT TICKETS SECTION */}
             <div>
                 <div className="mb-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -372,9 +374,9 @@ export default function MyTicketsPage() {
                                     <div className="flex items-center gap-1.5">
                                         <span className="font-medium text-slate-500 dark:text-slate-400">Ticket:</span>
                                         <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
-                                            {ticket.ticketNumber || ticket.id}
+                                            {formatTicketNumber(ticket.ticketNumber || ticket.id)}
                                         </span>
-                                        <CopyButton text={ticket.ticketNumber || String(ticket.id)} />
+                                        <CopyButton text={formatTicketNumber(ticket.ticketNumber || String(ticket.id))} />
                                     </div>
 
                                     {ticket.position != null && (
@@ -398,7 +400,6 @@ export default function MyTicketsPage() {
                 )}
             </div>
 
-            {/* 👇 Rating Modal Render */}
             <AnimatePresence>
                 {ratingTicket && (
                     <RatingModal
