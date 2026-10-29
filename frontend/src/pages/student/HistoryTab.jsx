@@ -2,10 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-    Search, Ticket, Building2, Star, CheckCircle2, XCircle,
+    Search, Ticket, Building2, Star, CheckCircle2,
     Calendar, ChevronRight, History as HistoryIcon, ListOrdered,
     Banknote, Monitor, FileText, BookOpen, GraduationCap,
-    Activity, Clock, User, X, ShieldCheck, MapPin
+    Activity, Clock, User, X, ShieldCheck
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -15,7 +15,9 @@ import EmptyState from '../../components/ui/EmptyState'
 import { SkeletonList } from '../../components/ui/Skeleton'
 import RatingModal from '../../components/student/RatingModal'
 import { useToastStore } from '../../store/toastStore'
+import { useUniversityStore } from '../../store/universityStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
+import { withAlpha } from '../../lib/colors'
 
 // 👇 HELPER: Formats old long ticket IDs into short Q-XXXX format
 function formatTicketNumber(ticketNumber) {
@@ -72,8 +74,8 @@ function formatDateTime(dt) {
     } catch { return null }
 }
 
-// 👇 PREMIUM MODAL COMPONENT
-function HistoryDetailModal({ item, onClose }) {
+// 👇 PREMIUM MODAL COMPONENT (Now accepts primaryColor)
+function HistoryDetailModal({ item, onClose, primaryColor }) {
     if (!item) return null;
 
     const isQueue = item.historyType === 'QUEUE';
@@ -83,22 +85,23 @@ function HistoryDetailModal({ item, onClose }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-            {/* Backdrop */}
             <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 onClick={onClose}
                 className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
             />
 
-            {/* Modal Container */}
             <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
                 className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
             >
-                {/* Header Banner */}
-                <div className={`px-6 py-8 ${isQueue ? 'bg-blue-600' : 'bg-emerald-600'} text-white relative overflow-hidden`}>
+                {/* 👇 DYNAMIC SCHOOL COLOR BANNER */}
+                <div
+                    className="px-6 py-8 text-white relative overflow-hidden"
+                    style={{ backgroundColor: primaryColor }}
+                >
                     <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
                     <div className="relative z-10 flex items-start justify-between gap-4">
                         <div className="flex items-center gap-4">
@@ -116,9 +119,7 @@ function HistoryDetailModal({ item, onClose }) {
                     </div>
                 </div>
 
-                {/* Body Content */}
                 <div className="p-6 space-y-6">
-                    {/* Status Row */}
                     <div className="flex items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800">
                         <div>
                             <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Status</p>
@@ -136,7 +137,6 @@ function HistoryDetailModal({ item, onClose }) {
                         )}
                     </div>
 
-                    {/* Details Grid */}
                     <div className="grid grid-cols-2 gap-y-6 gap-x-4">
                         <div>
                             <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
@@ -187,9 +187,11 @@ function HistoryDetailModal({ item, onClose }) {
                     </div>
                 </div>
 
-                {/* Footer */}
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-                    <button onClick={onClose} className="px-6 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
+                    <button
+                        onClick={onClose}
+                        className="px-6 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                    >
                         Close Details
                     </button>
                 </div>
@@ -201,6 +203,7 @@ function HistoryDetailModal({ item, onClose }) {
 
 export default function HistoryTab() {
     const { push } = useToastStore()
+    const { university } = useUniversityStore()
     const navigate = useNavigate()
 
     const [tickets, setTickets] = useState([])
@@ -211,7 +214,10 @@ export default function HistoryTab() {
 
     // Modals state
     const [ratingTicket, setRatingTicket] = useState(null)
-    const [selectedItem, setSelectedItem] = useState(null) // 👈 For View Details
+    const [selectedItem, setSelectedItem] = useState(null)
+
+    // Get school color
+    const primaryColor = university?.primaryColor || '#4f46e5'
 
     const load = useCallback(async () => {
         try {
@@ -309,8 +315,17 @@ export default function HistoryTab() {
                         View your past queue activities, appointments, and office visits. Keep track of your completed services and get quick access to details anytime.
                     </p>
                 </div>
-                <div className="hidden md:flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/50 px-4 py-3 dark:border-blue-900/50 dark:bg-blue-900/20">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-800 dark:text-blue-300">
+                <div
+                    className="hidden md:flex items-center gap-3 rounded-xl border px-4 py-3"
+                    style={{
+                        backgroundColor: withAlpha(primaryColor, 0.08),
+                        borderColor: withAlpha(primaryColor, 0.2)
+                    }}
+                >
+                    <div
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                        style={{ backgroundColor: withAlpha(primaryColor, 0.15), color: primaryColor }}
+                    >
                         <HistoryIcon className="h-5 w-5" />
                     </div>
                     <div>
@@ -321,8 +336,15 @@ export default function HistoryTab() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="flex items-center gap-4 p-5 bg-blue-50/30 border-blue-100 dark:bg-blue-950/20 dark:border-blue-900">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                {/* 👇 QUEUE STATS UPDATED WITH SCHOOL COLOR */}
+                <Card
+                    className="flex items-center gap-4 p-5 border-opacity-30 dark:border-opacity-30"
+                    style={{ backgroundColor: withAlpha(primaryColor, 0.05), borderColor: withAlpha(primaryColor, 0.2) }}
+                >
+                    <div
+                        className="flex h-12 w-12 items-center justify-center rounded-xl"
+                        style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
+                    >
                         <Ticket className="h-6 w-6" />
                     </div>
                     <div>
@@ -331,6 +353,7 @@ export default function HistoryTab() {
                         <p className="text-[11px] text-slate-400">Total queues joined</p>
                     </div>
                 </Card>
+
                 <Card className="flex items-center gap-4 p-5 bg-emerald-50/30 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900 dark:text-emerald-300">
                         <Calendar className="h-6 w-6" />
@@ -341,6 +364,7 @@ export default function HistoryTab() {
                         <p className="text-[11px] text-slate-400">Completed appointments</p>
                     </div>
                 </Card>
+
                 <Card className="flex items-center gap-4 p-5 bg-purple-50/30 border-purple-100 dark:bg-purple-950/20 dark:border-purple-900">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
                         <Building2 className="h-6 w-6" />
@@ -351,6 +375,7 @@ export default function HistoryTab() {
                         <p className="text-[11px] text-slate-400">Offices services accessed</p>
                     </div>
                 </Card>
+
                 <Card className="flex items-center gap-4 p-5 bg-teal-50/30 border-teal-100 dark:bg-teal-950/20 dark:border-teal-900">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-100 text-teal-600 dark:bg-teal-900 dark:text-teal-300">
                         <CheckCircle2 className="h-6 w-6" />
@@ -371,9 +396,10 @@ export default function HistoryTab() {
                             onClick={() => setActiveTab(tab.id)}
                             className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
                                 activeTab === tab.id
-                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    ? 'text-white shadow-sm'
                                     : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
                             }`}
+                            style={activeTab === tab.id ? { backgroundColor: primaryColor } : undefined}
                         >
                             {tab.label}
                         </button>
@@ -388,7 +414,8 @@ export default function HistoryTab() {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search history..."
-                            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                            style={{ '--tw-ring-color': withAlpha(primaryColor, 0.2) }}
                         />
                     </div>
                 </div>
@@ -434,8 +461,11 @@ export default function HistoryTab() {
 
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                {/* 👇 DYNAMIC ICON */}
-                                                <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${isQueue ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                                {/* 👇 DYNAMIC ICON WITH SCHOOL COLOR */}
+                                                <div
+                                                    className={`h-9 w-9 rounded-xl flex items-center justify-center ${!isQueue ? 'bg-emerald-50 text-emerald-600' : ''}`}
+                                                    style={isQueue ? { backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor } : undefined}
+                                                >
                                                     <ServiceIcon className="h-5 w-5" />
                                                 </div>
                                                 <div>
@@ -496,7 +526,6 @@ export default function HistoryTab() {
                 </Card>
             )}
 
-            {/* 👇 RENDER MODALS */}
             <AnimatePresence>
                 {ratingTicket && (
                     <RatingModal
@@ -509,6 +538,7 @@ export default function HistoryTab() {
                     <HistoryDetailModal
                         item={selectedItem}
                         onClose={() => setSelectedItem(null)}
+                        primaryColor={primaryColor}
                     />
                 )}
             </AnimatePresence>
