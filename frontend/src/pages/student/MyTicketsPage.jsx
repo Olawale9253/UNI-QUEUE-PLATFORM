@@ -9,13 +9,13 @@ import {
 import api from '../../api/axios'
 import { useToastStore } from '../../store/toastStore'
 import { useUniversityStore } from '../../store/universityStore'
+import { useAuthStore } from '../../store/authStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { withAlpha } from '../../lib/colors'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import RatingModal from '../../components/student/RatingModal'
 
-// 👇 HELPER: Formats old long ticket IDs into short Q-XXXX format
 function formatTicketNumber(ticketNumber) {
     if (!ticketNumber) return 'T-0000'
     if (ticketNumber.includes('-')) return ticketNumber
@@ -27,7 +27,6 @@ function formatTicketNumber(ticketNumber) {
     return ticketNumber
 }
 
-// 👇 HELPER: Dynamically assign icons based on the service name
 function getServiceIcon(name = '') {
     const n = name.toLowerCase()
     if (n.includes('tuition') || n.includes('payment') || n.includes('fee') || n.includes('bursary') || n.includes('finance')) return Ticket
@@ -98,6 +97,7 @@ function CopyButton({ text }) {
 export default function MyTicketsPage() {
     const { push } = useToastStore()
     const { university } = useUniversityStore()
+    const { logout } = useAuthStore()
     const navigate = useNavigate()
 
     const [activeTicket, setActiveTicket] = useState(null)
@@ -146,7 +146,15 @@ export default function MyTicketsPage() {
             push({ type: 'success', message: 'You have left the queue' })
             loadData()
         } catch (err) {
-            push({ type: 'error', message: err.message })
+            console.error("Leave queue error:", err)
+            // 👇 Handle expired session or backend crash
+            if (err.response?.status === 401 || err.response?.status === 500) {
+                push({ type: 'error', message: 'Your session expired. Please log in again.' })
+                logout()
+                navigate('/login')
+            } else {
+                push({ type: 'error', message: err.response?.data?.message || err.message || 'Failed to leave queue' })
+            }
         } finally {
             setActing(null)
         }
