@@ -5,7 +5,7 @@ import {
     Search, Ticket, Building2, Star, CheckCircle2,
     Calendar, ChevronRight, History as HistoryIcon, ListOrdered,
     Banknote, Monitor, FileText, BookOpen, GraduationCap,
-    Activity, Clock, User, X, ShieldCheck
+    Activity, Clock, User, X, ShieldCheck, MapPin
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -74,7 +74,7 @@ function formatDateTime(dt) {
     } catch { return null }
 }
 
-// 👇 PREMIUM MODAL COMPONENT (Now accepts primaryColor)
+// 👇 PREMIUM MODAL COMPONENT
 function HistoryDetailModal({ item, onClose, primaryColor }) {
     if (!item) return null;
 
@@ -95,82 +95,86 @@ function HistoryDetailModal({ item, onClose, primaryColor }) {
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
+                className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
             >
-                {/* 👇 DYNAMIC SCHOOL COLOR BANNER */}
+                {/* Premium Digital Ticket Header */}
                 <div
-                    className="px-6 py-8 text-white relative overflow-hidden"
+                    className="px-6 py-6 text-white relative overflow-hidden"
                     style={{ backgroundColor: primaryColor }}
                 >
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-transparent to-black/20" />
                     <div className="relative z-10 flex items-start justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md shadow-inner">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md shadow-inner border border-white/20">
                                 <Icon className="h-7 w-7 text-white" />
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold">{item.queueName || 'Appointment'}</h2>
+                                <h2 className="text-xl font-bold tracking-tight">{item.queueName || 'Appointment'}</h2>
                                 <p className="text-sm font-medium text-white/80 mt-0.5">{item.officeName || item.staffName || 'University Office'}</p>
                             </div>
                         </div>
-                        <button onClick={onClose} className="rounded-full p-2 bg-white/10 hover:bg-white/20 transition-colors">
-                            <X className="h-5 w-5 text-white" />
+                        <button onClick={onClose} className="rounded-full p-2 bg-white/10 hover:bg-white/25 transition-colors">
+                            <X className="h-4 w-4 text-white" />
                         </button>
                     </div>
                 </div>
 
-                <div className="p-6 space-y-6">
-                    <div className="flex items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800">
+                <div className="p-6 relative">
+                    {/* Decorative punch holes for ticket look */}
+                    <div className="absolute -left-3 top-0 h-6 w-6 -translate-y-1/2 rounded-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800" />
+                    <div className="absolute -right-3 top-0 h-6 w-6 -translate-y-1/2 rounded-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800" />
+
+                    <div className="flex items-center justify-between pb-6 border-b border-dashed border-slate-200 dark:border-slate-700">
                         <div>
-                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Status</p>
-                            <Badge variant={STATUS_VARIANTS[item.status] || 'default'} className="text-sm px-3 py-1">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">Status</p>
+                            <Badge variant={STATUS_VARIANTS[item.status] || 'default'} className="text-sm px-3 py-1 font-bold">
                                 {STATUS_LABELS[item.status] || item.status}
                             </Badge>
                         </div>
                         {isQueue && (
                             <div className="text-right">
-                                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Ticket Number</p>
-                                <p className="font-mono text-lg font-bold text-slate-900 dark:text-white">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">Ticket Number</p>
+                                <p className="font-mono text-xl font-black text-slate-900 dark:text-white tracking-tight">
                                     {formatTicketNumber(item.ticketNumber)}
                                 </p>
                             </div>
                         )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+                    <div className="grid grid-cols-2 gap-y-6 gap-x-4 pt-6">
                         <div>
-                            <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                            <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
                                 <Calendar className="h-3.5 w-3.5" /> Date Joined
                             </p>
-                            <p className="text-sm font-semibold text-slate-900 dark:text-white">{dtJoined?.day || 'N/A'}</p>
-                            <p className="text-xs text-slate-500 mt-0.5">{dtJoined?.time || ''}</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">{dtJoined?.day || 'N/A'}</p>
+                            <p className="text-xs font-medium text-slate-500 mt-0.5">{dtJoined?.time || ''}</p>
                         </div>
 
                         {dtCompleted && (
                             <div>
-                                <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Date Completed
+                                <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Completed
                                 </p>
-                                <p className="text-sm font-semibold text-slate-900 dark:text-white">{dtCompleted.day}</p>
-                                <p className="text-xs text-slate-500 mt-0.5">{dtCompleted.time}</p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-white">{dtCompleted.day}</p>
+                                <p className="text-xs font-medium text-slate-500 mt-0.5">{dtCompleted.time}</p>
                             </div>
                         )}
 
                         {isQueue && item.position && (
                             <div>
-                                <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
                                     <User className="h-3.5 w-3.5" /> Final Position
                                 </p>
-                                <p className="text-sm font-semibold text-slate-900 dark:text-white">#{item.position}</p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-white">{item.position}</p>
                             </div>
                         )}
 
                         {isQueue && item.status === 'COMPLETED' && (
                             <div>
-                                <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                                    <Clock className="h-3.5 w-3.5" /> Est. Wait Time
+                                <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
+                                    <Clock className="h-3.5 w-3.5" /> Wait Time
                                 </p>
-                                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                <p className="text-sm font-bold text-slate-900 dark:text-white">
                                     {item.estimatedMinutes ? `~${item.estimatedMinutes} mins` : 'N/A'}
                                 </p>
                             </div>
@@ -178,10 +182,19 @@ function HistoryDetailModal({ item, onClose, primaryColor }) {
 
                         {!isQueue && (
                             <div>
-                                <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
                                     <ShieldCheck className="h-3.5 w-3.5" /> Handled By
                                 </p>
-                                <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.staffName || 'Assigned Staff'}</p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-white">{item.staffName || 'Assigned Staff'}</p>
+                            </div>
+                        )}
+
+                        {item.officeName && (
+                            <div className="col-span-2">
+                                <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
+                                    <MapPin className="h-3.5 w-3.5" /> Location
+                                </p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-white">{item.officeName}</p>
                             </div>
                         )}
                     </div>
@@ -190,9 +203,9 @@ function HistoryDetailModal({ item, onClose, primaryColor }) {
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
                     <button
                         onClick={onClose}
-                        className="px-6 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                        className="px-6 py-2.5 rounded-xl bg-white border border-slate-200 dark:border-slate-700 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-sm"
                     >
-                        Close Details
+                        Close
                     </button>
                 </div>
             </motion.div>
@@ -212,11 +225,9 @@ export default function HistoryTab() {
     const [search, setSearch] = useState('')
     const [activeTab, setActiveTab] = useState('ALL')
 
-    // Modals state
     const [ratingTicket, setRatingTicket] = useState(null)
     const [selectedItem, setSelectedItem] = useState(null)
 
-    // Get school color
     const primaryColor = university?.primaryColor || '#4f46e5'
 
     const load = useCallback(async () => {
@@ -246,11 +257,13 @@ export default function HistoryTab() {
         const queueItems = tickets.map(t => ({
             ...t,
             historyType: 'QUEUE',
+            officeName: t.officeName || 'University Office', // Fallback so office visits counts properly
             dateObj: new Date(t.joinedAt || t.createdAt || Date.now()),
         }))
         const apptItems = appointments.map(a => ({
             ...a,
             historyType: 'APPOINTMENT',
+            officeName: a.officeName || 'University Office',
             dateObj: new Date(a.date || a.createdAt || Date.now()),
         }))
         return [...queueItems, ...apptItems].sort((a, b) => b.dateObj - a.dateObj)
@@ -258,7 +271,7 @@ export default function HistoryTab() {
 
     const stats = useMemo(() => {
         const completedTickets = tickets.filter(t => t.status === 'COMPLETED').length
-        const uniqueOffices = new Set(tickets.map(t => t.officeName).filter(Boolean)).size
+        const uniqueOffices = new Set([...tickets, ...appointments].map(t => t.officeName || 'University Office')).size
         const successRate = tickets.length > 0 ? Math.round((completedTickets / tickets.length) * 100) : 100
 
         return {
@@ -276,8 +289,9 @@ export default function HistoryTab() {
         if (activeTab === 'OFFICE') {
             const offices = new Map()
             list.forEach(i => {
-                if (i.officeName && !offices.has(i.officeName)) {
-                    offices.set(i.officeName, i)
+                const officeKey = i.officeName || i.staffName || 'University Office'
+                if (!offices.has(officeKey)) {
+                    offices.set(officeKey, i)
                 }
             })
             list = Array.from(offices.values())
@@ -294,6 +308,44 @@ export default function HistoryTab() {
         }
         return list
     }, [combinedHistory, activeTab, search])
+
+    // 👇 DYNAMIC EMPTY STATE CONFIG
+    const emptyStateConfig = useMemo(() => {
+        switch (activeTab) {
+            case 'APPOINTMENT':
+                return {
+                    title: "No appointments yet",
+                    description: "You haven't booked any appointments.",
+                    btnText: "Book Appointment",
+                    btnIcon: Calendar,
+                    path: "/student/appointments"
+                }
+            case 'OFFICE':
+                return {
+                    title: "No office visits yet",
+                    description: "You haven't interacted with any offices.",
+                    btnText: "Find Offices",
+                    btnIcon: Building2,
+                    path: "/student/offices"
+                }
+            case 'QUEUE':
+                return {
+                    title: "No queue history yet",
+                    description: "You haven't joined any queues.",
+                    btnText: "Browse Queues",
+                    btnIcon: ListOrdered,
+                    path: "/student/queues"
+                }
+            default:
+                return {
+                    title: "No history found",
+                    description: search ? "Try adjusting your search terms." : "You haven't participated in any queues or appointments yet.",
+                    btnText: "Browse Queues",
+                    btnIcon: ListOrdered,
+                    path: "/student/queues"
+                }
+        }
+    }, [activeTab, search])
 
     if (loading) {
         return (
@@ -336,7 +388,6 @@ export default function HistoryTab() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* 👇 QUEUE STATS UPDATED WITH SCHOOL COLOR */}
                 <Card
                     className="flex items-center gap-4 p-5 border-opacity-30 dark:border-opacity-30"
                     style={{ backgroundColor: withAlpha(primaryColor, 0.05), borderColor: withAlpha(primaryColor, 0.2) }}
@@ -424,9 +475,17 @@ export default function HistoryTab() {
             {filtered.length === 0 ? (
                 <EmptyState
                     icon={HistoryIcon}
-                    title="No history found"
-                    description={search ? "Try adjusting your search terms." : "You haven't participated in any queues or appointments yet."}
-                    action={<Button icon={ListOrdered} onClick={() => navigate('/student/queues')}>Browse queues</Button>}
+                    title={emptyStateConfig.title}
+                    description={emptyStateConfig.description}
+                    action={
+                        <Button
+                            icon={emptyStateConfig.btnIcon}
+                            onClick={() => navigate(emptyStateConfig.path)}
+                            style={{ backgroundColor: primaryColor }}
+                        >
+                            {emptyStateConfig.btnText}
+                        </Button>
+                    }
                 />
             ) : (
                 <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800">
@@ -461,7 +520,6 @@ export default function HistoryTab() {
 
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                {/* 👇 DYNAMIC ICON WITH SCHOOL COLOR */}
                                                 <div
                                                     className={`h-9 w-9 rounded-xl flex items-center justify-center ${!isQueue ? 'bg-emerald-50 text-emerald-600' : ''}`}
                                                     style={isQueue ? { backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor } : undefined}
