@@ -176,30 +176,46 @@ public class TicketService {
     public void leaveQueue(Long userId, Long ticketId) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
-        if (!ticket.getUser().getId().equals(userId)) {
-            throw new ResourceNotFoundException("Ticket not found");
+
+        // 👇 Safety Check: Ensure user is not null
+        if (ticket.getUser() == null || !ticket.getUser().getId().equals(userId)) {
+            throw new ResourceNotFoundException("Ticket not found or unauthorized");
         }
+
         if (ticket.getStatus() != TicketStatus.WAITING
                 && ticket.getStatus() != TicketStatus.WAITLISTED
                 && ticket.getStatus() != TicketStatus.CALLED) {
             throw new BadRequestException("Cannot leave a ticket that is " + ticket.getStatus());
         }
+
         TicketStatus oldStatus = ticket.getStatus();
         ticket.setStatus(TicketStatus.CANCELLED);
+        ticket.setCompletedAt(LocalDateTime.now()); // Mark when it was closed
         ticketRepository.save(ticket);
-        recalculatePositions(ticket.getQueue().getId());
 
-        if (oldStatus == TicketStatus.WAITING) {
-            promoteFromWaitlist(ticket.getQueue().getId());
+        // 👇 Safety Check: Ensure queue is not null before recalculating
+        if (ticket.getQueue() != null) {
+            Long queueId = ticket.getQueue().getId();
+            recalculatePositions(queueId);
+
+            if (oldStatus == TicketStatus.WAITING) {
+                promoteFromWaitlist(queueId);
+            }
+
+            Long uniId = ticket.getQueue().getUniversity() != null ? ticket.getQueue().getUniversity().getId() : null;
+            if (uniId != null) {
+                eventService.broadcastToUniversity(uniId, "queue:updated",
+                        Map.of("queueId", queueId, "reason", "ticket-cancelled"));
+            }
         }
 
-        Long uniId = ticket.getQueue().getUniversity().getId();
-        eventService.broadcastToUniversity(uniId, "queue:updated",
-                Map.of("queueId", ticket.getQueue().getId(), "reason", "ticket-cancelled"));
         eventService.broadcastToUser(userId, "my-ticket:updated",
                 Map.of("ticketId", ticketId, "status", "CANCELLED"));
 
-        auditService.record(userId, ticket.getQueue().getUniversity().getId(),
+        Long uniIdForAudit = (ticket.getQueue() != null && ticket.getQueue().getUniversity() != null)
+                ? ticket.getQueue().getUniversity().getId() : null;
+
+        auditService.record(userId, uniIdForAudit,
                 AuditAction.TICKET_CANCELLED, "Ticket", ticketId, null);
     }
 
@@ -208,7 +224,7 @@ public class TicketService {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
-        if (!ticket.getUser().getId().equals(userId)) {
+        if (ticket.getUser() == null || !ticket.getUser().getId().equals(userId)) {
             throw new ResourceNotFoundException("Ticket not found");
         }
         if (ticket.getStatus() != TicketStatus.WAITING
@@ -253,7 +269,7 @@ public class TicketService {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
-        if (!ticket.getUser().getId().equals(userId)) {
+        if (ticket.getUser() == null || !ticket.getUser().getId().equals(userId)) {
             throw new ResourceNotFoundException("Ticket not found");
         }
         if (ticket.getStatus() != TicketStatus.WAITING
