@@ -68,6 +68,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } catch (Exception ex) {
             log.error("Could not set user authentication: {}", ex.getMessage());
+            SecurityContextHolder.clearContext();
+
+            // 👇 FIX: Stop the request immediately and return a 401 instead of passing to the controller
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(
+                    "{\"success\":false,\"message\":\"Unauthorized — invalid or expired token\"}"
+            );
+            return;
         }
 
         filterChain.doFilter(request, response);
