@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-    Search, Ticket, Clock, Building2, Star, CheckCircle2,
-    XCircle, AlertCircle, Calendar, Briefcase, ChevronRight,
-    Filter, ArrowUpRight, History as HistoryIcon, ListOrdered
+    Search, Ticket, Building2, Star, CheckCircle2, XCircle,
+    Calendar, ChevronRight, History as HistoryIcon, ListOrdered,
+    Banknote, Monitor, FileText, BookOpen, GraduationCap,
+    Activity, Clock, User, X, ShieldCheck, MapPin
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -28,29 +29,29 @@ function formatTicketNumber(ticketNumber) {
     return ticketNumber
 }
 
+// 👇 HELPER: Dynamically assign icons based on the service name
+function getServiceIcon(name = '') {
+    const n = name.toLowerCase()
+    if (n.includes('tuition') || n.includes('payment') || n.includes('fee') || n.includes('bursary') || n.includes('finance')) return Banknote
+    if (n.includes('medical') || n.includes('health') || n.includes('clinic') || n.includes('screen')) return Activity
+    if (n.includes('portal') || n.includes('ict') || n.includes('it ') || n.includes('computer')) return Monitor
+    if (n.includes('password') || n.includes('transcript') || n.includes('document') || n.includes('result')) return FileText
+    if (n.includes('library') || n.includes('book')) return BookOpen
+    if (n.includes('register') || n.includes('academic') || n.includes('course')) return GraduationCap
+    return Building2 // Default fallback
+}
+
 const STATUS_VARIANTS = {
-    WAITING: 'warning',
-    WAITLISTED: 'info',
-    CALLED: 'indigo',
-    SERVING: 'indigo',
-    COMPLETED: 'success',
-    NO_SHOW: 'danger',
-    CANCELLED: 'default',
-    TRANSFERRED: 'default',
-    BOOKED: 'info',
+    WAITING: 'warning', WAITLISTED: 'info', CALLED: 'indigo',
+    SERVING: 'indigo', COMPLETED: 'success', NO_SHOW: 'danger',
+    CANCELLED: 'default', TRANSFERRED: 'default', BOOKED: 'info',
     UPCOMING: 'warning',
 }
 
 const STATUS_LABELS = {
-    WAITING: 'Waiting',
-    WAITLISTED: 'Waitlisted',
-    CALLED: 'Called',
-    SERVING: 'Serving',
-    COMPLETED: 'Completed',
-    NO_SHOW: 'No-show',
-    CANCELLED: 'Cancelled',
-    TRANSFERRED: 'Transferred',
-    BOOKED: 'Booked',
+    WAITING: 'Waiting', WAITLISTED: 'Waitlisted', CALLED: 'Called',
+    SERVING: 'Serving', COMPLETED: 'Completed', NO_SHOW: 'No-show',
+    CANCELLED: 'Cancelled', TRANSFERRED: 'Transferred', BOOKED: 'Booked',
     UPCOMING: 'Upcoming',
 }
 
@@ -67,9 +68,136 @@ function formatDateTime(dt) {
         const date = new Date(dt)
         const day = date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
         const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-        return { day, time }
+        return { day, time, full: `${day} at ${time}` }
     } catch { return null }
 }
+
+// 👇 PREMIUM MODAL COMPONENT
+function HistoryDetailModal({ item, onClose }) {
+    if (!item) return null;
+
+    const isQueue = item.historyType === 'QUEUE';
+    const Icon = getServiceIcon(item.queueName || item.officeName);
+    const dtJoined = formatDateTime(item.joinedAt || item.date);
+    const dtCompleted = formatDateTime(item.completedAt);
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            {/* Backdrop */}
+            <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={onClose}
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            />
+
+            {/* Modal Container */}
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
+            >
+                {/* Header Banner */}
+                <div className={`px-6 py-8 ${isQueue ? 'bg-blue-600' : 'bg-emerald-600'} text-white relative overflow-hidden`}>
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
+                    <div className="relative z-10 flex items-start justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md shadow-inner">
+                                <Icon className="h-7 w-7 text-white" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold">{item.queueName || 'Appointment'}</h2>
+                                <p className="text-sm font-medium text-white/80 mt-0.5">{item.officeName || item.staffName || 'University Office'}</p>
+                            </div>
+                        </div>
+                        <button onClick={onClose} className="rounded-full p-2 bg-white/10 hover:bg-white/20 transition-colors">
+                            <X className="h-5 w-5 text-white" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Body Content */}
+                <div className="p-6 space-y-6">
+                    {/* Status Row */}
+                    <div className="flex items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Status</p>
+                            <Badge variant={STATUS_VARIANTS[item.status] || 'default'} className="text-sm px-3 py-1">
+                                {STATUS_LABELS[item.status] || item.status}
+                            </Badge>
+                        </div>
+                        {isQueue && (
+                            <div className="text-right">
+                                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Ticket Number</p>
+                                <p className="font-mono text-lg font-bold text-slate-900 dark:text-white">
+                                    {formatTicketNumber(item.ticketNumber)}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Details Grid */}
+                    <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+                        <div>
+                            <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                <Calendar className="h-3.5 w-3.5" /> Date Joined
+                            </p>
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white">{dtJoined?.day || 'N/A'}</p>
+                            <p className="text-xs text-slate-500 mt-0.5">{dtJoined?.time || ''}</p>
+                        </div>
+
+                        {dtCompleted && (
+                            <div>
+                                <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Date Completed
+                                </p>
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white">{dtCompleted.day}</p>
+                                <p className="text-xs text-slate-500 mt-0.5">{dtCompleted.time}</p>
+                            </div>
+                        )}
+
+                        {isQueue && item.position && (
+                            <div>
+                                <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                    <User className="h-3.5 w-3.5" /> Final Position
+                                </p>
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white">#{item.position}</p>
+                            </div>
+                        )}
+
+                        {isQueue && item.status === 'COMPLETED' && (
+                            <div>
+                                <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                    <Clock className="h-3.5 w-3.5" /> Est. Wait Time
+                                </p>
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                    {item.estimatedMinutes ? `~${item.estimatedMinutes} mins` : 'N/A'}
+                                </p>
+                            </div>
+                        )}
+
+                        {!isQueue && (
+                            <div>
+                                <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                    <ShieldCheck className="h-3.5 w-3.5" /> Handled By
+                                </p>
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.staffName || 'Assigned Staff'}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                    <button onClick={onClose} className="px-6 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
+                        Close Details
+                    </button>
+                </div>
+            </motion.div>
+        </div>
+    )
+}
+
 
 export default function HistoryTab() {
     const { push } = useToastStore()
@@ -80,7 +208,10 @@ export default function HistoryTab() {
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
     const [activeTab, setActiveTab] = useState('ALL')
+
+    // Modals state
     const [ratingTicket, setRatingTicket] = useState(null)
+    const [selectedItem, setSelectedItem] = useState(null) // 👈 For View Details
 
     const load = useCallback(async () => {
         try {
@@ -288,6 +419,7 @@ export default function HistoryTab() {
                                 const dt = formatDateTime(item.joinedAt || item.date);
                                 const isQueue = item.historyType === 'QUEUE';
                                 const canRate = isQueue && item.status === 'COMPLETED' && !item.rated;
+                                const ServiceIcon = getServiceIcon(item.queueName || item.officeName);
 
                                 return (
                                     <tr key={item.id || idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
@@ -302,8 +434,9 @@ export default function HistoryTab() {
 
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${isQueue ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                                                    {isQueue ? <Ticket className="h-4 w-4" /> : <Calendar className="h-4 w-4" />}
+                                                {/* 👇 DYNAMIC ICON */}
+                                                <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${isQueue ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                                    <ServiceIcon className="h-5 w-5" />
                                                 </div>
                                                 <div>
                                                     <div className="text-sm font-bold text-slate-900 dark:text-white">
@@ -342,7 +475,10 @@ export default function HistoryTab() {
                                             {canRate ? (
                                                 <Button variant="secondary" size="sm" icon={Star} onClick={() => setRatingTicket(item)}>Rate</Button>
                                             ) : (
-                                                <button className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                <button
+                                                    onClick={() => setSelectedItem(item)}
+                                                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 transition-colors"
+                                                >
                                                     View Details <ChevronRight className="h-3 w-3" />
                                                 </button>
                                             )}
@@ -360,8 +496,21 @@ export default function HistoryTab() {
                 </Card>
             )}
 
+            {/* 👇 RENDER MODALS */}
             <AnimatePresence>
-                {ratingTicket && <RatingModal ticket={ratingTicket} onClose={() => setRatingTicket(null)} onRated={handleRated} />}
+                {ratingTicket && (
+                    <RatingModal
+                        ticket={ratingTicket}
+                        onClose={() => setRatingTicket(null)}
+                        onRated={handleRated}
+                    />
+                )}
+                {selectedItem && (
+                    <HistoryDetailModal
+                        item={selectedItem}
+                        onClose={() => setSelectedItem(null)}
+                    />
+                )}
             </AnimatePresence>
         </div>
     )
