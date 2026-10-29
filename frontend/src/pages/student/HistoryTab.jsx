@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Search, Ticket, Clock, Building2, Star, CheckCircle2,
-    XCircle, AlertCircle, Copy, Check, Filter, ArrowRight,
-    History as HistoryIcon, ListOrdered,
+    XCircle, AlertCircle, Calendar, Briefcase, ChevronRight,
+    Filter, ArrowUpRight, History as HistoryIcon, ListOrdered
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -25,6 +25,8 @@ const STATUS_VARIANTS = {
     NO_SHOW: 'danger',
     CANCELLED: 'default',
     TRANSFERRED: 'default',
+    BOOKED: 'info',
+    UPCOMING: 'warning',
 }
 
 const STATUS_LABELS = {
@@ -36,68 +38,46 @@ const STATUS_LABELS = {
     NO_SHOW: 'No-show',
     CANCELLED: 'Cancelled',
     TRANSFERRED: 'Transferred',
+    BOOKED: 'Booked',
+    UPCOMING: 'Upcoming',
 }
 
-const FILTERS = [
-    { value: 'ALL', label: 'All' },
-    { value: 'COMPLETED', label: 'Completed' },
-    { value: 'WAITING', label: 'Waiting' },
-    { value: 'CALLED', label: 'Called' },
-    { value: 'CANCELLED', label: 'Cancelled' },
-    { value: 'NO_SHOW', label: 'No-show' },
+const TABS = [
+    { id: 'ALL', label: 'All History' },
+    { id: 'QUEUE', label: 'Queue History' },
+    { id: 'APPOINTMENT', label: 'Appointment History' },
+    { id: 'OFFICE', label: 'Office Visits' },
 ]
-
-function CopyButton({ text }) {
-    const [copied, setCopied] = useState(false)
-    const copy = async (event) => {
-        event.stopPropagation()
-        try {
-            await navigator.clipboard.writeText(text)
-            setCopied(true)
-            setTimeout(() => setCopied(false), 1500)
-        } catch {}
-    }
-    return (
-        <button
-            type="button"
-            onClick={copy}
-            title="Copy ticket ID"
-            className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-300"
-        >
-            {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-        </button>
-    )
-}
-
-function InitialBadge({ queueName, ticketNumber }) {
-    const letter = queueName?.charAt(0).toUpperCase() || ticketNumber?.charAt(0).toUpperCase() || '#'
-    return (
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-sm font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-            {letter}
-        </div>
-    )
-}
 
 function formatDateTime(dt) {
     if (!dt) return null
     try {
-        return new Date(dt).toLocaleString([], { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        const date = new Date(dt)
+        const day = date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+        const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        return { day, time }
     } catch { return null }
 }
 
 export default function HistoryTab() {
     const { push } = useToastStore()
     const navigate = useNavigate()
+
     const [tickets, setTickets] = useState([])
+    const [appointments, setAppointments] = useState([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
-    const [filter, setFilter] = useState('ALL')
+    const [activeTab, setActiveTab] = useState('ALL')
     const [ratingTicket, setRatingTicket] = useState(null)
 
     const load = useCallback(async () => {
         try {
-            const res = await api.get('/api/user/tickets/history')
-            setTickets(res.data?.data || [])
+            const [ticketRes, apptRes] = await Promise.all([
+                api.get('/api/user/tickets/history').catch(() => ({ data: { data: [] } })),
+                api.get('/api/appointments').catch(() => ({ data: { data: [] } }))
+            ])
+            setTickets(ticketRes.data?.data || [])
+            setAppointments(apptRes.data?.data || [])
         } catch (err) {
             push({ type: 'error', message: err.message || 'Failed to load history' })
         } finally {
@@ -113,33 +93,62 @@ export default function HistoryTab() {
         setRatingTicket(null)
     }
 
+    // Combine and standardize history items
+    const combinedHistory = useMemo(() => {
+        const queueItems = tickets.map(t => ({
+            ...t,
+            historyType: 'QUEUE',
+            dateObj: new Date(t.joinedAt || t.createdAt || Date.now()),
+        }))
+        const apptItems = appointments.map(a => ({
+            ...a,
+            historyType: 'APPOINTMENT',
+            dateObj: new Date(a.date || a.createdAt || Date.now()),
+        }))
+        return [...queueItems, ...apptItems].sort((a, b) => b.dateObj - a.dateObj)
+    }, [tickets, appointments])
+
+    // Calculate Stats
+    const stats = useMemo(() => {
+        const completedTickets = tickets.filter(t => t.status === 'COMPLETED').length
+        const uniqueOffices = new Set(tickets.map(t => t.officeName).filter(Boolean)).size
+        const successRate = tickets.length > 0 ? Math.round((completedTickets / tickets.length) * 100) : 100
+
+        return {
+            queueVisits: tickets.length,
+            appointments: appointments.length,
+            offices: uniqueOffices,
+            successRate
+        }
+    }, [tickets, appointments])
+
+    // Filter Items based on Tab and Search
     const filtered = useMemo(() => {
-        let list = tickets
-        if (filter !== 'ALL') list = list.filter((item) => item.status === filter)
+        let list = combinedHistory
+        if (activeTab === 'QUEUE') list = list.filter(i => i.historyType === 'QUEUE')
+        if (activeTab === 'APPOINTMENT') list = list.filter(i => i.historyType === 'APPOINTMENT')
+        if (activeTab === 'OFFICE') {
+            // Group by office for office visits tab
+            const offices = new Map()
+            list.forEach(i => {
+                if (i.officeName && !offices.has(i.officeName)) {
+                    offices.set(i.officeName, i)
+                }
+            })
+            list = Array.from(offices.values())
+        }
+
         if (search.trim()) {
             const s = search.trim().toLowerCase()
-            list = list.filter(
-                (item) =>
-                    item.ticketNumber?.toLowerCase().includes(s) ||
-                    item.queueName?.toLowerCase().includes(s) ||
-                    item.officeName?.toLowerCase().includes(s)
+            list = list.filter(i =>
+                i.ticketNumber?.toLowerCase().includes(s) ||
+                i.queueName?.toLowerCase().includes(s) ||
+                i.officeName?.toLowerCase().includes(s) ||
+                i.staffName?.toLowerCase().includes(s)
             )
         }
-        return [...list].sort((a, b) => {
-            const at = a.joinedAt ? new Date(a.joinedAt).getTime() : 0
-            const bt = b.joinedAt ? new Date(b.joinedAt).getTime() : 0
-            return bt - at
-        })
-    }, [tickets, filter, search])
-
-    const statusCounts = useMemo(() => {
-        const counts = { ALL: tickets.length }
-        FILTERS.forEach((item) => {
-            if (item.value === 'ALL') return
-            counts[item.value] = tickets.filter((ticket) => ticket.status === item.value).length
-        })
-        return counts
-    }, [tickets])
+        return list
+    }, [combinedHistory, activeTab, search])
 
     if (loading) {
         return (
@@ -153,126 +162,199 @@ export default function HistoryTab() {
     return (
         <div className="space-y-6 pb-12">
             {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                    Ticket History
-                </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Every queue you've joined. Rate completed tickets to help improve service.
-                </p>
-            </div>
-
-            {/* Sticky Toolbar - REMOVED negative margins to prevent clipping */}
-            {tickets.length > 0 && (
-                <div className="sticky top-0 z-20 -mx-3 bg-white/95 px-3 py-3 backdrop-blur-sm dark:bg-slate-900/95 sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8 border-b border-slate-200 dark:border-slate-800">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="w-full max-w-sm">
-                            <div className="relative">
-                                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                                <input
-                                    type="text"
-                                    value={search}
-                                    onChange={(event) => setSearch(event.target.value)}
-                                    placeholder="Search by ticket ID or queue name..."
-                                    className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
-                                />
-                            </div>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                            <Filter className="mr-1 h-3.5 w-3.5 text-slate-400" />
-                            {FILTERS.map((item) => {
-                                const count = statusCounts[item.value] ?? 0
-                                const isActive = filter === item.value
-                                return (
-                                    <button
-                                        key={item.value}
-                                        type="button"
-                                        onClick={() => setFilter(item.value)}
-                                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                                            isActive
-                                                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                                                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
-                                        }`}
-                                    >
-                                        {item.label}
-                                        <span className={`text-[10px] font-bold ${isActive ? 'opacity-80' : 'opacity-60'}`}>
-                                            {count}
-                                        </span>
-                                    </button>
-                                )
-                            })}
-                        </div>
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                        History
+                    </h1>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
+                        View your past queue activities, appointments, and office visits. Keep track of your completed services and get quick access to details anytime.
+                    </p>
+                </div>
+                <div className="hidden md:flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/50 px-4 py-3 dark:border-blue-900/50 dark:bg-blue-900/20">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-800 dark:text-blue-300">
+                        <HistoryIcon className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Your Activity History</div>
+                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400">All your past queues, appointments and office visits in one place.</div>
                     </div>
                 </div>
-            )}
+            </div>
 
-            {/* List */}
-            {tickets.length === 0 ? (
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="flex items-center gap-4 p-5 bg-blue-50/30 border-blue-100 dark:bg-blue-950/20 dark:border-blue-900">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                        <Ticket className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <p className="text-xs font-semibold text-slate-500 uppercase">Queue Visits</p>
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.queueVisits}</p>
+                        <p className="text-[11px] text-slate-400">Total queues joined</p>
+                    </div>
+                </Card>
+                <Card className="flex items-center gap-4 p-5 bg-emerald-50/30 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900 dark:text-emerald-300">
+                        <Calendar className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <p className="text-xs font-semibold text-slate-500 uppercase">Appointments</p>
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.appointments}</p>
+                        <p className="text-[11px] text-slate-400">Completed appointments</p>
+                    </div>
+                </Card>
+                <Card className="flex items-center gap-4 p-5 bg-purple-50/30 border-purple-100 dark:bg-purple-950/20 dark:border-purple-900">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
+                        <Building2 className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <p className="text-xs font-semibold text-slate-500 uppercase">Office Visits</p>
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.offices}</p>
+                        <p className="text-[11px] text-slate-400">Offices services accessed</p>
+                    </div>
+                </Card>
+                <Card className="flex items-center gap-4 p-5 bg-teal-50/30 border-teal-100 dark:bg-teal-950/20 dark:border-teal-900">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-100 text-teal-600 dark:bg-teal-900 dark:text-teal-300">
+                        <CheckCircle2 className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <p className="text-xs font-semibold text-slate-500 uppercase">Success Rate</p>
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.successRate}%</p>
+                        <p className="text-[11px] text-slate-400">Completed successfully</p>
+                    </div>
+                </Card>
+            </div>
+
+            {/* Tabs & Search Toolbar */}
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-2 rounded-2xl border border-slate-200 dark:bg-slate-900 dark:border-slate-800 shadow-sm">
+                <div className="flex flex-wrap items-center gap-1">
+                    {TABS.map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                                activeTab === tab.id
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
+                            }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="flex items-center gap-3 px-2">
+                    <div className="relative w-full sm:w-64">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Search history..."
+                            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Data Table */}
+            {filtered.length === 0 ? (
                 <EmptyState
                     icon={HistoryIcon}
-                    title="No ticket history yet"
-                    description="Once you join a queue, every ticket you collect will appear here with its wait time and outcome."
+                    title="No history found"
+                    description={search ? "Try adjusting your search terms." : "You haven't participated in any queues or appointments yet."}
                     action={<Button icon={ListOrdered} onClick={() => navigate('/student/queues')}>Browse queues</Button>}
                 />
-            ) : filtered.length === 0 ? (
-                <EmptyState
-                    icon={Filter}
-                    variant="info"
-                    title="No tickets match"
-                    description={search.trim() ? 'Try a different search term or clear the filter.' : 'No tickets with this status yet.'}
-                    action={<Button variant="secondary" onClick={() => { setFilter('ALL'); setSearch('') }}>Clear filters</Button>}
-                />
             ) : (
-                <motion.div initial="initial" animate="animate" className="space-y-4">
-                    {filtered.map((itemValue, idx) => {
-                        const isCompleted = itemValue.status === 'COMPLETED'
-                        const canRate = isCompleted && !itemValue.rated
-                        return (
-                            <motion.div key={itemValue.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.02 }}>
-                                <Card className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                        <div className="flex min-w-0 flex-1 items-start gap-4">
-                                            <InitialBadge queueName={itemValue.queueName || itemValue.officeName} ticketNumber={itemValue.ticketNumber} />
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    <span className="font-mono text-sm font-bold text-slate-900 dark:text-slate-100">{itemValue.ticketNumber}</span>
-                                                    <CopyButton text={itemValue.ticketNumber} />
-                                                    <Badge variant={STATUS_VARIANTS[itemValue.status] || 'default'}>
-                                                        {STATUS_LABELS[itemValue.status] || itemValue.status}
-                                                    </Badge>
+                <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                            <tr className="bg-slate-50 border-b border-slate-200 dark:bg-slate-800/50 dark:border-slate-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                <th className="px-6 py-4">Date & Time</th>
+                                <th className="px-6 py-4">Service / Office</th>
+                                <th className="px-6 py-4">Details</th>
+                                <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4 text-right">Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                            {filtered.map((item, idx) => {
+                                const dt = formatDateTime(item.joinedAt || item.date);
+                                const isQueue = item.historyType === 'QUEUE';
+                                const canRate = isQueue && item.status === 'COMPLETED' && !item.rated;
+
+                                return (
+                                    <tr key={item.id || idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                                                {dt?.day || 'N/A'}
+                                            </div>
+                                            <div className="text-xs text-slate-500 font-medium">
+                                                {dt?.time || ''}
+                                            </div>
+                                        </td>
+
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${isQueue ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                                    {isQueue ? <Ticket className="h-4 w-4" /> : <Calendar className="h-4 w-4" />}
                                                 </div>
-                                                {(itemValue.queueName || itemValue.officeName) && (
-                                                    <div className="mt-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-400">
-                                                        <Building2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                                                        <span className="truncate">{itemValue.queueName || itemValue.officeName}</span>
+                                                <div>
+                                                    <div className="text-sm font-bold text-slate-900 dark:text-white">
+                                                        {item.queueName || 'Appointment'}
                                                     </div>
-                                                )}
-                                                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
-                                                    {itemValue.joinedAt && <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Joined {formatDateTime(itemValue.joinedAt)}</span>}
-                                                    {itemValue.completedAt && <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><CheckCircle2 className="h-3 w-3" /> Completed {formatDateTime(itemValue.completedAt)}</span>}
-                                                    {itemValue.status === 'NO_SHOW' && <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400"><AlertCircle className="h-3 w-3" /> Marked as no-show</span>}
-                                                    {itemValue.status === 'CANCELLED' && <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400"><XCircle className="h-3 w-3" /> Cancelled</span>}
+                                                    <div className="text-xs text-slate-500">
+                                                        {item.officeName || item.staffName || 'University Office'}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        {canRate && (
-                                            <div className="shrink-0 sm:pt-1">
-                                                <Button variant="secondary" size="sm" icon={Star} onClick={() => setRatingTicket(itemValue)}>Rate service</Button>
+                                        </td>
+
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                                {isQueue ? (
+                                                    <>Ticket No: <span className="font-mono text-slate-900 dark:text-white">{item.ticketNumber}</span></>
+                                                ) : (
+                                                    <>Staff: <span className="text-slate-900 dark:text-white">{item.staffName || 'Assigned Staff'}</span></>
+                                                )}
                                             </div>
-                                        )}
-                                        {isCompleted && itemValue.rated && (
-                                            <div className="shrink-0 text-xs text-slate-500 sm:pt-2 dark:text-slate-400">
-                                                <span className="inline-flex items-center gap-1">
-                                                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> Rated {itemValue.rating ?? ''}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </Card>
-                            </motion.div>
-                        )
-                    })}
-                </motion.div>
+                                            {isQueue && item.position && (
+                                                <div className="text-xs text-slate-500 mt-1">Position: {item.position}</div>
+                                            )}
+                                        </td>
+
+                                        <td className="px-6 py-4">
+                                            <Badge variant={STATUS_VARIANTS[item.status] || 'default'}>
+                                                {STATUS_LABELS[item.status] || item.status}
+                                            </Badge>
+                                            {item.status === 'COMPLETED' && item.completedAt && (
+                                                <div className="text-[11px] text-slate-400 mt-1">Served at {new Date(item.completedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                                            )}
+                                        </td>
+
+                                        <td className="px-6 py-4 text-right">
+                                            {canRate ? (
+                                                <Button variant="secondary" size="sm" icon={Star} onClick={() => setRatingTicket(item)}>Rate</Button>
+                                            ) : (
+                                                <button className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                    View Details <ChevronRight className="h-3 w-3" />
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                )
+                            })}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Footer info */}
+                    <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 dark:bg-slate-800/50 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 font-medium">
+                        <div>Showing 1 - {filtered.length} of {filtered.length} results</div>
+                    </div>
+                </Card>
             )}
 
             <AnimatePresence>
