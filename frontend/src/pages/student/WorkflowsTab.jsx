@@ -51,6 +51,9 @@ export default function WorkflowsTab() {
     const [abandonTarget, setAbandonTarget] = useState(null)
     const [abandoning, setAbandoning] = useState(false)
 
+    // 👇 State for filtering
+    const [statusFilter, setStatusFilter] = useState('ALL')
+
     const primaryColor = university?.primaryColor || '#4f46e5'
 
     const load = useCallback(async () => {
@@ -122,6 +125,12 @@ export default function WorkflowsTab() {
         }))
         return [...started, ...notStarted]
     }, [mine, available])
+
+    // 👇 Filter the workflows based on the dropdown
+    const filteredWorkflows = useMemo(() => {
+        if (statusFilter === 'ALL') return allWorkflows
+        return allWorkflows.filter(w => w.status === statusFilter)
+    }, [allWorkflows, statusFilter])
 
     // Generate latest updates
     const latestUpdates = useMemo(() => {
@@ -239,18 +248,27 @@ export default function WorkflowsTab() {
                                 <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">My Workflows</h2>
                                 <p className="text-xs text-slate-500">Your current university processes and their status.</p>
                             </div>
-                            <button className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-                                All Statuses
-                            </button>
+
+                            {/* 👇 Functional Filter Dropdown */}
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+                            >
+                                <option value="ALL">All Statuses</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="COMPLETED">Completed</option>
+                            </select>
                         </div>
 
                         <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                            {allWorkflows.length === 0 ? (
+                            {filteredWorkflows.length === 0 ? (
                                 <div className="p-8 text-center">
-                                    <EmptyState icon={Sparkles} title="No workflows available" description="Check back later when your university adds new processes." />
+                                    <EmptyState icon={Sparkles} title="No workflows found" description={`You have no workflows with status "${statusFilter.toLowerCase()}".`} />
                                 </div>
                             ) : (
-                                allWorkflows.map((item) => {
+                                filteredWorkflows.map((item) => {
                                     const Icon = getWorkflowIcon(item.workflowName || item.name);
                                     const title = item.workflowName || item.name;
                                     const isPending = item.status === 'PENDING';
@@ -272,7 +290,6 @@ export default function WorkflowsTab() {
                                                     </div>
                                                     <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{item.description || `Process for ${title.toLowerCase()}`}</p>
 
-                                                    {/* Progress Bar */}
                                                     <div className="flex items-center gap-3 mt-3">
                                                         <div className="h-1.5 w-full max-w-xs bg-slate-100 rounded-full overflow-hidden dark:bg-slate-800">
                                                             <div
