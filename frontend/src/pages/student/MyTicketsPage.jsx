@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     Ticket, Calendar, Clock, User, ArrowRight, Check, Copy, Star,
     CheckCircle2, XCircle, ChevronRight, HelpCircle, Building2,
-    ListOrdered, RotateCcw, SkipForward, LogOut, Search, MapPin, X, ShieldCheck
+    ListOrdered, RotateCcw, SkipForward, LogOut, Search, MapPin, X
 } from 'lucide-react'
 import api from '../../api/axios'
 import { useToastStore } from '../../store/toastStore'
@@ -97,12 +97,17 @@ function CopyButton({ text }) {
 }
 
 // 👇 PREMIUM MODAL: View Ticket Details inline
-function TicketDetailModal({ item, onClose, primaryColor }) {
+function TicketDetailModal({ item, onClose, primaryColor, onReschedule, onSkip, onLeave, acting }) {
     if (!item) return null;
 
     const Icon = getServiceIcon(item.queueName || item.officeName);
     const dtJoined = formatDateTime(item.joinedAt || item.createdAt);
     const dtCompleted = formatDateTime(item.completedAt);
+
+    const isActive = ['WAITING', 'CALLED', 'SERVING'].includes(item.status?.toUpperCase())
+
+    // 👇 Dynamic wait time calculation
+    const calculatedWait = item.estimatedMinutes ?? (item.position ? item.position * 5 : null)
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
@@ -192,7 +197,7 @@ function TicketDetailModal({ item, onClose, primaryColor }) {
                                 <Clock className="h-3.5 w-3.5" /> Est. Wait Time
                             </p>
                             <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                {item.estimatedMinutes ? `~${item.estimatedMinutes} mins` : '—'}
+                                {calculatedWait ? `~${calculatedWait} mins` : '—'}
                             </p>
                         </div>
 
@@ -203,6 +208,35 @@ function TicketDetailModal({ item, onClose, primaryColor }) {
                             <p className="text-sm font-bold text-slate-900 dark:text-white">{item.officeName || 'University Office'}</p>
                         </div>
                     </div>
+
+                    {/* 👇 Added Actions inside the Modal for Active Tickets */}
+                    {isActive && onReschedule && onSkip && onLeave && (
+                        <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2">
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    onClick={() => onReschedule(item.id)}
+                                    disabled={!!acting}
+                                    className="flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-50"
+                                >
+                                    <RotateCcw className="h-3.5 w-3.5" /> Reschedule
+                                </button>
+                                <button
+                                    onClick={() => onSkip(item.id)}
+                                    disabled={!!acting}
+                                    className="flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-50"
+                                >
+                                    <SkipForward className="h-3.5 w-3.5" /> Skip Turn
+                                </button>
+                            </div>
+                            <button
+                                onClick={() => onLeave(item.id)}
+                                disabled={!!acting}
+                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300"
+                            >
+                                <LogOut className="h-3.5 w-3.5" /> Leave Queue
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
@@ -232,7 +266,7 @@ export default function MyTicketsPage() {
     const [activeTab, setActiveTab] = useState('ALL')
 
     const [ratingTicket, setRatingTicket] = useState(null)
-    const [selectedTicket, setSelectedTicket] = useState(null) // 👈 For the inline Details modal
+    const [selectedTicket, setSelectedTicket] = useState(null)
     const shownRatingForTicket = useRef(null)
 
     const primaryColor = university?.primaryColor || '#4f46e5'
@@ -263,12 +297,13 @@ export default function MyTicketsPage() {
         }
     }, [activeTicket])
 
-    const leaveQueue = async () => {
-        if (!activeTicket) return
+    const leaveQueue = async (ticketId) => {
+        if (!ticketId) return
         setActing('leave')
         try {
-            await api.post(`/api/user/tickets/${activeTicket.id}/leave`)
+            await api.post(`/api/user/tickets/${ticketId}/leave`)
             setActiveTicket(null)
+            setSelectedTicket(null)
             push({ type: 'success', message: 'You have left the queue' })
             loadData()
         } catch (err) {
@@ -278,12 +313,38 @@ export default function MyTicketsPage() {
                 logout()
                 navigate('/login')
             } else {
-                // 👇 Show the actual backend error message
-                push({
-                    type: 'error',
-                    message: err.response?.data?.message || err.message || 'Server error while trying to leave the queue.'
-                })
+                push({ type: 'error', message: err.response?.data?.message || err.message || 'Server error while trying to leave the queue.' })
             }
+        } finally {
+            setActing(null)
+        }
+    }
+
+    const rescheduleTurn = async (ticketId) => {
+        if (!ticketId) return
+        setActing('reschedule')
+        try {
+            await api.post(`/api/user/tickets/${ticketId}/reschedule`)
+            push({ type: 'success', message: 'Turn rescheduled. You are now at the end of the queue.' })
+            setSelectedTicket(null)
+            loadData()
+        } catch (err) {
+            push({ type: 'error', message: err.response?.data?.message || err.message || 'Reschedule not available yet' })
+        } finally {
+            setActing(null)
+        }
+    }
+
+    const skipTurn = async (ticketId) => {
+        if (!ticketId) return
+        setActing('skip')
+        try {
+            await api.post(`/api/user/tickets/${ticketId}/skip`)
+            push({ type: 'success', message: 'Turn skipped' })
+            setSelectedTicket(null)
+            loadData()
+        } catch (err) {
+            push({ type: 'error', message: err.response?.data?.message || err.message || 'Skip not available yet' })
         } finally {
             setActing(null)
         }
@@ -328,8 +389,8 @@ export default function MyTicketsPage() {
     const isCompleted = activeTicket?.status === 'COMPLETED'
     const isActionable = activeTicket?.status === 'WAITING' || activeTicket?.status === 'CALLED'
 
-    // 👇 Dynamic wait time calculation if backend doesn't send it
-    const calculatedWaitTime = activeTicket?.estimatedMinutes ?? (position * (activeTicket?.averageServiceMinutes || 5))
+    // 👇 Dynamic wait time calculation for the main card
+    const calculatedWaitTime = activeTicket?.estimatedMinutes ?? (activeTicket?.position ? activeTicket.position * 5 : 20)
 
     return (
         <div className="space-y-8 pb-12 max-w-[1400px] mx-auto">
@@ -441,10 +502,30 @@ export default function MyTicketsPage() {
                             >
                                 <User className="h-4 w-4" /> View Queue Details <ChevronRight className="h-4 w-4 ml-auto" />
                             </button>
+
+                            {isActionable && (
+                                <div className="grid grid-cols-2 gap-2 mt-1">
+                                    <button
+                                        onClick={() => rescheduleTurn(activeTicket.id)}
+                                        disabled={!!acting}
+                                        className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-50"
+                                    >
+                                        <RotateCcw className="h-3.5 w-3.5" /> Reschedule
+                                    </button>
+                                    <button
+                                        onClick={() => skipTurn(activeTicket.id)}
+                                        disabled={!!acting}
+                                        className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-50"
+                                    >
+                                        <SkipForward className="h-3.5 w-3.5" /> Skip Turn
+                                    </button>
+                                </div>
+                            )}
+
                             {isCompleted && (
                                 <button
                                     onClick={() => setRatingTicket(activeTicket)}
-                                    className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90"
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90 mt-1"
                                     style={{ backgroundColor: primaryColor }}
                                 >
                                     <Star className="h-4 w-4" /> Rate Service
@@ -452,10 +533,11 @@ export default function MyTicketsPage() {
                             )}
                             {isActionable && (
                                 <button
-                                    onClick={leaveQueue}
+                                    onClick={() => leaveQueue(activeTicket.id)}
                                     disabled={!!acting}
-                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300"
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 mt-1"
                                 >
+                                    <LogOut className="h-3.5 w-3.5" />
                                     {acting === 'leave' ? 'Leaving...' : 'Leave Queue'}
                                 </button>
                             )}
@@ -579,7 +661,6 @@ export default function MyTicketsPage() {
                                                 <StatusBadge status={item.status} />
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                {/* 👇 FIXED: Now opens inline modal instead of navigating */}
                                                 <button
                                                     onClick={() => setSelectedTicket(item)}
                                                     className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 transition-colors"
@@ -610,6 +691,10 @@ export default function MyTicketsPage() {
                         item={selectedTicket}
                         onClose={() => setSelectedTicket(null)}
                         primaryColor={primaryColor}
+                        onReschedule={rescheduleTurn}
+                        onSkip={skipTurn}
+                        onLeave={leaveQueue}
+                        acting={acting}
                     />
                 )}
             </AnimatePresence>
