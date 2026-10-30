@@ -41,7 +41,8 @@ export default function StudentDashboard() {
     }
     if (!university || university.featureWorkflows !== false) {
         tabs.push({ to: '/student/clearance', label: 'My Progress', icon: RouteIcon })
-        tabs.push({ to: '/student/workflows', label: 'Workflows', icon: ListOrdered })
+        // 👇 Changed label to 'Student Workflows'
+        tabs.push({ to: '/student/workflows', label: 'Student Workflows', icon: ListOrdered })
     }
     if (!university || university.featureDocuments !== false) {
         tabs.push({ to: '/student/documents', label: 'Documents', icon: FileText })
