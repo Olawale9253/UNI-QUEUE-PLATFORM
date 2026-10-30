@@ -16,10 +16,9 @@ import MyClearancePage from './student/MyClearancePage'
 import DocumentsTab from './student/DocumentsTab'
 import StudentWorkflowProgress from './student/StudentWorkflowProgress'
 import StudentSettings from './student/StudentSettings'
-import JoinQueuePage from './student/JoinQueuePage'
 import MyTicketsPage from './student/MyTicketsPage'
 import ProfilePage from './student/ProfilePage'
-import Notifications from './Notifications' // 🔧 Import here
+import Notifications from './Notifications'
 
 import { useUniversityStore } from '../store/universityStore'
 
@@ -29,12 +28,11 @@ export default function StudentDashboard() {
     const isHome = location.pathname === '/student' || location.pathname === '/student/'
 
     const tabs = [
-        { to: '/student/queues', label: 'Browse Queues', icon: ListOrdered },
+        { to: '/student/queues', label: 'Join Queue', icon: ListOrdered },
         { to: '/student/offices', label: 'Offices', icon: Building2 },
         { to: '/student/history', label: 'History', icon: History },
-        { to: '/student/join-queue', label: 'Join Queue', icon: Search },
         { to: '/student/my-tickets', label: 'My Tickets', icon: Ticket },
-        { to: '/student/notifications', label: 'Notifications', icon: Bell }, // 🔧 Point to sub-route
+        { to: '/student/notifications', label: 'Notifications', icon: Bell },
         { to: '/student/profile', label: 'Profile', icon: User },
     ]
 
@@ -71,9 +69,8 @@ export default function StudentDashboard() {
                 <Route path="clearance" element={<StudentWorkflowProgress />} />
                 <Route path="documents" element={<DocumentsTab />} />
                 <Route path="settings" element={<StudentSettings />} />
-                <Route path="join-queue" element={<JoinQueuePage />} />
                 <Route path="my-tickets" element={<MyTicketsPage />} />
-                <Route path="notifications" element={<Notifications />} /> {/* 🔧 Add route */}
+                <Route path="notifications" element={<Notifications />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="*" element={<Navigate to="/student" replace />} />
             </Routes>

@@ -178,9 +178,10 @@ export default function QueuesTab() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Browse Queues</h1>
+                        {/* 👇 CHANGED TITLE */}
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Join Queue</h1>
                         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
-                            View available queues across different offices and join the one you need. Get your place in line, save time and avoid unnecessary waiting.
+                            Select the service you need and join the queue. Get your place in line, save time and avoid unnecessary waiting.
                         </p>
                     </div>
 
@@ -319,7 +320,6 @@ export default function QueuesTab() {
                                             </div>
 
                                             <div className="shrink-0 flex items-center justify-end sm:pl-4 sm:border-l sm:border-slate-100 dark:sm:border-slate-800 mt-4 sm:mt-0">
-                                                {/* 👇 FIXED: Button now joins instantly without requiring a first click to select */}
                                                 <button
                                                     type="button"
                                                     onClick={(e) => {
