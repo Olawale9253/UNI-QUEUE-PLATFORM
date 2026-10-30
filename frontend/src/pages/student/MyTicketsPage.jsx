@@ -50,23 +50,30 @@ function formatDateTime(dt) {
     } catch { return { day: 'N/A', time: '' } }
 }
 
-// 👇 DYNAMIC HELPER: Calculates wait time
+// 👇 DYNAMIC HELPER: Calculates wait time with correct grammar
 function calculateWaitTime(ticket) {
     if (!ticket) return '—';
 
+    // If historical, calculate exact time spent
     if (ticket.status === 'COMPLETED' || ticket.status === 'CANCELLED' || ticket.status === 'NO_SHOW') {
         if (ticket.joinedAt && ticket.completedAt) {
             const diffMins = Math.round((new Date(ticket.completedAt) - new Date(ticket.joinedAt)) / 60000);
-            return diffMins > 0 ? `${diffMins} mins` : '< 1 min';
+            if (diffMins < 1) return '< 1 min';
+            return `${diffMins} ${diffMins === 1 ? 'min' : 'mins'}`;
         }
         return '—';
     }
 
-    if (ticket.estimatedMinutes) return `${ticket.estimatedMinutes} mins`;
+    // If active, use backend estimate if available
+    if (ticket.estimatedMinutes) {
+        return `${ticket.estimatedMinutes} ${ticket.estimatedMinutes === 1 ? 'min' : 'mins'}`;
+    }
 
+    // Fallback calculation based on position
     if (ticket.position) {
         const avgMins = ticket.queueAverageServiceMinutes || 5;
-        return `${ticket.position * avgMins} mins`;
+        const totalMins = ticket.position * avgMins;
+        return `${totalMins} ${totalMins === 1 ? 'min' : 'mins'}`;
     }
     return '—';
 }
@@ -196,6 +203,11 @@ function TicketDetailModal({ item, onClose, primaryColor, onReschedule, onSkip, 
     const isActive = ['WAITING', 'CALLED', 'SERVING'].includes(item.status?.toUpperCase())
     const waitTime = calculateWaitTime(item)
 
+    // 👇 Dynamic position display
+    const positionDisplay = item.position
+        ? `${item.position} ${item.totalInQueue ? `/ ${item.totalInQueue}` : ''}`
+        : (item.status === 'COMPLETED' ? 'Served' : 'N/A');
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
             <motion.div
@@ -272,10 +284,11 @@ function TicketDetailModal({ item, onClose, primaryColor, onReschedule, onSkip, 
 
                         <div>
                             <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
-                                <User className="h-3.5 w-3.5" /> Position
+                                <User className="h-3.5 w-3.5" /> Final Position
                             </p>
+                            {/* 👇 Uses the dynamic position display */}
                             <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                {item.position ? item.position : '—'}
+                                {positionDisplay}
                             </p>
                         </div>
 
@@ -283,6 +296,7 @@ function TicketDetailModal({ item, onClose, primaryColor, onReschedule, onSkip, 
                             <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
                                 <Clock className="h-3.5 w-3.5" /> {isActive ? 'Est. Wait Time' : 'Time Spent'}
                             </p>
+                            {/* 👇 Uses the plural-corrected time */}
                             <p className="text-sm font-bold text-slate-900 dark:text-white">
                                 {waitTime}
                             </p>
@@ -337,7 +351,6 @@ function TicketDetailModal({ item, onClose, primaryColor, onReschedule, onSkip, 
         </div>
     )
 }
-
 
 export default function MyTicketsPage() {
     const { push } = useToastStore()
@@ -460,13 +473,8 @@ export default function MyTicketsPage() {
     }
 
     const position = activeTicket?.position ?? 1
-
-    // 👇 FIXED: Removed hardcoded 10. Uses real queue length or defaults to your position.
     const maxPosition = activeTicket?.totalInQueue || activeTicket?.waitingCount || position
-
-    // 👇 FIXED: Progress bar logic for when you are the only one (shows 100%)
     const progressPercent = maxPosition > 1 ? Math.min(100, Math.max(5, (position / maxPosition) * 100)) : 100
-
     const isCompleted = activeTicket?.status === 'COMPLETED'
     const isActionable = activeTicket?.status === 'WAITING' || activeTicket?.status === 'CALLED'
 
@@ -548,7 +556,6 @@ export default function MyTicketsPage() {
                         <div className="mt-6">
                             <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Position</p>
                             <div className="flex items-center justify-between text-sm font-bold text-slate-900 dark:text-white mb-2">
-                                {/* 👇 FIXED: Shows just the number if you are the only one */}
                                 <span>{position} {maxPosition > 1 ? `/ ${maxPosition}` : ''}</span>
                             </div>
                             <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden dark:bg-slate-800">
@@ -696,6 +703,11 @@ export default function MyTicketsPage() {
                                     const ServiceIcon = getServiceIcon(item.queueName || item.officeName);
                                     const waitTime = calculateWaitTime(item);
 
+                                    // 👇 Dynamic position display for the table
+                                    const positionDisplay = item.position
+                                        ? `${item.position} ${item.totalInQueue ? `/ ${item.totalInQueue}` : ''}`
+                                        : (item.status === 'COMPLETED' ? 'Served' : '—');
+
                                     return (
                                         <tr key={item.id || idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -731,7 +743,7 @@ export default function MyTicketsPage() {
                                             </td>
                                             <td className="px-6 py-4">
                                                     <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                                                        {item.position ? `${item.position} / ${item.totalInQueue || item.waitingCount || '—'}` : '—'}
+                                                        {positionDisplay}
                                                     </span>
                                             </td>
                                             <td className="px-6 py-4">
