@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import {
     Route as RouteIcon, CheckCircle2, Lock, ArrowRight, Play, X as CloseIcon, ListChecks, Sparkles,
     GraduationCap, FileText, Banknote, Building2, ClipboardCheck, Monitor, Clock,
-    HelpCircle, Lightbulb, ChevronRight, Activity, Calendar
+    HelpCircle, Lightbulb, ChevronRight, Activity, Calendar, Bell, Star
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -123,7 +123,7 @@ export default function WorkflowsTab() {
         return [...started, ...notStarted]
     }, [mine, available])
 
-    // Generate latest updates (just combining completed workflows and available ones for demo purposes)
+    // Generate latest updates
     const latestUpdates = useMemo(() => {
         const completedUpdates = mine.filter(w => w.status === 'COMPLETED').map(w => ({
             id: w.id, title: `${w.workflowName} Completed`, desc: `Your ${w.workflowName.toLowerCase()} has been confirmed.`,
@@ -290,7 +290,7 @@ export default function WorkflowsTab() {
                                                 <div className="flex items-center gap-2">
                                                     {isInProgress && (
                                                         <button onClick={() => setAbandonTarget(item)} className="text-slate-400 hover:text-rose-500 transition-colors" title="Abandon">
-                                                            <XIcon className="h-4 w-4" />
+                                                            <CloseIcon className="h-4 w-4" />
                                                         </button>
                                                     )}
                                                     <button
