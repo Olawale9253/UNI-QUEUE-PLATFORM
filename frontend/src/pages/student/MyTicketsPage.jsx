@@ -50,11 +50,10 @@ function formatDateTime(dt) {
     } catch { return { day: 'N/A', time: '' } }
 }
 
-// 👇 DYNAMIC HELPER: Calculates wait time based on position and average service time
+// 👇 DYNAMIC HELPER: Calculates wait time
 function calculateWaitTime(ticket) {
     if (!ticket) return '—';
 
-    // 1. Historical tickets: calculate exact time spent
     if (ticket.status === 'COMPLETED' || ticket.status === 'CANCELLED' || ticket.status === 'NO_SHOW') {
         if (ticket.joinedAt && ticket.completedAt) {
             const diffMins = Math.round((new Date(ticket.completedAt) - new Date(ticket.joinedAt)) / 60000);
@@ -63,15 +62,9 @@ function calculateWaitTime(ticket) {
         return '—';
     }
 
-    // 2. Active tickets: use backend estimate if available
-    if (ticket.estimatedMinutes) {
-        return `${ticket.estimatedMinutes} mins`;
-    }
+    if (ticket.estimatedMinutes) return `${ticket.estimatedMinutes} mins`;
 
-    // 3. Fallback calculation based on position
     if (ticket.position) {
-        // If you are position 1, you are next. Wait time is 1 * average_service_time (default 5 mins).
-        // If you are position 3, wait time is 3 * 5 = 15 mins.
         const avgMins = ticket.queueAverageServiceMinutes || 5;
         return `${ticket.position * avgMins} mins`;
     }
@@ -360,12 +353,12 @@ export default function MyTicketsPage() {
 
     const [ratingTicket, setRatingTicket] = useState(null)
     const [selectedTicket, setSelectedTicket] = useState(null)
-    const [confirmAction, setConfirmAction] = useState(null) // 👈 State for Confirmation Modal
+    const [confirmAction, setConfirmAction] = useState(null)
     const shownRatingForTicket = useRef(null)
 
     const primaryColor = university?.primaryColor || '#4f46e5'
 
-    // Live Ticker: Updates every minute
+    // Live Ticker
     const [, setTick] = useState(0)
     useEffect(() => {
         const interval = setInterval(() => setTick(t => t + 1), 60000)
@@ -398,7 +391,6 @@ export default function MyTicketsPage() {
         }
     }, [activeTicket])
 
-    // 👇 Triggers the Premium Modal instead of window.confirm
     const triggerConfirm = (type, id) => {
         setConfirmAction({ type, id })
     }
@@ -468,8 +460,13 @@ export default function MyTicketsPage() {
     }
 
     const position = activeTicket?.position ?? 1
-    const maxPosition = activeTicket?.totalInQueue ?? Math.max(position + 5, 10)
-    const progressPercent = Math.min(100, Math.max(5, (position / maxPosition) * 100))
+
+    // 👇 FIXED: Removed hardcoded 10. Uses real queue length or defaults to your position.
+    const maxPosition = activeTicket?.totalInQueue || activeTicket?.waitingCount || position
+
+    // 👇 FIXED: Progress bar logic for when you are the only one (shows 100%)
+    const progressPercent = maxPosition > 1 ? Math.min(100, Math.max(5, (position / maxPosition) * 100)) : 100
+
     const isCompleted = activeTicket?.status === 'COMPLETED'
     const isActionable = activeTicket?.status === 'WAITING' || activeTicket?.status === 'CALLED'
 
@@ -551,7 +548,8 @@ export default function MyTicketsPage() {
                         <div className="mt-6">
                             <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Position</p>
                             <div className="flex items-center justify-between text-sm font-bold text-slate-900 dark:text-white mb-2">
-                                <span>{position} / {maxPosition}</span>
+                                {/* 👇 FIXED: Shows just the number if you are the only one */}
+                                <span>{position} {maxPosition > 1 ? `/ ${maxPosition}` : ''}</span>
                             </div>
                             <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden dark:bg-slate-800">
                                 <div
@@ -733,7 +731,7 @@ export default function MyTicketsPage() {
                                             </td>
                                             <td className="px-6 py-4">
                                                     <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                                                        {item.position ? `${item.position} / ${item.totalInQueue || '—'}` : '—'}
+                                                        {item.position ? `${item.position} / ${item.totalInQueue || item.waitingCount || '—'}` : '—'}
                                                     </span>
                                             </td>
                                             <td className="px-6 py-4">
