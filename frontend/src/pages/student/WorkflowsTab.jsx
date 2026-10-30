@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import {
     Route as RouteIcon, CheckCircle2, Lock, ArrowRight, Play, X as CloseIcon, ListChecks, Sparkles,
     GraduationCap, FileText, Banknote, Building2, ClipboardCheck, Monitor, Clock,
-    HelpCircle, Lightbulb, ChevronRight, Activity, Calendar, Bell, Star
+    HelpCircle, Lightbulb, ChevronRight, Activity, Calendar, Bell, Star, Zap
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -51,7 +51,6 @@ export default function WorkflowsTab() {
     const [abandonTarget, setAbandonTarget] = useState(null)
     const [abandoning, setAbandoning] = useState(false)
 
-    // 👇 State for filtering
     const [statusFilter, setStatusFilter] = useState('ALL')
 
     const primaryColor = university?.primaryColor || '#4f46e5'
@@ -77,7 +76,7 @@ export default function WorkflowsTab() {
         setStarting(workflowId)
         try {
             await api.post(`/api/user/workflows/${workflowId}/start`)
-            push({ type: 'success', message: 'Workflow started' })
+            push({ type: 'success', message: 'Workflow started successfully' })
             await load()
         } catch (err) {
             push({ type: 'error', message: err.message || 'Failed to start' })
@@ -101,7 +100,6 @@ export default function WorkflowsTab() {
         }
     }
 
-    // Calculate stats
     const stats = useMemo(() => {
         const completed = mine.filter(w => w.status === 'COMPLETED').length
         const inProgress = mine.filter(w => w.status === 'IN_PROGRESS').length
@@ -110,7 +108,6 @@ export default function WorkflowsTab() {
         return { total, completed, inProgress, pending }
     }, [mine, available])
 
-    // Merge all workflows for the list view
     const allWorkflows = useMemo(() => {
         const started = mine.map(w => ({
             ...w,
@@ -126,25 +123,24 @@ export default function WorkflowsTab() {
         return [...started, ...notStarted]
     }, [mine, available])
 
-    // 👇 Filter the workflows based on the dropdown
     const filteredWorkflows = useMemo(() => {
         if (statusFilter === 'ALL') return allWorkflows
         return allWorkflows.filter(w => w.status === statusFilter)
     }, [allWorkflows, statusFilter])
 
-    // Generate latest updates
+    // Generate latest updates timeline
     const latestUpdates = useMemo(() => {
         const completedUpdates = mine.filter(w => w.status === 'COMPLETED').map(w => ({
             id: w.id, title: `${w.workflowName} Completed`, desc: `Your ${w.workflowName.toLowerCase()} has been confirmed.`,
-            date: w.completedAt, type: 'success', icon: CheckCircle2
+            date: w.completedAt, type: 'success'
         }))
         const progressUpdates = mine.filter(w => w.status === 'IN_PROGRESS').map(w => ({
             id: w.id, title: `${w.workflowName} In Progress`, desc: `You are currently on step ${w.currentStepOrder}.`,
-            date: w.joinedAt, type: 'progress', icon: Activity
+            date: w.joinedAt, type: 'progress'
         }))
         const pendingUpdates = available.slice(0, 2).map(w => ({
             id: w.id, title: `${w.name} Open`, desc: `This workflow is now available.`,
-            date: new Date().toISOString(), type: 'pending', icon: Calendar
+            date: new Date().toISOString(), type: 'pending'
         }))
 
         return [...completedUpdates, ...progressUpdates, ...pendingUpdates]
@@ -174,9 +170,9 @@ export default function WorkflowsTab() {
                     </p>
                 </div>
                 <div
-                    className="hidden md:flex items-start gap-3 rounded-xl border px-4 py-3 max-w-xs cursor-pointer hover:opacity-80 transition-opacity"
+                    className="hidden md:flex items-start gap-3 rounded-xl border px-4 py-3 max-w-xs cursor-pointer hover:opacity-80 transition-opacity shadow-sm"
                     style={{
-                        backgroundColor: withAlpha(primaryColor, 0.05),
+                        backgroundColor: withAlpha(primaryColor, 0.03),
                         borderColor: withAlpha(primaryColor, 0.2)
                     }}
                 >
@@ -195,43 +191,43 @@ export default function WorkflowsTab() {
 
             {/* Stats Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="flex items-center gap-4 p-5 bg-blue-50/30 border-blue-100 dark:bg-blue-950/20 dark:border-blue-900">
+                <Card className="flex items-center gap-4 p-5 bg-blue-50/30 border-blue-100 dark:bg-blue-950/20 dark:border-blue-900 shadow-sm">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
                         <RouteIcon className="h-6 w-6" />
                     </div>
                     <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase">Total Workflows</p>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.total}</p>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Workflows</p>
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5">{stats.total}</p>
                         <p className="text-[11px] text-slate-400">Active processes</p>
                     </div>
                 </Card>
-                <Card className="flex items-center gap-4 p-5 bg-emerald-50/30 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900">
+                <Card className="flex items-center gap-4 p-5 bg-emerald-50/30 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900 shadow-sm">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900 dark:text-emerald-300">
                         <CheckCircle2 className="h-6 w-6" />
                     </div>
                     <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase">Completed</p>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.completed}</p>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Completed</p>
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5">{stats.completed}</p>
                         <p className="text-[11px] text-slate-400">Finished successfully</p>
                     </div>
                 </Card>
-                <Card className="flex items-center gap-4 p-5 bg-amber-50/30 border-amber-100 dark:bg-amber-950/20 dark:border-amber-900">
+                <Card className="flex items-center gap-4 p-5 bg-amber-50/30 border-amber-100 dark:bg-amber-950/20 dark:border-amber-900 shadow-sm">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300">
                         <Activity className="h-6 w-6" />
                     </div>
                     <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase">In Progress</p>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.inProgress}</p>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">In Progress</p>
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5">{stats.inProgress}</p>
                         <p className="text-[11px] text-slate-400">Still ongoing</p>
                     </div>
                 </Card>
-                <Card className="flex items-center gap-4 p-5 bg-purple-50/30 border-purple-100 dark:bg-purple-950/20 dark:border-purple-900">
+                <Card className="flex items-center gap-4 p-5 bg-purple-50/30 border-purple-100 dark:bg-purple-950/20 dark:border-purple-900 shadow-sm">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
                         <Clock className="h-6 w-6" />
                     </div>
                     <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase">Pending</p>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.pending}</p>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pending</p>
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5">{stats.pending}</p>
                         <p className="text-[11px] text-slate-400">Awaiting action</p>
                     </div>
                 </Card>
@@ -242,18 +238,17 @@ export default function WorkflowsTab() {
 
                 {/* LEFT: My Workflows List */}
                 <div className="space-y-4">
-                    <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800">
-                        <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
+                    <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
                             <div>
                                 <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">My Workflows</h2>
-                                <p className="text-xs text-slate-500">Your current university processes and their status.</p>
+                                <p className="text-xs text-slate-500 mt-0.5">Your current university processes and their status.</p>
                             </div>
 
-                            {/* 👇 Functional Filter Dropdown */}
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+                                className="text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer shadow-sm transition-all"
                             >
                                 <option value="ALL">All Statuses</option>
                                 <option value="PENDING">Pending</option>
@@ -276,7 +271,7 @@ export default function WorkflowsTab() {
                                     const isInProgress = item.status === 'IN_PROGRESS';
 
                                     return (
-                                        <div key={item.id} className="p-5 flex flex-col sm:flex-row sm:items-center gap-5 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                                        <div key={item.id} className="p-5 flex flex-col sm:flex-row sm:items-center gap-5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                                             <div className="flex items-center gap-4 flex-1">
                                                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
                                                     <Icon className="h-6 w-6" />
@@ -284,16 +279,16 @@ export default function WorkflowsTab() {
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center justify-between gap-2">
                                                         <h3 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h3>
-                                                        <Badge variant={isCompleted ? 'success' : isInProgress ? 'warning' : 'default'}>
+                                                        <Badge variant={isCompleted ? 'success' : isInProgress ? 'warning' : 'default'} className="shadow-sm">
                                                             {isCompleted ? 'Completed' : isInProgress ? 'In Progress' : 'Pending'}
                                                         </Badge>
                                                     </div>
-                                                    <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{item.description || `Process for ${title.toLowerCase()}`}</p>
+                                                    <p className="text-xs text-slate-500 line-clamp-1 mt-1">{item.description || `Process for ${title.toLowerCase()}`}</p>
 
                                                     <div className="flex items-center gap-3 mt-3">
                                                         <div className="h-1.5 w-full max-w-xs bg-slate-100 rounded-full overflow-hidden dark:bg-slate-800">
                                                             <div
-                                                                className={`h-full rounded-full ${isCompleted ? 'bg-emerald-500' : 'bg-blue-600'}`}
+                                                                className={`h-full rounded-full transition-all duration-1000 ${isCompleted ? 'bg-emerald-500' : 'bg-blue-600'}`}
                                                                 style={{ width: `${item.progress}%` }}
                                                             />
                                                         </div>
@@ -306,13 +301,13 @@ export default function WorkflowsTab() {
                                                 <span className="text-[10px] text-slate-400">Last updated: {formatDateTime(item.completedAt || item.joinedAt) || '—'}</span>
                                                 <div className="flex items-center gap-2">
                                                     {isInProgress && (
-                                                        <button onClick={() => setAbandonTarget(item)} className="text-slate-400 hover:text-rose-500 transition-colors" title="Abandon">
+                                                        <button onClick={() => setAbandonTarget(item)} className="text-slate-400 hover:text-rose-500 transition-colors p-1" title="Abandon">
                                                             <CloseIcon className="h-4 w-4" />
                                                         </button>
                                                     )}
                                                     <button
                                                         onClick={() => isPending ? start(item.id) : navigate('/student/clearance')}
-                                                        className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 whitespace-nowrap"
+                                                        className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 whitespace-nowrap shadow-sm transition-all"
                                                     >
                                                         {isPending ? 'Start' : 'View Details'}
                                                     </button>
@@ -329,12 +324,14 @@ export default function WorkflowsTab() {
                 {/* RIGHT: Quick Actions & Latest Updates */}
                 <div className="space-y-6">
 
-                    {/* Quick Actions */}
-                    <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800">
-                        <div className="p-5 border-b border-slate-100 dark:border-slate-800">
-                            <h3 className="font-bold text-slate-900 dark:text-slate-100">Workflow Quick Actions</h3>
+                    {/* Premium Quick Actions */}
+                    <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+                            <h3 className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                                <Zap className="h-4 w-4" style={{ color: primaryColor }} /> Quick Actions
+                            </h3>
                         </div>
-                        <div className="p-3 space-y-1">
+                        <div className="p-3 space-y-2">
                             {available.slice(0, 4).map(w => {
                                 const Icon = getWorkflowIcon(w.name);
                                 return (
@@ -342,79 +339,92 @@ export default function WorkflowsTab() {
                                         key={w.id}
                                         onClick={() => start(w.id)}
                                         disabled={starting === w.id}
-                                        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left"
+                                        className="w-full group flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-brand-200 bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-brand-800 transition-all duration-200"
                                     >
-                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800">
-                                            <Icon className="h-4 w-4" />
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-500 group-hover:bg-brand-50 group-hover:text-brand-600 dark:bg-slate-800 transition-colors" style={{ '--tw-group-hover-text': primaryColor, '--tw-group-hover-bg': withAlpha(primaryColor, 0.1) }}>
+                                                <Icon className="h-4 w-4" />
+                                            </div>
+                                            <div className="text-left">
+                                                <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">{w.name}</p>
+                                                <p className="text-[11px] text-slate-500 truncate max-w-[140px]">{w.description || 'Start process'}</p>
+                                            </div>
                                         </div>
-                                        <div className="flex-1">
-                                            <p className="text-sm font-bold text-slate-900 dark:text-white">{w.name}</p>
-                                            <p className="text-[11px] text-slate-500 truncate">{w.description || 'Start process'}</p>
+                                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50 group-hover:bg-brand-100 dark:bg-slate-800 transition-colors">
+                                            <Play className="h-3 w-3 text-slate-400 group-hover:text-brand-600 transition-colors fill-current" />
                                         </div>
-                                        <ChevronRight className="h-4 w-4 text-slate-300 shrink-0" />
                                     </button>
                                 )
                             })}
                         </div>
                     </Card>
 
-                    {/* Latest Updates */}
-                    <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800">
-                        <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
+                    {/* Premium Latest Updates Timeline */}
+                    <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
                             <h3 className="font-bold text-slate-900 dark:text-slate-100">Latest Updates</h3>
                             <button className="text-xs font-semibold text-blue-600 hover:underline">View All</button>
                         </div>
-                        <div className="p-4 space-y-4">
+                        <div className="p-5">
                             {latestUpdates.length === 0 ? (
                                 <p className="text-xs text-slate-500 text-center py-4">No recent updates.</p>
                             ) : (
-                                latestUpdates.map((update, i) => (
-                                    <div key={i} className="flex gap-3">
-                                        <div className="relative mt-1">
-                                            <div className={`flex h-6 w-6 items-center justify-center rounded-full z-10 relative ${update.type === 'success' ? 'bg-emerald-100 text-emerald-600' : update.type === 'progress' ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'}`}>
-                                                <update.icon className="h-3 w-3" />
+                                <div className="space-y-0 relative before:absolute before:inset-0 before:ml-[11px] before:h-full before:w-0.5 before:bg-slate-100 dark:before:bg-slate-800">
+                                    {latestUpdates.map((update, i) => {
+                                        let dotColor = 'bg-amber-500';
+                                        let iconColor = 'text-amber-500';
+                                        if (update.type === 'success') { dotColor = 'bg-emerald-500'; iconColor = 'text-emerald-500'; }
+                                        if (update.type === 'progress') { dotColor = 'bg-blue-500'; iconColor = 'text-blue-500'; }
+
+                                        return (
+                                            <div key={i} className="relative flex items-start gap-4 pb-6 last:pb-0 group">
+                                                <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white dark:bg-slate-900 border-2 border-white dark:border-slate-900 shadow-sm z-10 relative mt-1`}>
+                                                    <div className={`h-2.5 w-2.5 rounded-full ${dotColor}`} />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight group-hover:text-brand-600 transition-colors">{update.title}</p>
+                                                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">{update.desc}</p>
+                                                    <p className="text-[10px] font-medium text-slate-400 mt-1.5 flex items-center gap-1">
+                                                        <Clock className="h-3 w-3" /> {formatDateTime(update.date)}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            {i !== latestUpdates.length - 1 && <div className="absolute top-6 left-1/2 -translate-x-1/2 w-px h-full bg-slate-200 dark:bg-slate-700" />}
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{update.title}</p>
-                                            <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{update.desc}</p>
-                                            <p className="text-[10px] text-slate-400 mt-1">{formatDateTime(update.date)}</p>
-                                        </div>
-                                    </div>
-                                ))
+                                        )
+                                    })}
+                                </div>
                             )}
                         </div>
                     </Card>
                 </div>
             </div>
 
-            {/* How it works */}
-            <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-900/50">
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-4">How It Works</h4>
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            {/* Premium How it Works */}
+            <div className="mt-8 rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-8 dark:border-slate-800 dark:from-slate-900/50 dark:to-slate-950 shadow-sm overflow-hidden relative">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-500 to-transparent opacity-20" />
+                <h4 className="text-center text-sm font-bold uppercase tracking-widest text-slate-400 mb-8">How It Works</h4>
+
+                <div className="relative flex flex-col md:flex-row items-center justify-between gap-8 md:gap-4">
+                    {/* Connecting line for desktop */}
+                    <div className="hidden md:block absolute top-6 left-[10%] right-[10%] h-0.5 bg-slate-200 dark:bg-slate-800 z-0" />
+
                     {[
-                        { step: '1', title: 'Start the process', desc: 'Choose the service you need from the workflows list.', icon: Play },
-                        { step: '2', title: 'Complete requirements', desc: 'Submit the necessary documents and information.', icon: CheckCircle2 },
-                        { step: '3', title: 'Track progress', desc: 'Check your status and get real-time updates.', icon: Activity },
-                        { step: '4', title: 'Get notified', desc: 'Receive alerts when your process is updated.', icon: Bell },
-                        { step: '5', title: 'Done!', desc: 'Your request is completed and ready for use.', icon: Star },
+                        { step: '1', title: 'Start', desc: 'Choose the service you need.', icon: Play },
+                        { step: '2', title: 'Complete', desc: 'Submit the necessary documents.', icon: CheckCircle2 },
+                        { step: '3', title: 'Track', desc: 'Check your status in real-time.', icon: Activity },
+                        { step: '4', title: 'Get Notified', desc: 'Receive alerts when updated.', icon: Bell },
+                        { step: '5', title: 'Done!', desc: 'Your request is completed.', icon: Star },
                     ].map((item, i) => (
-                        <div key={i} className="flex items-center gap-3 w-full md:w-auto">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white border border-slate-200 text-slate-400 dark:bg-slate-800 dark:border-slate-700">
+                        <div key={i} className="relative z-10 flex flex-col items-center text-center w-full md:w-1/5 group">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white border-2 border-slate-100 text-slate-400 shadow-sm group-hover:border-brand-200 group-hover:text-brand-600 group-hover:shadow-md transition-all duration-300 dark:bg-slate-900 dark:border-slate-800">
                                 <item.icon className="h-5 w-5" />
                             </div>
-                            <div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase">Step {item.step}</p>
-                                <p className="text-xs font-bold text-slate-900 dark:text-white">{item.title}</p>
-                                <p className="text-[10px] text-slate-500 max-w-[150px] leading-tight mt-0.5">{item.desc}</p>
-                            </div>
-                            {i < 4 && <ChevronRight className="hidden md:block h-4 w-4 text-slate-300 ml-auto" />}
+                            <p className="text-[10px] font-bold text-slate-400 uppercase mt-4 mb-1">Step {item.step}</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">{item.title}</p>
+                            <p className="text-xs text-slate-500 mt-1 max-w-[120px] leading-tight">{item.desc}</p>
                         </div>
                     ))}
                 </div>
             </div>
-
 
             <ConfirmDialog
                 open={!!abandonTarget}
