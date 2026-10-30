@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
     Search, ChevronRight, HelpCircle, GraduationCap,
     Users, Building2, Banknote, Clock, MapPin, Phone,
-    ArrowRight, CheckCircle2,
+    ArrowRight, CheckCircle2, AlertTriangle, X,
     FileText, BookOpen, Monitor, ListOrdered, Info, Lock
 } from 'lucide-react'
 import api from '../../api/axios'
@@ -46,6 +46,54 @@ function getCategoryIcon(category, name) {
 
 const CATEGORIES = ['All Queues', 'Academic', 'Administrative', 'Student Support', 'Financial', 'Other']
 
+// 👇 PREMIUM ALERT MODAL COMPONENT
+function PremiumAlertModal({ isOpen, onClose, title, message, actionText, actionPath, primaryColor }) {
+    const navigate = useNavigate()
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={onClose}
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            />
+
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 text-center"
+            >
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full mb-4 bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
+                    <AlertTriangle className="h-7 w-7" />
+                </div>
+
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{title}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{message}</p>
+
+                <div className="flex flex-col gap-2">
+                    {actionText && actionPath && (
+                        <button
+                            onClick={() => { onClose(); navigate(actionPath); }}
+                            className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90"
+                            style={{ backgroundColor: primaryColor }}
+                        >
+                            {actionText}
+                        </button>
+                    )}
+                    <button
+                        onClick={onClose}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                    >
+                        Dismiss
+                    </button>
+                </div>
+            </motion.div>
+        </div>
+    )
+}
+
 export default function QueuesTab() {
     const { push } = useToastStore()
     const { user } = useAuthStore()
@@ -61,6 +109,9 @@ export default function QueuesTab() {
     const [activeCategory, setActiveCategory] = useState('All Queues')
     const [selectedQueueId, setSelectedQueueId] = useState(null)
     const [joining, setJoining] = useState(false)
+
+    // 👇 State for the Premium Alert Modal
+    const [alertModal, setAlertModal] = useState(null)
 
     const primaryColor = university?.primaryColor || '#4f46e5'
     const isFresher = user?.role === 'FRESHER'
@@ -138,10 +189,18 @@ export default function QueuesTab() {
     }, [selectedQueue, offices])
 
     const handleJoinQueue = async (queueToJoin) => {
+        // 👇 Trigger Premium Modal instead of toast
         if (activeTicket) {
-            push({ type: 'error', message: 'You already have an active ticket. Complete it before joining another queue.' })
+            setAlertModal({
+                isOpen: true,
+                title: 'Active Ticket Found',
+                message: `You already have an active ticket for ${activeTicket.queueName}. You must complete or leave this queue before joining another one.`,
+                actionText: 'View My Ticket',
+                actionPath: '/student/my-tickets'
+            })
             return
         }
+
         if (!queueToJoin.isOpen) {
             push({ type: 'error', message: 'This queue is currently closed.' })
             return
@@ -178,7 +237,6 @@ export default function QueuesTab() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
                     <div>
-                        {/* 👇 CHANGED TITLE */}
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Join Queue</h1>
                         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
                             Select the service you need and join the queue. Get your place in line, save time and avoid unnecessary waiting.
@@ -500,13 +558,13 @@ export default function QueuesTab() {
                                             <button
                                                 type="button"
                                                 onClick={() => handleJoinQueue(selectedQueue)}
-                                                disabled={joining || !!activeTicket}
+                                                disabled={joining}
                                                 className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-md transition-all hover:shadow-lg disabled:opacity-50"
                                                 style={{ backgroundColor: primaryColor }}
                                             >
                                                 <Users className="h-4 w-4" />
-                                                {activeTicket ? 'Already in a Queue' : joining ? 'Joining...' : 'Join Queue'}
-                                                {!activeTicket && !joining && <ChevronRight className="h-4 w-4" />}
+                                                {joining ? 'Joining...' : 'Join Queue'}
+                                                {!joining && <ChevronRight className="h-4 w-4" />}
                                             </button>
                                         )}
 
@@ -549,6 +607,21 @@ export default function QueuesTab() {
                     </div>
                 </div>
             </div>
+
+            {/* 👇 RENDER PREMIUM ALERT MODAL */}
+            <AnimatePresence>
+                {alertModal && (
+                    <PremiumAlertModal
+                        isOpen={!!alertModal}
+                        onClose={() => setAlertModal(null)}
+                        title={alertModal.title}
+                        message={alertModal.message}
+                        actionText={alertModal.actionText}
+                        actionPath={alertModal.actionPath}
+                        primaryColor={primaryColor}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     )
 }
