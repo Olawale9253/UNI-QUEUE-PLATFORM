@@ -50,11 +50,11 @@ function formatDateTime(dt) {
     } catch { return { day: 'N/A', time: '' } }
 }
 
-// 👇 DYNAMIC HELPER: Calculates actual wait time for past tickets, and estimated for active ones
+// 👇 DYNAMIC HELPER: Calculates wait time based on position and average service time
 function calculateWaitTime(ticket) {
     if (!ticket) return '—';
 
-    // If historical, calculate exact time spent
+    // 1. Historical tickets: calculate exact time spent
     if (ticket.status === 'COMPLETED' || ticket.status === 'CANCELLED' || ticket.status === 'NO_SHOW') {
         if (ticket.joinedAt && ticket.completedAt) {
             const diffMins = Math.round((new Date(ticket.completedAt) - new Date(ticket.joinedAt)) / 60000);
@@ -63,11 +63,15 @@ function calculateWaitTime(ticket) {
         return '—';
     }
 
-    // If active, use backend estimate if available
-    if (ticket.estimatedMinutes) return `${ticket.estimatedMinutes} mins`;
+    // 2. Active tickets: use backend estimate if available
+    if (ticket.estimatedMinutes) {
+        return `${ticket.estimatedMinutes} mins`;
+    }
 
-    // Fallback calculation based on position
+    // 3. Fallback calculation based on position
     if (ticket.position) {
+        // If you are position 1, you are next. Wait time is 1 * average_service_time (default 5 mins).
+        // If you are position 3, wait time is 3 * 5 = 15 mins.
         const avgMins = ticket.queueAverageServiceMinutes || 5;
         return `${ticket.position * avgMins} mins`;
     }
@@ -120,7 +124,76 @@ function CopyButton({ text }) {
     )
 }
 
-// 👇 PREMIUM MODAL: View Ticket Details inline
+// 👇 PREMIUM CONFIRMATION MODAL
+function ConfirmActionModal({ action, onClose, onConfirm, primaryColor, acting }) {
+    if (!action) return null;
+
+    let title = '';
+    let message = '';
+    let buttonText = '';
+    let isDanger = false;
+
+    if (action.type === 'leave') {
+        title = 'Leave Queue?';
+        message = 'Are you sure you want to leave the queue? You will lose your current spot and have to rejoin if you change your mind.';
+        buttonText = 'Yes, Leave Queue';
+        isDanger = true;
+    } else if (action.type === 'reschedule') {
+        title = 'Reschedule Turn?';
+        message = 'Are you sure you want to reschedule? You will be moved to the end of the queue.';
+        buttonText = 'Yes, Reschedule';
+        isDanger = false;
+    } else if (action.type === 'skip') {
+        title = 'Skip Turn?';
+        message = 'Are you sure you want to skip your turn? This ticket will be marked as a No Show and you will lose your spot.';
+        buttonText = 'Yes, Skip Turn';
+        isDanger = true;
+    }
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6">
+            <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={onClose}
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            />
+
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 text-center"
+            >
+                <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full mb-4 ${isDanger ? 'bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400'}`}>
+                    <AlertTriangle className="h-7 w-7" />
+                </div>
+
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{title}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{message}</p>
+
+                <div className="flex flex-col gap-2">
+                    <button
+                        onClick={() => onConfirm(action.type, action.id)}
+                        disabled={!!acting}
+                        className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90 disabled:opacity-50 ${isDanger ? 'bg-rose-600' : ''}`}
+                        style={!isDanger ? { backgroundColor: primaryColor } : undefined}
+                    >
+                        {acting ? 'Processing...' : buttonText}
+                    </button>
+                    <button
+                        onClick={onClose}
+                        disabled={!!acting}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </motion.div>
+        </div>
+    )
+}
+
+// 👇 PREMIUM TICKET DETAILS MODAL
 function TicketDetailModal({ item, onClose, primaryColor, onReschedule, onSkip, onLeave, acting }) {
     if (!item) return null;
 
@@ -287,11 +360,12 @@ export default function MyTicketsPage() {
 
     const [ratingTicket, setRatingTicket] = useState(null)
     const [selectedTicket, setSelectedTicket] = useState(null)
+    const [confirmAction, setConfirmAction] = useState(null) // 👈 State for Confirmation Modal
     const shownRatingForTicket = useRef(null)
 
     const primaryColor = university?.primaryColor || '#4f46e5'
 
-    // 👇 LIVE TICKER: Forces the page to re-render every 60 seconds so wait times stay live
+    // Live Ticker: Updates every minute
     const [, setTick] = useState(0)
     useEffect(() => {
         const interval = setInterval(() => setTick(t => t + 1), 60000)
@@ -324,73 +398,37 @@ export default function MyTicketsPage() {
         }
     }, [activeTicket])
 
-    // 👇 CONFIRMATION WRAPPERS
-    const handleLeaveClick = (ticketId) => {
-        if (window.confirm("Are you sure you want to leave the queue? You will lose your current spot.")) {
-            leaveQueue(ticketId)
-        }
+    // 👇 Triggers the Premium Modal instead of window.confirm
+    const triggerConfirm = (type, id) => {
+        setConfirmAction({ type, id })
     }
 
-    const handleRescheduleClick = (ticketId) => {
-        if (window.confirm("Are you sure you want to reschedule? You will be moved to the back of the queue.")) {
-            rescheduleTurn(ticketId)
-        }
-    }
-
-    const handleSkipClick = (ticketId) => {
-        if (window.confirm("Are you sure you want to skip your turn? This ticket will be marked as No Show.")) {
-            skipTurn(ticketId)
-        }
-    }
-
-    const leaveQueue = async (ticketId) => {
-        if (!ticketId) return
-        setActing('leave')
+    const executeAction = async (type, id) => {
+        setActing(type)
         try {
-            await api.post(`/api/user/tickets/${ticketId}/leave`)
-            setActiveTicket(null)
+            if (type === 'leave') {
+                await api.post(`/api/user/tickets/${id}/leave`)
+                setActiveTicket(null)
+                push({ type: 'success', message: 'You have left the queue' })
+            } else if (type === 'reschedule') {
+                await api.post(`/api/user/tickets/${id}/reschedule`)
+                push({ type: 'success', message: 'Turn rescheduled. You are now at the end of the queue.' })
+            } else if (type === 'skip') {
+                await api.post(`/api/user/tickets/${id}/skip`)
+                push({ type: 'success', message: 'Turn skipped' })
+            }
+
+            setConfirmAction(null)
             setSelectedTicket(null)
-            push({ type: 'success', message: 'You have left the queue' })
             loadData()
         } catch (err) {
-            console.error("Leave queue error:", err)
             if (err.response?.status === 401) {
                 push({ type: 'error', message: 'Your session expired. Please log in again.' })
                 logout()
                 navigate('/login')
             } else {
-                push({ type: 'error', message: err.response?.data?.message || err.message || 'Server error while trying to leave the queue.' })
+                push({ type: 'error', message: err.response?.data?.message || err.message || `Failed to ${type}` })
             }
-        } finally {
-            setActing(null)
-        }
-    }
-
-    const rescheduleTurn = async (ticketId) => {
-        if (!ticketId) return
-        setActing('reschedule')
-        try {
-            await api.post(`/api/user/tickets/${ticketId}/reschedule`)
-            push({ type: 'success', message: 'Turn rescheduled. You are now at the end of the queue.' })
-            setSelectedTicket(null)
-            loadData()
-        } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || err.message || 'Reschedule not available yet' })
-        } finally {
-            setActing(null)
-        }
-    }
-
-    const skipTurn = async (ticketId) => {
-        if (!ticketId) return
-        setActing('skip')
-        try {
-            await api.post(`/api/user/tickets/${ticketId}/skip`)
-            push({ type: 'success', message: 'Turn skipped' })
-            setSelectedTicket(null)
-            loadData()
-        } catch (err) {
-            push({ type: 'error', message: err.response?.data?.message || err.message || 'Skip not available yet' })
         } finally {
             setActing(null)
         }
@@ -435,7 +473,6 @@ export default function MyTicketsPage() {
     const isCompleted = activeTicket?.status === 'COMPLETED'
     const isActionable = activeTicket?.status === 'WAITING' || activeTicket?.status === 'CALLED'
 
-    // Calculate active wait time using the helper
     const activeWaitTime = calculateWaitTime(activeTicket)
 
     return (
@@ -552,14 +589,14 @@ export default function MyTicketsPage() {
                             {isActionable && (
                                 <div className="grid grid-cols-2 gap-2 mt-1">
                                     <button
-                                        onClick={() => handleRescheduleClick(activeTicket.id)}
+                                        onClick={() => triggerConfirm('reschedule', activeTicket.id)}
                                         disabled={!!acting}
                                         className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-50"
                                     >
                                         <RotateCcw className="h-3.5 w-3.5" /> Reschedule
                                     </button>
                                     <button
-                                        onClick={() => handleSkipClick(activeTicket.id)}
+                                        onClick={() => triggerConfirm('skip', activeTicket.id)}
                                         disabled={!!acting}
                                         className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-50"
                                     >
@@ -580,12 +617,12 @@ export default function MyTicketsPage() {
 
                             {isActionable && (
                                 <button
-                                    onClick={() => handleLeaveClick(activeTicket.id)}
+                                    onClick={() => triggerConfirm('leave', activeTicket.id)}
                                     disabled={!!acting}
                                     className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 mt-1"
                                 >
                                     <LogOut className="h-3.5 w-3.5" />
-                                    {acting === 'leave' ? 'Leaving...' : 'Leave Queue'}
+                                    Leave Queue
                                 </button>
                             )}
                         </div>
@@ -738,9 +775,18 @@ export default function MyTicketsPage() {
                         item={selectedTicket}
                         onClose={() => setSelectedTicket(null)}
                         primaryColor={primaryColor}
-                        onReschedule={handleRescheduleClick}
-                        onSkip={handleSkipClick}
-                        onLeave={handleLeaveClick}
+                        onReschedule={(id) => triggerConfirm('reschedule', id)}
+                        onSkip={(id) => triggerConfirm('skip', id)}
+                        onLeave={(id) => triggerConfirm('leave', id)}
+                        acting={acting}
+                    />
+                )}
+                {confirmAction && (
+                    <ConfirmActionModal
+                        action={confirmAction}
+                        onClose={() => setConfirmAction(null)}
+                        onConfirm={executeAction}
+                        primaryColor={primaryColor}
                         acting={acting}
                     />
                 )}
