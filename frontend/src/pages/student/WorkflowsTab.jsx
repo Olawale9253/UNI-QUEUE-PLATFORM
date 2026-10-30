@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import {
     Route as RouteIcon, CheckCircle2, Lock, ArrowRight, Play, X as CloseIcon, ListChecks, Sparkles,
     GraduationCap, FileText, Banknote, Building2, ClipboardCheck, Monitor, Clock,
-    HelpCircle, Lightbulb, ChevronRight, Activity, Calendar, Bell, Star, Zap
+    HelpCircle, Lightbulb, ChevronRight, Activity, Calendar, Bell, Star, Zap, Info, RotateCcw
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -18,7 +18,7 @@ import { useUniversityStore } from '../../store/universityStore'
 import { formatDateTime } from '../../lib/format'
 import { withAlpha } from '../../lib/colors'
 
-// 👇 Helper to assign dynamic icons based on workflow name
+// Helper to assign dynamic icons based on workflow name
 function getWorkflowIcon(name = '') {
     const n = name.toLowerCase()
     if (n.includes('course') || n.includes('registration') || n.includes('academic')) return GraduationCap
@@ -78,8 +78,16 @@ export default function WorkflowsTab() {
             await api.post(`/api/user/workflows/${workflowId}/start`)
             push({ type: 'success', message: 'Workflow started successfully' })
             await load()
+            // Automatically navigate to progress page after starting
+            navigate('/student/clearance')
         } catch (err) {
-            push({ type: 'error', message: err.message || 'Failed to start' })
+            // 👇 Handle the "Already started" error gracefully
+            if (err.response?.data?.message?.includes('already started')) {
+                push({ type: 'info', message: 'You already have an active session for this. Redirecting...' })
+                navigate('/student/clearance')
+            } else {
+                push({ type: 'error', message: err.message || 'Failed to start' })
+            }
         } finally {
             setStarting(null)
         }
@@ -108,19 +116,42 @@ export default function WorkflowsTab() {
         return { total, completed, inProgress, pending }
     }, [mine, available])
 
+    // 👇 MERGE & DEDUPLICATE: Prevents duplicate workflows showing up
     const allWorkflows = useMemo(() => {
-        const started = mine.map(w => ({
-            ...w,
-            isStarted: true,
-            progress: w.totalSteps > 0 ? Math.round((w.completedSteps / w.totalSteps) * 100) : 0,
-        }))
-        const notStarted = available.map(w => ({
-            ...w,
-            isStarted: false,
-            progress: 0,
-            status: 'PENDING'
-        }))
-        return [...started, ...notStarted]
+        const map = new Map()
+
+        // Add started workflows first
+        mine.forEach(w => {
+            map.set(w.workflowId, {
+                id: w.workflowId,
+                enrollmentId: w.id,
+                name: w.workflowName,
+                description: w.description || 'University process',
+                status: w.status,
+                progress: w.totalSteps > 0 ? Math.round((w.completedSteps / w.totalSteps) * 100) : 0,
+                steps: w.steps || [],
+                joinedAt: w.joinedAt,
+                completedAt: w.completedAt,
+                isStarted: true
+            })
+        })
+
+        // Add available workflows only if they aren't already in the list
+        available.forEach(w => {
+            if (!map.has(w.id)) {
+                map.set(w.id, {
+                    id: w.id,
+                    name: w.name,
+                    description: w.description || 'University process',
+                    status: 'PENDING',
+                    progress: 0,
+                    steps: w.steps || [],
+                    isStarted: false
+                })
+            }
+        })
+
+        return Array.from(map.values())
     }, [mine, available])
 
     const filteredWorkflows = useMemo(() => {
@@ -198,7 +229,7 @@ export default function WorkflowsTab() {
                     <div>
                         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Workflows</p>
                         <p className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5">{stats.total}</p>
-                        <p className="text-[11px] text-slate-400">Active processes</p>
+                        <p className="text-[11px] text-slate-400">Available processes</p>
                     </div>
                 </Card>
                 <Card className="flex items-center gap-4 p-5 bg-emerald-50/30 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900 shadow-sm">
@@ -241,8 +272,8 @@ export default function WorkflowsTab() {
                     <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm">
                         <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
                             <div>
-                                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">My Workflows</h2>
-                                <p className="text-xs text-slate-500 mt-0.5">Your current university processes and their status.</p>
+                                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">All Workflows</h2>
+                                <p className="text-xs text-slate-500 mt-0.5">Select a process to view its required steps.</p>
                             </div>
 
                             <select
@@ -251,7 +282,7 @@ export default function WorkflowsTab() {
                                 className="text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer shadow-sm transition-all"
                             >
                                 <option value="ALL">All Statuses</option>
-                                <option value="PENDING">Pending</option>
+                                <option value="PENDING">Available</option>
                                 <option value="IN_PROGRESS">In Progress</option>
                                 <option value="COMPLETED">Completed</option>
                             </select>
@@ -260,59 +291,97 @@ export default function WorkflowsTab() {
                         <div className="divide-y divide-slate-100 dark:divide-slate-800">
                             {filteredWorkflows.length === 0 ? (
                                 <div className="p-8 text-center">
-                                    <EmptyState icon={Sparkles} title="No workflows found" description={`You have no workflows with status "${statusFilter.toLowerCase()}".`} />
+                                    <EmptyState icon={Sparkles} title="No workflows found" description={`You have no workflows with this status.`} />
                                 </div>
                             ) : (
                                 filteredWorkflows.map((item) => {
-                                    const Icon = getWorkflowIcon(item.workflowName || item.name);
-                                    const title = item.workflowName || item.name;
+                                    const Icon = getWorkflowIcon(item.name);
                                     const isPending = item.status === 'PENDING';
                                     const isCompleted = item.status === 'COMPLETED';
                                     const isInProgress = item.status === 'IN_PROGRESS';
+                                    const isAbandoned = item.status === 'ABANDONED';
 
                                     return (
-                                        <div key={item.id} className="p-5 flex flex-col sm:flex-row sm:items-center gap-5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                                            <div className="flex items-center gap-4 flex-1">
-                                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
-                                                    <Icon className="h-6 w-6" />
-                                                </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h3>
-                                                        <Badge variant={isCompleted ? 'success' : isInProgress ? 'warning' : 'default'} className="shadow-sm">
-                                                            {isCompleted ? 'Completed' : isInProgress ? 'In Progress' : 'Pending'}
-                                                        </Badge>
+                                        <div key={item.id} className="p-5 flex flex-col gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                                                {/* Title & Info */}
+                                                <div className="flex items-start gap-4">
+                                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
+                                                        <Icon className="h-6 w-6" />
                                                     </div>
-                                                    <p className="text-xs text-slate-500 line-clamp-1 mt-1">{item.description || `Process for ${title.toLowerCase()}`}</p>
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <h3 className="text-base font-bold text-slate-900 dark:text-white">{item.name}</h3>
+                                                            <Badge variant={isCompleted ? 'success' : isInProgress ? 'warning' : isAbandoned ? 'danger' : 'default'} className="shadow-sm">
+                                                                {isCompleted ? 'Completed' : isInProgress ? 'In Progress' : isAbandoned ? 'Abandoned' : 'Available'}
+                                                            </Badge>
+                                                        </div>
+                                                        <p className="text-sm text-slate-500 mt-1">{item.description}</p>
+                                                    </div>
+                                                </div>
 
-                                                    <div className="flex items-center gap-3 mt-3">
+                                                {/* Action Buttons */}
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    {isInProgress && (
+                                                        <button onClick={() => setAbandonTarget(item)} className="text-slate-400 hover:text-rose-500 transition-colors p-2" title="Abandon">
+                                                            <CloseIcon className="h-4 w-4" />
+                                                        </button>
+                                                    )}
+
+                                                    {isCompleted ? (
+                                                        <Button variant="secondary" onClick={() => navigate('/student/clearance')} className="text-xs">View Details</Button>
+                                                    ) : isInProgress ? (
+                                                        <Button onClick={() => navigate('/student/clearance')} className="text-xs" style={{ backgroundColor: primaryColor }}>Continue</Button>
+                                                    ) : (
+                                                        <Button
+                                                            onClick={() => start(item.id)}
+                                                            loading={starting === item.id}
+                                                            className="text-xs"
+                                                            style={{ backgroundColor: primaryColor }}
+                                                            icon={isAbandoned ? RotateCcw : Play}
+                                                        >
+                                                            {isAbandoned ? 'Restart' : 'Start'}
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* 👇 STEP-BY-STEP PREVIEW */}
+                                            {item.steps && item.steps.length > 0 && (
+                                                <div className="ml-16 mt-2">
+                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-1">
+                                                        <ListChecks className="h-3 w-3" /> Required Steps
+                                                    </p>
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        {item.steps.map((step, idx) => (
+                                                            <div key={idx} className="flex items-center gap-2">
+                                                                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                                                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white text-[9px] font-bold text-slate-500 dark:bg-slate-900">
+                                                                        {idx + 1}
+                                                                    </span>
+                                                                    {step.queueName || step.label || 'Process Step'}
+                                                                </div>
+                                                                {idx < item.steps.length - 1 && <ChevronRight className="h-3 w-3 text-slate-300" />}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Progress Bar for started workflows */}
+                                            {isInProgress && (
+                                                <div className="ml-16 mt-1">
+                                                    <div className="flex items-center gap-3">
                                                         <div className="h-1.5 w-full max-w-xs bg-slate-100 rounded-full overflow-hidden dark:bg-slate-800">
                                                             <div
-                                                                className={`h-full rounded-full transition-all duration-1000 ${isCompleted ? 'bg-emerald-500' : 'bg-blue-600'}`}
+                                                                className="h-full rounded-full bg-blue-600"
                                                                 style={{ width: `${item.progress}%` }}
                                                             />
                                                         </div>
                                                         <span className="text-xs font-bold text-slate-700 dark:text-slate-300 shrink-0">{item.progress}%</span>
                                                     </div>
                                                 </div>
-                                            </div>
-
-                                            <div className="flex flex-col sm:items-end gap-2 shrink-0 sm:w-32">
-                                                <span className="text-[10px] text-slate-400">Last updated: {formatDateTime(item.completedAt || item.joinedAt) || '—'}</span>
-                                                <div className="flex items-center gap-2">
-                                                    {isInProgress && (
-                                                        <button onClick={() => setAbandonTarget(item)} className="text-slate-400 hover:text-rose-500 transition-colors p-1" title="Abandon">
-                                                            <CloseIcon className="h-4 w-4" />
-                                                        </button>
-                                                    )}
-                                                    <button
-                                                        onClick={() => isPending ? start(item.id) : navigate('/student/clearance')}
-                                                        className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 whitespace-nowrap shadow-sm transition-all"
-                                                    >
-                                                        {isPending ? 'Start' : 'View Details'}
-                                                    </button>
-                                                </div>
-                                            </div>
+                                            )}
                                         </div>
                                     )
                                 })
@@ -334,10 +403,14 @@ export default function WorkflowsTab() {
                         <div className="p-3 space-y-2">
                             {available.slice(0, 4).map(w => {
                                 const Icon = getWorkflowIcon(w.name);
+                                // Check if this workflow is already in progress to change the action
+                                const startedVersion = allWorkflows.find(x => x.id === w.id && x.status !== 'PENDING')
+                                const isStarted = !!startedVersion
+
                                 return (
                                     <button
                                         key={w.id}
-                                        onClick={() => start(w.id)}
+                                        onClick={() => isStarted ? navigate('/student/clearance') : start(w.id)}
                                         disabled={starting === w.id}
                                         className="w-full group flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-brand-200 bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-brand-800 transition-all duration-200"
                                     >
@@ -347,7 +420,7 @@ export default function WorkflowsTab() {
                                             </div>
                                             <div className="text-left">
                                                 <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">{w.name}</p>
-                                                <p className="text-[11px] text-slate-500 truncate max-w-[140px]">{w.description || 'Start process'}</p>
+                                                <p className="text-[11px] text-slate-500 truncate max-w-[140px]">{isStarted ? 'Continue process' : 'Start process'}</p>
                                             </div>
                                         </div>
                                         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50 group-hover:bg-brand-100 dark:bg-slate-800 transition-colors">
@@ -363,7 +436,6 @@ export default function WorkflowsTab() {
                     <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm">
                         <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
                             <h3 className="font-bold text-slate-900 dark:text-slate-100">Latest Updates</h3>
-                            <button className="text-xs font-semibold text-blue-600 hover:underline">View All</button>
                         </div>
                         <div className="p-5">
                             {latestUpdates.length === 0 ? (
@@ -372,9 +444,8 @@ export default function WorkflowsTab() {
                                 <div className="space-y-0 relative before:absolute before:inset-0 before:ml-[11px] before:h-full before:w-0.5 before:bg-slate-100 dark:before:bg-slate-800">
                                     {latestUpdates.map((update, i) => {
                                         let dotColor = 'bg-amber-500';
-                                        let iconColor = 'text-amber-500';
-                                        if (update.type === 'success') { dotColor = 'bg-emerald-500'; iconColor = 'text-emerald-500'; }
-                                        if (update.type === 'progress') { dotColor = 'bg-blue-500'; iconColor = 'text-blue-500'; }
+                                        if (update.type === 'success') dotColor = 'bg-emerald-500';
+                                        if (update.type === 'progress') dotColor = 'bg-blue-500';
 
                                         return (
                                             <div key={i} className="relative flex items-start gap-4 pb-6 last:pb-0 group">
@@ -404,7 +475,6 @@ export default function WorkflowsTab() {
                 <h4 className="text-center text-sm font-bold uppercase tracking-widest text-slate-400 mb-8">How It Works</h4>
 
                 <div className="relative flex flex-col md:flex-row items-center justify-between gap-8 md:gap-4">
-                    {/* Connecting line for desktop */}
                     <div className="hidden md:block absolute top-6 left-[10%] right-[10%] h-0.5 bg-slate-200 dark:bg-slate-800 z-0" />
 
                     {[
@@ -430,7 +500,7 @@ export default function WorkflowsTab() {
                 open={!!abandonTarget}
                 onClose={() => !abandoning && setAbandonTarget(null)}
                 onConfirm={abandon}
-                title={`Abandon "${abandonTarget?.workflowName || abandonTarget?.name}"?`}
+                title={`Abandon "${abandonTarget?.name}"?`}
                 description="You'll lose your progress on this workflow. You can restart it later, but you'll begin from step 1."
                 confirmLabel="Abandon"
                 cancelLabel="Keep going"
