@@ -163,6 +163,7 @@ function SettingRow({ icon: Icon, title, hint, control }) {
 function ProfileSection({ profile, onSaved, onEmailChange }) {
     const { user, setUser } = useAuthStore()
     const { push } = useToastStore()
+    const navigate = useNavigate() // 👈 Added useNavigate
     const [emailModalOpen, setEmailModalOpen] = useState(false)
     const [form, setForm] = useState({
         fullName: '',
@@ -207,6 +208,9 @@ function ProfileSection({ profile, onSaved, onEmailChange }) {
             }
             push({ type: 'success', message: 'Profile saved' })
             onSaved?.(updated)
+
+            // 👇 Navigate back to Home after saving
+            navigate('/student')
         } catch (err) {
             push({
                 type: 'error',
@@ -314,6 +318,7 @@ function ProfileSection({ profile, onSaved, onEmailChange }) {
 function PasswordSection() {
     const { updateTokens } = useAuthStore()
     const { push } = useToastStore()
+    const navigate = useNavigate() // 👈 Added useNavigate
     const [current, setCurrent] = useState('')
     const [next, setNext] = useState('')
     const [confirm, setConfirm] = useState('')
@@ -345,6 +350,9 @@ function PasswordSection() {
             setCurrent('')
             setNext('')
             setConfirm('')
+
+            // 👇 Navigate back to Home after saving
+            navigate('/student')
         } catch (err) {
             push({
                 type: 'error',
