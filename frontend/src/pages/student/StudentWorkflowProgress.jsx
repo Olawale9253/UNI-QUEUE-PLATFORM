@@ -280,7 +280,16 @@ export default function StudentWorkflowProgress() {
         setError(null)
         try {
             const res = await api.get('/api/student/workflows/my-progress')
-            setData(res.data.data)
+            const workflowData = res.data.data
+
+            // 👇 FIX: Check if the workflow is abandoned
+            if (workflowData && workflowData.status === 'ABANDONED') {
+                setError('NONE')
+                setData(null)
+                return
+            }
+
+            setData(workflowData)
         } catch (err) {
             const status = err.response?.status
             const msg = err.message
@@ -297,10 +306,12 @@ export default function StudentWorkflowProgress() {
     }, [])
 
     const handleCancelWorkflow = async () => {
-        if (!data?.enrollmentId) return
+        // 👇 FIX: Use enrollmentId or id to be safe
+        const targetId = data?.enrollmentId || data?.id
+        if (!targetId) return
         setCancelling(true)
         try {
-            await api.post(`/api/user/workflows/${data.enrollmentId}/abandon`)
+            await api.post(`/api/user/workflows/${targetId}/abandon`)
             push({ type: 'success', message: 'Workflow cancelled successfully.' })
             setShowCancelConfirm(false)
             navigate('/student/workflows')
@@ -322,7 +333,7 @@ export default function StudentWorkflowProgress() {
     if (error === 'NONE') {
         return (
             <div className="space-y-4 pb-12">
-                <EmptyState message="You are not enrolled in a clearance workflow yet." />
+                <EmptyState message="You are not enrolled in an active clearance workflow." />
             </div>
         )
     }
