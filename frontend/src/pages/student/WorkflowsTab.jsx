@@ -415,6 +415,7 @@ export default function WorkflowsTab() {
                 </div>
             </div>
 
+
             <ConfirmDialog
                 open={!!abandonTarget}
                 onClose={() => !abandoning && setAbandonTarget(null)}
