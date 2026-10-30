@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     Ticket, Calendar, Clock, User, ArrowRight, Check, Copy, Star,
     CheckCircle2, XCircle, ChevronRight, HelpCircle, Building2,
-    ListOrdered, RotateCcw, SkipForward, LogOut, Search, MapPin, X
+    ListOrdered, RotateCcw, SkipForward, LogOut, Search, MapPin, X, AlertTriangle
 } from 'lucide-react'
 import api from '../../api/axios'
 import { useToastStore } from '../../store/toastStore'
@@ -48,6 +48,30 @@ function formatDateTime(dt) {
         const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
         return { day, time }
     } catch { return { day: 'N/A', time: '' } }
+}
+
+// 👇 DYNAMIC HELPER: Calculates actual wait time for past tickets, and estimated for active ones
+function calculateWaitTime(ticket) {
+    if (!ticket) return '—';
+
+    // If historical, calculate exact time spent
+    if (ticket.status === 'COMPLETED' || ticket.status === 'CANCELLED' || ticket.status === 'NO_SHOW') {
+        if (ticket.joinedAt && ticket.completedAt) {
+            const diffMins = Math.round((new Date(ticket.completedAt) - new Date(ticket.joinedAt)) / 60000);
+            return diffMins > 0 ? `${diffMins} mins` : '< 1 min';
+        }
+        return '—';
+    }
+
+    // If active, use backend estimate if available
+    if (ticket.estimatedMinutes) return `${ticket.estimatedMinutes} mins`;
+
+    // Fallback calculation based on position
+    if (ticket.position) {
+        const avgMins = ticket.queueAverageServiceMinutes || 5;
+        return `${ticket.position * avgMins} mins`;
+    }
+    return '—';
 }
 
 function StatusBadge({ status }) {
@@ -103,11 +127,8 @@ function TicketDetailModal({ item, onClose, primaryColor, onReschedule, onSkip, 
     const Icon = getServiceIcon(item.queueName || item.officeName);
     const dtJoined = formatDateTime(item.joinedAt || item.createdAt);
     const dtCompleted = formatDateTime(item.completedAt);
-
     const isActive = ['WAITING', 'CALLED', 'SERVING'].includes(item.status?.toUpperCase())
-
-    // 👇 Dynamic wait time calculation
-    const calculatedWait = item.estimatedMinutes ?? (item.position ? item.position * 5 : null)
+    const waitTime = calculateWaitTime(item)
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
@@ -194,10 +215,10 @@ function TicketDetailModal({ item, onClose, primaryColor, onReschedule, onSkip, 
 
                         <div>
                             <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
-                                <Clock className="h-3.5 w-3.5" /> Est. Wait Time
+                                <Clock className="h-3.5 w-3.5" /> {isActive ? 'Est. Wait Time' : 'Time Spent'}
                             </p>
                             <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                {calculatedWait ? `~${calculatedWait} mins` : '—'}
+                                {waitTime}
                             </p>
                         </div>
 
@@ -209,7 +230,6 @@ function TicketDetailModal({ item, onClose, primaryColor, onReschedule, onSkip, 
                         </div>
                     </div>
 
-                    {/* 👇 Added Actions inside the Modal for Active Tickets */}
                     {isActive && onReschedule && onSkip && onLeave && (
                         <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2">
                             <div className="grid grid-cols-2 gap-2">
@@ -271,6 +291,13 @@ export default function MyTicketsPage() {
 
     const primaryColor = university?.primaryColor || '#4f46e5'
 
+    // 👇 LIVE TICKER: Forces the page to re-render every 60 seconds so wait times stay live
+    const [, setTick] = useState(0)
+    useEffect(() => {
+        const interval = setInterval(() => setTick(t => t + 1), 60000)
+        return () => clearInterval(interval)
+    }, [])
+
     const loadData = useCallback(async () => {
         try {
             const [activeRes, historyRes] = await Promise.all([
@@ -296,6 +323,25 @@ export default function MyTicketsPage() {
             }
         }
     }, [activeTicket])
+
+    // 👇 CONFIRMATION WRAPPERS
+    const handleLeaveClick = (ticketId) => {
+        if (window.confirm("Are you sure you want to leave the queue? You will lose your current spot.")) {
+            leaveQueue(ticketId)
+        }
+    }
+
+    const handleRescheduleClick = (ticketId) => {
+        if (window.confirm("Are you sure you want to reschedule? You will be moved to the back of the queue.")) {
+            rescheduleTurn(ticketId)
+        }
+    }
+
+    const handleSkipClick = (ticketId) => {
+        if (window.confirm("Are you sure you want to skip your turn? This ticket will be marked as No Show.")) {
+            skipTurn(ticketId)
+        }
+    }
 
     const leaveQueue = async (ticketId) => {
         if (!ticketId) return
@@ -389,8 +435,8 @@ export default function MyTicketsPage() {
     const isCompleted = activeTicket?.status === 'COMPLETED'
     const isActionable = activeTicket?.status === 'WAITING' || activeTicket?.status === 'CALLED'
 
-    // 👇 Dynamic wait time calculation for the main card
-    const calculatedWaitTime = activeTicket?.estimatedMinutes ?? (activeTicket?.position ? activeTicket.position * 5 : 20)
+    // Calculate active wait time using the helper
+    const activeWaitTime = calculateWaitTime(activeTicket)
 
     return (
         <div className="space-y-8 pb-12 max-w-[1400px] mx-auto">
@@ -489,7 +535,7 @@ export default function MyTicketsPage() {
                                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Estimated Wait Time</p>
                             </div>
                             <h2 className="text-3xl font-black text-slate-900 dark:text-white">
-                                {calculatedWaitTime} <span className="text-lg font-bold text-slate-500">mins</span>
+                                {activeWaitTime}
                             </h2>
                             <p className="text-[11px] font-medium text-slate-400 mt-1">(Subject to change)</p>
                         </div>
@@ -506,14 +552,14 @@ export default function MyTicketsPage() {
                             {isActionable && (
                                 <div className="grid grid-cols-2 gap-2 mt-1">
                                     <button
-                                        onClick={() => rescheduleTurn(activeTicket.id)}
+                                        onClick={() => handleRescheduleClick(activeTicket.id)}
                                         disabled={!!acting}
                                         className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-50"
                                     >
                                         <RotateCcw className="h-3.5 w-3.5" /> Reschedule
                                     </button>
                                     <button
-                                        onClick={() => skipTurn(activeTicket.id)}
+                                        onClick={() => handleSkipClick(activeTicket.id)}
                                         disabled={!!acting}
                                         className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-50"
                                     >
@@ -531,9 +577,10 @@ export default function MyTicketsPage() {
                                     <Star className="h-4 w-4" /> Rate Service
                                 </button>
                             )}
+
                             {isActionable && (
                                 <button
-                                    onClick={() => leaveQueue(activeTicket.id)}
+                                    onClick={() => handleLeaveClick(activeTicket.id)}
                                     disabled={!!acting}
                                     className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 mt-1"
                                 >
@@ -612,7 +659,7 @@ export default function MyTicketsPage() {
                                 filteredTickets.map((item, idx) => {
                                     const dt = formatDateTime(item.joinedAt || item.createdAt);
                                     const ServiceIcon = getServiceIcon(item.queueName || item.officeName);
-                                    const waitTime = item.estimatedMinutes ?? (item.position ? item.position * 5 : null);
+                                    const waitTime = calculateWaitTime(item);
 
                                     return (
                                         <tr key={item.id || idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
@@ -654,7 +701,7 @@ export default function MyTicketsPage() {
                                             </td>
                                             <td className="px-6 py-4">
                                                     <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                                                        {waitTime ? `${waitTime} mins` : '—'}
+                                                        {waitTime}
                                                     </span>
                                             </td>
                                             <td className="px-6 py-4">
@@ -691,9 +738,9 @@ export default function MyTicketsPage() {
                         item={selectedTicket}
                         onClose={() => setSelectedTicket(null)}
                         primaryColor={primaryColor}
-                        onReschedule={rescheduleTurn}
-                        onSkip={skipTurn}
-                        onLeave={leaveQueue}
+                        onReschedule={handleRescheduleClick}
+                        onSkip={handleSkipClick}
+                        onLeave={handleLeaveClick}
                         acting={acting}
                     />
                 )}
