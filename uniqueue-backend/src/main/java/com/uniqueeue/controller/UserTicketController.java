@@ -54,6 +54,16 @@ public class UserTicketController {
                 "Ticket history", ticketService.getHistory(principal.getId())));
     }
 
+    // 👇 FIXED: Matches the frontend POST /api/user/tickets/{id}/leave request
+    @PostMapping("/{id}/leave")
+    public ResponseEntity<ApiResponse<Object>> leaveQueue(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        ticketService.leaveQueue(principal.getId(), id);
+        return ResponseEntity.ok(ApiResponse.success("Left queue", null));
+    }
+
+    // Keeping the old DELETE mapping just in case you use it elsewhere
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Object>> leave(
             @PathVariable Long id,
