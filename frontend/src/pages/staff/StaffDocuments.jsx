@@ -109,7 +109,7 @@ export default function StaffDocuments() {
 
     if (loading) {
         return (
-            <div className="space-y-6 pb-12">
+            <div className="space-y-6 pb-12 px-4 sm:px-6">
                 <div className="h-10 w-1/3 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
                 <Card padded={false}>
                     {Array.from({ length: 4 }).map((_, index) => <SkeletonRow key={index} />)}
@@ -119,7 +119,7 @@ export default function StaffDocuments() {
     }
 
     return (
-        <div className="space-y-6 pb-12">
+        <div className="space-y-6 pb-12 px-4 sm:px-6">
             {/* Header */}
             <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
@@ -132,8 +132,8 @@ export default function StaffDocuments() {
 
             {/* Toolbar */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-wrap items-center gap-1.5">
-                    <Filter className="mr-1 h-3.5 w-3.5 text-slate-400" />
+                <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap pb-1 scrollbar-hide">
+                    <Filter className="mr-1 h-3.5 w-3.5 text-slate-400 shrink-0" />
                     {FILTERS.map((item) => {
                         const isActive = filter === item.value
                         return (
@@ -141,7 +141,7 @@ export default function StaffDocuments() {
                                 key={item.value}
                                 type="button"
                                 onClick={() => setFilter(item.value)}
-                                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] sm:text-xs font-semibold transition-colors ${
                                     isActive
                                         ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
                                         : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
@@ -154,7 +154,7 @@ export default function StaffDocuments() {
                 </div>
 
                 {docs.length > 0 && (
-                    <div className="w-full max-w-sm">
+                    <div className="w-full sm:max-w-sm">
                         <div className="relative">
                             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                             <input
@@ -188,7 +188,7 @@ export default function StaffDocuments() {
                     action={<Button variant="secondary" onClick={() => setSearch('')}>Clear search</Button>}
                 />
             ) : (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                     {filtered.map((itemValue, idx) => {
                         const isPending = itemValue.status === 'PENDING'
                         return (
@@ -198,10 +198,10 @@ export default function StaffDocuments() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.02 }}
                             >
-                                <Card className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                        <div className="flex min-w-0 flex-1 items-start gap-4">
-                                            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                                <Card className="p-4 sm:p-5 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                                    <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                        <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
+                                            <div className={`flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl ${
                                                 itemValue.status === 'APPROVED'
                                                     ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
                                                     : itemValue.status === 'REJECTED'
@@ -209,38 +209,38 @@ export default function StaffDocuments() {
                                                         : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
                                             }`}>
                                                 {itemValue.status === 'APPROVED' ? (
-                                                    <CheckCircle2 className="h-5 w-5" />
+                                                    <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
                                                 ) : itemValue.status === 'REJECTED' ? (
-                                                    <XCircle className="h-5 w-5" />
+                                                    <XCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                                                 ) : (
-                                                    <Clock className="h-5 w-5" />
+                                                    <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
                                                 )}
                                             </div>
 
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex flex-wrap items-center gap-2">
-                                                    <h3 className="truncate text-base font-bold text-slate-900 dark:text-slate-100">
+                                                    <h3 className="truncate text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
                                                         {itemValue.originalFilename}
                                                     </h3>
-                                                    <Badge variant={STATUS_VARIANTS[itemValue.status] || 'default'}>
+                                                    <Badge variant={STATUS_VARIANTS[itemValue.status] || 'default'} className="text-[10px] sm:text-xs">
                                                         {STATUS_LABELS[itemValue.status] || itemValue.status}
                                                     </Badge>
                                                 </div>
 
-                                                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                                                <div className="mt-1 flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                                                     <span className="font-medium text-slate-700 dark:text-slate-300">{itemValue.type}</span>
                                                     <span>·</span>
                                                     <span>{formatSize(itemValue.sizeBytes)}</span>
                                                 </div>
 
-                                                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
+                                                <div className="mt-2 flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
                                                     <span className="flex items-center gap-1">
-                                                        <User className="h-3.5 w-3.5 shrink-0" />
+                                                        <User className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
                                                         {itemValue.uploadedByName || 'Unknown'}
                                                     </span>
                                                     {itemValue.ticketNumber && (
                                                         <span className="flex items-center gap-1 font-mono font-medium">
-                                                            <Hash className="h-3.5 w-3.5 shrink-0" />
+                                                            <Hash className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
                                                             {itemValue.ticketNumber}
                                                         </span>
                                                     )}
@@ -248,7 +248,7 @@ export default function StaffDocuments() {
                                                 </div>
 
                                                 {itemValue.status === 'REJECTED' && itemValue.reviewNotes && (
-                                                    <div className="mt-3 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
+                                                    <div className="mt-3 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2 sm:p-3 text-[10px] sm:text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
                                                         <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                                                         <div>
                                                             <span className="font-bold">Reason: </span>
@@ -259,10 +259,10 @@ export default function StaffDocuments() {
                                             </div>
                                         </div>
 
-                                        <div className="flex shrink-0 items-center gap-2 mt-2 sm:mt-0">
+                                        <div className="flex shrink-0 items-center justify-end gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
                                             <button
                                                 onClick={() => download(itemValue)}
-                                                className="rounded-lg border border-slate-200 bg-white p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                                                className="rounded-lg border border-slate-200 bg-white p-1.5 sm:p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
                                                 title="Download"
                                             >
                                                 <Download className="h-4 w-4" />
@@ -272,6 +272,7 @@ export default function StaffDocuments() {
                                                     size="sm"
                                                     icon={Eye}
                                                     onClick={() => setSelected(itemValue)}
+                                                    className="text-xs sm:text-sm"
                                                 >
                                                     Review
                                                 </Button>

@@ -44,24 +44,24 @@ function KpiTile({ label, value, hint, icon: Icon, accent, valueColor, delay }) 
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay }}
         >
-            <Card className="flex h-full flex-col">
-                <div className="flex items-start justify-between gap-3">
+            <Card className="flex h-full flex-col p-4 sm:p-5">
+                <div className="flex items-start justify-between gap-2 sm:gap-3">
                     <div className="min-w-0">
-                        <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        <div className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                             {label}
                         </div>
-                        <div className={`mt-2 truncate text-3xl font-bold tracking-tight ${valueColor}`}>
+                        <div className={`mt-1 sm:mt-2 truncate text-2xl sm:text-3xl font-bold tracking-tight ${valueColor}`}>
                             {value}
                         </div>
                         {hint && (
-                            <div className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                            <div className="mt-0.5 sm:mt-1 truncate text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                                 {hint}
                             </div>
                         )}
                     </div>
                     {Icon && (
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${accent}`}>
-                            <Icon className="h-5 w-5" />
+                        <div className={`flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg ${accent}`}>
+                            <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                         </div>
                     )}
                 </div>
@@ -118,7 +118,6 @@ export default function ActivityPage() {
                 )
                 const all = ticketsByQueue.flat()
 
-                // Sort by most recent activity — no slice, we page in the UI
                 const sorted = all.sort((leftValue, rightValue) => {
                     const at = leftValue.completedAt || leftValue.calledAt || leftValue.joinedAt
                         ? new Date(leftValue.completedAt || leftValue.calledAt || leftValue.joinedAt).getTime() : 0
@@ -186,7 +185,7 @@ export default function ActivityPage() {
 
     if (loading) {
         return (
-            <div className="space-y-6">
+            <div className="space-y-6 px-4 sm:px-6">
                 <div className="h-8 w-48 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
                 <SkeletonStats count={5} />
                 <SkeletonStats count={3} />
@@ -198,8 +197,8 @@ export default function ActivityPage() {
     }
 
     return (
-        <div>
-            <div className="mb-5">
+        <div className="px-4 sm:px-6 pb-12">
+            <div className="mb-4 sm:mb-5">
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                     Activity
                 </h2>
@@ -209,7 +208,7 @@ export default function ActivityPage() {
             </div>
 
             {/* KPI Tiles */}
-            <div className="mb-7 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
+            <div className="mb-6 sm:mb-7 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
                 <KpiTile
                     label="Served Today"
                     value={derived.servedToday}
@@ -258,23 +257,23 @@ export default function ActivityPage() {
             </div>
 
             {/* Performance cards */}
-            <div className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="mb-6 sm:mb-7 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <Card>
                     <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-50 dark:bg-sky-950/40">
                             <Zap className="h-5 w-5 text-sky-600 dark:text-sky-400" />
                         </div>
                         <div>
-                            <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            <div className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                 Weekly Pace
                             </div>
-                            <div className="mt-1 text-2xl font-bold text-sky-600 dark:text-sky-400">
+                            <div className="mt-1 text-xl sm:text-2xl font-bold text-sky-600 dark:text-sky-400">
                                 {derived.weeklyPace}
-                                <span className="ml-1 text-sm font-normal text-slate-500">tickets/day</span>
+                                <span className="ml-1 text-xs sm:text-sm font-normal text-slate-500">tickets/day</span>
                             </div>
                         </div>
                     </div>
-                    <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-3 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                         Your rolling 7-day average. Aim to keep it steady across the week.
                     </p>
                 </Card>
@@ -285,15 +284,15 @@ export default function ActivityPage() {
                             <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <div>
-                            <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            <div className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                 Completion Rate
                             </div>
-                            <div className="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                            <div className="mt-1 text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                                 {derived.completionRate}%
                             </div>
                         </div>
                     </div>
-                    <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-3 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                         Of your recent tickets, the share you served to completion.
                     </p>
                 </Card>
@@ -304,15 +303,15 @@ export default function ActivityPage() {
                             <AlertCircle className="h-5 w-5 text-rose-600 dark:text-rose-400" />
                         </div>
                         <div>
-                            <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            <div className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                 No-show Rate
                             </div>
-                            <div className="mt-1 text-2xl font-bold text-rose-600 dark:text-rose-400">
+                            <div className="mt-1 text-xl sm:text-2xl font-bold text-rose-600 dark:text-rose-400">
                                 {derived.noShowRate}%
                             </div>
                         </div>
                     </div>
-                    <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-3 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                         Students who were called but didn't show up. Lower is better.
                     </p>
                 </Card>
@@ -321,14 +320,14 @@ export default function ActivityPage() {
             {/* Two-column: Ticket History + Queue Breakdown */}
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_400px]">
                 <Card padded={false}>
-                    <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+                    <div className="flex items-center justify-between border-b border-slate-100 px-4 sm:px-6 py-3 sm:py-4 dark:border-slate-800">
                         <div className="flex items-center gap-2">
                             <ActivityIcon className="h-4 w-4 text-brand-600 dark:text-brand-400" />
-                            <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                            <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100">
                                 Ticket History
                             </h3>
                         </div>
-                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                             {recentTickets.length} {recentTickets.length === 1 ? 'entry' : 'entries'}
                         </span>
                     </div>
@@ -360,11 +359,11 @@ export default function ActivityPage() {
                                     return (
                                         <li
                                             key={visibleTicket.id}
-                                            className="flex items-center justify-between gap-3 px-6 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                                            className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3 sm:py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40"
                                         >
-                                            <div className="flex min-w-0 flex-1 items-start gap-3">
+                                            <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
                                                 <div
-                                                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                                                    className={`flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full ${
                                                         isCompleted
                                                             ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
                                                             : isNoShow
@@ -375,24 +374,24 @@ export default function ActivityPage() {
                                                     }`}
                                                 >
                                                     {isCompleted ? (
-                                                        <CheckCircle2 className="h-4 w-4" />
+                                                        <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                                     ) : isNoShow ? (
-                                                        <XCircle className="h-4 w-4" />
+                                                        <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                                     ) : (
-                                                        <Ticket className="h-4 w-4" />
+                                                        <Ticket className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                                     )}
                                                 </div>
 
                                                 <div className="min-w-0 flex-1">
-                                                    <div className="flex flex-wrap items-center gap-2">
-                                                        <span className="font-mono text-xs font-bold text-slate-900 dark:text-slate-100">
+                                                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                                        <span className="font-mono text-[10px] sm:text-xs font-bold text-slate-900 dark:text-slate-100">
                                                             {visibleTicket.ticketNumber}
                                                         </span>
-                                                        <Badge variant={STATUS_VARIANTS[visibleTicket.status] || 'default'}>
+                                                        <Badge variant={STATUS_VARIANTS[visibleTicket.status] || 'default'} className="text-[9px] sm:text-[10px]">
                                                             {STATUS_LABELS[visibleTicket.status] || visibleTicket.status}
                                                         </Badge>
                                                     </div>
-                                                    <div className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+                                                    <div className="mt-0.5 truncate text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                                                         {visibleTicket.queueName}
                                                         {visibleTicket.userFullName ? ` · ${visibleTicket.userFullName}` : ''}
                                                     </div>
@@ -400,7 +399,7 @@ export default function ActivityPage() {
                                             </div>
 
                                             {ts && (
-                                                <div className="shrink-0 text-right text-[10px] text-slate-400 dark:text-slate-500">
+                                                <div className="shrink-0 text-right text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500">
                                                     {relativeTime(ts)}
                                                 </div>
                                             )}
@@ -411,15 +410,16 @@ export default function ActivityPage() {
 
                             {/* Load more */}
                             {hasMore && (
-                                <div className="border-t border-slate-100 px-6 py-4 dark:border-slate-800">
+                                <div className="border-t border-slate-100 px-4 sm:px-6 py-3 sm:py-4 dark:border-slate-800">
                                     <Button
                                         variant="secondary"
                                         fullWidth
                                         onClick={() => setVisibleCount((item) => item + PAGE_SIZE)}
+                                        className="text-xs sm:text-sm"
                                     >
-                                        <ChevronDown className="mr-1.5 h-4 w-4" />
+                                        <ChevronDown className="mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                         Load {Math.min(PAGE_SIZE, remainingCount)} more
-                                        <span className="ml-2 text-xs font-normal text-slate-400">
+                                        <span className="ml-2 text-[10px] sm:text-xs font-normal text-slate-400">
                                             ({remainingCount} remaining)
                                         </span>
                                     </Button>
@@ -427,7 +427,7 @@ export default function ActivityPage() {
                             )}
 
                             {!hasMore && recentTickets.length > PAGE_SIZE && (
-                                <div className="border-t border-slate-100 px-6 py-3 text-center text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
+                                <div className="border-t border-slate-100 px-4 sm:px-6 py-3 text-center text-[10px] sm:text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
                                     That's all your ticket history.
                                 </div>
                             )}
@@ -436,14 +436,14 @@ export default function ActivityPage() {
                 </Card>
 
                 <Card padded={false}>
-                    <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+                    <div className="flex items-center justify-between border-b border-slate-100 px-4 sm:px-5 py-3 sm:py-4 dark:border-slate-800">
                         <div className="flex items-center gap-2">
                             <Building2 className="h-4 w-4 text-brand-600 dark:text-brand-400" />
-                            <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                            <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100">
                                 My Queues
                             </h3>
                         </div>
-                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                             {queueBreakdown.length}
                         </span>
                     </div>
@@ -460,17 +460,17 @@ export default function ActivityPage() {
                     ) : (
                         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                             {queueBreakdown.map((item) => (
-                                <li key={item.id} className="px-5 py-3.5">
+                                <li key={item.id} className="px-4 sm:px-5 py-3 sm:py-3.5">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0 flex-1">
-                                            <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                            <div className="truncate text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
                                                 {item.name}
                                             </div>
-                                            <div className="mt-0.5 truncate text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                            <div className="mt-0.5 truncate text-[9px] sm:text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                                 {item.office}
                                             </div>
                                             {item.currentlyServing && (
-                                                <div className="mt-1.5 text-xs">
+                                                <div className="mt-1.5 text-[10px] sm:text-xs">
                                                     <span className="text-slate-500 dark:text-slate-400">
                                                         Now serving:{' '}
                                                     </span>
@@ -481,20 +481,20 @@ export default function ActivityPage() {
                                             )}
                                         </div>
 
-                                        <div className="flex shrink-0 items-center gap-3">
+                                        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
                                             <div className="text-right">
-                                                <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                                <div className="text-[9px] sm:text-[10px] font-medium uppercase tracking-wide text-slate-500">
                                                     Waiting
                                                 </div>
-                                                <div className="text-base font-bold text-brand-600 dark:text-brand-400">
+                                                <div className="text-sm sm:text-base font-bold text-brand-600 dark:text-brand-400">
                                                     {item.waiting}
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                                                <div className="text-[9px] sm:text-[10px] font-medium uppercase tracking-wide text-slate-500">
                                                     ~Wait
                                                 </div>
-                                                <div className="text-base font-bold text-amber-600 dark:text-amber-400">
+                                                <div className="text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400">
                                                     {item.estimatedMinutes}m
                                                 </div>
                                             </div>

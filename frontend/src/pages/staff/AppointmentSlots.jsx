@@ -88,16 +88,16 @@ export default function AppointmentSlots() {
         } finally { setDeleting(false) }
     }
 
-    if (loading) return <div className="space-y-6 pb-12"><SkeletonCard /></div>
+    if (loading) return <div className="space-y-6 pb-12 px-4 sm:px-6"><SkeletonCard /></div>
 
     return (
-        <div className="space-y-6 pb-12">
+        <div className="space-y-6 pb-12 px-4 sm:px-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Appointment Slots</h1>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Offer 1-on-1 or group appointment slots for students to book.</p>
                 </div>
-                <Button icon={Plus} onClick={() => setShowCreate((item) => !item)} variant={showCreate ? 'secondary' : 'primary'}>{showCreate ? 'Cancel' : 'New slot'}</Button>
+                <Button icon={Plus} onClick={() => setShowCreate((item) => !item)} variant={showCreate ? 'secondary' : 'primary'} className="w-full sm:w-auto justify-center">{showCreate ? 'Cancel' : 'New slot'}</Button>
             </div>
 
             <AnimatePresence>
@@ -132,9 +132,9 @@ export default function AppointmentSlots() {
                                     <Input label="Duration (minutes)" type="number" min="5" max="240" value={form.durationMinutes} onChange={setField('durationMinutes')} />
                                     <Input label="Capacity (1 = 1-on-1, >1 = group)" type="number" min="1" max="200" value={form.capacity} onChange={setField('capacity')} hint="Set to 1 for individual meetings." />
                                 </div>
-                                <div className="flex justify-end gap-2 pt-2">
-                                    <Button type="button" variant="secondary" onClick={() => { setForm(initialForm); setShowCreate(false) }} disabled={creating}>Cancel</Button>
-                                    <Button type="submit" loading={creating} disabled={creating}>Create slot</Button>
+                                <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
+                                    <Button type="button" variant="secondary" onClick={() => { setForm(initialForm); setShowCreate(false) }} disabled={creating} className="w-full sm:w-auto">Cancel</Button>
+                                    <Button type="submit" loading={creating} disabled={creating} className="w-full sm:w-auto">Create slot</Button>
                                 </div>
                             </form>
                         </Card>
@@ -156,30 +156,30 @@ export default function AppointmentSlots() {
                 {selectedSlot && (
                     <>
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} onClick={() => setSelectedSlot(null)} className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm" />
-                        <motion.aside initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }} className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900">
-                            <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+                        <motion.aside initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }} className="fixed inset-y-0 right-0 z-50 flex w-full sm:max-w-md flex-col border-l border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900">
+                            <div className="flex items-start justify-between border-b border-slate-100 px-4 sm:px-6 py-4 dark:border-slate-800">
                                 <div className="min-w-0">
-                                    <h3 className="truncate text-base font-bold text-slate-900 dark:text-slate-100">{selectedSlot.title}</h3>
-                                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{formatSlotRange(selectedSlot.startTime, selectedSlot.endTime).date} · {formatSlotRange(selectedSlot.startTime, selectedSlot.endTime).startTime}</p>
+                                    <h3 className="truncate text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">{selectedSlot.title}</h3>
+                                    <p className="mt-0.5 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{formatSlotRange(selectedSlot.startTime, selectedSlot.endTime).date} · {formatSlotRange(selectedSlot.startTime, selectedSlot.endTime).startTime}</p>
                                 </div>
                                 <button onClick={() => setSelectedSlot(null)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><CloseIcon className="h-4 w-4" /></button>
                             </div>
-                            <div className="flex-1 overflow-y-auto px-6 py-4">
-                                <div className="mb-4 flex items-center justify-between text-sm">
+                            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+                                <div className="mb-4 flex items-center justify-between text-xs sm:text-sm">
                                     <span className="text-slate-600 dark:text-slate-400">Bookings ({bookings.filter((b) => b.status === 'BOOKED').length} / {selectedSlot.capacity})</span>
                                     <Badge variant={selectedSlot.remaining > 0 ? 'success' : 'default'}>{selectedSlot.remaining} remaining</Badge>
                                 </div>
                                 {bookingsLoading ? <div className="text-sm text-slate-500">Loading…</div> : bookings.length === 0 ? <EmptyState icon={Users} title="No bookings yet" description="Students will appear here once they book." /> : (
                                     <ul className="space-y-2">
                                         {bookings.map((bookingValue) => (
-                                            <li key={bookingValue.id} className="rounded-lg border border-slate-200 px-4 py-3 text-sm dark:border-slate-700">
-                                                <div className="flex items-start justify-between gap-2">
+                                            <li key={bookingValue.id} className="rounded-lg border border-slate-200 px-3 sm:px-4 py-3 text-xs sm:text-sm dark:border-slate-700">
+                                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                                                     <div className="min-w-0">
                                                         <div className="font-medium text-slate-900 dark:text-slate-100">{bookingValue.studentName}</div>
-                                                        <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{bookingValue.studentEmail}{bookingValue.matricNumber ? ` · ${bookingValue.matricNumber}` : ''}</div>
-                                                        {bookingValue.notes && <p className="mt-2 rounded bg-slate-50 px-2 py-1.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">"{bookingValue.notes}"</p>}
+                                                        <div className="mt-0.5 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{bookingValue.studentEmail}{bookingValue.matricNumber ? ` · ${bookingValue.matricNumber}` : ''}</div>
+                                                        {bookingValue.notes && <p className="mt-2 rounded bg-slate-50 px-2 py-1.5 text-[10px] sm:text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">"{bookingValue.notes}"</p>}
                                                     </div>
-                                                    <Badge variant={bookingValue.status === 'BOOKED' ? 'indigo' : 'default'}>{bookingValue.status}</Badge>
+                                                    <Badge variant={bookingValue.status === 'BOOKED' ? 'indigo' : 'default'} className="w-fit">{bookingValue.status}</Badge>
                                                 </div>
                                             </li>
                                         ))}
@@ -202,20 +202,20 @@ function SlotCard({ slot, onClick, onDelete }) {
     const categoryStyle = CATEGORY_STYLES[slot.category] || CATEGORY_STYLES.OTHER
 
     return (
-        <div className="relative flex h-full flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+        <div className="relative flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
             <div className="mb-3 flex items-start justify-between gap-2">
-                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${categoryStyle}`}>{categoryLabel}</span>
-                <Badge variant={slot.bookedCount > 0 ? 'success' : 'default'}>{slot.bookedCount}/{slot.capacity}</Badge>
+                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] sm:text-xs font-medium ${categoryStyle}`}>{categoryLabel}</span>
+                <Badge variant={slot.bookedCount > 0 ? 'success' : 'default'} className="text-[10px] sm:text-xs">{slot.bookedCount}/{slot.capacity}</Badge>
             </div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">{slot.title}</h3>
-            <div className="mt-3 space-y-1.5 text-xs text-slate-500 dark:text-slate-400">
-                <div className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" />{date}</div>
-                <div className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" />{startTime} – {endTime}</div>
-                {slot.location && <div className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" />{slot.roomDetail || slot.location}</div>}
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">{slot.title}</h3>
+            <div className="mt-3 space-y-1.5 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-1.5"><Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5" />{date}</div>
+                <div className="flex items-center gap-1.5"><Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5" />{startTime} – {endTime}</div>
+                {slot.location && <div className="flex items-center gap-1.5"><MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5" />{slot.roomDetail || slot.location}</div>}
             </div>
             <div className="mt-auto flex items-center gap-2 pt-5">
-                <Button size="sm" variant="subtle" onClick={onClick} fullWidth icon={Users}>View bookings</Button>
-                <button onClick={onDelete} className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400" aria-label="Delete slot"><CloseIcon className="h-4 w-4" /></button>
+                <Button size="sm" variant="subtle" onClick={onClick} fullWidth icon={Users} className="text-xs sm:text-sm">View bookings</Button>
+                <button onClick={onDelete} className="rounded-lg p-1.5 sm:p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400" aria-label="Delete slot"><CloseIcon className="h-4 w-4" /></button>
             </div>
         </div>
     )

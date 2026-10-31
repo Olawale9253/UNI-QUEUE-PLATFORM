@@ -134,7 +134,7 @@ export default function AppointmentsList() {
 
     if (loading) {
         return (
-            <div className="space-y-6 pb-12">
+            <div className="space-y-6 pb-12 px-4 sm:px-6">
                 <div className="h-10 w-1/3 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
                 <Card padded={false}>
                     {Array.from({ length: 5 }).map((_, index) => <SkeletonRow key={index} />)}
@@ -144,7 +144,7 @@ export default function AppointmentsList() {
     }
 
     return (
-        <div className="space-y-6 pb-12">
+        <div className="space-y-6 pb-12 px-4 sm:px-6">
             {/* Header */}
             <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
@@ -157,7 +157,7 @@ export default function AppointmentsList() {
 
             {/* Toolbar */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-wrap items-center gap-1.5">
+                <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap pb-1 scrollbar-hide">
                     {TABS.map((item) => {
                         const isActive = tab === item.value
                         return (
@@ -165,14 +165,14 @@ export default function AppointmentsList() {
                                 key={item.value}
                                 type="button"
                                 onClick={() => setTab(item.value)}
-                                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] sm:text-xs font-semibold transition-colors ${
                                     isActive
                                         ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
                                         : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
                                 }`}
                             >
                                 {item.label}
-                                <span className={`text-[10px] font-bold ${isActive ? 'opacity-80' : 'opacity-60'}`}>
+                                <span className={`text-[9px] sm:text-[10px] font-bold ${isActive ? 'opacity-80' : 'opacity-60'}`}>
                                     {tabCounts[item.value] ?? 0}
                                 </span>
                             </button>
@@ -181,7 +181,7 @@ export default function AppointmentsList() {
                 </div>
 
                 {appointments.length > 0 && (
-                    <div className="w-full max-w-sm">
+                    <div className="w-full sm:max-w-sm">
                         <div className="relative">
                             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                             <input
@@ -211,7 +211,7 @@ export default function AppointmentsList() {
                     initial="initial"
                     animate="animate"
                     variants={{ initial: {}, animate: { transition: { staggerChildren: 0.03 } } }}
-                    className="space-y-4"
+                    className="space-y-3 sm:space-y-4"
                 >
                     {currentList.map((itemValue) => {
                         const isActionable = itemValue.status === 'BOOKED' || itemValue.status === 'CONFIRMED'
@@ -229,10 +229,10 @@ export default function AppointmentsList() {
                                     onClick={() => setSelected(itemValue)}
                                     className="group block w-full text-left"
                                 >
-                                    <Card className={`transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-brand-300 dark:hover:border-brand-700 ${isActionable ? 'border-brand-200 dark:border-brand-900' : ''}`}>
-                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                            <div className="flex min-w-0 flex-1 items-start gap-4">
-                                                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${
+                                    <Card className={`p-4 sm:p-5 transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-brand-300 dark:hover:border-brand-700 ${isActionable ? 'border-brand-200 dark:border-brand-900' : ''}`}>
+                                        <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                            <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
+                                                <div className={`flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${
                                                     isCompleted ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
                                                         : isNoShow ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
                                                             : 'bg-brand-100 text-brand-700 dark:bg-brand-950/40 dark:text-brand-300'
@@ -242,32 +242,32 @@ export default function AppointmentsList() {
 
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex flex-wrap items-center gap-2">
-                                                        <h3 className="truncate text-base font-bold text-slate-900 dark:text-slate-100">
+                                                        <h3 className="truncate text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
                                                             {itemValue.studentName || 'Unknown student'}
                                                         </h3>
-                                                        <Badge variant={STATUS_VARIANTS[itemValue.status] || 'default'}>
+                                                        <Badge variant={STATUS_VARIANTS[itemValue.status] || 'default'} className="text-[10px] sm:text-xs">
                                                             {STATUS_LABELS[itemValue.status] || itemValue.status}
                                                         </Badge>
                                                     </div>
 
-                                                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                                                    <div className="mt-1 flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                                                         {itemValue.studentEmail && (
                                                             <span className="flex items-center gap-1">
-                                                                <Mail className="h-3.5 w-3.5 shrink-0" />
+                                                                <Mail className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
                                                                 <span className="truncate">{itemValue.studentEmail}</span>
                                                             </span>
                                                         )}
                                                         {itemValue.matricNumber && (
                                                             <span className="flex items-center gap-1 font-mono font-medium">
-                                                                <Hash className="h-3.5 w-3.5 shrink-0" />
+                                                                <Hash className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
                                                                 {itemValue.matricNumber}
                                                             </span>
                                                         )}
                                                     </div>
 
-                                                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
+                                                    <div className="mt-2 flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
                                                         <span className="flex items-center gap-1 font-medium">
-                                                            <Calendar className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                                                            <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 text-slate-400" />
                                                             {formatDateTime(itemValue.startTime)}
                                                         </span>
                                                         {itemValue.slotTitle && (
@@ -275,7 +275,7 @@ export default function AppointmentsList() {
                                                         )}
                                                     </div>
 
-                                                    <div className="mt-2 flex items-center gap-1.5 text-xs">
+                                                    <div className="mt-2 flex items-center gap-1.5 text-[10px] sm:text-xs">
                                                         <span className="text-slate-500 dark:text-slate-400">Ref:</span>
                                                         <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{reference}</span>
                                                         <CopyButton text={reference} title="Copy reference" />
@@ -283,17 +283,17 @@ export default function AppointmentsList() {
                                                 </div>
                                             </div>
 
-                                            <div className="flex shrink-0 flex-col items-end gap-2 mt-2 sm:mt-0">
+                                            <div className="flex shrink-0 flex-col sm:items-end gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
                                                 {isActionable ? (
-                                                    <span className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 transition-colors group-hover:bg-brand-100 dark:bg-brand-950/40 dark:text-brand-300">
-                                                        Tap to mark outcome <ChevronRight className="h-3.5 w-3.5" />
+                                                    <span className="inline-flex w-full sm:w-auto items-center justify-center gap-1 rounded-lg bg-brand-50 px-3 py-1.5 text-[10px] sm:text-xs font-semibold text-brand-700 transition-colors group-hover:bg-brand-100 dark:bg-brand-950/40 dark:text-brand-300">
+                                                        Tap to mark outcome <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                                                     </span>
                                                 ) : isCompleted ? (
-                                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+                                                    <span className="inline-flex w-full sm:w-auto justify-center items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
                                                         <CheckCircle2 className="h-3 w-3" /> Complete
                                                     </span>
                                                 ) : isNoShow ? (
-                                                    <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-rose-700 dark:bg-rose-950/40 dark:text-rose-400">
+                                                    <span className="inline-flex w-full sm:w-auto justify-center items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wide text-rose-700 dark:bg-rose-950/40 dark:text-rose-400">
                                                         <XCircle className="h-3 w-3" /> No-show
                                                     </span>
                                                 ) : null}
