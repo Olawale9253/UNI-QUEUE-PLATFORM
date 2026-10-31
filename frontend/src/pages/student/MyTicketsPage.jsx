@@ -16,7 +16,6 @@ import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import RatingModal from '../../components/student/RatingModal'
 
-// 👇 HELPER: Formats old long ticket IDs into short Q-XXXX format
 function formatTicketNumber(ticketNumber) {
     if (!ticketNumber) return 'T-0000'
     if (ticketNumber.includes('-')) return ticketNumber
@@ -28,7 +27,6 @@ function formatTicketNumber(ticketNumber) {
     return ticketNumber
 }
 
-// 👇 HELPER: Dynamically assign icons based on the service name
 function getServiceIcon(name = '') {
     const n = name.toLowerCase()
     if (n.includes('tuition') || n.includes('payment') || n.includes('fee') || n.includes('bursary') || n.includes('finance')) return Ticket
@@ -50,11 +48,8 @@ function formatDateTime(dt) {
     } catch { return { day: 'N/A', time: '' } }
 }
 
-// 👇 DYNAMIC HELPER: Calculates wait time with correct grammar
 function calculateWaitTime(ticket) {
     if (!ticket) return '—';
-
-    // If historical, calculate exact time spent
     if (ticket.status === 'COMPLETED' || ticket.status === 'CANCELLED' || ticket.status === 'NO_SHOW') {
         if (ticket.joinedAt && ticket.completedAt) {
             const diffMins = Math.round((new Date(ticket.completedAt) - new Date(ticket.joinedAt)) / 60000);
@@ -63,13 +58,7 @@ function calculateWaitTime(ticket) {
         }
         return '—';
     }
-
-    // If active, use backend estimate if available
-    if (ticket.estimatedMinutes) {
-        return `${ticket.estimatedMinutes} ${ticket.estimatedMinutes === 1 ? 'min' : 'mins'}`;
-    }
-
-    // Fallback calculation based on position
+    if (ticket.estimatedMinutes) return `${ticket.estimatedMinutes} ${ticket.estimatedMinutes === 1 ? 'min' : 'mins'}`;
     if (ticket.position) {
         const avgMins = ticket.queueAverageServiceMinutes || 5;
         const totalMins = ticket.position * avgMins;
@@ -82,18 +71,9 @@ function StatusBadge({ status }) {
     const s = status?.toUpperCase()
     let colorClass = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
     let Icon = CheckCircle2
-
-    if (s === 'COMPLETED') {
-        colorClass = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
-        Icon = CheckCircle2
-    } else if (s === 'CANCELLED' || s === 'NO_SHOW') {
-        colorClass = 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
-        Icon = XCircle
-    } else if (s === 'WAITING' || s === 'SERVING' || s === 'CALLED') {
-        colorClass = 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
-        Icon = Clock
-    }
-
+    if (s === 'COMPLETED') { colorClass = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'; Icon = CheckCircle2 }
+    else if (s === 'CANCELLED' || s === 'NO_SHOW') { colorClass = 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'; Icon = XCircle }
+    else if (s === 'WAITING' || s === 'SERVING' || s === 'CALLED') { colorClass = 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'; Icon = Clock }
     return (
         <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider ${colorClass}`}>
             <Icon className="h-3 w-3" />
@@ -113,140 +93,62 @@ function CopyButton({ text }) {
         } catch {}
     }
     return (
-        <button
-            type="button"
-            onClick={copy}
-            title="Copy ticket ID"
-            className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-300"
-        >
+        <button type="button" onClick={copy} title="Copy ticket ID" className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-300">
             {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
         </button>
     )
 }
 
-// 👇 PREMIUM CONFIRMATION MODAL
 function ConfirmActionModal({ action, onClose, onConfirm, primaryColor, acting }) {
     if (!action) return null;
-
-    let title = '';
-    let message = '';
-    let buttonText = '';
-    let isDanger = false;
-
-    if (action.type === 'leave') {
-        title = 'Leave Queue?';
-        message = 'Are you sure you want to leave the queue? You will lose your current spot and have to rejoin if you change your mind.';
-        buttonText = 'Yes, Leave Queue';
-        isDanger = true;
-    } else if (action.type === 'reschedule') {
-        title = 'Reschedule Turn?';
-        message = 'Are you sure you want to reschedule? You will be moved to the end of the queue.';
-        buttonText = 'Yes, Reschedule';
-        isDanger = false;
-    } else if (action.type === 'skip') {
-        title = 'Skip Turn?';
-        message = 'Are you sure you want to skip your turn? This ticket will be marked as a No Show and you will lose your spot.';
-        buttonText = 'Yes, Skip Turn';
-        isDanger = true;
-    }
-
+    let title = ''; let message = ''; let buttonText = ''; let isDanger = false;
+    if (action.type === 'leave') { title = 'Leave Queue?'; message = 'Are you sure you want to leave the queue? You will lose your current spot and have to rejoin if you change your mind.'; buttonText = 'Yes, Leave Queue'; isDanger = true; }
+    else if (action.type === 'reschedule') { title = 'Reschedule Turn?'; message = 'Are you sure you want to reschedule? You will be moved to the end of the queue.'; buttonText = 'Yes, Reschedule'; isDanger = false; }
+    else if (action.type === 'skip') { title = 'Skip Turn?'; message = 'Are you sure you want to skip your turn? This ticket will be marked as a No Show and you will lose your spot.'; buttonText = 'Yes, Skip Turn'; isDanger = true; }
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6">
-            <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                onClick={onClose}
-                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-            />
-
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 text-center"
-            >
-                <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full mb-4 ${isDanger ? 'bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400'}`}>
-                    <AlertTriangle className="h-7 w-7" />
-                </div>
-
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 text-center">
+                <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full mb-4 ${isDanger ? 'bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400'}`}><AlertTriangle className="h-7 w-7" /></div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{title}</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{message}</p>
-
                 <div className="flex flex-col gap-2">
-                    <button
-                        onClick={() => onConfirm(action.type, action.id)}
-                        disabled={!!acting}
-                        className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90 disabled:opacity-50 ${isDanger ? 'bg-rose-600' : ''}`}
-                        style={!isDanger ? { backgroundColor: primaryColor } : undefined}
-                    >
-                        {acting ? 'Processing...' : buttonText}
-                    </button>
-                    <button
-                        onClick={onClose}
-                        disabled={!!acting}
-                        className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                    >
-                        Cancel
-                    </button>
+                    <button onClick={() => onConfirm(action.type, action.id)} disabled={!!acting} className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90 disabled:opacity-50 ${isDanger ? 'bg-rose-600' : ''}`} style={!isDanger ? { backgroundColor: primaryColor } : undefined}>{acting ? 'Processing...' : buttonText}</button>
+                    <button onClick={onClose} disabled={!!acting} className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">Cancel</button>
                 </div>
             </motion.div>
         </div>
     )
 }
 
-// 👇 PREMIUM TICKET DETAILS MODAL
 function TicketDetailModal({ item, onClose, primaryColor, onReschedule, onSkip, onLeave, acting }) {
     if (!item) return null;
-
     const Icon = getServiceIcon(item.queueName || item.officeName);
     const dtJoined = formatDateTime(item.joinedAt || item.createdAt);
     const dtCompleted = formatDateTime(item.completedAt);
     const isActive = ['WAITING', 'CALLED', 'SERVING'].includes(item.status?.toUpperCase())
     const waitTime = calculateWaitTime(item)
-
-    // 👇 Dynamic position display
-    const positionDisplay = item.position
-        ? `${item.position} ${item.totalInQueue ? `/ ${item.totalInQueue}` : ''}`
-        : (item.status === 'COMPLETED' ? 'Served' : 'N/A');
-
+    const positionDisplay = item.position ? `${item.position} ${item.totalInQueue ? `/ ${item.totalInQueue}` : ''}` : (item.status === 'COMPLETED' ? 'Served' : 'N/A');
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-            <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                onClick={onClose}
-                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-            />
-
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
-            >
-                <div
-                    className="px-6 py-6 text-white relative overflow-hidden"
-                    style={{ backgroundColor: primaryColor }}
-                >
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <div className="px-6 py-6 text-white relative overflow-hidden" style={{ backgroundColor: primaryColor }}>
                     <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-transparent to-black/20" />
                     <div className="relative z-10 flex items-start justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md shadow-inner border border-white/20">
-                                <Icon className="h-7 w-7 text-white" />
-                            </div>
+                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md shadow-inner border border-white/20"><Icon className="h-7 w-7 text-white" /></div>
                             <div>
                                 <h2 className="text-xl font-bold tracking-tight">{item.queueName || 'Appointment'}</h2>
                                 <p className="text-sm font-medium text-white/80 mt-0.5">{item.officeName || item.staffName || 'University Office'}</p>
                             </div>
                         </div>
-                        <button onClick={onClose} className="rounded-full p-2 bg-white/10 hover:bg-white/25 transition-colors">
-                            <X className="h-4 w-4 text-white" />
-                        </button>
+                        <button onClick={onClose} className="rounded-full p-2 bg-white/10 hover:bg-white/25 transition-colors"><X className="h-4 w-4 text-white" /></button>
                     </div>
                 </div>
-
                 <div className="p-6 relative">
                     <div className="absolute -left-3 top-0 h-6 w-6 -translate-y-1/2 rounded-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800" />
                     <div className="absolute -right-3 top-0 h-6 w-6 -translate-y-1/2 rounded-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800" />
-
                     <div className="flex items-center justify-between pb-6 border-b border-dashed border-slate-200 dark:border-slate-700">
                         <div>
                             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">Status</p>
@@ -255,97 +157,49 @@ function TicketDetailModal({ item, onClose, primaryColor, onReschedule, onSkip, 
                         <div className="text-right">
                             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">Ticket Number</p>
                             <div className="flex items-center justify-end gap-2">
-                                <p className="font-mono text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                                    {formatTicketNumber(item.ticketNumber)}
-                                </p>
+                                <p className="font-mono text-xl font-black text-slate-900 dark:text-white tracking-tight">{formatTicketNumber(item.ticketNumber)}</p>
                                 <CopyButton text={formatTicketNumber(item.ticketNumber)} />
                             </div>
                         </div>
                     </div>
-
                     <div className="grid grid-cols-2 gap-y-6 gap-x-4 pt-6">
                         <div>
-                            <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
-                                <Calendar className="h-3.5 w-3.5" /> Date Joined
-                            </p>
+                            <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5"><Calendar className="h-3.5 w-3.5" /> Date Joined</p>
                             <p className="text-sm font-bold text-slate-900 dark:text-white">{dtJoined?.day || 'N/A'}</p>
                             <p className="text-xs font-medium text-slate-500 mt-0.5">{dtJoined?.time || ''}</p>
                         </div>
-
                         {dtCompleted && (
                             <div>
-                                <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
-                                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Completed
-                                </p>
+                                <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Completed</p>
                                 <p className="text-sm font-bold text-slate-900 dark:text-white">{dtCompleted.day}</p>
                                 <p className="text-xs font-medium text-slate-500 mt-0.5">{dtCompleted.time}</p>
                             </div>
                         )}
-
                         <div>
-                            <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
-                                <User className="h-3.5 w-3.5" /> Final Position
-                            </p>
-                            {/* 👇 Uses the dynamic position display */}
-                            <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                {positionDisplay}
-                            </p>
+                            <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5"><User className="h-3.5 w-3.5" /> Final Position</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">{positionDisplay}</p>
                         </div>
-
                         <div>
-                            <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
-                                <Clock className="h-3.5 w-3.5" /> {isActive ? 'Est. Wait Time' : 'Time Spent'}
-                            </p>
-                            {/* 👇 Uses the plural-corrected time */}
-                            <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                {waitTime}
-                            </p>
+                            <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5"><Clock className="h-3.5 w-3.5" /> {isActive ? 'Est. Wait Time' : 'Time Spent'}</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">{waitTime}</p>
                         </div>
-
                         <div className="col-span-2">
-                            <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
-                                <MapPin className="h-3.5 w-3.5" /> Location
-                            </p>
+                            <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5"><MapPin className="h-3.5 w-3.5" /> Location</p>
                             <p className="text-sm font-bold text-slate-900 dark:text-white">{item.officeName || 'University Office'}</p>
                         </div>
                     </div>
-
                     {isActive && onReschedule && onSkip && onLeave && (
                         <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2">
                             <div className="grid grid-cols-2 gap-2">
-                                <button
-                                    onClick={() => onReschedule(item.id)}
-                                    disabled={!!acting}
-                                    className="flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-50"
-                                >
-                                    <RotateCcw className="h-3.5 w-3.5" /> Reschedule
-                                </button>
-                                <button
-                                    onClick={() => onSkip(item.id)}
-                                    disabled={!!acting}
-                                    className="flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-50"
-                                >
-                                    <SkipForward className="h-3.5 w-3.5" /> Skip Turn
-                                </button>
+                                <button onClick={() => onReschedule(item.id)} disabled={!!acting} className="flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-50"><RotateCcw className="h-3.5 w-3.5" /> Reschedule</button>
+                                <button onClick={() => onSkip(item.id)} disabled={!!acting} className="flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-50"><SkipForward className="h-3.5 w-3.5" /> Skip Turn</button>
                             </div>
-                            <button
-                                onClick={() => onLeave(item.id)}
-                                disabled={!!acting}
-                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300"
-                            >
-                                <LogOut className="h-3.5 w-3.5" /> Leave Queue
-                            </button>
+                            <button onClick={() => onLeave(item.id)} disabled={!!acting} className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300"><LogOut className="h-3.5 w-3.5" /> Leave Queue</button>
                         </div>
                     )}
                 </div>
-
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-                    <button
-                        onClick={onClose}
-                        className="px-6 py-2.5 rounded-xl bg-white border border-slate-200 dark:border-slate-700 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-sm"
-                    >
-                        Close
-                    </button>
+                    <button onClick={onClose} className="px-6 py-2.5 rounded-xl bg-white border border-slate-200 dark:border-slate-700 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-sm">Close</button>
                 </div>
             </motion.div>
         </div>
@@ -371,7 +225,6 @@ export default function MyTicketsPage() {
 
     const primaryColor = university?.primaryColor || '#4f46e5'
 
-    // Live Ticker
     const [, setTick] = useState(0)
     useEffect(() => {
         const interval = setInterval(() => setTick(t => t + 1), 60000)
@@ -386,11 +239,7 @@ export default function MyTicketsPage() {
             ])
             setActiveTicket(activeRes.data?.data || null)
             setHistory(historyRes.data?.data || [])
-        } catch {
-            // silent
-        } finally {
-            setLoading(false)
-        }
+        } catch { } finally { setLoading(false) }
     }, [])
 
     useAdaptivePoll(loadData, { fastMs: 5000, slowMs: 15000 })
@@ -404,9 +253,7 @@ export default function MyTicketsPage() {
         }
     }, [activeTicket])
 
-    const triggerConfirm = (type, id) => {
-        setConfirmAction({ type, id })
-    }
+    const triggerConfirm = (type, id) => setConfirmAction({ type, id })
 
     const executeAction = async (type, id) => {
         setActing(type)
@@ -422,7 +269,6 @@ export default function MyTicketsPage() {
                 await api.post(`/api/user/tickets/${id}/skip`)
                 push({ type: 'success', message: 'Turn skipped' })
             }
-
             setConfirmAction(null)
             setSelectedTicket(null)
             loadData()
@@ -434,9 +280,7 @@ export default function MyTicketsPage() {
             } else {
                 push({ type: 'error', message: err.response?.data?.message || err.message || `Failed to ${type}` })
             }
-        } finally {
-            setActing(null)
-        }
+        } finally { setActing(null) }
     }
 
     const handleRated = (ticketId, rating) => {
@@ -465,11 +309,7 @@ export default function MyTicketsPage() {
     }, [allTickets, activeTab])
 
     if (loading && !activeTicket) {
-        return (
-            <div className="flex h-64 items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" />
-            </div>
-        )
+        return <div className="flex h-64 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" /></div>
     }
 
     const position = activeTicket?.position ?? 1
@@ -477,290 +317,156 @@ export default function MyTicketsPage() {
     const progressPercent = maxPosition > 1 ? Math.min(100, Math.max(5, (position / maxPosition) * 100)) : 100
     const isCompleted = activeTicket?.status === 'COMPLETED'
     const isActionable = activeTicket?.status === 'WAITING' || activeTicket?.status === 'CALLED'
-
     const activeWaitTime = calculateWaitTime(activeTicket)
 
     return (
-        <div className="space-y-8 pb-12 max-w-[1400px] mx-auto">
+        <div className="space-y-6 sm:space-y-8 pb-12 max-w-[1400px] mx-auto px-4 sm:px-6">
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                        My Ticket
-                    </h1>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        View your current ticket, track your queue position, and check the status of all your past tickets.
-                    </p>
-                </div>
-                <div
-                    className="hidden md:flex items-center gap-3 rounded-xl border px-4 py-3"
-                    style={{
-                        backgroundColor: withAlpha(primaryColor, 0.05),
-                        borderColor: withAlpha(primaryColor, 0.2)
-                    }}
-                >
-                    <div
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-                        style={{
-                            backgroundColor: withAlpha(primaryColor, 0.15),
-                            color: primaryColor
-                        }}
-                    >
-                        <HelpCircle className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Need help?</div>
-                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Have a problem with your ticket? Get support.</div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 ml-2" />
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">My Ticket</h1>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">View your current ticket, track your queue position, and check the status of all your past tickets.</p>
                 </div>
             </div>
 
             {activeTicket ? (
-                <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr_1fr] gap-4">
-                    <Card className="p-6 relative overflow-hidden flex flex-col justify-between" style={{ backgroundColor: withAlpha(primaryColor, 0.03), borderColor: withAlpha(primaryColor, 0.15) }}>
-                        <Badge className="absolute top-4 right-4 bg-emerald-50 text-emerald-700 border-emerald-200" variant="success">
-                            <CheckCircle2 className="h-3 w-3 mr-1" /> Current Ticket
+                <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr_1fr] gap-3 sm:gap-4">
+                    <Card className="p-4 sm:p-6 relative overflow-hidden flex flex-col justify-between" style={{ backgroundColor: withAlpha(primaryColor, 0.03), borderColor: withAlpha(primaryColor, 0.15) }}>
+                        <Badge className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-emerald-50 text-emerald-700 border-emerald-200" variant="success">
+                            <CheckCircle2 className="h-3 w-3 mr-1" /> Current
                         </Badge>
                         <div>
-                            <div className="flex items-center gap-4 mb-4 mt-2">
-                                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl" style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}>
-                                    <Ticket className="h-7 w-7" />
+                            <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4 mt-2">
+                                <div className="flex h-10 w-10 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl" style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}>
+                                    <Ticket className="h-5 w-5 sm:h-7 sm:w-7" />
                                 </div>
-                                <div>
-                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">{activeTicket.queueName}</h2>
-                                    <p className="text-sm font-medium text-slate-500 flex items-center gap-1.5 mt-0.5">
-                                        <Building2 className="h-3.5 w-3.5" /> {activeTicket.officeName || 'Academic Office'}
+                                <div className="min-w-0">
+                                    <h2 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white truncate">{activeTicket.queueName}</h2>
+                                    <p className="text-xs sm:text-sm font-medium text-slate-500 flex items-center gap-1.5 mt-0.5 truncate">
+                                        <Building2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> {activeTicket.officeName || 'Academic Office'}
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4 text-xs font-semibold text-slate-600 dark:text-slate-400">
-                                <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {formatDateTime(activeTicket.joinedAt || activeTicket.createdAt).day}</span>
-                                <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {formatDateTime(activeTicket.joinedAt || activeTicket.createdAt).time}</span>
+                            <div className="flex items-center gap-2 sm:gap-4 text-[10px] sm:text-xs font-semibold text-slate-600 dark:text-slate-400">
+                                <span className="flex items-center gap-1.5"><Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> {formatDateTime(activeTicket.joinedAt || activeTicket.createdAt).day}</span>
+                                <span className="flex items-center gap-1.5"><Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> {formatDateTime(activeTicket.joinedAt || activeTicket.createdAt).time}</span>
                             </div>
                         </div>
-                        <p className="text-sm font-medium mt-6" style={{ color: primaryColor }}>
-                            You are currently in the queue. Please wait for your turn.
-                        </p>
+                        <p className="text-xs sm:text-sm font-medium mt-4 sm:mt-6" style={{ color: primaryColor }}>You are currently in the queue.</p>
                     </Card>
 
-                    <Card className="p-6 flex flex-col justify-between bg-white dark:bg-slate-900">
+                    <Card className="p-4 sm:p-6 flex flex-col justify-between bg-white dark:bg-slate-900">
                         <div>
-                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Your Ticket Number</p>
+                            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Ticket Number</p>
                             <div className="flex items-center gap-2">
-                                <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-                                    {formatTicketNumber(activeTicket.ticketNumber)}
-                                </h2>
+                                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">{formatTicketNumber(activeTicket.ticketNumber)}</h2>
                                 <CopyButton text={formatTicketNumber(activeTicket.ticketNumber)} />
                             </div>
                         </div>
-                        <div className="mt-6">
-                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Position</p>
-                            <div className="flex items-center justify-between text-sm font-bold text-slate-900 dark:text-white mb-2">
-                                <span>{position} {maxPosition > 1 ? `/ ${maxPosition}` : ''}</span>
+                        <div className="mt-4 sm:mt-6">
+                            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Position</p>
+                            <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-slate-900 dark:text-white mb-2"><span>{position} {maxPosition > 1 ? `/ ${maxPosition}` : ''}</span></div>
+                            <div className="h-2 sm:h-2.5 w-full bg-slate-100 rounded-full overflow-hidden dark:bg-slate-800">
+                                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progressPercent}%`, backgroundColor: primaryColor }} />
                             </div>
-                            <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden dark:bg-slate-800">
-                                <div
-                                    className="h-full rounded-full transition-all duration-500"
-                                    style={{ width: `${progressPercent}%`, backgroundColor: primaryColor }}
-                                />
-                            </div>
-                            <p className="text-xs font-medium text-slate-500 mt-2">
-                                <span className="font-bold text-slate-700 dark:text-slate-300">{Math.max(0, position - 1)}</span> people ahead
-                            </p>
+                            <p className="text-[10px] sm:text-xs font-medium text-slate-500 mt-2"><span className="font-bold text-slate-700 dark:text-slate-300">{Math.max(0, position - 1)}</span> people ahead</p>
                         </div>
                     </Card>
 
-                    <Card className="p-6 flex flex-col justify-between bg-white dark:bg-slate-900">
+                    <Card className="p-4 sm:p-6 flex flex-col justify-between bg-white dark:bg-slate-900">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <Clock className="h-4 w-4 text-slate-400" />
-                                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Estimated Wait Time</p>
+                                <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400" />
+                                <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">Est. Wait Time</p>
                             </div>
-                            <h2 className="text-3xl font-black text-slate-900 dark:text-white">
-                                {activeWaitTime}
-                            </h2>
-                            <p className="text-[11px] font-medium text-slate-400 mt-1">(Subject to change)</p>
+                            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">{activeWaitTime}</h2>
                         </div>
 
-                        <div className="mt-6 flex flex-col gap-2">
-                            <button
-                                onClick={() => setSelectedTicket(activeTicket)}
-                                className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90"
-                                style={{ backgroundColor: primaryColor }}
-                            >
-                                <User className="h-4 w-4" /> View Queue Details <ChevronRight className="h-4 w-4 ml-auto" />
+                        <div className="mt-4 sm:mt-6 flex flex-col gap-2">
+                            <button onClick={() => setSelectedTicket(activeTicket)} className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-sm transition-all hover:opacity-90" style={{ backgroundColor: primaryColor }}>
+                                <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> View Details <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-auto" />
                             </button>
 
                             {isActionable && (
                                 <div className="grid grid-cols-2 gap-2 mt-1">
-                                    <button
-                                        onClick={() => triggerConfirm('reschedule', activeTicket.id)}
-                                        disabled={!!acting}
-                                        className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-50"
-                                    >
-                                        <RotateCcw className="h-3.5 w-3.5" /> Reschedule
-                                    </button>
-                                    <button
-                                        onClick={() => triggerConfirm('skip', activeTicket.id)}
-                                        disabled={!!acting}
-                                        className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-50"
-                                    >
-                                        <SkipForward className="h-3.5 w-3.5" /> Skip Turn
-                                    </button>
+                                    <button onClick={() => triggerConfirm('reschedule', activeTicket.id)} disabled={!!acting} className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 py-2 sm:px-3 text-[10px] sm:text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-50"><RotateCcw className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Reschedule</button>
+                                    <button onClick={() => triggerConfirm('skip', activeTicket.id)} disabled={!!acting} className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 py-2 sm:px-3 text-[10px] sm:text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-50"><SkipForward className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Skip</button>
                                 </div>
                             )}
-
                             {isCompleted && (
-                                <button
-                                    onClick={() => setRatingTicket(activeTicket)}
-                                    className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90 mt-1"
-                                    style={{ backgroundColor: primaryColor }}
-                                >
-                                    <Star className="h-4 w-4" /> Rate Service
-                                </button>
+                                <button onClick={() => setRatingTicket(activeTicket)} className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90 mt-1" style={{ backgroundColor: primaryColor }}><Star className="h-4 w-4" /> Rate Service</button>
                             )}
-
                             {isActionable && (
-                                <button
-                                    onClick={() => triggerConfirm('leave', activeTicket.id)}
-                                    disabled={!!acting}
-                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 mt-1"
-                                >
-                                    <LogOut className="h-3.5 w-3.5" />
-                                    Leave Queue
-                                </button>
+                                <button onClick={() => triggerConfirm('leave', activeTicket.id)} disabled={!!acting} className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-3 py-2 text-[10px] sm:text-xs font-bold text-rose-700 transition-colors hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 mt-1"><LogOut className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Leave Queue</button>
                             )}
                         </div>
                     </Card>
                 </div>
             ) : (
-                <Card className="py-16 text-center">
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-                        <Ticket className="h-8 w-8 text-slate-400" />
-                    </div>
-                    <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-slate-100">No active ticket</h3>
-                    <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500 dark:text-slate-400">
-                        You are not currently in any queue. Join a service to get started.
-                    </p>
-                    <Link
-                        to="/student/queues"
-                        className="mt-6 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:opacity-90"
-                        style={{ backgroundColor: primaryColor }}
-                    >
-                        Join a Service <ArrowRight className="h-4 w-4" />
-                    </Link>
+                <Card className="py-12 sm:py-16 text-center">
+                    <div className="mx-auto flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800"><Ticket className="h-6 w-6 sm:h-8 sm:w-8 text-slate-400" /></div>
+                    <h3 className="mt-4 text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">No active ticket</h3>
+                    <p className="mx-auto mt-2 max-w-sm text-xs sm:text-sm text-slate-500 dark:text-slate-400">You are not currently in any queue. Join a service to get started.</p>
+                    <Link to="/student/queues" className="mt-5 sm:mt-6 inline-flex items-center gap-2 rounded-xl px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm transition-colors hover:opacity-90" style={{ backgroundColor: primaryColor }}>Join a Service <ArrowRight className="h-4 w-4" /></Link>
                 </Card>
             )}
 
             <div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
                     <div>
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">All My Tickets</h2>
-                        <p className="text-sm text-slate-500">Track the status of your past and current tickets.</p>
+                        <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">All My Tickets</h2>
+                        <p className="text-xs sm:text-sm text-slate-500">Track your past and current tickets.</p>
                     </div>
-
-                    <div className="flex flex-wrap items-center gap-1 bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl">
+                    <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl overflow-x-auto whitespace-nowrap scrollbar-hide">
                         {['ALL', 'ACTIVE', 'COMPLETED', 'CANCELLED'].map(tab => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                                    activeTab === tab
-                                        ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white'
-                                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
-                                }`}
-                            >
-                                {tab === 'ALL' ? 'All Tickets' : tab.charAt(0) + tab.slice(1).toLowerCase()}
-                            </button>
+                            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-3 sm:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-colors shrink-0 ${activeTab === tab ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'}`}>{tab === 'ALL' ? 'All' : tab.charAt(0) + tab.slice(1).toLowerCase()}</button>
                         ))}
                     </div>
                 </div>
 
                 <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
+                        <table className="w-full text-left border-collapse min-w-[700px]">
                             <thead>
-                            <tr className="bg-slate-50 border-b border-slate-200 dark:bg-slate-800/50 dark:border-slate-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                <th className="px-6 py-4">Date & Time</th>
-                                <th className="px-6 py-4">Service / Office</th>
-                                <th className="px-6 py-4">Ticket No.</th>
-                                <th className="px-6 py-4">Position</th>
-                                <th className="px-6 py-4">Wait Time</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4 text-right">Actions</th>
+                            <tr className="bg-slate-50 border-b border-slate-200 dark:bg-slate-800/50 dark:border-slate-800 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                <th className="px-4 sm:px-6 py-3 sm:py-4">Date & Time</th>
+                                <th className="px-4 sm:px-6 py-3 sm:py-4">Service / Office</th>
+                                <th className="px-4 sm:px-6 py-3 sm:py-4">Ticket No.</th>
+                                <th className="px-4 sm:px-6 py-3 sm:py-4">Position</th>
+                                <th className="px-4 sm:px-6 py-3 sm:py-4">Wait Time</th>
+                                <th className="px-4 sm:px-6 py-3 sm:py-4">Status</th>
+                                <th className="px-4 sm:px-6 py-3 sm:py-4 text-right">Actions</th>
                             </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {filteredTickets.length === 0 ? (
-                                <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-500">
-                                        No tickets found for this filter.
-                                    </td>
-                                </tr>
+                                <tr><td colSpan={7} className="px-4 py-8 sm:py-12 text-center text-xs sm:text-sm text-slate-500">No tickets found for this filter.</td></tr>
                             ) : (
                                 filteredTickets.map((item, idx) => {
                                     const dt = formatDateTime(item.joinedAt || item.createdAt);
                                     const ServiceIcon = getServiceIcon(item.queueName || item.officeName);
                                     const waitTime = calculateWaitTime(item);
-
-                                    // 👇 Dynamic position display for the table
-                                    const positionDisplay = item.position
-                                        ? `${item.position} ${item.totalInQueue ? `/ ${item.totalInQueue}` : ''}`
-                                        : (item.status === 'COMPLETED' ? 'Served' : '—');
-
+                                    const positionDisplay = item.position ? `${item.position} ${item.totalInQueue ? `/ ${item.totalInQueue}` : ''}` : (item.status === 'COMPLETED' ? 'Served' : '—');
                                     return (
                                         <tr key={item.id || idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                                                    {dt.day}
-                                                </div>
-                                                <div className="text-xs text-slate-500 font-medium">
-                                                    {dt.time}
-                                                </div>
+                                            <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                                                <div className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">{dt.day}</div>
+                                                <div className="text-[10px] sm:text-xs text-slate-500 font-medium">{dt.time}</div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div
-                                                        className="h-8 w-8 rounded-lg flex items-center justify-center"
-                                                        style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
-                                                    >
-                                                        <ServiceIcon className="h-4 w-4" />
-                                                    </div>
-                                                    <div>
-                                                        <div className="text-sm font-bold text-slate-900 dark:text-white">
-                                                            {item.queueName || 'Appointment'}
-                                                        </div>
-                                                        <div className="text-xs text-slate-500">
-                                                            {item.officeName || item.staffName || 'University Office'}
-                                                        </div>
+                                            <td className="px-4 sm:px-6 py-3 sm:py-4">
+                                                <div className="flex items-center gap-2 sm:gap-3">
+                                                    <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}><ServiceIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" /></div>
+                                                    <div className="min-w-0">
+                                                        <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate max-w-[120px]">{item.queueName || 'Appointment'}</div>
+                                                        <div className="text-[10px] sm:text-xs text-slate-500 truncate max-w-[120px]">{item.officeName || item.staffName || 'University Office'}</div>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                    <span className="font-mono text-sm font-bold text-slate-900 dark:text-white">
-                                                        {formatTicketNumber(item.ticketNumber)}
-                                                    </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                                                        {positionDisplay}
-                                                    </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                                                        {waitTime}
-                                                    </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <StatusBadge status={item.status} />
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <button
-                                                    onClick={() => setSelectedTicket(item)}
-                                                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 transition-colors"
-                                                >
-                                                    View Details <ChevronRight className="h-3 w-3" />
-                                                </button>
+                                            <td className="px-4 sm:px-6 py-3 sm:py-4"><span className="font-mono text-xs sm:text-sm font-bold text-slate-900 dark:text-white">{formatTicketNumber(item.ticketNumber)}</span></td>
+                                            <td className="px-4 sm:px-6 py-3 sm:py-4"><span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">{positionDisplay}</span></td>
+                                            <td className="px-4 sm:px-6 py-3 sm:py-4"><span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">{waitTime}</span></td>
+                                            <td className="px-4 sm:px-6 py-3 sm:py-4"><StatusBadge status={item.status} /></td>
+                                            <td className="px-4 sm:px-6 py-3 sm:py-4 text-right">
+                                                <button onClick={() => setSelectedTicket(item)} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 transition-colors">Details <ChevronRight className="h-3 w-3" /></button>
                                             </td>
                                         </tr>
                                     )
@@ -773,33 +479,9 @@ export default function MyTicketsPage() {
             </div>
 
             <AnimatePresence>
-                {ratingTicket && (
-                    <RatingModal
-                        ticket={ratingTicket}
-                        onClose={() => setRatingTicket(null)}
-                        onRated={handleRated}
-                    />
-                )}
-                {selectedTicket && (
-                    <TicketDetailModal
-                        item={selectedTicket}
-                        onClose={() => setSelectedTicket(null)}
-                        primaryColor={primaryColor}
-                        onReschedule={(id) => triggerConfirm('reschedule', id)}
-                        onSkip={(id) => triggerConfirm('skip', id)}
-                        onLeave={(id) => triggerConfirm('leave', id)}
-                        acting={acting}
-                    />
-                )}
-                {confirmAction && (
-                    <ConfirmActionModal
-                        action={confirmAction}
-                        onClose={() => setConfirmAction(null)}
-                        onConfirm={executeAction}
-                        primaryColor={primaryColor}
-                        acting={acting}
-                    />
-                )}
+                {ratingTicket && <RatingModal ticket={ratingTicket} onClose={() => setRatingTicket(null)} onRated={handleRated} />}
+                {selectedTicket && <TicketDetailModal item={selectedTicket} onClose={() => setSelectedTicket(null)} primaryColor={primaryColor} onReschedule={(id) => triggerConfirm('reschedule', id)} onSkip={(id) => triggerConfirm('skip', id)} onLeave={(id) => triggerConfirm('leave', id)} acting={acting} />}
+                {confirmAction && <ConfirmActionModal action={confirmAction} onClose={() => setConfirmAction(null)} onConfirm={executeAction} primaryColor={primaryColor} acting={acting} />}
             </AnimatePresence>
         </div>
     )
