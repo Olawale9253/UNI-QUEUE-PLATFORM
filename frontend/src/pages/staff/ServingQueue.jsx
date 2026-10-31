@@ -90,10 +90,6 @@ function ServingQueueSkeleton() {
     )
 }
 
-/**
- * Builds a context-aware message describing the current queue state.
- * Called when the staff clicks "Call Next" but there is nothing to call.
- */
 function describeEmptyQueue(queue, tickets) {
     if (!queue) return 'No one is waiting in this queue.'
     const waiting = tickets.filter((ticket) => ticket.status === 'WAITING' || ticket.status === 'WAITLISTED').length
@@ -111,7 +107,6 @@ function describeEmptyQueue(queue, tickets) {
     if (waiting === 0) {
         return `No one is waiting in ${queue.name}. New students will appear here as they join.`
     }
-    // Fallback — shouldn't normally hit
     return `No one is waiting in ${queue.name}.`
 }
 
@@ -280,14 +275,12 @@ export default function ServingQueue() {
             const status = err.response?.status
             const message = err.message || ''
 
-            // ─── Empty queue: informational, not an error ───
             if (/no waiting tickets/i.test(message)) {
                 push({
                     type: 'info',
                     message: describeEmptyQueue(activeQueue, tickets),
                     duration: 5000,
                 })
-                // Silent resync in case the queue changed under us
                 if (activeQueueId) loadTickets(activeQueueId, false)
                 return
             }
@@ -301,7 +294,6 @@ export default function ServingQueue() {
                     setTimeout(() => loadTickets(activeQueueId, false), 300)
                 }
             } else {
-                // eslint-disable-next-line no-console
                 console.error('[ServingQueue] action failed', {
                     actionKey,
                     status,
@@ -401,7 +393,6 @@ export default function ServingQueue() {
         (ticketValue) => ticketValue.status === 'WAITING' || ticketValue.status === 'WAITLISTED'
     )
 
-    // Dynamic label for the Call Next button
     const callNextLabel = (() => {
         if (isClosed) return 'Closed'
         if (called) return 'Currently serving'
@@ -415,7 +406,7 @@ export default function ServingQueue() {
 
     if (queues.length === 0) {
         return (
-            <>
+            <div className="px-4 sm:px-6">
                 <div className="mb-5">
                     <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                         Queue Management
@@ -430,13 +421,13 @@ export default function ServingQueue() {
                     title="No queues assigned to you"
                     description="Once an admin assigns you to a service, it will appear here for you to manage."
                 />
-            </>
+            </div>
         )
     }
 
     return (
-        <div>
-            <div className="mb-5">
+        <div className="px-4 sm:px-6">
+            <div className="mb-4 sm:mb-5">
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                     Queue Management
                 </h2>
@@ -446,13 +437,13 @@ export default function ServingQueue() {
             </div>
 
             {isClosed && (
-                <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/40">
-                    <Lock className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-400" />
-                    <div className="flex-1 text-sm">
+                <div className="mb-4 sm:mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 sm:p-4 dark:border-amber-900 dark:bg-amber-950/40">
+                    <Lock className="mt-0.5 h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-amber-700 dark:text-amber-400" />
+                    <div className="flex-1 text-xs sm:text-sm">
                         <p className="font-medium text-amber-900 dark:text-amber-200">
                             This service is currently closed
                         </p>
-                        <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
+                        <p className="mt-1 text-[10px] sm:text-xs text-amber-800 dark:text-amber-300">
                             Students cannot join right now.
                             {activeQueue?.opensAt && (
                                 <>
@@ -470,44 +461,44 @@ export default function ServingQueue() {
                 </div>
             )}
 
-            <Card className="mb-6">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+            <Card className="mb-4 sm:mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                     <div className="flex items-center gap-2">
-                        <span className="text-sm text-slate-600 dark:text-slate-400">
+                        <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                             Assigned office:
                         </span>
-                        <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        <span className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
                             {activeQueue?.name || '—'}
                         </span>
-                        {isClosed && <Badge variant="default">Closed</Badge>}
+                        {isClosed && <Badge variant="default" className="text-[10px]">Closed</Badge>}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
                         <Button
                             onClick={callNext}
                             disabled={!!called || !!acting || isClosed}
                             loading={acting === 'next'}
-                            className={
+                            className={`flex-1 sm:flex-none justify-center text-xs sm:text-sm ${
                                 waiting.length === 0 && !called && !isClosed
                                     ? '!bg-slate-400 hover:!bg-slate-500'
                                     : '!bg-emerald-600 hover:!bg-emerald-700'
-                            }
+                            }`}
                         >
                             {callNextLabel}
                         </Button>
                         <button
                             onClick={refresh}
                             disabled={refreshing || !!acting}
-                            className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-700 disabled:opacity-60"
+                            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-3 py-2 text-xs sm:text-sm font-semibold text-white transition-colors hover:bg-violet-700 disabled:opacity-60"
                         >
-                            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                            {refreshing ? 'Refreshing…' : 'Refresh'}
+                            <RefreshCw className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                            {refreshing ? '...' : 'Refresh'}
                         </button>
                     </div>
                 </div>
 
                 {queues.length > 1 && (
-                    <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+                    <div className="mt-4 flex flex-nowrap overflow-x-auto gap-2 border-t border-slate-100 pt-4 dark:border-slate-800 scrollbar-hide pb-1">
                         {queues.map((queueValue) => {
                             const isActive = activeQueueId === queueValue.id
                             const waitingCount = queueValue.waitingCount ?? 0
@@ -517,21 +508,21 @@ export default function ServingQueue() {
                                     key={queueValue.id}
                                     onClick={() => setActiveQueueId(queueValue.id)}
                                     disabled={!!acting}
-                                    className={`inline-flex items-center gap-2 rounded-lg border-2 px-3 py-2 transition-all disabled:opacity-60 ${
+                                    className={`shrink-0 inline-flex items-center gap-2 rounded-lg border-2 px-2 py-1.5 sm:px-3 sm:py-2 transition-all disabled:opacity-60 ${
                                         isActive
                                             ? 'border-brand-500 bg-brand-50 dark:border-brand-600 dark:bg-brand-950/40'
                                             : 'border-slate-200 bg-white hover:border-brand-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-brand-700 dark:hover:bg-slate-800/60'
                                     }`}
                                 >
                                     <Building2
-                                        className={`h-4 w-4 shrink-0 ${
+                                        className={`h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 ${
                                             isActive
                                                 ? 'text-brand-600 dark:text-brand-400'
                                                 : 'text-slate-400'
                                         }`}
                                     />
                                     <span
-                                        className={`max-w-[160px] truncate text-sm font-semibold ${
+                                        className={`max-w-[120px] sm:max-w-[160px] truncate text-xs sm:text-sm font-semibold ${
                                             isActive
                                                 ? 'text-slate-900 dark:text-slate-100'
                                                 : 'text-slate-700 dark:text-slate-300'
@@ -540,12 +531,12 @@ export default function ServingQueue() {
                                         {queueValue.name}
                                     </span>
                                     {isClosedChip && (
-                                        <span className="text-[10px] font-bold uppercase tracking-wide text-rose-600 dark:text-rose-400">
+                                        <span className="text-[9px] font-bold uppercase tracking-wide text-rose-600 dark:text-rose-400">
                                             Closed
                                         </span>
                                     )}
                                     <span
-                                        className={`ml-1 inline-flex min-w-[28px] items-center justify-center rounded-md px-2 py-0.5 text-sm font-bold tabular-nums ${
+                                        className={`ml-1 inline-flex min-w-[20px] sm:min-w-[28px] items-center justify-center rounded-md px-1.5 sm:px-2 py-0.5 text-xs sm:text-sm font-bold tabular-nums ${
                                             waitingCount === 0
                                                 ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
                                                 : isActive
@@ -562,8 +553,8 @@ export default function ServingQueue() {
                 )}
             </Card>
 
-            <Card className="mb-6">
-                <h3 className="mb-6 text-base font-semibold text-slate-900 dark:text-slate-100">
+            <Card className="mb-4 sm:mb-6">
+                <h3 className="mb-4 sm:mb-6 text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100">
                     Current Serving
                 </h3>
 
@@ -577,55 +568,56 @@ export default function ServingQueue() {
                             transition={{ duration: 0.25 }}
                             className="text-center"
                         >
-                            <div className="flex items-center justify-center gap-3">
-                                <div className="font-mono text-3xl font-bold tracking-tight text-brand-600 dark:text-brand-400 sm:text-4xl">
+                            <div className="flex items-center justify-center gap-2 sm:gap-3">
+                                <div className="font-mono text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-brand-600 dark:text-brand-400">
                                     {called.ticketNumber}
                                 </div>
                                 <CopyButton text={called.ticketNumber} title="Copy ticket ID" />
                             </div>
 
-                            <div className="mt-3 flex justify-center">
-                                <Badge variant={STATUS_VARIANTS[called.status] || 'default'}>
+                            <div className="mt-2 sm:mt-3 flex justify-center">
+                                <Badge variant={STATUS_VARIANTS[called.status] || 'default'} className="text-[10px] sm:text-xs">
                                     {STATUS_LABELS[called.status] || called.status}
                                 </Badge>
                             </div>
 
-                            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-600 dark:text-slate-400">
+                            <div className="mt-3 sm:mt-4 flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 gap-y-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                                 <span className="flex items-center gap-1.5">
-                                    <User className="h-3.5 w-3.5" />
+                                    <User className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                                     {called.userFullName}
                                 </span>
                                 {called.matricNumber && (
-                                    <span className="font-mono text-xs">
+                                    <span className="font-mono text-[10px] sm:text-xs">
                                         Matric: {called.matricNumber}
                                     </span>
                                 )}
                                 {called.calledAt && (
-                                    <span className="flex items-center gap-1.5 text-xs">
+                                    <span className="flex items-center gap-1.5 text-[10px] sm:text-xs">
                                         <Clock className="h-3 w-3" />
                                         Called {formatTime(called.calledAt)}
                                     </span>
                                 )}
                             </div>
 
-                            <div className="mt-6 flex justify-center">
-                                <div className="inline-flex items-center gap-3 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 dark:border-amber-900 dark:bg-amber-950/40">
-                                    <Users className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                                    <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                            <div className="mt-4 sm:mt-6 flex justify-center">
+                                <div className="inline-flex items-center gap-2 sm:gap-3 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 sm:px-4 sm:py-2 dark:border-amber-900 dark:bg-amber-950/40">
+                                    <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-600 dark:text-amber-400" />
+                                    <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
                                         Waiting
                                     </span>
-                                    <span className="text-xl font-bold text-amber-700 dark:text-amber-300">
+                                    <span className="text-base sm:text-xl font-bold text-amber-700 dark:text-amber-300">
                                         {waiting.length}
                                     </span>
                                 </div>
                             </div>
 
-                            <div className="mt-6 flex flex-wrap justify-center gap-2">
+                            <div className="mt-4 sm:mt-6 flex flex-wrap justify-center gap-2">
                                 {called.status === 'CALLED' && (
                                     <Button
                                         onClick={() => serve(called.id)}
                                         disabled={!!acting}
                                         loading={acting === `serve-${called.id}`}
+                                        className="w-full sm:w-auto text-xs sm:text-sm justify-center"
                                     >
                                         Start Service
                                     </Button>
@@ -637,6 +629,7 @@ export default function ServingQueue() {
                                         onClick={() => complete(called.id)}
                                         disabled={!!acting}
                                         loading={acting === `complete-${called.id}`}
+                                        className="w-full sm:w-auto text-xs sm:text-sm justify-center"
                                     >
                                         Complete
                                     </Button>
@@ -644,9 +637,9 @@ export default function ServingQueue() {
                                 <button
                                     onClick={() => noShow(called.id)}
                                     disabled={!!acting}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-100 disabled:opacity-60 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/60"
+                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-100 disabled:opacity-60 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/60"
                                 >
-                                    <XCircle className="h-4 w-4" />
+                                    <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                     {acting === `noshow-${called.id}` ? 'Marking…' : 'No-show'}
                                 </button>
                             </div>
@@ -655,25 +648,25 @@ export default function ServingQueue() {
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="py-8 text-center"
+                            className="py-6 sm:py-8 text-center"
                         >
-                            <div className="text-3xl font-bold text-slate-300 dark:text-slate-600 sm:text-4xl">
+                            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-300 dark:text-slate-600">
                                 None
                             </div>
-                            <div className="mt-5 flex justify-center">
-                                <div className="inline-flex items-center gap-3 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 dark:border-amber-900 dark:bg-amber-950/40">
-                                    <Users className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                                    <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                            <div className="mt-3 sm:mt-5 flex justify-center">
+                                <div className="inline-flex items-center gap-2 sm:gap-3 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 sm:px-4 sm:py-2 dark:border-amber-900 dark:bg-amber-950/40">
+                                    <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-600 dark:text-amber-400" />
+                                    <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
                                         Waiting
                                     </span>
-                                    <span className="text-xl font-bold text-amber-700 dark:text-amber-300">
+                                    <span className="text-base sm:text-xl font-bold text-amber-700 dark:text-amber-300">
                                         {waiting.length}
                                     </span>
                                 </div>
                             </div>
 
                             {waiting.length === 0 && !isClosed && (
-                                <p className="mt-5 text-xs text-slate-500 dark:text-slate-400">
+                                <p className="mt-3 sm:mt-5 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                                     No students are waiting. New tickets will appear here as they join.
                                 </p>
                             )}
@@ -682,15 +675,15 @@ export default function ServingQueue() {
                                 <button
                                     onClick={callNext}
                                     disabled={!!acting}
-                                    className="mt-5 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
+                                    className="mt-3 sm:mt-5 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-xs sm:text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
                                 >
-                                    <Ticket className="h-4 w-4" />
+                                    <Ticket className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                     {acting === 'next' ? 'Calling…' : 'Call Next Ticket'}
                                 </button>
                             )}
 
                             {waiting.length > 0 && isClosed && (
-                                <p className="mt-5 text-xs text-amber-700 dark:text-amber-400">
+                                <p className="mt-3 sm:mt-5 text-[10px] sm:text-xs text-amber-700 dark:text-amber-400">
                                     Service is closed. Call Next is disabled.
                                 </p>
                             )}
@@ -700,11 +693,11 @@ export default function ServingQueue() {
             </Card>
 
             <Card padded={false}>
-                <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
-                    <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                <div className="flex items-center justify-between border-b border-slate-100 px-4 sm:px-6 py-3 sm:py-4 dark:border-slate-800">
+                    <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100">
                         Waiting Tickets
                     </h3>
-                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] sm:text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                         {waiting.length}
                     </span>
                 </div>
@@ -740,30 +733,30 @@ export default function ServingQueue() {
                                 key={item.id}
                                 variants={staggerItem}
                                 layout
-                                className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-3 sm:py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40"
                             >
-                                <div className="flex min-w-0 flex-1 items-center gap-4">
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-sm font-bold text-brand-600 dark:bg-slate-800 dark:text-brand-400">
+                                <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+                                    <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs sm:text-sm font-bold text-brand-600 dark:bg-slate-800 dark:text-brand-400">
                                         {item.position ?? indexValue + 1}
                                     </div>
 
                                     <div className="min-w-0 flex-1">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <span className="font-mono text-sm font-bold text-slate-900 dark:text-slate-100">
+                                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                            <span className="font-mono text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                                                 {item.ticketNumber}
                                             </span>
                                             <CopyButton text={item.ticketNumber} title="Copy ticket ID" />
-                                            <Badge variant={STATUS_VARIANTS[item.status] || 'default'}>
+                                            <Badge variant={STATUS_VARIANTS[item.status] || 'default'} className="text-[9px] sm:text-xs">
                                                 {STATUS_LABELS[item.status] || item.status}
                                             </Badge>
                                         </div>
-                                        <div className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+                                        <div className="mt-0.5 truncate text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                                             {item.userFullName}
                                             {item.matricNumber ? ` · ${item.matricNumber}` : ''}
                                         </div>
                                         {item.estimatedMinutesRemaining != null && (
-                                            <div className="mt-0.5 flex items-center gap-1 text-xs text-slate-400">
-                                                <Clock className="h-3 w-3" />
+                                            <div className="mt-0.5 flex items-center gap-1 text-[9px] sm:text-xs text-slate-400">
+                                                <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                                 ~{item.estimatedMinutesRemaining} min remaining
                                             </div>
                                         )}
@@ -773,9 +766,9 @@ export default function ServingQueue() {
                                 <button
                                     onClick={() => noShow(item.id)}
                                     disabled={!!acting}
-                                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition-colors hover:bg-rose-100 disabled:opacity-60 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/60"
+                                    className="w-full sm:w-auto inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-[10px] sm:text-xs font-medium text-rose-700 transition-colors hover:bg-rose-100 disabled:opacity-60 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/60"
                                 >
-                                    <XCircle className="h-3.5 w-3.5" />
+                                    <XCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                                     {acting === `noshow-${item.id}` ? 'Marking…' : 'No-show'}
                                 </button>
                             </motion.li>

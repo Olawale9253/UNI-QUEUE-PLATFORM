@@ -51,11 +51,11 @@ function ServiceCard({ service }) {
         >
             <Card className="flex h-full flex-col">
                 <div className="mb-3 flex items-start justify-between gap-2">
-                    <h3 className="min-w-0 flex-1 text-base font-bold leading-tight text-slate-900 dark:text-slate-100">
+                    <h3 className="min-w-0 flex-1 text-sm sm:text-base font-bold leading-tight text-slate-900 dark:text-slate-100">
                         {service.name}
                     </h3>
                     {service.isActive !== false ? (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
                             <span className="relative flex h-1.5 w-1.5">
                                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -63,64 +63,64 @@ function ServiceCard({ service }) {
                             Live
                         </span>
                     ) : (
-                        <Badge variant="default">Inactive</Badge>
+                        <Badge variant="default" className="text-[9px] sm:text-[10px]">Inactive</Badge>
                     )}
                 </div>
 
                 {service.description && (
-                    <p className="line-clamp-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                    <p className="line-clamp-2 text-[10px] sm:text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                         {service.description}
                     </p>
                 )}
 
                 {service.location && (
-                    <p className="mt-2 flex items-start gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-2 flex items-start gap-1.5 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                         <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
                         <span>{service.location}</span>
                     </p>
                 )}
 
                 {service.opensAt && service.closesAt && (
-                    <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 flex items-center gap-1.5 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                         <Clock className="h-3 w-3 shrink-0" />
                         {String(service.opensAt).slice(0, 5)} – {String(service.closesAt).slice(0, 5)}
                     </p>
                 )}
 
-                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3 sm:pt-4 dark:border-slate-800">
                     <div>
-                        <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center gap-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                             <Users className="h-3 w-3" /> Waiting
                         </div>
-                        <div className="mt-1 text-base font-bold text-brand-600 dark:text-brand-400">
+                        <div className="mt-1 text-sm sm:text-base font-bold text-brand-600 dark:text-brand-400">
                             {service.waitingCount ?? 0}
                         </div>
                     </div>
                     <div>
-                        <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center gap-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                             <Clock className="h-3 w-3" /> ~Wait
                         </div>
-                        <div className="mt-1 text-base font-bold text-amber-600 dark:text-amber-400">
-                            {service.estimatedMinutes ?? 0}<span className="text-xs font-normal text-slate-500">m</span>
+                        <div className="mt-1 text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400">
+                            {service.estimatedMinutes ?? 0}<span className="text-[10px] sm:text-xs font-normal text-slate-500">m</span>
                         </div>
                     </div>
                     <div>
-                        <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center gap-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                             <Ticket className="h-3 w-3" /> Staff
                         </div>
-                        <div className="mt-1 text-base font-bold text-sky-600 dark:text-sky-400">
+                        <div className="mt-1 text-sm sm:text-base font-bold text-sky-600 dark:text-sky-400">
                             {service.staffCount ?? 0}
                         </div>
                     </div>
                 </div>
 
                 {service.currentlyServing ? (
-                    <div className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-xs dark:bg-emerald-950/30">
+                    <div className="mt-3 rounded-lg bg-emerald-50 px-2 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs dark:bg-emerald-950/30">
                         <span className="text-slate-600 dark:text-slate-400">Now serving: </span>
                         <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">{service.currentlyServing}</span>
                     </div>
                 ) : (
-                    <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-400 dark:bg-slate-800/50 dark:text-slate-500">
+                    <div className="mt-3 rounded-lg bg-slate-50 px-2 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs text-slate-400 dark:bg-slate-800/50 dark:text-slate-500">
                         No one currently being served
                     </div>
                 )}
@@ -128,12 +128,12 @@ function ServiceCard({ service }) {
                 {(service.matricRequired || service.allowWaitlist) && (
                     <div className="mt-3 flex flex-wrap gap-1.5">
                         {service.matricRequired && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[9px] sm:text-[10px] font-medium uppercase tracking-wide text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
                                 <GraduationCap className="h-3 w-3" /> Matric required
                             </span>
                         )}
                         {service.allowWaitlist && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-sky-700 dark:bg-sky-950/40 dark:text-sky-400">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-[9px] sm:text-[10px] font-medium uppercase tracking-wide text-sky-700 dark:bg-sky-950/40 dark:text-sky-400">
                                 <ListOrdered className="h-3 w-3" /> Waitlist enabled
                             </span>
                         )}
@@ -194,7 +194,7 @@ export default function QueuesList() {
 
     if (loading) {
         return (
-            <div className="space-y-6 pb-12">
+            <div className="space-y-6 pb-12 px-4 sm:px-6">
                 <div className="h-10 w-1/3 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
                 <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[320px_1fr]">
                     <div className="h-96 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
@@ -205,7 +205,7 @@ export default function QueuesList() {
     }
 
     return (
-        <div className="space-y-6 pb-12">
+        <div className="space-y-6 pb-12 px-4 sm:px-6">
             {/* Premium Header & Search Toolbar */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
@@ -216,7 +216,7 @@ export default function QueuesList() {
                     </p>
                 </div>
                 {services.length > 0 && (
-                    <div className="w-full max-w-sm">
+                    <div className="w-full sm:max-w-sm">
                         <div className="relative">
                             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                             <input
@@ -239,20 +239,20 @@ export default function QueuesList() {
             ) : (
                 <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[320px_1fr]">
 
-                    {/* Left Column: Offices (Sticky) */}
+                    {/* Left Column: Offices (Sticky on desktop, scrollable on mobile) */}
                     <div className="lg:sticky lg:top-24">
                         <Card className="h-fit">
                             <div className="mb-4 flex items-center justify-between gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
                                 <div className="flex items-center gap-2">
                                     <Building2 className="h-4 w-4 text-brand-600 dark:text-brand-400" />
-                                    <h3 className="text-sm font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">Offices</h3>
+                                    <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">Offices</h3>
                                 </div>
                                 <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                                     {visibleGroups.length}
                                 </span>
                             </div>
 
-                            <ul className="space-y-1">
+                            <ul className="space-y-1 max-h-[40vh] lg:max-h-none overflow-y-auto pr-1">
                                 {visibleGroups.map((g) => {
                                     const isSelected = g.key === selectedOfficeKey
                                     return (
@@ -260,7 +260,7 @@ export default function QueuesList() {
                                             <button
                                                 type="button"
                                                 onClick={() => setSelectedOfficeKey(g.key)}
-                                                className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
+                                                className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-xs sm:text-sm transition-colors ${
                                                     isSelected
                                                         ? 'bg-brand-50 font-medium text-brand-700 dark:bg-brand-950/40 dark:text-brand-300'
                                                         : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
@@ -269,11 +269,11 @@ export default function QueuesList() {
                                                 <span className="truncate">{g.label}</span>
                                                 <div className="flex shrink-0 items-center gap-1.5">
                                                     {g.waitingTotal > 0 && (
-                                                        <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${isSelected ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'}`}>
+                                                        <span className={`rounded-full px-1.5 py-0.5 text-[9px] sm:text-[10px] font-bold ${isSelected ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'}`}>
                                                             {g.waitingTotal}
                                                         </span>
                                                     )}
-                                                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isSelected ? 'bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
+                                                    <span className={`rounded-full px-1.5 py-0.5 text-[9px] sm:text-[10px] font-bold ${isSelected ? 'bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
                                                         {g.services.length}
                                                     </span>
                                                 </div>
@@ -283,7 +283,7 @@ export default function QueuesList() {
                                 })}
                             </ul>
 
-                            <div className="mt-4 flex items-center gap-3 border-t border-slate-100 pt-3 text-[10px] text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                            <div className="mt-4 flex items-center gap-3 border-t border-slate-100 pt-3 text-[9px] sm:text-[10px] text-slate-500 dark:border-slate-800 dark:text-slate-400">
                                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400" /> Waiting</span>
                                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-brand-400" /> Services</span>
                             </div>
@@ -294,54 +294,54 @@ export default function QueuesList() {
                     <div className="min-w-0">
                         {selectedGroup ? (
                             <>
-                                <Card className="mb-5">
+                                <Card className="mb-4 sm:mb-5">
                                     <div className="flex flex-wrap items-start justify-between gap-3">
                                         <div className="flex min-w-0 items-start gap-3">
-                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-950/40">
-                                                <Building2 className="h-6 w-6 text-brand-600 dark:text-brand-400" />
+                                            <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-950/40">
+                                                <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-brand-600 dark:text-brand-400" />
                                             </div>
                                             <div className="min-w-0">
-                                                <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{selectedGroup.label}</h3>
+                                                <h3 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{selectedGroup.label}</h3>
                                                 {selectedGroup.location && (
-                                                    <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-                                                        <MapPin className="h-3.5 w-3.5 shrink-0" /> {selectedGroup.location}
+                                                    <p className="mt-0.5 sm:mt-1 flex items-center gap-1.5 text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">
+                                                        <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" /> {selectedGroup.location}
                                                     </p>
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-3 sm:gap-4">
                                             <div className="text-right">
-                                                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Services</div>
-                                                <div className="text-xl font-bold text-brand-600 dark:text-brand-400">{selectedGroup.services.length}</div>
+                                                <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-500">Services</div>
+                                                <div className="text-base sm:text-xl font-bold text-brand-600 dark:text-brand-400">{selectedGroup.services.length}</div>
                                             </div>
                                             <div className="text-right">
-                                                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Waiting</div>
-                                                <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{selectedGroup.waitingTotal}</div>
+                                                <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-500">Waiting</div>
+                                                <div className="text-base sm:text-xl font-bold text-amber-600 dark:text-amber-400">{selectedGroup.waitingTotal}</div>
                                             </div>
                                         </div>
                                     </div>
                                 </Card>
 
-                                <div className="mb-4 flex items-center gap-2">
+                                <div className="mb-3 sm:mb-4 flex items-center gap-2">
                                     <ListOrdered className="h-4 w-4 text-brand-600 dark:text-brand-400" />
-                                    <h4 className="text-sm font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">Services in this office</h4>
-                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                    <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">Services in this office</h4>
+                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                                         {selectedGroup.services.length}
                                     </span>
                                 </div>
 
-                                <div className={`grid gap-4 ${gridClassForCount(selectedGroup.services.length)}`}>
+                                <div className={`grid gap-3 sm:gap-4 ${gridClassForCount(selectedGroup.services.length)}`}>
                                     {selectedGroup.services.map((item) => <ServiceCard key={item.id} service={item} />)}
                                 </div>
                             </>
                         ) : (
                             <Card>
-                                <div className="py-16 text-center">
+                                <div className="py-12 sm:py-16 text-center">
                                     <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
                                         <Building2 className="h-7 w-7 text-slate-400" />
                                     </div>
                                     <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Select an office</p>
-                                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Pick an office from the left to see its services.</p>
+                                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Pick an office from the list to see its services.</p>
                                 </div>
                             </Card>
                         )}

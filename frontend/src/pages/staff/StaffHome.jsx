@@ -61,24 +61,22 @@ export default function StaffHome() {
     useAdaptivePoll(load, { fastMs: 5000, slowMs: 15000 })
 
     return (
-        <div className="space-y-6 pb-12">
-            {/* 🔧 FIX: Removed the duplicate Header div here */}
-
+        <div className="space-y-6 pb-12 px-4 sm:px-6">
             <StaffStatsCards />
 
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-3">
                 {QUICK_ACTIONS.map((item, index) => {
                     const Icon = item.icon
                     return (
                         <motion.div key={item.to} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 + index * 0.05 }}>
                             <Link to={item.to} className="group block h-full">
-                                <Card className="flex h-full items-center gap-4 transition-all duration-200 hover:border-brand-300 hover:shadow-md dark:hover:border-brand-700">
-                                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${item.accent}`}>
-                                        <Icon className="h-6 w-6" />
+                                <Card className="flex h-full items-center gap-4 p-4 sm:p-5 transition-all duration-200 hover:border-brand-300 hover:shadow-md dark:hover:border-brand-700">
+                                    <div className={`flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl ${item.accent}`}>
+                                        <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-1.5">
-                                            <h3 className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">{item.label}</h3>
+                                            <h3 className="truncate text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">{item.label}</h3>
                                             <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-600" />
                                         </div>
                                         <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">{item.description}</p>
@@ -92,16 +90,16 @@ export default function StaffHome() {
 
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
                 <Card padded={false}>
-                    <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
-                        <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Recent Queue Tickets</h2>
-                        <button onClick={() => navigate('/staff/activity')} className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400">
-                            View all <ChevronRight className="h-3.5 w-3.5" />
+                    <div className="flex items-center justify-between border-b border-slate-100 px-4 sm:px-6 py-3 sm:py-4 dark:border-slate-800">
+                        <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Recent Queue Tickets</h2>
+                        <button onClick={() => navigate('/staff/activity')} className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400">
+                            View all <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                         </button>
                     </div>
                     {ticketsLoading ? (
                         <div className="divide-y divide-slate-100 dark:divide-slate-800">
                             {Array.from({ length: 3 }).map((_, i) => (
-                                <div key={i} className="flex items-center gap-4 px-6 py-4">
+                                <div key={i} className="flex items-center gap-4 px-4 sm:px-6 py-4">
                                     <div className="h-4 w-32 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
                                     <div className="h-4 w-48 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
                                 </div>
@@ -118,18 +116,18 @@ export default function StaffHome() {
                     ) : (
                         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                             {recentTickets.map((recentTicket) => (
-                                <li key={recentTicket.id} className="flex items-center justify-between gap-3 px-6 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                <li key={recentTicket.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-3 sm:py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                     <div className="min-w-0 flex-1">
-                                        <div className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">
+                                        <div className="truncate text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                                             {recentTicket.queueName || recentTicket.officeName || 'Service'}
                                         </div>
-                                        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1 text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">
                                             <span className="font-mono">Ticket: {recentTicket.ticketNumber}</span>
                                             {recentTicket.userFullName && <span>· {recentTicket.userFullName}</span>}
                                             {recentTicket.joinedAt && <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {formatTime(recentTicket.joinedAt)}</span>}
                                         </div>
                                     </div>
-                                    <Badge variant={STATUS_VARIANTS[recentTicket.status] || 'default'}>
+                                    <Badge variant={STATUS_VARIANTS[recentTicket.status] || 'default'} className="w-fit text-[10px] sm:text-xs">
                                         {STATUS_LABELS[recentTicket.status] || recentTicket.status}
                                     </Badge>
                                 </li>
