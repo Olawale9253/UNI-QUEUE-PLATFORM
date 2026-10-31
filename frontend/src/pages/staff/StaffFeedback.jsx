@@ -41,7 +41,6 @@ export default function StaffFeedback() {
             const res = await api.get('/api/staff/feedback/me')
             setData(res.data?.data || null)
         } catch (err) {
-            // 404 = staff hasn't been rated yet; that's fine
             if (err.response?.status === 404) {
                 setData(null)
             } else {
@@ -66,7 +65,7 @@ export default function StaffFeedback() {
 
     if (loading) {
         return (
-            <div className="space-y-6 pb-12">
+            <div className="space-y-6 pb-12 px-4 sm:px-6">
                 <div className="h-10 w-1/3 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
                 <div className="h-32 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -78,10 +77,9 @@ export default function StaffFeedback() {
         )
     }
 
-    // No feedback yet
     if (!data || (data.totalRatings ?? 0) === 0) {
         return (
-            <div className="space-y-8 pb-12">
+            <div className="space-y-8 pb-12 px-4 sm:px-6">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">My Feedback</h1>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -97,34 +95,13 @@ export default function StaffFeedback() {
         )
     }
 
-    const trendIcon = stats.trend === null
-        ? Minus
-        : stats.trend > 0
-            ? TrendingUp
-            : stats.trend < 0
-                ? TrendingDown
-                : Minus
-
-    const trendColor = stats.trend === null
-        ? 'text-slate-400'
-        : stats.trend > 0
-            ? 'text-emerald-600 dark:text-emerald-400'
-            : stats.trend < 0
-                ? 'text-rose-600 dark:text-rose-400'
-                : 'text-slate-500'
-
-    const trendLabel = stats.trend === null
-        ? 'No prior data'
-        : stats.trend > 0
-            ? `+${stats.trend.toFixed(1)} vs last month`
-            : stats.trend < 0
-                ? `${stats.trend.toFixed(1)} vs last month`
-                : 'Same as last month'
-
+    const trendIcon = stats.trend === null ? Minus : stats.trend > 0 ? TrendingUp : stats.trend < 0 ? TrendingDown : Minus
+    const trendColor = stats.trend === null ? 'text-slate-400' : stats.trend > 0 ? 'text-emerald-600 dark:text-emerald-400' : stats.trend < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500'
+    const trendLabel = stats.trend === null ? 'No prior data' : stats.trend > 0 ? `+${stats.trend.toFixed(1)} vs last month` : stats.trend < 0 ? `${stats.trend.toFixed(1)} vs last month` : 'Same as last month'
     const TrendIcon = trendIcon
 
     return (
-        <div className="space-y-8 pb-12">
+        <div className="space-y-6 sm:space-y-8 pb-12 px-4 sm:px-6">
             {/* Header */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
@@ -138,6 +115,7 @@ export default function StaffFeedback() {
                     icon={refreshing ? Loader2 : RefreshCw}
                     onClick={() => load(true)}
                     disabled={refreshing}
+                    className="w-full sm:w-auto justify-center text-xs sm:text-sm"
                 >
                     Refresh
                 </Button>
@@ -145,33 +123,33 @@ export default function StaffFeedback() {
 
             {/* Hero card — this month's rating */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                <Card className="relative overflow-hidden">
+                <Card className="relative overflow-hidden p-4 sm:p-6">
                     <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-brand-500/5 blur-3xl" />
-                    <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="relative flex flex-col gap-4 sm:gap-6 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <p className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                                 This month
                             </p>
-                            <div className="mt-2 flex items-baseline gap-3">
-                                <span className="text-5xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+                            <div className="mt-1 sm:mt-2 flex items-baseline gap-2 sm:gap-3">
+                                <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
                                     {Number(stats.thisMonthAvg ?? stats.avgRating).toFixed(1)}
                                 </span>
-                                <span className="text-lg font-semibold text-slate-400">/ 5.0</span>
+                                <span className="text-sm sm:text-lg font-semibold text-slate-400">/ 5.0</span>
                             </div>
-                            <div className="mt-2 flex items-center gap-2">
-                                <StarRow rating={Number(stats.thisMonthAvg ?? stats.avgRating)} size="h-4 w-4" />
-                                <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                                <StarRow rating={Number(stats.thisMonthAvg ?? stats.avgRating)} size="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                <span className="text-[10px] sm:text-sm font-medium text-slate-500 dark:text-slate-400">
                                     from {stats.thisMonthCount ?? stats.totalRatings} ratings
                                 </span>
                             </div>
                         </div>
 
                         <div className="flex flex-col items-start gap-1 sm:items-end">
-                            <div className={`flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold dark:bg-slate-800 ${trendColor}`}>
-                                <TrendIcon className="h-3.5 w-3.5" />
+                            <div className={`flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-[10px] sm:text-xs font-bold dark:bg-slate-800 ${trendColor}`}>
+                                <TrendIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                                 {trendLabel}
                             </div>
-                            <p className="mt-1 text-xs text-slate-400">
+                            <p className="mt-1 text-[10px] sm:text-xs text-slate-400">
                                 All-time: {Number(stats.avgRating).toFixed(1)} avg
                             </p>
                         </div>
@@ -180,7 +158,7 @@ export default function StaffFeedback() {
             </motion.div>
 
             {/* Stat cards */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
                 {[
                     { label: 'Total ratings', value: stats.totalRatings ?? 0, icon: MessageSquare, color: 'text-brand-600', bg: 'bg-brand-50 dark:bg-brand-950/40' },
                     { label: 'Positive reviews', value: `${stats.positivePercent ?? 0}%`, icon: ThumbsUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
@@ -191,16 +169,17 @@ export default function StaffFeedback() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05 }}
+                        className={i === 2 ? 'col-span-2 lg:col-span-1' : ''}
                     >
-                        <Card className="flex items-center justify-between">
+                        <Card className="flex items-center justify-between p-4 sm:p-5">
                             <div>
-                                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{stat.label}</p>
-                                <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                                <p className="text-[10px] sm:text-sm font-medium text-slate-500 dark:text-slate-400">{stat.label}</p>
+                                <p className="mt-1 sm:mt-2 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                                     {stat.value}
                                 </p>
                             </div>
-                            <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${stat.bg} ${stat.color}`}>
-                                <stat.icon className="h-6 w-6" />
+                            <div className={`flex h-9 w-9 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl ${stat.bg} ${stat.color}`}>
+                                <stat.icon className="h-4 w-4 sm:h-6 sm:w-6" />
                             </div>
                         </Card>
                     </motion.div>
@@ -210,37 +189,37 @@ export default function StaffFeedback() {
             {/* Per-queue breakdown */}
             {data.perQueue?.length > 0 && (
                 <div>
-                    <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">Rating by service</h2>
+                    <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">Rating by service</h2>
                     <Card padded={false}>
                         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                             {data.perQueue.map((q) => {
                                 const pct = Math.min(100, (Number(q.avgRating) / 5) * 100)
                                 return (
-                                    <li key={q.queueId} className="flex items-center gap-4 p-4 sm:px-6">
-                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
-                                            <Building2 className="h-5 w-5 text-slate-500" />
+                                    <li key={q.queueId} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 sm:px-6">
+                                        <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-slate-100 dark:bg-slate-800">
+                                            <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-slate-500" />
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center justify-between gap-2">
-                                                <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                <p className="truncate text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
                                                     {q.queueName}
                                                     {q.officeName && (
-                                                        <span className="ml-2 text-xs font-medium text-slate-400">
+                                                        <span className="ml-2 text-[10px] sm:text-xs font-medium text-slate-400">
                                                             · {q.officeName}
                                                         </span>
                                                     )}
                                                 </p>
-                                                <span className="shrink-0 text-sm font-bold text-slate-900 dark:text-slate-100">
+                                                <span className="shrink-0 text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                                                     {Number(q.avgRating).toFixed(1)}
                                                 </span>
                                             </div>
-                                            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                            <div className="mt-1.5 sm:mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                                                 <div
                                                     className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500"
                                                     style={{ width: `${pct}%` }}
                                                 />
                                             </div>
-                                            <p className="mt-1 text-[11px] text-slate-400">
+                                            <p className="mt-1 text-[9px] sm:text-[11px] text-slate-400">
                                                 {q.totalRatings} rating{q.totalRatings === 1 ? '' : 's'}
                                             </p>
                                         </div>
@@ -255,9 +234,9 @@ export default function StaffFeedback() {
             {/* Recent comments */}
             {data.recentComments?.length > 0 && (
                 <div>
-                    <div className="mb-4 flex items-center gap-2">
+                    <div className="mb-3 sm:mb-4 flex items-center gap-2">
                         <Quote className="h-4 w-4 text-slate-400" />
-                        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Recent comments</h2>
+                        <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">Recent comments</h2>
                     </div>
                     <div className="space-y-3">
                         {data.recentComments.map((c) => (
@@ -266,19 +245,19 @@ export default function StaffFeedback() {
                                 initial={{ opacity: 0, y: 6 }}
                                 animate={{ opacity: 1, y: 0 }}
                             >
-                                <Card>
+                                <Card className="p-4 sm:p-5">
                                     <div className="flex items-start justify-between gap-3">
-                                        <StarRow rating={c.rating} />
-                                        <span className="text-[11px] text-slate-400">
+                                        <StarRow rating={c.rating} size="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                        <span className="text-[9px] sm:text-[11px] text-slate-400">
                                             {formatDateTime(c.createdAt)}
                                         </span>
                                     </div>
                                     {c.comment ? (
-                                        <p className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                                        <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-700 dark:text-slate-300">
                                             "{c.comment}"
                                         </p>
                                     ) : (
-                                        <p className="mt-3 text-sm italic text-slate-400">
+                                        <p className="mt-3 text-[10px] sm:text-sm italic text-slate-400">
                                             No written comment.
                                         </p>
                                     )}
