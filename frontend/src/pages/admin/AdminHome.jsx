@@ -18,11 +18,7 @@ const QUICK_ACTIONS = [
 
 export default function AdminHome() {
     return (
-        // Changed spacing to make it tighter since the header is gone
-        <div className="space-y-6 pb-12 mt-2">
-
-            {/* 🔧 Removed the redundant header block here */}
-
+        <div className="space-y-6 pb-12 mt-2 px-4 sm:px-6">
             <AdminStatsCards />
 
             <motion.div
@@ -30,10 +26,10 @@ export default function AdminHome() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
             >
-                <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-slate-100">
+                <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
                     Quick Actions
                 </h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {QUICK_ACTIONS.map((item, index) => {
                         const Icon = item.icon
                         return (
@@ -44,18 +40,18 @@ export default function AdminHome() {
                                 transition={{ delay: 0.15 + index * 0.05 }}
                             >
                                 <Link to={item.to} className="group block h-full">
-                                    <Card className="flex h-full items-start gap-4 transition-all duration-200 hover:border-brand-300 hover:shadow-md dark:hover:border-brand-700">
-                                        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${item.accent} transition-transform group-hover:scale-105`}>
-                                            <Icon className="h-6 w-6" />
+                                    <Card className="flex h-full items-start gap-3 sm:gap-4 p-4 sm:p-5 transition-all duration-200 hover:border-brand-300 hover:shadow-md dark:hover:border-brand-700">
+                                        <div className={`flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl ${item.accent} transition-transform group-hover:scale-105`}>
+                                            <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-1.5">
-                                                <h3 className="truncate text-base font-bold text-slate-900 dark:text-slate-100">
+                                                <h3 className="truncate text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
                                                     {item.label}
                                                 </h3>
-                                                <ArrowRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-brand-600" />
+                                                <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-brand-600" />
                                             </div>
-                                            <p className="mt-1 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                                            <p className="mt-1 text-[10px] sm:text-sm leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2">
                                                 {item.description}
                                             </p>
                                         </div>
