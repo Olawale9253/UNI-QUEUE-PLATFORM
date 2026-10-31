@@ -30,15 +30,6 @@ function getWorkflowIcon(name = '') {
     return RouteIcon
 }
 
-function WorkflowsSkeleton() {
-    return (
-        <div className="space-y-4">
-            <SkeletonCard />
-            <SkeletonCard />
-        </div>
-    )
-}
-
 export default function WorkflowsTab() {
     const { push } = useToastStore()
     const { university } = useUniversityStore()
@@ -78,10 +69,8 @@ export default function WorkflowsTab() {
             await api.post(`/api/user/workflows/${workflowId}/start`)
             push({ type: 'success', message: 'Workflow started successfully' })
             await load()
-            // Automatically navigate to progress page after starting
             navigate('/student/clearance')
         } catch (err) {
-            // 👇 Handle the "Already started" error gracefully
             if (err.response?.data?.message?.includes('already started')) {
                 push({ type: 'info', message: 'You already have an active session for this. Redirecting...' })
                 navigate('/student/clearance')
@@ -116,11 +105,8 @@ export default function WorkflowsTab() {
         return { total, completed, inProgress, pending }
     }, [mine, available])
 
-    // 👇 MERGE & DEDUPLICATE: Prevents duplicate workflows showing up
     const allWorkflows = useMemo(() => {
         const map = new Map()
-
-        // Add started workflows first
         mine.forEach(w => {
             map.set(w.workflowId, {
                 id: w.workflowId,
@@ -135,8 +121,6 @@ export default function WorkflowsTab() {
                 isStarted: true
             })
         })
-
-        // Add available workflows only if they aren't already in the list
         available.forEach(w => {
             if (!map.has(w.id)) {
                 map.set(w.id, {
@@ -150,7 +134,6 @@ export default function WorkflowsTab() {
                 })
             }
         })
-
         return Array.from(map.values())
     }, [mine, available])
 
@@ -159,7 +142,6 @@ export default function WorkflowsTab() {
         return allWorkflows.filter(w => w.status === statusFilter)
     }, [allWorkflows, statusFilter])
 
-    // Generate latest updates timeline
     const latestUpdates = useMemo(() => {
         const completedUpdates = mine.filter(w => w.status === 'COMPLETED').map(w => ({
             id: w.id, title: `${w.workflowName} Completed`, desc: `Your ${w.workflowName.toLowerCase()} has been confirmed.`,
@@ -181,85 +163,66 @@ export default function WorkflowsTab() {
 
     if (loading) {
         return (
-            <div className="space-y-6">
-                <div className="h-10 w-1/3 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
-                <WorkflowsSkeleton />
+            <div className="space-y-6 p-4">
+                <div className="h-8 w-1/2 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="h-24 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+                    <div className="h-24 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+                    <div className="h-24 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+                    <div className="h-24 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+                </div>
             </div>
         )
     }
 
     return (
-        <div className="space-y-6 pb-12">
-            {/* Header & Help Box */}
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                        Student Workflows
-                    </h1>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
-                        Track, manage and complete your university processes — all in one place. Follow each step, meet the requirements, and get updates as you progress.
-                    </p>
-                </div>
-                <div
-                    className="hidden md:flex items-start gap-3 rounded-xl border px-4 py-3 max-w-xs cursor-pointer hover:opacity-80 transition-opacity shadow-sm"
-                    style={{
-                        backgroundColor: withAlpha(primaryColor, 0.03),
-                        borderColor: withAlpha(primaryColor, 0.2)
-                    }}
-                >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm dark:bg-slate-800" style={{ color: primaryColor }}>
-                        <Lightbulb className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Need help with a process?</div>
-                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Check the FAQ section or contact support.</div>
-                        <div className="text-xs font-bold mt-2 flex items-center gap-1" style={{ color: primaryColor }}>
-                            View Help & FAQs <ChevronRight className="h-3 w-3" />
-                        </div>
-                    </div>
-                </div>
+        <div className="space-y-6 pb-12 px-4 sm:px-6">
+            {/* Header */}
+            <div className="pt-2">
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    Student Workflows
+                </h1>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">
+                    Track, manage and complete your university processes. Follow each step and get updates as you progress.
+                </p>
             </div>
 
-            {/* Stats Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="flex items-center gap-4 p-5 bg-blue-50/30 border-blue-100 dark:bg-blue-950/20 dark:border-blue-900 shadow-sm">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
-                        <RouteIcon className="h-6 w-6" />
+            {/* Stats Row - Now 2x2 on mobile, 4x1 on desktop */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <Card className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 p-4 bg-blue-50/40 border-blue-100 dark:bg-blue-950/20 dark:border-blue-900 shadow-sm">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                        <RouteIcon className="h-5 w-5" />
                     </div>
-                    <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Workflows</p>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5">{stats.total}</p>
-                        <p className="text-[11px] text-slate-400">Available processes</p>
-                    </div>
-                </Card>
-                <Card className="flex items-center gap-4 p-5 bg-emerald-50/30 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900 shadow-sm">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900 dark:text-emerald-300">
-                        <CheckCircle2 className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Completed</p>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5">{stats.completed}</p>
-                        <p className="text-[11px] text-slate-400">Finished successfully</p>
+                    <div className="min-w-0">
+                        <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">Total</p>
+                        <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-none mt-1">{stats.total}</p>
                     </div>
                 </Card>
-                <Card className="flex items-center gap-4 p-5 bg-amber-50/30 border-amber-100 dark:bg-amber-950/20 dark:border-amber-900 shadow-sm">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300">
-                        <Activity className="h-6 w-6" />
+                <Card className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 p-4 bg-emerald-50/40 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900 shadow-sm">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900 dark:text-emerald-300">
+                        <CheckCircle2 className="h-5 w-5" />
                     </div>
-                    <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">In Progress</p>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5">{stats.inProgress}</p>
-                        <p className="text-[11px] text-slate-400">Still ongoing</p>
+                    <div className="min-w-0">
+                        <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">Completed</p>
+                        <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-none mt-1">{stats.completed}</p>
                     </div>
                 </Card>
-                <Card className="flex items-center gap-4 p-5 bg-purple-50/30 border-purple-100 dark:bg-purple-950/20 dark:border-purple-900 shadow-sm">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
-                        <Clock className="h-6 w-6" />
+                <Card className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 p-4 bg-amber-50/40 border-amber-100 dark:bg-amber-950/20 dark:border-amber-900 shadow-sm">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300">
+                        <Activity className="h-5 w-5" />
                     </div>
-                    <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pending</p>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white mt-0.5">{stats.pending}</p>
-                        <p className="text-[11px] text-slate-400">Awaiting action</p>
+                    <div className="min-w-0">
+                        <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">In Progress</p>
+                        <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-none mt-1">{stats.inProgress}</p>
+                    </div>
+                </Card>
+                <Card className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 p-4 bg-purple-50/40 border-purple-100 dark:bg-purple-950/20 dark:border-purple-900 shadow-sm">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
+                        <Clock className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">Pending</p>
+                        <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-none mt-1">{stats.pending}</p>
                     </div>
                 </Card>
             </div>
@@ -267,19 +230,19 @@ export default function WorkflowsTab() {
             {/* Main Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
 
-                {/* LEFT: My Workflows List */}
+                {/* LEFT: All Workflows List */}
                 <div className="space-y-4">
                     <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm">
-                        <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 gap-3">
                             <div>
-                                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">All Workflows</h2>
-                                <p className="text-xs text-slate-500 mt-0.5">Select a process to view its required steps.</p>
+                                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">All Workflows</h2>
+                                <p className="text-xs text-slate-500 mt-0.5">Select a process to view its steps.</p>
                             </div>
 
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer shadow-sm transition-all"
+                                className="text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer shadow-sm w-full sm:w-auto"
                             >
                                 <option value="ALL">All Statuses</option>
                                 <option value="PENDING">Available</option>
@@ -291,7 +254,7 @@ export default function WorkflowsTab() {
                         <div className="divide-y divide-slate-100 dark:divide-slate-800">
                             {filteredWorkflows.length === 0 ? (
                                 <div className="p-8 text-center">
-                                    <EmptyState icon={Sparkles} title="No workflows found" description={`You have no workflows with this status.`} />
+                                    <EmptyState icon={Sparkles} title="No workflows" description="You have no workflows with this status." />
                                 </div>
                             ) : (
                                 filteredWorkflows.map((item) => {
@@ -302,41 +265,38 @@ export default function WorkflowsTab() {
                                     const isAbandoned = item.status === 'ABANDONED';
 
                                     return (
-                                        <div key={item.id} className="p-5 flex flex-col gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                                                {/* Title & Info */}
-                                                <div className="flex items-start gap-4">
-                                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
-                                                        <Icon className="h-6 w-6" />
+                                        <div key={item.id} className="p-4 sm:p-5 flex flex-col gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
+                                                        <Icon className="h-5 w-5" />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
-                                                        <div className="flex items-center gap-2">
-                                                            <h3 className="text-base font-bold text-slate-900 dark:text-white">{item.name}</h3>
-                                                            <Badge variant={isCompleted ? 'success' : isInProgress ? 'warning' : isAbandoned ? 'danger' : 'default'} className="shadow-sm">
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight">{item.name}</h3>
+                                                            <Badge variant={isCompleted ? 'success' : isInProgress ? 'warning' : isAbandoned ? 'danger' : 'default'} className="shadow-sm text-[10px]">
                                                                 {isCompleted ? 'Completed' : isInProgress ? 'In Progress' : isAbandoned ? 'Abandoned' : 'Available'}
                                                             </Badge>
                                                         </div>
-                                                        <p className="text-sm text-slate-500 mt-1">{item.description}</p>
+                                                        <p className="text-xs sm:text-sm text-slate-500 mt-1 line-clamp-2">{item.description}</p>
                                                     </div>
                                                 </div>
 
-                                                {/* Action Buttons */}
-                                                <div className="flex items-center gap-2 shrink-0">
+                                                <div className="flex items-center gap-2 shrink-0 self-end sm:self-start">
                                                     {isInProgress && (
                                                         <button onClick={() => setAbandonTarget(item)} className="text-slate-400 hover:text-rose-500 transition-colors p-2" title="Abandon">
                                                             <CloseIcon className="h-4 w-4" />
                                                         </button>
                                                     )}
-
                                                     {isCompleted ? (
-                                                        <Button variant="secondary" onClick={() => navigate('/student/clearance')} className="text-xs">View Details</Button>
+                                                        <Button variant="secondary" onClick={() => navigate('/student/clearance')} className="text-xs h-8 px-3">Details</Button>
                                                     ) : isInProgress ? (
-                                                        <Button onClick={() => navigate('/student/clearance')} className="text-xs" style={{ backgroundColor: primaryColor }}>Continue</Button>
+                                                        <Button onClick={() => navigate('/student/clearance')} className="text-xs h-8 px-3" style={{ backgroundColor: primaryColor }}>Continue</Button>
                                                     ) : (
                                                         <Button
                                                             onClick={() => start(item.id)}
                                                             loading={starting === item.id}
-                                                            className="text-xs"
+                                                            className="text-xs h-8 px-3"
                                                             style={{ backgroundColor: primaryColor }}
                                                             icon={isAbandoned ? RotateCcw : Play}
                                                         >
@@ -346,20 +306,17 @@ export default function WorkflowsTab() {
                                                 </div>
                                             </div>
 
-                                            {/* 👇 STEP-BY-STEP PREVIEW */}
+                                            {/* Step-by-Step Preview */}
                                             {item.steps && item.steps.length > 0 && (
-                                                <div className="ml-16 mt-2">
-                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-1">
-                                                        <ListChecks className="h-3 w-3" /> Required Steps
-                                                    </p>
-                                                    <div className="flex flex-wrap items-center gap-2">
+                                                <div className="sm:ml-13 mt-2">
+                                                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                                                         {item.steps.map((step, idx) => (
-                                                            <div key={idx} className="flex items-center gap-2">
-                                                                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                                                                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white text-[9px] font-bold text-slate-500 dark:bg-slate-900">
+                                                            <div key={idx} className="flex items-center gap-1 sm:gap-2">
+                                                                <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] sm:text-xs font-medium text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                                                    <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white text-[8px] font-bold text-slate-500 dark:bg-slate-900">
                                                                         {idx + 1}
                                                                     </span>
-                                                                    {step.queueName || step.label || 'Process Step'}
+                                                                    <span className="truncate max-w-[80px] sm:max-w-none">{step.queueName || step.label || 'Step'}</span>
                                                                 </div>
                                                                 {idx < item.steps.length - 1 && <ChevronRight className="h-3 w-3 text-slate-300" />}
                                                             </div>
@@ -368,17 +325,14 @@ export default function WorkflowsTab() {
                                                 </div>
                                             )}
 
-                                            {/* Progress Bar for started workflows */}
+                                            {/* Progress Bar */}
                                             {isInProgress && (
-                                                <div className="ml-16 mt-1">
+                                                <div className="sm:ml-13 mt-1">
                                                     <div className="flex items-center gap-3">
                                                         <div className="h-1.5 w-full max-w-xs bg-slate-100 rounded-full overflow-hidden dark:bg-slate-800">
-                                                            <div
-                                                                className="h-full rounded-full bg-blue-600"
-                                                                style={{ width: `${item.progress}%` }}
-                                                            />
+                                                            <div className="h-full rounded-full bg-blue-600" style={{ width: `${item.progress}%` }} />
                                                         </div>
-                                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 shrink-0">{item.progress}%</span>
+                                                        <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 shrink-0">{item.progress}%</span>
                                                     </div>
                                                 </div>
                                             )}
@@ -393,17 +347,16 @@ export default function WorkflowsTab() {
                 {/* RIGHT: Quick Actions & Latest Updates */}
                 <div className="space-y-6">
 
-                    {/* Premium Quick Actions */}
+                    {/* Quick Actions */}
                     <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm">
-                        <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
-                            <h3 className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+                            <h3 className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 text-sm sm:text-base">
                                 <Zap className="h-4 w-4" style={{ color: primaryColor }} /> Quick Actions
                             </h3>
                         </div>
                         <div className="p-3 space-y-2">
                             {available.slice(0, 4).map(w => {
                                 const Icon = getWorkflowIcon(w.name);
-                                // Check if this workflow is already in progress to change the action
                                 const startedVersion = allWorkflows.find(x => x.id === w.id && x.status !== 'PENDING')
                                 const isStarted = !!startedVersion
 
@@ -415,15 +368,15 @@ export default function WorkflowsTab() {
                                         className="w-full group flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-brand-200 bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-brand-800 transition-all duration-200"
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-500 group-hover:bg-brand-50 group-hover:text-brand-600 dark:bg-slate-800 transition-colors" style={{ '--tw-group-hover-text': primaryColor, '--tw-group-hover-bg': withAlpha(primaryColor, 0.1) }}>
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-500 group-hover:bg-brand-50 group-hover:text-brand-600 dark:bg-slate-800 transition-colors">
                                                 <Icon className="h-4 w-4" />
                                             </div>
-                                            <div className="text-left">
-                                                <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">{w.name}</p>
-                                                <p className="text-[11px] text-slate-500 truncate max-w-[140px]">{isStarted ? 'Continue process' : 'Start process'}</p>
+                                            <div className="text-left min-w-0">
+                                                <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors truncate">{w.name}</p>
+                                                <p className="text-[10px] sm:text-[11px] text-slate-500 truncate">{isStarted ? 'Continue process' : 'Start process'}</p>
                                             </div>
                                         </div>
-                                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50 group-hover:bg-brand-100 dark:bg-slate-800 transition-colors">
+                                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-50 group-hover:bg-brand-100 dark:bg-slate-800 transition-colors ml-2">
                                             <Play className="h-3 w-3 text-slate-400 group-hover:text-brand-600 transition-colors fill-current" />
                                         </div>
                                     </button>
@@ -432,12 +385,12 @@ export default function WorkflowsTab() {
                         </div>
                     </Card>
 
-                    {/* Premium Latest Updates Timeline */}
+                    {/* Latest Updates */}
                     <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm">
-                        <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
-                            <h3 className="font-bold text-slate-900 dark:text-slate-100">Latest Updates</h3>
+                        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+                            <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base">Latest Updates</h3>
                         </div>
-                        <div className="p-5">
+                        <div className="p-4 sm:p-5">
                             {latestUpdates.length === 0 ? (
                                 <p className="text-xs text-slate-500 text-center py-4">No recent updates.</p>
                             ) : (
@@ -448,14 +401,14 @@ export default function WorkflowsTab() {
                                         if (update.type === 'progress') dotColor = 'bg-blue-500';
 
                                         return (
-                                            <div key={i} className="relative flex items-start gap-4 pb-6 last:pb-0 group">
+                                            <div key={i} className="relative flex items-start gap-3 pb-5 last:pb-0 group">
                                                 <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white dark:bg-slate-900 border-2 border-white dark:border-slate-900 shadow-sm z-10 relative mt-1`}>
                                                     <div className={`h-2.5 w-2.5 rounded-full ${dotColor}`} />
                                                 </div>
-                                                <div className="flex-1">
-                                                    <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight group-hover:text-brand-600 transition-colors">{update.title}</p>
-                                                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">{update.desc}</p>
-                                                    <p className="text-[10px] font-medium text-slate-400 mt-1.5 flex items-center gap-1">
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight truncate">{update.title}</p>
+                                                    <p className="text-[10px] sm:text-xs text-slate-500 mt-1 line-clamp-2">{update.desc}</p>
+                                                    <p className="text-[9px] sm:text-[10px] font-medium text-slate-400 mt-1.5 flex items-center gap-1">
                                                         <Clock className="h-3 w-3" /> {formatDateTime(update.date)}
                                                     </p>
                                                 </div>
@@ -469,12 +422,12 @@ export default function WorkflowsTab() {
                 </div>
             </div>
 
-            {/* Premium How it Works */}
-            <div className="mt-8 rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-8 dark:border-slate-800 dark:from-slate-900/50 dark:to-slate-950 shadow-sm overflow-hidden relative">
+            {/* How it Works - Compacted for Mobile */}
+            <div className="mt-6 rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-5 sm:p-8 dark:border-slate-800 dark:from-slate-900/50 dark:to-slate-950 shadow-sm overflow-hidden relative">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-500 to-transparent opacity-20" />
-                <h4 className="text-center text-sm font-bold uppercase tracking-widest text-slate-400 mb-8">How It Works</h4>
+                <h4 className="text-center text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 sm:mb-8">How It Works</h4>
 
-                <div className="relative flex flex-col md:flex-row items-center justify-between gap-8 md:gap-4">
+                <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-4 overflow-x-auto pb-4 md:pb-0">
                     <div className="hidden md:block absolute top-6 left-[10%] right-[10%] h-0.5 bg-slate-200 dark:bg-slate-800 z-0" />
 
                     {[
@@ -484,13 +437,15 @@ export default function WorkflowsTab() {
                         { step: '4', title: 'Get Notified', desc: 'Receive alerts when updated.', icon: Bell },
                         { step: '5', title: 'Done!', desc: 'Your request is completed.', icon: Star },
                     ].map((item, i) => (
-                        <div key={i} className="relative z-10 flex flex-col items-center text-center w-full md:w-1/5 group">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white border-2 border-slate-100 text-slate-400 shadow-sm group-hover:border-brand-200 group-hover:text-brand-600 group-hover:shadow-md transition-all duration-300 dark:bg-slate-900 dark:border-slate-800">
-                                <item.icon className="h-5 w-5" />
+                        <div key={i} className="relative z-10 flex md:flex-col items-center md:text-center w-full md:w-1/5 group gap-4 md:gap-0 shrink-0">
+                            <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white border-2 border-slate-100 text-slate-400 shadow-sm group-hover:border-brand-200 group-hover:text-brand-600 group-hover:shadow-md transition-all duration-300 dark:bg-slate-900 dark:border-slate-800 shrink-0">
+                                <item.icon className="h-4 w-4 md:h-5 md:w-5" />
                             </div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase mt-4 mb-1">Step {item.step}</p>
-                            <p className="text-sm font-bold text-slate-900 dark:text-white">{item.title}</p>
-                            <p className="text-xs text-slate-500 mt-1 max-w-[120px] leading-tight">{item.desc}</p>
+                            <div className="text-left md:text-center">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase md:mt-4 md:mb-1">Step {item.step}</p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-white">{item.title}</p>
+                                <p className="text-xs text-slate-500 md:mt-1 max-w-[200px] md:max-w-[120px] leading-tight">{item.desc}</p>
+                            </div>
                         </div>
                     ))}
                 </div>
