@@ -10,12 +10,12 @@ import Card from '../../components/ui/Card'
 
 function InformationRow({ label, value, icon: Icon }) {
     return (
-        <div className="grid gap-1 border-b border-slate-100 py-3.5 last:border-b-0 dark:border-slate-800 sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-4">
-            <dt className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                {Icon && <Icon className="h-3.5 w-3.5" />}
+        <div className="grid gap-1 border-b border-slate-100 py-3 sm:py-3.5 last:border-b-0 dark:border-slate-800 sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-4">
+            <dt className="flex items-center gap-2 text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400">
+                {Icon && <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
                 {label}
             </dt>
-            <dd className="break-words text-sm font-medium text-slate-900 dark:text-slate-100">
+            <dd className="break-words text-xs sm:text-sm font-medium text-slate-900 dark:text-slate-100">
                 {value || 'Not provided'}
             </dd>
         </div>
@@ -40,7 +40,7 @@ export default function ProfilePage() {
     const data = profile || user || {}
 
     return (
-        <div className="mx-auto max-w-4xl space-y-6 pb-12 pt-2">
+        <div className="mx-auto max-w-4xl space-y-6 pb-12 pt-2 px-4 sm:px-6">
             {/* Header */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
@@ -53,7 +53,7 @@ export default function ProfilePage() {
                 </div>
                 <Link
                     to="/student/settings"
-                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                    className="inline-flex shrink-0 w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                 >
                     <Pencil className="h-4 w-4" />
                     Edit Profile
@@ -68,21 +68,21 @@ export default function ProfilePage() {
                 <div className="space-y-6">
                     {/* Profile Hero Card */}
                     <Card>
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-2xl font-bold text-brand-700 shadow-sm ring-4 ring-white dark:bg-brand-950/50 dark:text-brand-300 dark:ring-slate-900">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                            <div className="flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-xl sm:text-2xl font-bold text-brand-700 shadow-sm ring-4 ring-white dark:bg-brand-950/50 dark:text-brand-300 dark:ring-slate-900">
                                 {getInitials(data.fullName)}
                             </div>
                             <div className="min-w-0 flex-1">
-                                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                                <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">
                                     {data.fullName || 'Student Name'}
                                 </h2>
-                                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-medium text-slate-500 dark:text-slate-400">
+                                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
                                     <span className="flex items-center gap-1.5">
-                                        <GraduationCap className="h-4 w-4" />
+                                        <GraduationCap className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                         {data.matricNumber || 'No matric number'}
                                     </span>
                                     <span className="flex items-center gap-1.5">
-                                        <Building2 className="h-4 w-4" />
+                                        <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                         {data.department || 'No department'}
                                     </span>
                                 </div>
@@ -92,7 +92,7 @@ export default function ProfilePage() {
 
                     {/* Account Info Card */}
                     <Card>
-                        <h3 className="mb-2 text-base font-bold text-slate-900 dark:text-slate-100">
+                        <h3 className="mb-2 text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
                             Account Information
                         </h3>
                         <dl>

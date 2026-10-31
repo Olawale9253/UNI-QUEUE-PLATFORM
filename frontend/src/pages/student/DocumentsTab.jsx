@@ -173,7 +173,7 @@ export default function DocumentsTab() {
 
     if (loading) {
         return (
-            <div>
+            <div className="px-4 sm:px-6">
                 <div className="mb-5">
                     <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Documents</h2>
                 </div>
@@ -185,8 +185,8 @@ export default function DocumentsTab() {
     }
 
     return (
-        <div>
-            <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div className="px-4 sm:px-6 pb-12">
+            <div className="mb-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                         Documents
@@ -199,6 +199,7 @@ export default function DocumentsTab() {
                     icon={Upload}
                     onClick={() => setUploadOpen((item) => !item)}
                     variant={uploadOpen ? 'secondary' : 'primary'}
+                    className="w-full sm:w-auto justify-center"
                 >
                     {uploadOpen ? 'Cancel' : 'Upload document'}
                 </Button>
@@ -243,11 +244,11 @@ export default function DocumentsTab() {
                                     </div>
                                 </div>
 
-                                <div className="flex justify-end gap-2">
-                                    <Button type="button" variant="secondary" onClick={() => setUploadOpen(false)} disabled={uploading}>
+                                <div className="flex flex-col sm:flex-row justify-end gap-2">
+                                    <Button type="button" variant="secondary" onClick={() => setUploadOpen(false)} disabled={uploading} className="w-full sm:w-auto">
                                         Cancel
                                     </Button>
-                                    <Button type="submit" loading={uploading} disabled={uploading || !file}>
+                                    <Button type="submit" loading={uploading} disabled={uploading || !file} className="w-full sm:w-auto">
                                         {uploading ? 'Uploading…' : 'Upload'}
                                     </Button>
                                 </div>
@@ -258,7 +259,7 @@ export default function DocumentsTab() {
             </AnimatePresence>
 
             {docs.length > 0 && (
-                <div className="mb-5 flex flex-wrap gap-1.5">
+                <div className="mb-5 flex overflow-x-auto whitespace-nowrap gap-1.5 pb-2 scrollbar-hide">
                     {FILTERS.map((itemValue) => {
                         const isActive = filter === itemValue.value
                         return (
@@ -266,14 +267,14 @@ export default function DocumentsTab() {
                                 key={itemValue.value}
                                 type="button"
                                 onClick={() => setFilter(itemValue.value)}
-                                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] sm:text-xs font-medium transition-colors shrink-0 ${
                                     isActive
                                         ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
                                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
                                 }`}
                             >
                                 {itemValue.label}
-                                <span className={`text-[10px] font-bold ${isActive ? 'opacity-80' : 'opacity-60'}`}>
+                                <span className={`text-[9px] sm:text-[10px] font-bold ${isActive ? 'opacity-80' : 'opacity-60'}`}>
                   {counts[itemValue.value] ?? 0}
                 </span>
                             </button>
@@ -308,29 +309,29 @@ export default function DocumentsTab() {
                                 transition={{ delay: idx * 0.02 }}
                             >
                                 <Card>
-                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                        <div className="flex min-w-0 flex-1 items-start gap-4">
-                                            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                                    <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                        <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
+                                            <div className={`flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl ${
                                                 itemValue2.status === 'APPROVED'
                                                     ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
                                                     : itemValue2.status === 'REJECTED'
                                                         ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
                                                         : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
                                             }`}>
-                                                <StatusIcon className="h-5 w-5" />
+                                                <StatusIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                                             </div>
 
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex flex-wrap items-center gap-2">
-                                                    <h3 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+                                                    <h3 className="truncate text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100">
                                                         {itemValue2.originalFilename}
                                                     </h3>
-                                                    <Badge variant={STATUS_VARIANTS[itemValue2.status] || 'default'}>
+                                                    <Badge variant={STATUS_VARIANTS[itemValue2.status] || 'default'} className="text-[10px] sm:text-xs">
                                                         {STATUS_LABELS[itemValue2.status] || itemValue2.status}
                                                     </Badge>
                                                 </div>
 
-                                                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                                                <div className="mt-1 flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                                                     <span>{DOC_TYPES.find((itemValue3) => itemValue3.value === itemValue2.type)?.label || itemValue2.type}</span>
                                                     <span>·</span>
                                                     <span>{formatSize(itemValue2.sizeBytes)}</span>
@@ -339,13 +340,13 @@ export default function DocumentsTab() {
                                                 </div>
 
                                                 {itemValue2.status === 'REJECTED' && itemValue2.reviewNotes && (
-                                                    <div className="mt-3 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
+                                                    <div className="mt-3 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2 sm:p-3 text-[10px] sm:text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
                                                         <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                                                         <div>
                                                             <span className="font-semibold">Reason: </span>
                                                             {itemValue2.reviewNotes}
                                                             {itemValue2.reviewedByName && (
-                                                                <div className="mt-0.5 text-[10px] opacity-70">
+                                                                <div className="mt-0.5 text-[9px] sm:text-[10px] opacity-70">
                                                                     Reviewed by {itemValue2.reviewedByName} on {formatDateTime(itemValue2.reviewedAt)}
                                                                 </div>
                                                             )}
@@ -354,17 +355,17 @@ export default function DocumentsTab() {
                                                 )}
 
                                                 {itemValue2.status === 'APPROVED' && itemValue2.reviewedByName && (
-                                                    <div className="mt-3 text-xs text-emerald-600 dark:text-emerald-400">
+                                                    <div className="mt-2 sm:mt-3 text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400">
                                                         Approved by {itemValue2.reviewedByName} · {formatDateTime(itemValue2.reviewedAt)}
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="flex shrink-0 items-center gap-1 sm:flex-col sm:items-end">
+                                        <div className="flex shrink-0 items-center justify-end gap-2 sm:flex-col sm:items-end sm:gap-1 mt-2 sm:mt-0">
                                             <button
                                                 onClick={() => download(itemValue2)}
-                                                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                                                className="rounded-lg p-1.5 sm:p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-300"
                                                 title="Download"
                                             >
                                                 <Download className="h-4 w-4" />
@@ -372,7 +373,7 @@ export default function DocumentsTab() {
                                             {itemValue2.status !== 'APPROVED' && (
                                                 <button
                                                     onClick={() => setDeleteTarget(itemValue2)}
-                                                    className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
+                                                    className="rounded-lg p-1.5 sm:p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
                                                     title="Delete"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
