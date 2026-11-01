@@ -13,7 +13,9 @@ import com.uniqueeue.dto.response.SystemAnalyticsResponse;
 import com.uniqueeue.dto.response.UniversityResponse;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
+import com.uniqueeue.model.UniversityRequest;
 import com.uniqueeue.model.User;
+import com.uniqueeue.repository.UniversityRequestRepository;
 import com.uniqueeue.repository.UserRepository;
 import com.uniqueeue.security.JwtTokenProvider;
 import com.uniqueeue.security.UserPrincipal;
@@ -21,6 +23,7 @@ import com.uniqueeue.service.*;
 import com.uniqueeue.service.UniversityStarterPackService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,6 +47,7 @@ public class SuperAdminController {
     private final UserRepository userRepository;
     private final JwtTokenProvider tokenProvider;
     private final UniversityStarterPackService starterPackService;
+    private final UniversityRequestRepository universityRequestRepository; // 👈 Added
 
     // ============================================================
     //  UNIVERSITIES
@@ -213,5 +217,26 @@ public class SuperAdminController {
     public ResponseEntity<ApiResponse<SystemAnalyticsResponse>> analytics() {
         return ResponseEntity.ok(ApiResponse.success(
                 "System analytics", systemAnalyticsService.overview()));
+    }
+
+    // ============================================================
+    //  UNIVERSITY REQUESTS
+    // ============================================================
+
+    @GetMapping("/university-requests")
+    public ResponseEntity<ApiResponse<List<UniversityRequest>>> getUniversityRequests() {
+        List<UniversityRequest> requests = universityRequestRepository.findAll(
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+        return ResponseEntity.ok(ApiResponse.success("University requests", requests));
+    }
+
+    @DeleteMapping("/university-requests/{id}")
+    public ResponseEntity<ApiResponse<Object>> deleteUniversityRequest(@PathVariable Long id) {
+        if (!universityRequestRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Request not found");
+        }
+        universityRequestRepository.deleteById(id);
+        return ResponseEntity.ok(ApiResponse.success("Request resolved and deleted", null));
     }
 }

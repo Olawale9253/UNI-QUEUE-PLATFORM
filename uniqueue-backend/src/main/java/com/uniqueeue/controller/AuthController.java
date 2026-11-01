@@ -8,7 +8,9 @@ import com.uniqueeue.dto.request.ResetPasswordRequest;
 import com.uniqueeue.dto.request.VerifyEmailRequest;
 import com.uniqueeue.dto.response.ApiResponse;
 import com.uniqueeue.dto.response.AuthResponse;
+import com.uniqueeue.model.UniversityRequest;
 import com.uniqueeue.repository.UniversityRepository;
+import com.uniqueeue.repository.UniversityRequestRepository;
 import com.uniqueeue.repository.UserRepository;
 import com.uniqueeue.security.UserPrincipal;
 import com.uniqueeue.service.AuthService;
@@ -32,7 +34,10 @@ public class AuthController {
 
     private final AuthService authService;
     private final UniversityRepository universityRepository;
+    private final UniversityRequestRepository universityRequestRepository;
     private final UserRepository userRepository;
+
+    // ... (Keep all your existing endpoints: register, login, verify-email, etc. unchanged)
 
     @PostMapping("/register")
     @RateLimited(
@@ -220,5 +225,28 @@ public class AuthController {
         data.put("tagline", uni.getTagline());
         data.put("primaryColor", uni.getPrimaryColor());
         return ResponseEntity.ok(ApiResponse.success("University", data));
+    }
+
+    // 👇 NEW ENDPOINT: Request University
+    @PostMapping("/request-university")
+    @RateLimited(limit = 3, windowSeconds = 3600, keyType = RateKeyType.IP, name = "request-university")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> requestUniversity(@RequestBody Map<String, String> payload) {
+        String universityName = payload.get("universityName");
+        String studentEmail = payload.get("studentEmail");
+
+        if (universityName == null || universityName.isBlank() || studentEmail == null || studentEmail.isBlank()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("University name and student email are required."));
+        }
+
+        UniversityRequest request = UniversityRequest.builder()
+                .universityName(universityName.trim())
+                .studentEmail(studentEmail.trim().toLowerCase())
+                .build();
+
+        universityRequestRepository.save(request);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("message", "Request submitted! We will contact your university soon.");
+        return ResponseEntity.ok(ApiResponse.success("Request submitted", data));
     }
 }

@@ -119,6 +119,7 @@ export default function App() {
                             <Route path="/reset-password" element={<ResetPassword />} />
                             <Route path="/setup-account" element={<SetupAccount />} />
                             <Route path="/verify-email" element={<VerifyEmail />} />
+                            <Route path="/super-admin/requests" element={<UniversityRequests />} />
                             <Route
                                 path="/pending-verification"
                                 element={
