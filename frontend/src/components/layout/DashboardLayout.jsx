@@ -5,7 +5,7 @@ import { X as CloseIcon, Home as HomeIcon, LogOut } from 'lucide-react'
 import PageHeader from './PageHeader'
 import { useUIStore } from '../../store/uiStore'
 import { useAuthStore } from '../../store/authStore'
-import { useIdleLogout } from '../../hooks/useIdleLogout' // <-- Imported hook
+import { useIdleLogout } from '../../hooks/useIdleLogout'
 
 const ROLE_HOME = {
     SUPER_ADMIN: '/super-admin',
@@ -55,7 +55,7 @@ export default function DashboardLayout({ tabs, title, description, action, chil
     const location = useLocation()
     const navigate = useNavigate()
 
-    // 👇 ACTIVATE THE IDLE LOGOUT HOOK HERE
+    // Activates the idle logout hook
     useIdleLogout()
 
     useEffect(() => {
@@ -162,7 +162,8 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                 )}
             </AnimatePresence>
 
-            <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-white dark:bg-slate-950">
+            {/* 👇 THIS IS THE MAIN BACKGROUND FIX: Changed bg-white to bg-slate-50 */}
+            <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-slate-950">
                 <div className="mx-auto w-full max-w-[1680px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
                     {title && <PageHeader title={title} description={description} action={action} />}
                     {children}
