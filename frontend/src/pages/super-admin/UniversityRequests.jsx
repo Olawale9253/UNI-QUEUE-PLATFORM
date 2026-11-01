@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Building2, Mail } from 'lucide-react'
 import api from '../../api/axios'
@@ -14,7 +14,7 @@ export default function UniversityRequests() {
     const [loading, setLoading] = useState(true)
     const [processingId, setProcessingId] = useState(null)
 
-    const load = async () => {
+    const load = useCallback(async () => {
         setLoading(true)
         try {
             const res = await api.get('/api/super-admin/university-requests')
@@ -24,9 +24,9 @@ export default function UniversityRequests() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [push])
 
-    useEffect(() => { load() }, [])
+    useEffect(() => { load() }, [load])
 
     // Group requests by university name
     const groupedRequests = useMemo(() => {
@@ -49,7 +49,7 @@ export default function UniversityRequests() {
         try {
             await Promise.all(ids.map(id => api.delete(`/api/super-admin/university-requests/${id}`)))
             push({ type: 'success', message: 'Requests resolved!' })
-            load()
+            await load()
         } catch (err) {
             push({ type: 'error', message: 'Failed to delete requests' })
         } finally {
@@ -57,25 +57,12 @@ export default function UniversityRequests() {
         }
     }
 
-    if (loading) {
-        return (
-            <div className="flex h-64 items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" />
-            </div>
-        )
-    }
-
-    // 👇 REMOVED THE EXTRA WRAPPER HERE
     return (
-        <div className="space-y-6 pb-12">
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">University Requests</h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    See which universities students are requesting. Reach out to them to activate their workspace.
-                </p>
-            </div>
-
-            {groupedRequests.length === 0 ? (
+        // 👇 ADDED px-4 sm:px-6 TO MATCH YOUR OTHER PAGES
+        <div className="space-y-6 pb-12 px-4 sm:px-6">
+            {loading ? (
+                <div className="py-12 text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">Loading requests...</div>
+            ) : groupedRequests.length === 0 ? (
                 <EmptyState
                     icon={Building2}
                     title="No requests yet"
