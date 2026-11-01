@@ -8,6 +8,7 @@ import ImpersonationBanner from './components/layout/ImpersonationBanner'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import ScrollToTop from './components/common/ScrollToTop'
 import IdleTimeout from './components/common/IdleTimeout'
+import UniversityRequests from './pages/super-admin/UniversityRequests'
 
 import Home from './pages/Home'
 import Login from './pages/Login'
