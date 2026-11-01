@@ -11,6 +11,7 @@ import PageHeader from '../components/layout/PageHeader'
 import SuperAdminHome from './super-admin/SuperAdminHome'
 import Universities from './super-admin/Universities'
 import UniversityApplications from './super-admin/UniversityApplications'
+import UniversityRequests from './super-admin/UniversityRequests' // 👈 ADDED IMPORT
 import Users from './super-admin/Users'
 import SystemAnalytics from './super-admin/SystemAnalytics'
 import TiersAndFeatures from './super-admin/TiersAndFeatures'
@@ -20,11 +21,12 @@ import Broadcast from './super-admin/Broadcast'
 import Plans from './super-admin/Plans'
 import Feedback from './super-admin/Feedback'
 import Notifications from './Notifications'
-import Profile from './Profile'   // 👈 ADDED
+import Profile from './Profile'
 
 const tabs = [
     { to: '/super-admin/universities', label: 'Universities', icon: Building2 },
     { to: '/super-admin/pending-requests', label: 'Pending Requests', icon: Clock },
+    { to: '/super-admin/requests', label: 'Uni Requests', icon: Building2 }, // 👈 ADDED TAB (Moved higher for visibility)
     { to: '/super-admin/users', label: 'Users', icon: UsersIcon },
     { to: '/super-admin/feedback', label: 'Feedback', icon: MessageSquare },
     { to: '/super-admin/analytics', label: 'System Analytics', icon: Activity },
@@ -34,7 +36,6 @@ const tabs = [
     { to: '/super-admin/notifications', label: 'Notifications', icon: Bell },
     { to: '/super-admin/audit-logs', label: 'Audit Logs', icon: FileText },
     { to: '/super-admin/settings', label: 'Settings', icon: SettingsIcon },
-    { to: '/super-admin/requests', label: 'Uni Requests', icon: Building2 },
 ]
 
 export default function SuperAdminDashboard() {
@@ -55,6 +56,7 @@ export default function SuperAdminDashboard() {
                 <Route index element={<SuperAdminHome />} />
                 <Route path="universities" element={<Universities />} />
                 <Route path="pending-requests" element={<UniversityApplications />} />
+                <Route path="requests" element={<UniversityRequests />} /> {/* 👈 ADDED ROUTE */}
                 <Route path="users" element={<Users />} />
                 <Route path="feedback" element={<Feedback />} />
                 <Route path="analytics" element={<SystemAnalytics />} />
@@ -64,7 +66,7 @@ export default function SuperAdminDashboard() {
                 <Route path="notifications" element={<Notifications />} />
                 <Route path="audit-logs" element={<AuditLogs />} />
                 <Route path="settings" element={<Settings />} />
-                <Route path="profile" element={<Profile />} />   {/* 👈 ADDED */}
+                <Route path="profile" element={<Profile />} />
                 <Route path="*" element={<Navigate to="/super-admin" replace />} />
             </Routes>
         </DashboardLayout>

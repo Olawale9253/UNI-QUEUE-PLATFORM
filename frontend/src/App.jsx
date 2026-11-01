@@ -8,7 +8,6 @@ import ImpersonationBanner from './components/layout/ImpersonationBanner'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import ScrollToTop from './components/common/ScrollToTop'
 import IdleTimeout from './components/common/IdleTimeout'
-import UniversityRequests from './pages/super-admin/UniversityRequests'
 
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -120,7 +119,7 @@ export default function App() {
                             <Route path="/reset-password" element={<ResetPassword />} />
                             <Route path="/setup-account" element={<SetupAccount />} />
                             <Route path="/verify-email" element={<VerifyEmail />} />
-                            <Route path="/super-admin/requests" element={<UniversityRequests />} />
+
                             <Route
                                 path="/pending-verification"
                                 element={
@@ -129,7 +128,6 @@ export default function App() {
                                     </ProtectedRoute>
                                 }
                             />
-                            {/* 🗑️ Removed: /profile standalone route */}
                             <Route
                                 path="/student/*"
                                 element={
