@@ -65,78 +65,75 @@ export default function UniversityRequests() {
         )
     }
 
+    // 👇 REMOVED THE EXTRA WRAPPER HERE
     return (
-        // 👇 ADDED STANDARD LAYOUT WRAPPER
-        <div className="bg-slate-50 dark:bg-slate-950 min-h-screen p-4 sm:p-6 lg:p-8">
-            <div className="mx-auto w-full max-w-[1600px] pb-12">
-
-                <div className="mb-6 sm:mb-8">
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">University Requests</h1>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        See which universities students are requesting. Reach out to them to activate their workspace.
-                    </p>
-                </div>
-
-                {groupedRequests.length === 0 ? (
-                    <EmptyState
-                        icon={Building2}
-                        title="No requests yet"
-                        description="When students request a new university, it will show up here."
-                    />
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {groupedRequests.map((group, i) => (
-                            <motion.div key={group.name} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                                <Card className="p-5 flex flex-col h-full border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                                    <div className="flex items-start justify-between gap-3 mb-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
-                                                <Building2 className="h-5 w-5" />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">{group.name}</h3>
-                                                <p className="text-xs text-slate-500">{formatDateTime(group.latest)}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col items-center justify-center h-10 w-10 shrink-0 rounded-full bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 font-bold text-sm">
-                                            {group.emails.length}
-                                        </div>
-                                    </div>
-
-                                    <div className="flex-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 mb-4 max-h-32 overflow-y-auto space-y-1.5">
-                                        {group.emails.map((email, idx) => (
-                                            <div key={idx} className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-                                                <Mail className="h-3 w-3 shrink-0 text-slate-400" />
-                                                <span className="truncate">{email}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div className="flex items-center gap-2 mt-auto pt-2">
-                                        <Button
-                                            variant="secondary"
-                                            onClick={() => handleDeleteGroup(group.ids)}
-                                            disabled={processingId === group.ids[0]}
-                                            className="flex-1 text-xs"
-                                        >
-                                            {processingId === group.ids[0] ? 'Resolving...' : 'Resolve'}
-                                        </Button>
-                                        <Button
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(group.emails.join(', '))
-                                                push({ type: 'success', message: 'Emails copied to clipboard' })
-                                            }}
-                                            className="flex-1 text-xs"
-                                        >
-                                            Copy Emails
-                                        </Button>
-                                    </div>
-                                </Card>
-                            </motion.div>
-                        ))}
-                    </div>
-                )}
+        <div className="space-y-6 pb-12">
+            <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">University Requests</h1>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    See which universities students are requesting. Reach out to them to activate their workspace.
+                </p>
             </div>
+
+            {groupedRequests.length === 0 ? (
+                <EmptyState
+                    icon={Building2}
+                    title="No requests yet"
+                    description="When students request a new university, it will show up here."
+                />
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {groupedRequests.map((group, i) => (
+                        <motion.div key={group.name} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                            <Card className="p-5 flex flex-col h-full border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                                <div className="flex items-start justify-between gap-3 mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
+                                            <Building2 className="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">{group.name}</h3>
+                                            <p className="text-xs text-slate-500">{formatDateTime(group.latest)}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col items-center justify-center h-10 w-10 shrink-0 rounded-full bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 font-bold text-sm">
+                                        {group.emails.length}
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 mb-4 max-h-32 overflow-y-auto space-y-1.5">
+                                    {group.emails.map((email, idx) => (
+                                        <div key={idx} className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+                                            <Mail className="h-3 w-3 shrink-0 text-slate-400" />
+                                            <span className="truncate">{email}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="flex items-center gap-2 mt-auto pt-2">
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() => handleDeleteGroup(group.ids)}
+                                        disabled={processingId === group.ids[0]}
+                                        className="flex-1 text-xs"
+                                    >
+                                        {processingId === group.ids[0] ? 'Resolving...' : 'Resolve'}
+                                    </Button>
+                                    <Button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(group.emails.join(', '))
+                                            push({ type: 'success', message: 'Emails copied to clipboard' })
+                                        }}
+                                        className="flex-1 text-xs"
+                                    >
+                                        Copy Emails
+                                    </Button>
+                                </div>
+                            </Card>
+                        </motion.div>
+                    ))}
+                </div>
+            )}
         </div>
     )
 }
