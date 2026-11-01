@@ -25,13 +25,16 @@ public class GreetingScheduler {
     @Scheduled(cron = "0 0 8 * * *")
     public void sendDailyGreetings() {
         LocalDate today = LocalDate.now();
-        List<GreetingCampaign> campaigns = campaignRepository.findByScheduledDateAndIsSentFalse(today);
+
+        // 👇 USING THE UPDATED REPOSITORY METHOD
+        List<GreetingCampaign> campaigns = campaignRepository.findByScheduledDateAndSentFalse(today);
 
         if (campaigns.isEmpty()) {
             return;
         }
 
         log.info("Found {} greeting campaigns to send today.", campaigns.size());
+
         List<User> activeUsers = userRepository.findAll().stream()
                 .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                 .toList();
@@ -41,7 +44,6 @@ public class GreetingScheduler {
                 emailService.sendGreetingEmail(user, campaign.getTitle(), campaign.getMessage(), campaign.getImageUrl());
             }
 
-            // Mark as sent so it doesn't send again today
             campaign.setSent(true);
             campaignRepository.save(campaign);
             log.info("Greeting campaign '{}' sent successfully.", campaign.getTitle());

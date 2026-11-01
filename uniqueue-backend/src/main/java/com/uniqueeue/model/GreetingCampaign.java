@@ -6,24 +6,27 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "greeting_campaigns")
-@Data @Builder @NoArgsConstructor @AllArgsConstructor
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class GreetingCampaign {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private String title;
+    private String title; // e.g., "Happy Independence Day!"
 
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String message;
+    private String message; // The body text
 
-    private String imageUrl;
+    private String imageUrl; // A festive banner image (optional)
 
     @Column(nullable = false)
-    private LocalDate scheduledDate;
+    private LocalDate scheduledDate; // The exact date to send it
 
-    // 👇 RENAMED THIS FROM isSent TO sent
+    // 👇 RENAMED FROM isSent TO sent
     @Column(nullable = false)
     private boolean sent = false;
 }

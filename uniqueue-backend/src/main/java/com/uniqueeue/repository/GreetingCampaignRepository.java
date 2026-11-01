@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface GreetingCampaignRepository extends JpaRepository<GreetingCampaign, Long> {
-    List<GreetingCampaign> findByScheduledDateAndIsSentFalse(LocalDate date);
+    List<GreetingCampaign> findByScheduledDateAndSentFalse(LocalDate date);
 }
