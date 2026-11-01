@@ -50,13 +50,10 @@ function formatHours(minutes) {
 
 function WorkloadSkeleton() {
     return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="space-y-6 px-4 sm:px-6 pb-12">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
                 {Array.from({ length: 4 }).map((unusedValue, index) => (
-                    <div
-                        key={index}
-                        className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
-                    >
+                    <div key={index} className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-900">
                         <SkeletonBox className="h-3 w-20" />
                         <SkeletonBox className="mt-3 h-7 w-16" />
                         <SkeletonBox className="mt-2 h-3 w-24" />
@@ -71,31 +68,17 @@ function WorkloadSkeleton() {
 
 function SummaryTile({ label, value, hint, icon: Icon, accent, valueColor }) {
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-        >
-            <Card className="flex h-full flex-col">
-                <div className="flex items-start justify-between gap-3">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+            <Card className="flex h-full flex-col p-4 sm:p-5">
+                <div className="flex items-start justify-between gap-2 sm:gap-3">
                     <div className="min-w-0 flex-1">
-                        <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                            {label}
-                        </div>
-                        <div className={`mt-2 text-3xl font-bold tracking-tight ${valueColor}`}>
-                            {value}
-                        </div>
-                        {hint && (
-                            <div className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
-                                {hint}
-                            </div>
-                        )}
+                        <div className="text-[9px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</div>
+                        <div className={`mt-1 sm:mt-2 text-xl sm:text-3xl font-bold tracking-tight truncate ${valueColor}`}>{value}</div>
+                        {hint && <div className="mt-0.5 sm:mt-1 truncate text-[9px] sm:text-xs text-slate-500 dark:text-slate-400">{hint}</div>}
                     </div>
                     {Icon && (
-                        <div
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${accent}`}
-                        >
-                            <Icon className="h-5 w-5" />
+                        <div className={`flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg ${accent}`}>
+                            <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                         </div>
                     )}
                 </div>
@@ -107,128 +90,74 @@ function SummaryTile({ label, value, hint, icon: Icon, accent, valueColor }) {
 function QueueRow({ q: queue, showRatioBar }) {
     const stringValue = levelStyle(queue.level)
     return (
-        <div className="grid grid-cols-12 items-center gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0 dark:border-slate-800">
+        <div className="grid grid-cols-12 items-center gap-2 sm:gap-3 border-b border-slate-100 px-3 sm:px-4 py-2 sm:py-3 last:border-b-0 dark:border-slate-800 min-w-[500px]">
             <div className="col-span-4 min-w-0">
-                <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-                    {queue.queueName}
-                </div>
-                {!queue.isOpen && (
-                    <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                        Closed
-                    </div>
-                )}
+                <div className="truncate text-xs sm:text-sm font-medium text-slate-900 dark:text-slate-100">{queue.queueName}</div>
+                {!queue.isOpen && <div className="mt-0.5 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide text-slate-400">Closed</div>}
             </div>
-
-            <div className="col-span-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                {queue.waitingCount}
-            </div>
-
-            <div className="col-span-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                {queue.staffCount}
-            </div>
-
+            <div className="col-span-2 text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">{queue.waitingCount}</div>
+            <div className="col-span-2 text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">{queue.staffCount}</div>
             <div className="col-span-2">
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold tabular-nums text-slate-900 dark:text-slate-100">
-                        {queue.ratio.toFixed(1)}
-                    </span>
+                <div className="flex items-center gap-1 sm:gap-2">
+                    <span className="text-xs sm:text-sm font-bold tabular-nums text-slate-900 dark:text-slate-100">{queue.ratio.toFixed(1)}</span>
                     {showRatioBar && (
-                        <div className="h-1.5 w-10 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                            <div
-                                className={`h-full ${stringValue.bar}`}
-                                style={{
-                                    width: `${Math.min(100, (queue.ratio / 20) * 100)}%`,
-                                }}
-                            />
+                        <div className="h-1.5 w-8 sm:w-10 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                            <div className={`h-full ${stringValue.bar}`} style={{ width: `${Math.min(100, (queue.ratio / 20) * 100)}%` }} />
                         </div>
                     )}
                 </div>
             </div>
-
-            <div className="col-span-2 text-right text-xs font-medium text-slate-500 dark:text-slate-400">
-                {formatHours(queue.estWaitMinutes)}
-            </div>
+            <div className="col-span-2 text-right text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">{formatHours(queue.estWaitMinutes)}</div>
         </div>
     )
 }
 
 function OfficeCard({ office }) {
     const stringValueValue = levelStyle(office.level)
-    const criticalQueues = office.queues.filter(
-        (item) => item.level === 'CRITICAL' || item.level === 'HIGH'
-    ).length
+    const criticalQueues = office.queues.filter((item) => item.level === 'CRITICAL' || item.level === 'HIGH').length
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
             <Card padded={false}>
-                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-                    <div className="flex min-w-0 items-start gap-3">
-                        <div
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border ${stringValueValue.chip}`}
-                        >
-                            <Building2 className="h-5 w-5" />
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-slate-100 p-4 sm:px-5 sm:py-4 dark:border-slate-800">
+                    <div className="flex min-w-0 items-start gap-2 sm:gap-3">
+                        <div className={`flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg border ${stringValueValue.chip}`}>
+                            <Building2 className="h-4 w-4 sm:h-5 sm:w-5" />
                         </div>
                         <div className="min-w-0">
-                            <h3 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
-                                {office.officeName}
-                            </h3>
-                            <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-                                <span>
-                                    {office.queueCount}{' '}
-                                    {office.queueCount === 1 ? 'service' : 'services'}
-                                </span>
+                            <h3 className="truncate text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100">{office.officeName}</h3>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-0.5 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
+                                <span>{office.queueCount} services</span>
                                 <span className="text-slate-300 dark:text-slate-700">·</span>
-                                <span>
-                                    Ratio{' '}
-                                    <strong className="text-slate-700 dark:text-slate-300">
-                                        {office.ratio.toFixed(1)}
-                                    </strong>
-                                </span>
+                                <span>Ratio <strong className="text-slate-700 dark:text-slate-300">{office.ratio.toFixed(1)}</strong></span>
                                 <span className="text-slate-300 dark:text-slate-700">·</span>
-                                <span>
-                                    Est wait{' '}
-                                    <strong className="text-slate-700 dark:text-slate-300">
-                                        {formatHours(office.estWaitMinutes)}
-                                    </strong>
-                                </span>
+                                <span>Est wait <strong className="text-slate-700 dark:text-slate-300">{formatHours(office.estWaitMinutes)}</strong></span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex shrink-0 flex-col items-end gap-1">
-                        <span
-                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${stringValueValue.chip}`}
-                        >
-                            {office.level === 'CRITICAL' && (
-                                <AlertTriangle className="h-2.5 w-2.5" />
-                            )}
+                    <div className="flex shrink-0 flex-row sm:flex-col items-start sm:items-end gap-2 sm:gap-1 mt-2 sm:mt-0">
+                        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wide ${stringValueValue.chip}`}>
+                            {office.level === 'CRITICAL' && <AlertTriangle className="h-2.5 w-2.5" />}
                             {stringValueValue.label}
                         </span>
                         {criticalQueues > 0 && (
-                            <span className="text-[11px] font-medium text-rose-600 dark:text-rose-400">
-                                {criticalQueues}{' '}
-                                {criticalQueues === 1 ? 'queue' : 'queues'} hot
-                            </span>
+                            <span className="text-[9px] sm:text-[11px] font-medium text-rose-600 dark:text-rose-400">{criticalQueues} hot</span>
                         )}
                     </div>
                 </div>
 
-                <div className="grid grid-cols-12 gap-3 border-b border-slate-100 bg-slate-50/60 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
-                    <div className="col-span-4">Service</div>
-                    <div className="col-span-2">Waiting</div>
-                    <div className="col-span-2">Staff</div>
-                    <div className="col-span-2">Ratio</div>
-                    <div className="col-span-2 text-right">Est. wait</div>
-                </div>
-
-                <div>
-                    {office.queues.map((itemValue) => (
-                        <QueueRow key={itemValue.queueId} q={itemValue} showRatioBar />
-                    ))}
+                <div className="overflow-x-auto">
+                    <div className="grid grid-cols-12 gap-2 sm:gap-3 border-b border-slate-100 bg-slate-50/60 px-3 sm:px-4 py-2 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400 min-w-[500px]">
+                        <div className="col-span-4">Service</div>
+                        <div className="col-span-2">Waiting</div>
+                        <div className="col-span-2">Staff</div>
+                        <div className="col-span-2">Ratio</div>
+                        <div className="col-span-2 text-right">Est. wait</div>
+                    </div>
+                    <div>
+                        {office.queues.map((itemValue) => <QueueRow key={itemValue.queueId} q={itemValue} showRatioBar />)}
+                    </div>
                 </div>
             </Card>
         </motion.div>
@@ -244,199 +173,84 @@ export default function Workload() {
     const [search, setSearch] = useState('')
     const [levelFilter, setLevelFilter] = useState('ALL')
 
-    const load = useCallback(
-        async (silent = false) => {
-            if (!silent) setLoading(true)
-            else setRefreshing(true)
-            setError(null)
-            try {
-                const res = await api.get('/api/admin/workload')
-                setData(res.data?.data || null)
-            } catch (err) {
-                const msg = err.message || 'Failed to load workload'
-                setError(msg)
-                if (!silent) push({ type: 'error', message: msg })
-            } finally {
-                setLoading(false)
-                setRefreshing(false)
-            }
-        },
-        [push]
-    )
+    const load = useCallback(async (silent = false) => {
+        if (!silent) setLoading(true); else setRefreshing(true)
+        setError(null)
+        try {
+            const res = await api.get('/api/admin/workload')
+            setData(res.data?.data || null)
+        } catch (err) {
+            const msg = err.message || 'Failed to load workload'
+            setError(msg)
+            if (!silent) push({ type: 'error', message: msg })
+        } finally {
+            setLoading(false); setRefreshing(false)
+        }
+    }, [push])
 
-    useEffect(() => {
-        load()
-    }, [load])
-
+    useEffect(() => { load() }, [load])
     useAdaptivePoll(() => load(true), { fastMs: 15000, slowMs: 60000 })
 
     const filteredOffices = useMemo(() => {
         if (!data?.offices) return []
         let list = data.offices
-        if (levelFilter !== 'ALL') {
-            list = list.filter((item) => item.level === levelFilter)
-        }
+        if (levelFilter !== 'ALL') list = list.filter((item) => item.level === levelFilter)
         if (search.trim()) {
             const searchValue = search.toLowerCase()
-            list = list
-                .map((item) => {
-                    const nameMatch = item.officeName.toLowerCase().includes(searchValue)
-                    const matchingQueues = item.queues.filter((itemValue) =>
-                        itemValue.queueName.toLowerCase().includes(searchValue)
-                    )
-                    if (nameMatch) return item
-                    if (matchingQueues.length > 0) {
-                        return { ...item, queues: matchingQueues }
-                    }
-                    return null
-                })
-                .filter(Boolean)
+            list = list.map((item) => {
+                const nameMatch = item.officeName.toLowerCase().includes(searchValue)
+                const matchingQueues = item.queues.filter((itemValue) => itemValue.queueName.toLowerCase().includes(searchValue))
+                if (nameMatch) return item
+                if (matchingQueues.length > 0) return { ...item, queues: matchingQueues }
+                return null
+            }).filter(Boolean)
         }
         return list
     }, [data, search, levelFilter])
 
-    if (loading) {
-        return (
-            <>
-                <WorkloadSkeleton />
-            </>
-        )
-    }
+    if (loading) return <WorkloadSkeleton />
 
     if (error || !data) {
         return (
-            <>
-                <EmptyState
-                    icon={AlertTriangle}
-                    variant="danger"
-                    title="Couldn't load workload"
-                    description={error || 'Something went wrong.'}
-                    action={
-                        <button
-                            onClick={() => load()}
-                            className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
-                        >
-                            <RefreshCw className="h-3.5 w-3.5" />
-                            Try again
-                        </button>
-                    }
-                />
-            </>
+            <div className="px-4 sm:px-6 pb-12">
+                <EmptyState icon={AlertTriangle} variant="danger" title="Couldn't load workload" description={error || 'Something went wrong.'}
+                            action={<button onClick={() => load()} className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"><RefreshCw className="h-3.5 w-3.5" />Try again</button>} />
+            </div>
         )
     }
 
     const stringValueValue2 = data.summary
 
     return (
-        <>
-            <div className="mb-5 flex items-center justify-end gap-3">
-                <button
-                    onClick={() => load(true)}
-                    disabled={refreshing}
-                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                >
-                    <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                    Refresh
+        <div className="px-4 sm:px-6 pb-12">
+            <div className="mb-4 sm:mb-5 flex flex-col sm:flex-row sm:items-center justify-end gap-2 sm:gap-3">
+                <button onClick={() => load(true)} disabled={refreshing} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />Refresh
                 </button>
-                <ExportButton
-                    rows={(data?.offices || []).map((office) => ({
-                        officeId: office.officeId,
-                        officeName: office.officeName,
-                        queueCount: office.queueCount,
-                        waitingCount: office.waitingCount,
-                        staffCount: office.staffCount,
-                        ratio: office.ratio,
-                        estWaitMinutes: office.estWaitMinutes,
-                        level: office.level,
-                    }))}
-                    columns={[
-                        { key: 'officeId', label: 'Office ID' },
-                        { key: 'officeName', label: 'Office' },
-                        { key: 'queueCount', label: 'Services' },
-                        { key: 'waitingCount', label: 'Waiting' },
-                        { key: 'staffCount', label: 'Staff' },
-                        { key: 'ratio', label: 'Ratio (students / staff)' },
-                        { key: 'estWaitMinutes', label: 'Est. Wait (min)' },
-                        { key: 'level', label: 'Load Level' },
-                    ]}
-                    filename="uniqueue-workload"
-                    label="Export"
-                />
+                <ExportButton rows={(data?.offices || []).map((office) => ({ officeId: office.officeId, officeName: office.officeName, queueCount: office.queueCount, waitingCount: office.waitingCount, staffCount: office.staffCount, ratio: office.ratio, estWaitMinutes: office.estWaitMinutes, level: office.level }))} columns={[{ key: 'officeId', label: 'Office ID' }, { key: 'officeName', label: 'Office' }, { key: 'queueCount', label: 'Services' }, { key: 'waitingCount', label: 'Waiting' }, { key: 'staffCount', label: 'Staff' }, { key: 'ratio', label: 'Ratio (students / staff)' }, { key: 'estWaitMinutes', label: 'Est. Wait (min)' }, { key: 'level', label: 'Load Level' }]} filename="uniqueue-workload" label="Export" className="w-full sm:w-auto" />
             </div>
 
-            <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-                <SummaryTile
-                    label="Students waiting"
-                    value={stringValueValue2.totalWaiting}
-                    hint={`Across ${stringValueValue2.totalQueues} ${stringValueValue2.totalQueues === 1 ? 'service' : 'services'}`}
-                    icon={Users}
-                    accent="bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400"
-                    valueColor="text-brand-600 dark:text-brand-400"
-                />
-                <SummaryTile
-                    label="Staff assignments"
-                    value={stringValueValue2.totalStaff}
-                    hint="Staff-to-queue assignments"
-                    icon={Activity}
-                    accent="bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400"
-                    valueColor="text-sky-600 dark:text-sky-400"
-                />
-                <SummaryTile
-                    label="Worst office"
-                    value={stringValueValue2.worstOfficeName || '—'}
-                    hint={`${stringValueValue2.worstOfficeWaiting} waiting`}
-                    icon={TrendingUp}
-                    accent="bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
-                    valueColor="text-amber-600 dark:text-amber-400"
-                />
-                <SummaryTile
-                    label="Overall load"
-                    value={levelStyle(stringValueValue2.overallLevel).label}
-                    hint={`${data.offices.length} offices`}
-                    icon={AlertTriangle}
-                    accent={
-                        stringValueValue2.overallLevel === 'CRITICAL'
-                            ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
-                            : stringValueValue2.overallLevel === 'HIGH'
-                                ? 'bg-orange-50 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400'
-                                : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
-                    }
-                    valueColor={
-                        stringValueValue2.overallLevel === 'CRITICAL'
-                            ? 'text-rose-600 dark:text-rose-400'
-                            : stringValueValue2.overallLevel === 'HIGH'
-                                ? 'text-orange-600 dark:text-orange-400'
-                                : 'text-emerald-600 dark:text-emerald-400'
-                    }
-                />
+            <div className="mb-5 sm:mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                <SummaryTile label="Students waiting" value={stringValueValue2.totalWaiting} hint={`Across ${stringValueValue2.totalQueues} services`} icon={Users} accent="bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400" valueColor="text-brand-600 dark:text-brand-400" />
+                <SummaryTile label="Staff assignments" value={stringValueValue2.totalStaff} hint="Staff-to-queue assignments" icon={Activity} accent="bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400" valueColor="text-sky-600 dark:text-sky-400" />
+                <SummaryTile label="Worst office" value={stringValueValue2.worstOfficeName || '—'} hint={`${stringValueValue2.worstOfficeWaiting} waiting`} icon={TrendingUp} accent="bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400" valueColor="text-amber-600 dark:text-amber-400" />
+                <SummaryTile label="Overall load" value={levelStyle(stringValueValue2.overallLevel).label} hint={`${data.offices.length} offices`} icon={AlertTriangle}
+                             accent={stringValueValue2.overallLevel === 'CRITICAL' ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400' : stringValueValue2.overallLevel === 'HIGH' ? 'bg-orange-50 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'}
+                             valueColor={stringValueValue2.overallLevel === 'CRITICAL' ? 'text-rose-600 dark:text-rose-400' : stringValueValue2.overallLevel === 'HIGH' ? 'text-orange-600 dark:text-orange-400' : 'text-emerald-600 dark:text-emerald-400'} />
             </div>
 
             {data.offices.length > 0 && (
-                <div className="mb-5 flex flex-wrap items-center gap-3">
+                <div className="mb-4 sm:mb-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <div className="relative min-w-0 flex-1 sm:max-w-xs">
                         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(event) => setSearch(event.target.value)}
-                            placeholder="Search offices or services"
-                            className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
-                        />
+                        <input type="text" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search offices or services" className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500" />
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-1.5">
-                        <Filter className="mr-1 h-3.5 w-3.5 text-slate-400" />
+                    <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap pb-1 sm:pb-0 scrollbar-hide">
+                        <Filter className="mr-1 h-3.5 w-3.5 text-slate-400 shrink-0" />
                         {['ALL', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map((lvl) => (
-                            <button
-                                key={lvl}
-                                type="button"
-                                onClick={() => setLevelFilter(lvl)}
-                                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                                    levelFilter === lvl
-                                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                                        : 'bg-white text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
-                                }`}
-                            >
+                            <button key={lvl} type="button" onClick={() => setLevelFilter(lvl)}
+                                    className={`shrink-0 rounded-full px-3 py-1 text-[10px] sm:text-xs font-semibold transition-colors ${levelFilter === lvl ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-white text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'}`}>
                                 {lvl === 'ALL' ? 'All' : levelStyle(lvl).label}
                             </button>
                         ))}
@@ -445,36 +259,15 @@ export default function Workload() {
             )}
 
             {data.offices.length === 0 ? (
-                <EmptyState
-                    icon={Activity}
-                    variant="info"
-                    title="No workload data yet"
-                    description="Once you have services and staff assigned, this dashboard will show you where the pressure is."
-                />
+                <EmptyState icon={Activity} variant="info" title="No workload data yet" description="Once you have services and staff assigned, this dashboard will show you where the pressure is." />
             ) : filteredOffices.length === 0 ? (
-                <EmptyState
-                    icon={Search}
-                    title="No offices match"
-                    description="Try a different search term or clear the level filter."
-                    action={
-                        <button
-                            onClick={() => {
-                                setSearch('')
-                                setLevelFilter('ALL')
-                            }}
-                            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
-                        >
-                            Clear filters
-                        </button>
-                    }
-                />
+                <EmptyState icon={Search} title="No offices match" description="Try a different search term or clear the level filter."
+                            action={<button onClick={() => { setSearch(''); setLevelFilter('ALL') }} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100">Clear filters</button>} />
             ) : (
-                <div className="space-y-4">
-                    {filteredOffices.map((filteredOffice) => (
-                        <OfficeCard key={filteredOffice.officeId} office={filteredOffice} />
-                    ))}
+                <div className="space-y-3 sm:space-y-4">
+                    {filteredOffices.map((filteredOffice) => <OfficeCard key={filteredOffice.officeId} office={filteredOffice} />)}
                 </div>
             )}
-        </>
+        </div>
     )
 }
