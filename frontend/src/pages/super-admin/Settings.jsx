@@ -47,8 +47,7 @@ export default function Settings() {
     }
 
     return (
-        <div className="mx-auto max-w-3xl space-y-8 pb-12 pt-4">
-            {/* Page Header */}
+        <div className="mx-auto max-w-3xl space-y-6 sm:space-y-8 pb-12 pt-2 sm:pt-4 px-4 sm:px-6">
             <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                     Platform Settings
@@ -59,20 +58,20 @@ export default function Settings() {
             </div>
 
             <form onSubmit={save}>
-                <Card>
-                    <div className="mb-6 flex items-center gap-3 border-b border-slate-100 pb-5 dark:border-slate-800">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
-                            <DollarSign className="h-5 w-5" />
+                <Card className="p-4 sm:p-6">
+                    <div className="mb-5 sm:mb-6 flex items-center gap-3 border-b border-slate-100 pb-4 sm:pb-5 dark:border-slate-800">
+                        <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
+                            <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Currency Configuration</h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">Currency Configuration</h2>
+                            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                                 Used to calculate Naira equivalents on pricing pages across the app.
                             </p>
                         </div>
                     </div>
 
-                    <div className="max-w-md">
+                    <div className="w-full sm:max-w-md">
                         <Input
                             label="USD to NGN Exchange Rate"
                             type="number"
@@ -86,11 +85,11 @@ export default function Settings() {
                     </div>
                 </Card>
 
-                <div className="mt-6 flex justify-end gap-3">
-                    <Button type="button" variant="secondary" icon={RefreshCw} onClick={load} disabled={saving}>
+                <div className="mt-5 sm:mt-6 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
+                    <Button type="button" variant="secondary" icon={RefreshCw} onClick={load} disabled={saving} className="w-full sm:w-auto justify-center">
                         Reset
                     </Button>
-                    <Button type="submit" icon={Save} loading={saving} disabled={saving}>
+                    <Button type="submit" icon={Save} loading={saving} disabled={saving} className="w-full sm:w-auto justify-center">
                         Save Settings
                     </Button>
                 </div>
