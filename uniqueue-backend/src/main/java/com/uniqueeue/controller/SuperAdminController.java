@@ -13,8 +13,10 @@ import com.uniqueeue.dto.response.SystemAnalyticsResponse;
 import com.uniqueeue.dto.response.UniversityResponse;
 import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
+import com.uniqueeue.model.GreetingCampaign;
 import com.uniqueeue.model.UniversityRequest;
 import com.uniqueeue.model.User;
+import com.uniqueeue.repository.GreetingCampaignRepository;
 import com.uniqueeue.repository.UniversityRequestRepository;
 import com.uniqueeue.repository.UserRepository;
 import com.uniqueeue.security.JwtTokenProvider;
@@ -47,7 +49,8 @@ public class SuperAdminController {
     private final UserRepository userRepository;
     private final JwtTokenProvider tokenProvider;
     private final UniversityStarterPackService starterPackService;
-    private final UniversityRequestRepository universityRequestRepository; // 👈 Added
+    private final UniversityRequestRepository universityRequestRepository;
+    private final GreetingCampaignRepository greetingCampaignRepository;
 
     // ============================================================
     //  UNIVERSITIES
@@ -77,6 +80,23 @@ public class SuperAdminController {
             @Valid @RequestBody UpdateUniversityRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
                 "University updated", universityService.update(id, request)));
+    }
+
+    @GetMapping("/greetings")
+    public ResponseEntity<ApiResponse<List<GreetingCampaign>>> getGreetings() {
+        return ResponseEntity.ok(ApiResponse.success("Greetings", greetingCampaignRepository.findAll()));
+    }
+
+    @PostMapping("/greetings")
+    public ResponseEntity<ApiResponse<GreetingCampaign>> createGreeting(@RequestBody GreetingCampaign campaign) {
+        campaign.setSent(false);
+        return ResponseEntity.ok(ApiResponse.success("Greeting scheduled", greetingCampaignRepository.save(campaign)));
+    }
+
+    @DeleteMapping("/greetings/{id}")
+    public ResponseEntity<ApiResponse<Object>> deleteGreeting(@PathVariable Long id) {
+        greetingCampaignRepository.deleteById(id);
+        return ResponseEntity.ok(ApiResponse.success("Greeting deleted", null));
     }
 
     @PostMapping("/universities/{id}/seed-starter-pack")

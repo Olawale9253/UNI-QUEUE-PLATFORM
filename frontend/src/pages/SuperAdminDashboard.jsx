@@ -3,7 +3,7 @@ import {
     Building2, Users as UsersIcon, Activity,
     Settings as SettingsIcon,
     Shield, FileText, Megaphone, CreditCard, Clock,
-    MessageSquare, Bell
+    MessageSquare, Bell, Mail
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import PageHeader from '../components/layout/PageHeader'
@@ -22,6 +22,7 @@ import Plans from './super-admin/Plans'
 import Feedback from './super-admin/Feedback'
 import Notifications from './Notifications'
 import Profile from './Profile'
+import Greetings from './super-admin/Greetings'
 
 const tabs = [
     { to: '/super-admin/universities', label: 'Universities', icon: Building2 },
@@ -36,6 +37,7 @@ const tabs = [
     { to: '/super-admin/notifications', label: 'Notifications', icon: Bell },
     { to: '/super-admin/audit-logs', label: 'Audit Logs', icon: FileText },
     { to: '/super-admin/settings', label: 'Settings', icon: SettingsIcon },
+    { to: '/super-admin/greetings', label: 'Holiday Greetings', icon: Mail },
 ]
 
 export default function SuperAdminDashboard() {
@@ -67,7 +69,9 @@ export default function SuperAdminDashboard() {
                 <Route path="audit-logs" element={<AuditLogs />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="profile" element={<Profile />} />
+                <Route path="greetings" element={<Greetings />} />
                 <Route path="*" element={<Navigate to="/super-admin" replace />} />
+
             </Routes>
         </DashboardLayout>
     )

@@ -320,7 +320,6 @@ public class EmailService {
         }
     }
 
-    // 👇 NEW METHOD FOR BROADCASTS
     @Async
     @Transactional(readOnly = true)
     public void sendBroadcastEmail(User user, String title, String message) {
@@ -329,7 +328,6 @@ public class EmailService {
 
             User freshUser = userRepository.findById(user.getId()).orElse(user);
 
-            // Format line breaks from the textarea to HTML
             String formattedMessage = escape(message).replace("\n", "<br>");
 
             String html = wrap(freshUser, null, title,
@@ -339,6 +337,35 @@ public class EmailService {
             sendHtml(freshUser.getEmail(), title, html);
         } catch (Exception ex) {
             log.error("sendBroadcastEmail failed for {}: {}", user.getEmail(), ex.getMessage());
+        }
+    }
+
+    // 👇 NEW METHOD FOR GREETINGS
+    @Async
+    @Transactional(readOnly = true)
+    public void sendGreetingEmail(User user, String title, String message, String imageUrl) {
+        try {
+            if (user == null || user.getEmail() == null || user.getEmail().isBlank()) return;
+
+            User freshUser = userRepository.findById(user.getId()).orElse(user);
+            String formattedMessage = escape(message).replace("\n", "<br>");
+
+            // Build a custom HTML card
+            String cardHtml = "";
+            if (imageUrl != null && !imageUrl.isBlank()) {
+                cardHtml += "<div style='text-align: center; margin-bottom: 24px;'>" +
+                        "<img src='" + escape(imageUrl) + "' alt='Greeting' " +
+                        "style='width: 100%; max-width: 480px; border-radius: 12px; object-fit: cover;' />" +
+                        "</div>";
+            }
+
+            cardHtml += "<div style='text-align: center; font-size: 16px; line-height: 1.8; color: #334155;'>" + formattedMessage + "</div>";
+
+            String html = wrap(freshUser, null, title, cardHtml, null, "Open UniQueue", baseUrl);
+
+            sendHtml(freshUser.getEmail(), "🎉 " + title, html);
+        } catch (Exception ex) {
+            log.error("sendGreetingEmail failed for {}: {}", user.getEmail(), ex.getMessage());
         }
     }
 
