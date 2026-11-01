@@ -41,19 +41,19 @@ export default function PendingVerification() {
     const rejected = status === 'REJECTED'
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 dark:bg-slate-950">
-            <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8 sm:py-12 dark:bg-slate-950">
+            <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 text-center shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900">
                 <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${
-                    rejected ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'
+                    rejected ? 'bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400' : 'bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
                 }`}>
                     {rejected ? <XCircle className="h-6 w-6" /> : <Clock className="h-6 w-6" />}
                 </div>
 
-                <h1 className="mt-5 text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                <h1 className="mt-5 text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                     {rejected ? 'Registration not approved' : 'Your account is pending verification'}
                 </h1>
 
-                <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                     {rejected
                         ? <>Your registration was reviewed and not approved. {reason && <><br/><br/>Reason: <em>{reason}</em></>}</>
                         : <>An administrator at {user?.universityName || 'your university'} needs to verify your details. You'll get access as soon as they do — usually within a few hours.</>
@@ -65,7 +65,7 @@ export default function PendingVerification() {
                         type="button"
                         onClick={check}
                         disabled={checking}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-60"
+                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 py-2.5 text-xs sm:text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-60"
                     >
                         <RefreshCw className={`h-4 w-4 ${checking ? 'animate-spin' : ''}`} />
                         {checking ? 'Checking…' : 'Check status'}
@@ -74,14 +74,14 @@ export default function PendingVerification() {
                     <button
                         type="button"
                         onClick={handleLogout}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-2.5 text-xs sm:text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                     >
                         <LogOut className="h-4 w-4" />
                         Sign out
                     </button>
                 </div>
 
-                <p className="mt-6 text-[11px] text-slate-400">
+                <p className="mt-6 text-[10px] sm:text-[11px] text-slate-400">
                     Need help? <Link to="/" className="underline">Contact support</Link>
                 </p>
             </div>

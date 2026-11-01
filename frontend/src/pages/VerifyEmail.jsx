@@ -2,13 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-    Mail,
-    ShieldCheck,
-    Loader2,
-    CheckCircle2,
-    AlertCircle,
-    ArrowRight,
-    RefreshCw,
+    Mail, ShieldCheck, Loader2, CheckCircle2, AlertCircle, ArrowRight, RefreshCw,
 } from 'lucide-react'
 import api from '../api/axios'
 import { useToastStore } from '../store/toastStore'
@@ -99,7 +93,6 @@ export default function VerifyEmail() {
         setResending(true)
         setError(null)
         try {
-            // 🔧 FIX: 15-second timeout to prevent infinite spinning
             await api.post('/api/auth/resend-verification', {
                 email: email.trim(),
             }, { timeout: 15000 })
@@ -111,7 +104,6 @@ export default function VerifyEmail() {
             })
             codeInputRef.current?.focus()
         } catch (err) {
-            // 🔧 FIX: Catch timeout or 500 errors gracefully
             if (err.code === 'ECONNABORTED') {
                 setError('The server took too long to respond. Please try again later.')
             } else if (err.response?.status === 500) {
@@ -127,12 +119,12 @@ export default function VerifyEmail() {
     // ── SUCCESS STATE ──
     if (success) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 dark:bg-slate-950">
+            <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8 sm:py-12 dark:bg-slate-950">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                    className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-lg dark:border-slate-800 dark:bg-slate-900"
+                    className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 text-center shadow-lg dark:border-slate-800 dark:bg-slate-900"
                 >
                     <motion.div
                         initial={{ scale: 0.5, opacity: 0 }}
@@ -143,14 +135,14 @@ export default function VerifyEmail() {
                         <CheckCircle2 className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
                     </motion.div>
 
-                    <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                    <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">
                         Email verified!
                     </h1>
-                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                    <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                         Redirecting you to your dashboard…
                     </p>
 
-                    <div className="mt-5 flex items-center justify-center gap-2 text-xs text-slate-400">
+                    <div className="mt-5 flex items-center justify-center gap-2 text-[10px] sm:text-xs text-slate-400">
                         <Loader2 className="h-3 w-3 animate-spin" />
                         Just a moment
                     </div>
@@ -161,24 +153,24 @@ export default function VerifyEmail() {
 
     // ── FORM STATE ──
     return (
-        <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 dark:bg-slate-950">
+        <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8 sm:py-12 dark:bg-slate-950">
             <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
                 className="w-full max-w-md"
             >
-                <div className="mb-6 flex justify-center">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 shadow-lg shadow-brand-500/30">
-                        <ShieldCheck className="h-7 w-7 text-white" />
+                <div className="mb-4 sm:mb-6 flex justify-center">
+                    <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-brand-600 shadow-lg shadow-brand-500/30">
+                        <ShieldCheck className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                     </div>
                 </div>
 
-                <div className="mb-8 text-center">
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                <div className="mb-6 sm:mb-8 text-center">
+                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                         Check your email
                     </h1>
-                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                    <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                         We sent a 6-digit verification code to{' '}
                         {passedEmail ? (
                             <strong className="text-slate-700 dark:text-slate-300">
@@ -191,9 +183,9 @@ export default function VerifyEmail() {
                     </p>
                 </div>
 
-                <form onSubmit={verify} className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <form onSubmit={verify} className="space-y-3 sm:space-y-4 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                     <div>
-                        <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                        <label className="mb-1.5 block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
                             Email address
                         </label>
                         <div className="relative">
@@ -205,13 +197,13 @@ export default function VerifyEmail() {
                                 placeholder="Enter your email"
                                 required
                                 disabled={loading}
-                                className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                                className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                        <label className="mb-1.5 block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
                             Verification code
                         </label>
                         <input
@@ -224,12 +216,12 @@ export default function VerifyEmail() {
                             required
                             disabled={loading}
                             autoFocus
-                            className="w-full rounded-lg border border-slate-200 bg-white py-3 text-center font-mono text-2xl tracking-[0.5em] text-slate-900 placeholder-slate-300 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-600"
+                            className="w-full rounded-lg border border-slate-200 bg-white py-3 text-center font-mono text-xl sm:text-2xl tracking-[0.5em] text-slate-900 placeholder-slate-300 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-600"
                         />
                     </div>
 
                     {error && (
-                        <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
+                        <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2.5 sm:p-3 text-[10px] sm:text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
                             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                             <span>{error}</span>
                         </div>
@@ -238,7 +230,7 @@ export default function VerifyEmail() {
                     <button
                         type="submit"
                         disabled={loading || code.length < 6}
-                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 py-3 text-xs sm:text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {loading ? (
                             <>
@@ -253,7 +245,7 @@ export default function VerifyEmail() {
                         )}
                     </button>
 
-                    <div className="flex items-center justify-between pt-2 text-xs">
+                    <div className="flex items-center justify-between pt-2 text-[10px] sm:text-xs">
                         <span className="text-slate-500 dark:text-slate-400">
                             Didn't receive the code?
                         </span>
@@ -273,7 +265,7 @@ export default function VerifyEmail() {
                     </div>
                 </form>
 
-                <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+                <p className="mt-6 text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                     Already verified?{' '}
                     <Link
                         to="/login"
