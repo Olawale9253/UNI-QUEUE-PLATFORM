@@ -47,13 +47,13 @@ function Toggle({ checked, onChange }) {
         <button
             type="button"
             onClick={() => onChange(!checked)}
-            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
+            className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
                 checked ? 'bg-brand-600' : 'bg-slate-200 dark:bg-slate-700'
             }`}
         >
             <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    checked ? 'translate-x-5' : 'translate-x-0'
+                className={`pointer-events-none inline-block h-3.5 w-3.5 sm:h-5 sm:w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    checked ? 'translate-x-4 sm:translate-x-5' : 'translate-x-0'
                 }`}
             />
         </button>
@@ -155,7 +155,7 @@ export default function Settings() {
 
     if (loading) {
         return (
-            <div className="space-y-6 pb-12">
+            <div className="space-y-6 pb-12 px-4 sm:px-6">
                 <div className="h-10 w-1/3 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
                 {[1, 2, 3, 4, 5].map((index) => (
                     <div key={index} className="h-48 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800/50" />
@@ -165,316 +165,201 @@ export default function Settings() {
     }
 
     return (
-        <div className="space-y-6 pb-12">
+        <div className="space-y-6 pb-24 px-4 sm:px-6">
             <form onSubmit={save} className="space-y-6">
 
-                {/* NOTIFICATIONS (NEW) */}
-                <Card>
+                <Card className="p-4 sm:p-6">
                     <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40 shrink-0">
                             <Bell className="h-4 w-4 text-brand-600 dark:text-brand-400" />
                         </div>
                         <div>
-                            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Notifications</h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">How you want to be alerted.</p>
+                            <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100">Notifications</h2>
+                            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">How you want to be alerted.</p>
                         </div>
                     </div>
 
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between rounded-lg border border-slate-200 p-4 dark:border-slate-700">
+                    <div className="space-y-3 sm:space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700">
                             <div>
-                                <div className="text-sm font-medium text-slate-900 dark:text-slate-100">In-app toasts</div>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">Show a message in the corner of the screen when something happens.</p>
+                                <div className="text-xs sm:text-sm font-medium text-slate-900 dark:text-slate-100">In-app toasts</div>
+                                <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">Show a message in the corner of the screen when something happens.</p>
                             </div>
                             <Toggle checked={prefs.soundEnabled} onChange={(v) => updatePrefs({ soundEnabled: v })} />
                         </div>
 
-                        <div className="flex items-center justify-between rounded-lg border border-slate-200 p-4 dark:border-slate-700">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700">
                             <div>
-                                <div className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-slate-100">
+                                <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-900 dark:text-slate-100">
                                     <Volume2 className="h-4 w-4 text-slate-400" />
                                     Sound alerts
                                 </div>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">Play a chime when a new notification arrives.</p>
+                                <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">Play a chime when a new notification arrives.</p>
                             </div>
                             <Toggle checked={prefs.soundEnabled} onChange={(v) => updatePrefs({ soundEnabled: v })} />
                         </div>
                     </div>
                 </Card>
 
-                {/* BRANDING */}
-                <Card>
+                <Card className="p-4 sm:p-6">
                     <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40 shrink-0">
                             <Palette className="h-4 w-4 text-brand-600 dark:text-brand-400" />
                         </div>
                         <div>
-                            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Branding</h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">Logo, brand color, and campus photo.</p>
+                            <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100">Branding</h2>
+                            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">Logo, brand color, and campus photo.</p>
                         </div>
                     </div>
 
-                    <Input
-                        label="University name"
-                        value={form.name}
-                        onChange={setField('name')}
-                        placeholder="University of Lagos"
-                        required
-                        icon={Building2}
-                    />
-                    <Input
-                        label="Tagline"
-                        value={form.tagline}
-                        onChange={setField('tagline')}
-                        placeholder="Skip the line. Not the service."
-                        hint="Shown on the login page hero."
-                    />
+                    <Input label="University name" value={form.name} onChange={setField('name')} placeholder="University of Lagos" required icon={Building2} />
+                    <Input label="Tagline" value={form.tagline} onChange={setField('tagline')} placeholder="Skip the line. Not the service." hint="Shown on the login page hero." />
 
-                    <div className="mt-4 rounded-xl border border-slate-200 p-4 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-800/30">
-                        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                            <Palette className="h-4 w-4 text-slate-500" />
-                            Brand Color
+                    <div className="mt-4 rounded-xl border border-slate-200 p-3 sm:p-4 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-800/30">
+                        <label className="mb-2 flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            <Palette className="h-4 w-4 text-slate-500" /> Brand Color
                         </label>
-                        <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">
-                            This color is used for buttons, active tabs, and highlights across your entire workspace.
-                        </p>
-                        <div className="flex flex-wrap items-center gap-4">
-                            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl shadow-sm ring-1 ring-slate-900/10">
-                                <input
-                                    type="color"
-                                    value={form.primaryColor}
-                                    onChange={setField('primaryColor')}
-                                    className="absolute -left-2 -top-2 h-20 w-20 cursor-pointer border-0 p-0"
-                                />
+                        <p className="mb-4 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">This color is used for buttons, active tabs, and highlights across your entire workspace.</p>
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                            <div className="relative h-10 w-10 sm:h-12 sm:w-12 shrink-0 overflow-hidden rounded-xl shadow-sm ring-1 ring-slate-900/10">
+                                <input type="color" value={form.primaryColor} onChange={setField('primaryColor')} className="absolute -left-2 -top-2 h-20 w-20 cursor-pointer border-0 p-0" />
                             </div>
-                            <div className="flex-1 min-w-[200px]">
+                            <div className="flex-1 min-w-[150px]">
                                 <div className="relative">
-                                    <span className="absolute inset-y-0 left-3 flex items-center text-sm font-medium text-slate-400">#</span>
-                                    <input
-                                        type="text"
-                                        value={form.primaryColor.replace('#', '')}
-                                        onChange={(e) => setForm({ ...form, primaryColor: `#${e.target.value}` })}
-                                        maxLength={6}
-                                        className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-8 pr-3 font-mono text-sm uppercase text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                                    />
+                                    <span className="absolute inset-y-0 left-3 flex items-center text-xs sm:text-sm font-medium text-slate-400">#</span>
+                                    <input type="text" value={form.primaryColor.replace('#', '')} onChange={(e) => setForm({ ...form, primaryColor: `#${e.target.value}` })} maxLength={6} className="w-full rounded-lg border border-slate-200 bg-white py-2 sm:py-2.5 pl-7 sm:pl-8 pr-3 font-mono text-xs sm:text-sm uppercase text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <ImageUrlInput
-                            label="University logo URL"
-                            value={form.logoUrl}
-                            onChange={(url) => setForm({ ...form, logoUrl: url })}
-                            placeholder="https://unilag.edu.ng/logo.png"
-                            hint="Paste your school's logo URL."
-                            previewHeight="h-32"
-                        />
-                        <ImageUrlInput
-                            label="Campus photo URL"
-                            value={form.campusImageUrl}
-                            onChange={(url) => setForm({ ...form, campusImageUrl: url })}
-                            placeholder="https://unilag.edu.ng/campus.jpg"
-                            hint="Paste any public image URL of your campus."
-                            previewHeight="h-32"
-                        />
+                        <ImageUrlInput label="University logo URL" value={form.logoUrl} onChange={(url) => setForm({ ...form, logoUrl: url })} placeholder="https://unilag.edu.ng/logo.png" hint="Paste your school's logo URL." previewHeight="h-32" />
+                        <ImageUrlInput label="Campus photo URL" value={form.campusImageUrl} onChange={(url) => setForm({ ...form, campusImageUrl: url })} placeholder="https://unilag.edu.ng/campus.jpg" hint="Paste any public image URL of your campus." previewHeight="h-32" />
                     </div>
                 </Card>
 
-                {/* SCHEDULE & CLOSED DATES */}
-                <Card>
+                <Card className="p-4 sm:p-6">
                     <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40 shrink-0">
                             <CalendarX className="h-4 w-4 text-brand-600 dark:text-brand-400" />
                         </div>
                         <div>
-                            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Schedule</h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                Time zone, country, and days when your university is closed.
-                            </p>
+                            <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100">Schedule</h2>
+                            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">Time zone, country, and days when your university is closed.</p>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
                         <div>
-                            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                University time zone
-                            </label>
-                            <select
-                                value={form.timezone}
-                                onChange={setField('timezone')}
-                                className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                            >
-                                {TIMEZONES.map((tz) => (
-                                    <option key={tz.value} value={tz.value}>{tz.label}</option>
-                                ))}
+                            <label className="mb-1.5 block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">University time zone</label>
+                            <select value={form.timezone} onChange={setField('timezone')} className="w-full rounded-lg border border-slate-200 bg-white px-3 sm:px-3.5 py-2 sm:py-2.5 text-xs sm:text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+                                {TIMEZONES.map((tz) => (<option key={tz.value} value={tz.value}>{tz.label}</option>))}
                             </select>
                         </div>
-
                         <div>
-                            <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
-                                <Globe className="h-3.5 w-3.5 text-slate-400" />
-                                Country (public holidays)
+                            <label className="mb-1.5 flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+                                <Globe className="h-3.5 w-3.5 text-slate-400" /> Country (public holidays)
                             </label>
-                            <select
-                                value={form.countryCode || 'NG'}
-                                onChange={setField('countryCode')}
-                                className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                            >
-                                {COUNTRIES.map((item) => (
-                                    <option key={item.value} value={item.value}>{item.label}</option>
-                                ))}
+                            <select value={form.countryCode || 'NG'} onChange={setField('countryCode')} className="w-full rounded-lg border border-slate-200 bg-white px-3 sm:px-3.5 py-2 sm:py-2.5 text-xs sm:text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+                                {COUNTRIES.map((item) => (<option key={item.value} value={item.value}>{item.label}</option>))}
                             </select>
                         </div>
                     </div>
 
-                    <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
+                    <div className="mt-4 sm:mt-6 border-t border-slate-100 pt-4 sm:pt-6 dark:border-slate-800">
                         <div className="mb-4">
-                            <div className="text-sm font-medium text-slate-900 dark:text-slate-100">Closed dates</div>
-                            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                                Public holidays and other days when the university is closed.
-                            </p>
+                            <div className="text-xs sm:text-sm font-medium text-slate-900 dark:text-slate-100">Closed dates</div>
+                            <p className="mt-0.5 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">Public holidays and other days when the university is closed.</p>
                         </div>
                         <ClosedDatesPanel />
                     </div>
                 </Card>
 
-                {/* REGISTRATION RULES */}
-                <Card>
+                <Card className="p-4 sm:p-6">
                     <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40 shrink-0">
                             <GraduationCap className="h-4 w-4 text-brand-600 dark:text-brand-400" />
                         </div>
                         <div>
-                            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Registration rules</h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">How continuing students validate their identity.</p>
+                            <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100">Registration rules</h2>
+                            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">How continuing students validate their identity.</p>
                         </div>
                     </div>
 
-                    <Input
-                        label="Email domain"
-                        value={form.emailDomain}
-                        onChange={setField('emailDomain')}
-                        placeholder="@unilag.edu.ng"
-                        hint="Only emails ending with this are accepted for continuing students."
-                    />
-                    <Input
-                        label="Matric number pattern (regex)"
-                        value={form.matricPattern}
-                        onChange={setField('matricPattern')}
-                        placeholder="^\d{2}/\d{5}/\d{3}$"
-                        hint="Format enforced when students submit a matric."
-                    />
+                    <Input label="Email domain" value={form.emailDomain} onChange={setField('emailDomain')} placeholder="@unilag.edu.ng" hint="Only emails ending with this are accepted for continuing students." />
+                    <Input label="Matric number pattern (regex)" value={form.matricPattern} onChange={setField('matricPattern')} placeholder="^\d{2}/\d{5}/\d{3}$" hint="Format enforced when students submit a matric." />
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
                         <Input label="Matric example" value={form.matricExample} onChange={setField('matricExample')} placeholder="21/12345/001" />
                         <Input label="Matric format description" value={form.matricDescription} onChange={setField('matricDescription')} placeholder="YY/XXXXX/XXX" />
                     </div>
 
-                    <div className="mt-5 rounded-lg border border-slate-200 p-4 dark:border-slate-700">
-                        <label className="mb-2 block text-sm font-medium text-slate-900 dark:text-slate-100">
-                            Matric verification mode
-                        </label>
+                    <div className="mt-4 sm:mt-5 rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700">
+                        <label className="mb-2 block text-xs sm:text-sm font-medium text-slate-900 dark:text-slate-100">Matric verification mode</label>
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
                             {[
-                                { v: 'OPEN',    label: 'Open',    hint: 'Auto-verify everyone' },
+                                { v: 'OPEN', label: 'Open', hint: 'Auto-verify everyone' },
                                 { v: 'PATTERN', label: 'Pattern', hint: 'Regex only. Queue for review.' },
-                                { v: 'LIST',    label: 'Registry',hint: 'Must match uploaded list' },
-                                { v: 'BOTH',    label: 'Both',    hint: 'Regex + registry match' },
+                                { v: 'LIST', label: 'Registry', hint: 'Must match uploaded list' },
+                                { v: 'BOTH', label: 'Both', hint: 'Regex + registry match' },
                             ].map((verificationOption) => (
                                 <button
                                     key={verificationOption.v}
                                     type="button"
                                     onClick={() => setForm({ ...form, matricVerificationMode: verificationOption.v })}
-                                    className={`rounded-lg border p-3 text-left transition-colors ${
-                                        form.matricVerificationMode === verificationOption.v
-                                            ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/40'
-                                            : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600'
-                                    }`}
+                                    className={`rounded-lg border p-2 sm:p-3 text-left transition-colors ${form.matricVerificationMode === verificationOption.v ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/40' : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600'}`}
                                 >
-                                    <div className={`text-sm font-semibold ${
-                                        form.matricVerificationMode === verificationOption.v ? 'text-brand-700 dark:text-brand-300' : 'text-slate-900 dark:text-slate-100'
-                                    }`}>
-                                        {verificationOption.label}
-                                    </div>
-                                    <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{verificationOption.hint}</div>
+                                    <div className={`text-xs sm:text-sm font-semibold ${form.matricVerificationMode === verificationOption.v ? 'text-brand-700 dark:text-brand-300' : 'text-slate-900 dark:text-slate-100'}`}>{verificationOption.label}</div>
+                                    <div className="mt-0.5 text-[9px] sm:text-[11px] text-slate-500 dark:text-slate-400">{verificationOption.hint}</div>
                                 </button>
                             ))}
                         </div>
                     </div>
                 </Card>
 
-                {/* FRESHER REGISTRATION */}
-                <Card>
+                <Card className="p-4 sm:p-6">
                     <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40 shrink-0">
                             <Sparkles className="h-4 w-4 text-brand-600 dark:text-brand-400" />
                         </div>
                         <div>
-                            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Fresher registration</h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">How new students register before they get a matric number.</p>
+                            <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100">Fresher registration</h2>
+                            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">How new students register before they get a matric number.</p>
                         </div>
                     </div>
 
-                    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
-                        <input
-                            type="checkbox"
-                            checked={form.fresherRegistrationEnabled}
-                            onChange={setCheck('fresherRegistrationEnabled')}
-                            className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-brand-600 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]"
-                        />
+                    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                        <input type="checkbox" checked={form.fresherRegistrationEnabled} onChange={setCheck('fresherRegistrationEnabled')} className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-brand-600 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]" />
                         <div>
-                            <div className="text-sm font-medium text-slate-900 dark:text-slate-100">Allow fresher registration</div>
-                            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                                Freshers register with their JAMB / admission info and can
-                                access fresher-friendly queues.
-                            </p>
+                            <div className="text-xs sm:text-sm font-medium text-slate-900 dark:text-slate-100">Allow fresher registration</div>
+                            <p className="mt-0.5 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">Freshers register with their JAMB / admission info and can access fresher-friendly queues.</p>
                         </div>
                     </label>
 
                     {form.fresherRegistrationEnabled && (
                         <>
-                            <div className="mt-5">
-                                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Verification mode</label>
+                            <div className="mt-4 sm:mt-5">
+                                <label className="mb-2 block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">Verification mode</label>
                                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                                     {VERIFICATION_MODES.map((itemValue) => (
-                                        <button
-                                            key={itemValue.value}
-                                            type="button"
-                                            onClick={() => setForm({ ...form, fresherVerificationMode: itemValue.value })}
-                                            className={`rounded-lg border p-3 text-left transition-colors ${
-                                                form.fresherVerificationMode === itemValue.value
-                                                    ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/40'
-                                                    : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600'
-                                            }`}
-                                        >
-                                            <div className={`text-sm font-semibold ${form.fresherVerificationMode === itemValue.value ? 'text-brand-700 dark:text-brand-300' : 'text-slate-900 dark:text-slate-100'}`}>
-                                                {itemValue.label}
-                                            </div>
-                                            <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{itemValue.hint}</div>
+                                        <button key={itemValue.value} type="button" onClick={() => setForm({ ...form, fresherVerificationMode: itemValue.value })} className={`rounded-lg border p-2 sm:p-3 text-left transition-colors ${form.fresherVerificationMode === itemValue.value ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/40' : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600'}`}>
+                                            <div className={`text-xs sm:text-sm font-semibold ${form.fresherVerificationMode === itemValue.value ? 'text-brand-700 dark:text-brand-300' : 'text-slate-900 dark:text-slate-100'}`}>{itemValue.label}</div>
+                                            <div className="mt-0.5 text-[9px] sm:text-xs text-slate-500 dark:text-slate-400">{itemValue.hint}</div>
                                         </button>
                                     ))}
                                 </div>
                             </div>
 
-                            <div className="mt-5 rounded-lg border border-slate-200 p-4 dark:border-slate-700">
+                            <div className="mt-4 sm:mt-5 rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700">
                                 <label className="flex cursor-pointer items-start gap-3">
-                                    <input
-                                        type="checkbox"
-                                        checked={form.requireJambReg}
-                                        onChange={setCheck('requireJambReg')}
-                                        className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-brand-600 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]"
-                                    />
+                                    <input type="checkbox" checked={form.requireJambReg} onChange={setCheck('requireJambReg')} className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-brand-600 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]" />
                                     <div className="flex-1">
-                                        <div className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-slate-100">
-                                            <FileText className="h-3.5 w-3.5 text-slate-400" />
-                                            Require JAMB registration number
-                                        </div>
+                                        <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-900 dark:text-slate-100"><FileText className="h-3.5 w-3.5 text-slate-400" /> Require JAMB registration number</div>
                                     </div>
                                 </label>
                                 {form.requireJambReg && (
-                                    <div className="mt-3 grid grid-cols-1 gap-3 pl-7 sm:grid-cols-3">
+                                    <div className="mt-3 grid grid-cols-1 gap-3 pl-0 sm:pl-7 sm:grid-cols-3">
                                         <Input label="Pattern (regex)" value={form.jambRegPattern} onChange={setField('jambRegPattern')} placeholder="^\d{10}$" />
                                         <Input label="Example" value={form.jambRegExample} onChange={setField('jambRegExample')} placeholder="2025123456" />
                                         <Input label="Description" value={form.jambRegDescription} onChange={setField('jambRegDescription')} placeholder="10-digit number" />
@@ -482,23 +367,15 @@ export default function Settings() {
                                 )}
                             </div>
 
-                            <div className="mt-3 rounded-lg border border-slate-200 p-4 dark:border-slate-700">
+                            <div className="mt-3 rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700">
                                 <label className="flex cursor-pointer items-start gap-3">
-                                    <input
-                                        type="checkbox"
-                                        checked={form.requireAdmissionRef}
-                                        onChange={setCheck('requireAdmissionRef')}
-                                        className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-brand-600 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]"
-                                    />
+                                    <input type="checkbox" checked={form.requireAdmissionRef} onChange={setCheck('requireAdmissionRef')} className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-brand-600 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]" />
                                     <div className="flex-1">
-                                        <div className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-slate-100">
-                                            <FileText className="h-3.5 w-3.5 text-slate-400" />
-                                            Require admission reference number
-                                        </div>
+                                        <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-900 dark:text-slate-100"><FileText className="h-3.5 w-3.5 text-slate-400" /> Require admission reference number</div>
                                     </div>
                                 </label>
                                 {form.requireAdmissionRef && (
-                                    <div className="mt-3 grid grid-cols-1 gap-3 pl-7 sm:grid-cols-3">
+                                    <div className="mt-3 grid grid-cols-1 gap-3 pl-0 sm:pl-7 sm:grid-cols-3">
                                         <Input label="Pattern (regex)" value={form.admissionRefPattern} onChange={setField('admissionRefPattern')} placeholder="^ADM/\d{4}/\d{5}$" />
                                         <Input label="Example" value={form.admissionRefExample} onChange={setField('admissionRefExample')} placeholder="ADM/2025/00123" />
                                         <Input label="Description" value={form.admissionRefDescription} onChange={setField('admissionRefDescription')} placeholder="ADM/YYYY/NNNNN" />
@@ -506,23 +383,15 @@ export default function Settings() {
                                 )}
                             </div>
 
-                            <div className="mt-3 rounded-lg border border-slate-200 p-4 dark:border-slate-700">
+                            <div className="mt-3 rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700">
                                 <label className="flex cursor-pointer items-start gap-3">
-                                    <input
-                                        type="checkbox"
-                                        checked={form.requireApplicationNumber}
-                                        onChange={setCheck('requireApplicationNumber')}
-                                        className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-brand-600 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]"
-                                    />
+                                    <input type="checkbox" checked={form.requireApplicationNumber} onChange={setCheck('requireApplicationNumber')} className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-brand-600 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]" />
                                     <div className="flex-1">
-                                        <div className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-slate-100">
-                                            <Hash className="h-3.5 w-3.5 text-slate-400" />
-                                            Require application number
-                                        </div>
+                                        <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-900 dark:text-slate-100"><Hash className="h-3.5 w-3.5 text-slate-400" /> Require application number</div>
                                     </div>
                                 </label>
                                 {form.requireApplicationNumber && (
-                                    <div className="mt-3 grid grid-cols-1 gap-3 pl-7 sm:grid-cols-3">
+                                    <div className="mt-3 grid grid-cols-1 gap-3 pl-0 sm:pl-7 sm:grid-cols-3">
                                         <Input label="Pattern (regex)" value={form.applicationNumberPattern} onChange={setField('applicationNumberPattern')} placeholder="^APP-\d{4}-\d{5}$" />
                                         <Input label="Example" value={form.applicationNumberExample} onChange={setField('applicationNumberExample')} placeholder="APP-2025-00123" />
                                         <Input label="Description" value={form.applicationNumberDescription} onChange={setField('applicationNumberDescription')} placeholder="APP-YYYY-NNNNN" />
@@ -533,28 +402,25 @@ export default function Settings() {
                     )}
                 </Card>
 
-                {/* LIMITS */}
-                <Card>
+                <Card className="p-4 sm:p-6">
                     <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-950/40 shrink-0">
                             <Users className="h-4 w-4 text-brand-600 dark:text-brand-400" />
                         </div>
                         <div>
-                            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Account limits</h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">Maximum staff members and queues.</p>
+                            <h2 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100">Account limits</h2>
+                            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">Maximum staff members and queues.</p>
                         </div>
                     </div>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
                         <Input label="Max staff members" type="number" min="1" value={form.maxStaff} onChange={setField('maxStaff')} />
                         <Input label="Max active queues" type="number" min="1" value={form.maxQueues} onChange={setField('maxQueues')} />
                     </div>
                 </Card>
 
-                <div className="sticky bottom-0 -mx-4 flex items-center justify-end gap-3 border-t border-slate-200 bg-white/90 px-4 py-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 sm:-mx-6 sm:px-6">
-                    <Button type="button" variant="secondary" icon={RefreshCw} onClick={load} disabled={saving}>Reset</Button>
-                    <Button type="submit" icon={Save} loading={saving} disabled={saving}>
-                        {saving ? 'Saving…' : 'Save changes'}
-                    </Button>
+                <div className="sticky bottom-0 -mx-4 sm:-mx-6 flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-3 border-t border-slate-200 bg-white/90 px-4 sm:px-6 py-3 sm:py-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+                    <Button type="button" variant="secondary" icon={RefreshCw} onClick={load} disabled={saving} className="w-full sm:w-auto justify-center">Reset</Button>
+                    <Button type="submit" icon={Save} loading={saving} disabled={saving} className="w-full sm:w-auto justify-center">{saving ? 'Saving…' : 'Save changes'}</Button>
                 </div>
             </form>
         </div>
