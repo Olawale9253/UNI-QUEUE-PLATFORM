@@ -37,14 +37,10 @@ export default function Broadcast() {
         try {
             const res = await api.get('/api/super-admin/universities')
             setUniversities(res.data.data || [])
-        } catch {
-            // silent
-        }
+        } catch {}
     }, [])
 
-    useEffect(() => {
-        loadUniversities()
-    }, [loadUniversities])
+    useEffect(() => { loadUniversities() }, [loadUniversities])
 
     useEffect(() => {
         const fetchCount = async () => {
@@ -113,8 +109,7 @@ export default function Broadcast() {
     ].join(' ')
 
     return (
-        <div className="space-y-8 pb-12">
-            {/* Page Header */}
+        <div className="space-y-6 sm:space-y-8 pb-12 px-4 sm:px-6">
             <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                     System Broadcast
@@ -124,25 +119,25 @@ export default function Broadcast() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
                 {/* Compose Form */}
                 <div className="lg:col-span-2">
-                    <Card>
-                        <div className="mb-6 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
-                                <Megaphone className="h-5 w-5" />
+                    <Card className="p-4 sm:p-6">
+                        <div className="mb-4 sm:mb-6 flex items-center gap-3 border-b border-slate-100 pb-3 sm:pb-4 dark:border-slate-800">
+                            <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
+                                <Megaphone className="h-4 w-4 sm:h-5 sm:w-5" />
                             </div>
                             <div>
-                                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Compose Message</h2>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                <h2 className="text-sm sm:text-lg font-bold text-slate-900 dark:text-slate-100">Compose Message</h2>
+                                <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                                     Only users with active accounts will receive this notification.
                                 </p>
                             </div>
                         </div>
 
-                        <form onSubmit={handleSendClick} className="space-y-5">
+                        <form onSubmit={handleSendClick} className="space-y-4 sm:space-y-5">
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                <label className="mb-1.5 block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                     Announcement Title <span className="text-rose-500">*</span>
                                 </label>
                                 <input
@@ -151,13 +146,13 @@ export default function Broadcast() {
                                     onChange={setField('title')}
                                     placeholder="e.g. Scheduled maintenance this weekend"
                                     maxLength={255}
-                                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-900"
+                                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-900"
                                     required
                                 />
                             </div>
 
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                <label className="mb-1.5 block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                     Message Body <span className="text-rose-500">*</span>
                                 </label>
                                 <textarea
@@ -166,17 +161,17 @@ export default function Broadcast() {
                                     onChange={setField('message')}
                                     placeholder="Write your announcement here. Keep it clear and concise..."
                                     maxLength={2000}
-                                    className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-900"
+                                    className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-900"
                                     required
                                 />
                                 <div className="mt-1.5 flex justify-end">
-                                    <span className="text-xs font-medium text-slate-400">
+                                    <span className="text-[10px] sm:text-xs font-medium text-slate-400">
                                         {form.message.length} / 2000
                                     </span>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                            <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2">
                                 <Select
                                     label="Target University"
                                     value={form.universityId}
@@ -192,8 +187,8 @@ export default function Broadcast() {
                                 />
                             </div>
 
-                            <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
-                                <Button type="submit" icon={Send} disabled={sending}>
+                            <div className="flex justify-end pt-3 sm:pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <Button type="submit" icon={Send} disabled={sending} className="w-full sm:w-auto justify-center text-xs sm:text-sm">
                                     Send Broadcast
                                 </Button>
                             </div>
@@ -202,49 +197,49 @@ export default function Broadcast() {
                 </div>
 
                 {/* Preview Panel */}
-                <div className="space-y-6">
-                    <Card>
-                        <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
+                <div className="space-y-4 sm:space-y-6">
+                    <Card className="p-4 sm:p-6">
+                        <div className="mb-3 sm:mb-4 flex items-center gap-2 border-b border-slate-100 pb-2 sm:pb-3 dark:border-slate-800">
                             <Users className="h-4 w-4 text-brand-600" />
-                            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">Audience Preview</h3>
+                            <h3 className="text-[10px] sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">Audience Preview</h3>
                         </div>
 
-                        <div className="space-y-4">
-                            <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/50">
-                                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <div className="space-y-3 sm:space-y-4">
+                            <div className="rounded-xl bg-slate-50 p-3 sm:p-4 dark:bg-slate-800/50">
+                                <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                     Estimated Recipients
                                 </div>
                                 <div className="mt-1 flex items-baseline gap-2">
                                     {countLoading ? (
-                                        <span className="text-sm font-medium text-slate-500">Calculating…</span>
+                                        <span className="text-xs sm:text-sm font-medium text-slate-500">Calculating…</span>
                                     ) : (
                                         <>
-                                            <span className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+                                            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100">
                                                 {recipientCount ?? '—'}
                                             </span>
-                                            <span className="text-sm font-medium text-slate-500">users</span>
+                                            <span className="text-xs sm:text-sm font-medium text-slate-500">users</span>
                                         </>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-                                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                            <div className="rounded-xl border border-slate-200 p-3 sm:p-4 dark:border-slate-700">
+                                <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                     Target Scope
                                 </div>
-                                <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                <div className="mt-1 text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
                                     {audienceLabel}
                                 </div>
                             </div>
                         </div>
                     </Card>
 
-                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900/50 dark:bg-amber-950/20">
-                        <div className="mb-3 flex items-center gap-2">
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 sm:p-5 dark:border-amber-900/50 dark:bg-amber-950/20">
+                        <div className="mb-2 sm:mb-3 flex items-center gap-2">
                             <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                            <h3 className="text-sm font-bold text-amber-900 dark:text-amber-200">Important Notes</h3>
+                            <h3 className="text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200">Important Notes</h3>
                         </div>
-                        <ul className="space-y-2.5 text-xs text-amber-800 dark:text-amber-300">
+                        <ul className="space-y-2 sm:space-y-2.5 text-[10px] sm:text-xs text-amber-800 dark:text-amber-300">
                             <li className="flex gap-2">
                                 <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
                                 <span>Broadcasts appear instantly in the recipient's notification bell.</span>
