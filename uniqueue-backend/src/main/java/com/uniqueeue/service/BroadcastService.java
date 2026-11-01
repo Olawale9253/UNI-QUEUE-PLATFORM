@@ -22,6 +22,7 @@ public class BroadcastService {
 
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final EmailService emailService; // 👈 Injected EmailService
     private final AuditService auditService;
 
     @Transactional
@@ -35,26 +36,22 @@ public class BroadcastService {
         String title = request.getTitle();
         String message = request.getMessage();
 
-        // Route each recipient through NotificationService.notify(...) so the
-        // exact same pipeline that powers ticket notifications also powers
-        // broadcasts. This does three things per user:
-        //   1. Saves the Notification row
-        //   2. Fires a per-user SSE event (bell chimes + badge bumps live)
-        //   3. Sends a Web Push to subscribed devices (respects push_enabled)
-        //
-        // The EventService defers the SSE send until after this transaction
-        // commits, so clients don't refetch stale data.
         for (User userValue10 : recipients) {
             try {
+                // 1. In-app Notification
                 notificationService.notify(
                         userValue10,
                         NotificationType.BROADCAST,
                         title,
                         message
                 );
+
+                // 2. Email Notification
+                emailService.sendBroadcastEmail(userValue10, title, message);
+
             } catch (Exception ex) {
                 // A single bad recipient shouldn't take down the whole broadcast.
-                log.warn("Broadcast notify failed for user {}: {}", userValue10.getId(), ex.getMessage());
+                log.warn("Broadcast notify/email failed for user {}: {}", userValue10.getId(), ex.getMessage());
             }
         }
 

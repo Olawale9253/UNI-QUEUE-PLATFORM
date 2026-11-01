@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
-    Send, Megaphone, Users, Building2, AlertCircle, CheckCircle2,
+    Send, Megaphone, Users, Building2, AlertCircle, CheckCircle2, Mail
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -115,7 +115,7 @@ export default function Broadcast() {
                     System Broadcast
                 </h1>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Send platform-wide announcements and alerts directly to user notification bells.
+                    Send platform-wide announcements and alerts directly to user notification bells and email inboxes.
                 </p>
             </div>
 
@@ -237,7 +237,7 @@ export default function Broadcast() {
                     <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 sm:p-5 dark:border-amber-900/50 dark:bg-amber-950/20">
                         <div className="mb-2 sm:mb-3 flex items-center gap-2">
                             <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                            <h3 className="text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200">Important Notes</h3>
+                            <h3 className="text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200">Delivery Method</h3>
                         </div>
                         <ul className="space-y-2 sm:space-y-2.5 text-[10px] sm:text-xs text-amber-800 dark:text-amber-300">
                             <li className="flex gap-2">
@@ -245,8 +245,8 @@ export default function Broadcast() {
                                 <span>Broadcasts appear instantly in the recipient's notification bell.</span>
                             </li>
                             <li className="flex gap-2">
-                                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
-                                <span>Recipients can dismiss them like any other notification.</span>
+                                <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                                <span>Messages will also be sent to the user's registered email address.</span>
                             </li>
                             <li className="flex gap-2">
                                 <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
@@ -262,7 +262,7 @@ export default function Broadcast() {
                 onClose={() => !sending && setConfirmOpen(false)}
                 onConfirm={confirmSend}
                 title="Send this broadcast?"
-                description={`"${form.title}" will be sent to ${recipientCount ?? '?'} users. This action cannot be undone.`}
+                description={`"${form.title}" will be sent to ${recipientCount ?? '?'} users via In-App Notification and Email. This action cannot be undone.`}
                 confirmLabel="Yes, send now"
                 variant="info"
                 loading={sending}

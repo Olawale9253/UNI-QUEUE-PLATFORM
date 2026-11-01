@@ -320,6 +320,28 @@ public class EmailService {
         }
     }
 
+    // 👇 NEW METHOD FOR BROADCASTS
+    @Async
+    @Transactional(readOnly = true)
+    public void sendBroadcastEmail(User user, String title, String message) {
+        try {
+            if (user == null || user.getEmail() == null || user.getEmail().isBlank()) return;
+
+            User freshUser = userRepository.findById(user.getId()).orElse(user);
+
+            // Format line breaks from the textarea to HTML
+            String formattedMessage = escape(message).replace("\n", "<br>");
+
+            String html = wrap(freshUser, null, title,
+                    "Hi " + firstName(freshUser) + ",<br><br>" + formattedMessage,
+                    null, "Open UniQueue", baseUrl);
+
+            sendHtml(freshUser.getEmail(), title, html);
+        } catch (Exception ex) {
+            log.error("sendBroadcastEmail failed for {}: {}", user.getEmail(), ex.getMessage());
+        }
+    }
+
     private String wrap(User user, Queue queue, String heading, String body, String callout, String ctaLabel, String ctaUrl) {
         String uniName = "UniQueue";
         String accent = "#4f46e5";
