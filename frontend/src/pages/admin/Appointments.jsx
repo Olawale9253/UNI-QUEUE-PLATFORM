@@ -26,16 +26,16 @@ const FILTERS = ['ALL', 'BOOKED', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHO
 
 function StatTile({ label, value, hint, icon: Icon, accent, valueColor }) {
     return (
-        <Card className="flex flex-col justify-between h-full">
-            <div className="flex items-start justify-between gap-3">
+        <Card className="flex flex-col justify-between h-full p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-2 sm:gap-3">
                 <div className="min-w-0">
-                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</div>
-                    <div className={`mt-2 truncate text-3xl font-bold tracking-tight ${valueColor}`}>{value}</div>
-                    {hint && <div className="mt-1 truncate text-xs font-medium text-slate-500 dark:text-slate-400">{hint}</div>}
+                    <div className="text-[9px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</div>
+                    <div className={`mt-1 sm:mt-2 truncate text-xl sm:text-3xl font-bold tracking-tight ${valueColor}`}>{value}</div>
+                    {hint && <div className="mt-0.5 sm:mt-1 truncate text-[9px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">{hint}</div>}
                 </div>
                 {Icon && (
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${accent}`}>
-                        <Icon className="h-5 w-5" />
+                    <div className={`flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl ${accent}`}>
+                        <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
                 )}
             </div>
@@ -86,7 +86,7 @@ export default function Appointments() {
 
     if (loading) {
         return (
-            <div className="space-y-6 pb-12">
+            <div className="space-y-6 pb-12 px-4 sm:px-6">
                 <Card padded={false}>
                     {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
                 </Card>
@@ -95,14 +95,14 @@ export default function Appointments() {
     }
 
     return (
-        <div className="space-y-8 pb-12">
+        <div className="space-y-6 sm:space-y-8 pb-12 px-4 sm:px-6">
             <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Appointments</h1>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Manage and track all scheduled bookings across your university.</p>
             </div>
 
             {stats && (
-                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 lg:grid-cols-5">
                     <StatTile label="Total" value={stats.total ?? 0} hint="All time" icon={Calendar} accent="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300" valueColor="text-slate-900 dark:text-slate-100" />
                     <StatTile label="Today" value={stats.today ?? 0} hint="Booked for today" icon={CalendarCheck} accent="bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400" valueColor="text-brand-600 dark:text-brand-400" />
                     <StatTile label="Upcoming" value={stats.upcoming ?? 0} hint="Scheduled ahead" icon={Clock} accent="bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400" valueColor="text-sky-600 dark:text-sky-400" />
@@ -112,34 +112,24 @@ export default function Appointments() {
             )}
 
             {appointments.length > 0 && (
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="w-full max-w-sm">
+                <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="w-full lg:max-w-sm">
                         <div className="relative">
                             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Search by student, staff, or slot..."
-                                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                            />
+                            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by student, staff, or slot..." className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
                         </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                        <Filter className="mr-1 h-3.5 w-3.5 text-slate-400" />
+                    <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap pb-1 lg:pb-0 scrollbar-hide">
+                        <Filter className="mr-1 h-3.5 w-3.5 text-slate-400 shrink-0" />
                         {FILTERS.map((item) => {
                             const count = item === 'ALL' ? appointments.length : appointments.filter((a) => a.status === item).length
                             return (
-                                <button
-                                    key={item}
-                                    type="button"
-                                    onClick={() => setFilter(item)}
-                                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                                        filter === item
-                                            ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                                            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
-                                    }`}
-                                >
+                                <button key={item} type="button" onClick={() => setFilter(item)}
+                                        className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] sm:text-xs font-semibold transition-colors ${
+                                            filter === item
+                                                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                                                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+                                        }`}>
                                     {item.charAt(0) + item.slice(1).toLowerCase().replace(/_/g, ' ')}
                                     <span className="ml-1.5 opacity-60">{count}</span>
                                 </button>
@@ -154,34 +144,34 @@ export default function Appointments() {
             ) : filtered.length === 0 ? (
                 <EmptyState icon={Filter} title="No appointments match" description="Try a different filter or clear the search." action={<Button variant="secondary" onClick={() => { setFilter('ALL'); setSearch('') }}>Clear filters</Button>} />
             ) : (
-                <motion.div variants={stagger(0, 0.03)} initial="initial" animate="animate" className="space-y-4">
+                <motion.div variants={stagger(0, 0.03)} initial="initial" animate="animate" className="space-y-3 sm:space-y-4">
                     {filtered.map((itemValue) => (
                         <motion.div key={itemValue.id} variants={staggerItem}>
-                            <Card className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                    <div className="flex min-w-0 items-start gap-4">
-                                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-sm font-bold text-white dark:bg-brand-700">
+                            <Card className="p-4 sm:p-5 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                                        <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-xs sm:text-sm font-bold text-white dark:bg-brand-700">
                                             {itemValue.studentName?.slice(0, 1).toUpperCase() || '?'}
                                         </div>
                                         <div className="min-w-0">
                                             <div className="flex flex-wrap items-center gap-2">
-                                                <h3 className="truncate text-base font-bold text-slate-900 dark:text-slate-100">{itemValue.studentName || 'Unknown student'}</h3>
-                                                <Badge variant={STATUS_VARIANTS[itemValue.status] || 'default'}>{itemValue.status}</Badge>
+                                                <h3 className="truncate text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">{itemValue.studentName || 'Unknown student'}</h3>
+                                                <Badge variant={STATUS_VARIANTS[itemValue.status] || 'default'} className="text-[9px] sm:text-xs">{itemValue.status}</Badge>
                                             </div>
                                             {itemValue.studentEmail && (
-                                                <div className="mt-1 flex items-center gap-1.5 truncate text-sm text-slate-500 dark:text-slate-400">
-                                                    <Mail className="h-3.5 w-3.5 shrink-0" />{itemValue.studentEmail}
+                                                <div className="mt-1 flex items-center gap-1.5 truncate text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">
+                                                    <Mail className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />{itemValue.studentEmail}
                                                 </div>
                                             )}
-                                            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                                            <div className="mt-1.5 sm:mt-2 flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">
                                                 {itemValue.slotTitle && (
-                                                    <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" />{itemValue.slotTitle}</span>
+                                                    <span className="flex items-center gap-1.5"><Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5" />{itemValue.slotTitle}</span>
                                                 )}
                                                 {itemValue.startTime && (
-                                                    <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" />{new Date(itemValue.startTime).toLocaleString()}</span>
+                                                    <span className="flex items-center gap-1.5"><Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5" />{new Date(itemValue.startTime).toLocaleString()}</span>
                                                 )}
                                                 {itemValue.staffName && (
-                                                    <span className="flex items-center gap-1.5"><User className="h-3.5 w-3.5" />{itemValue.staffName}</span>
+                                                    <span className="flex items-center gap-1.5"><User className="h-3 w-3 sm:h-3.5 sm:w-3.5" />{itemValue.staffName}</span>
                                                 )}
                                             </div>
                                         </div>

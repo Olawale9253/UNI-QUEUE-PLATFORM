@@ -17,17 +17,9 @@ const initialForm = { fullName: '', email: '', password: '', department: '', pho
 
 function SelectCheckbox({ checked, onChange, disabled }) {
     return (
-        <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); if (!disabled) onChange(!checked) }}
-            disabled={disabled}
-            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors disabled:opacity-50 ${
-                checked
-                    ? 'border-brand-600 bg-brand-600 text-white'
-                    : 'border-slate-300 bg-white hover:border-brand-400 dark:border-slate-600 dark:bg-slate-900'
-            }`}
-        >
-            {checked && <Check className="h-3 w-3" strokeWidth={3} />}
+        <button type="button" onClick={(e) => { e.stopPropagation(); if (!disabled) onChange(!checked) }} disabled={disabled}
+                className={`flex h-4 w-4 sm:h-5 sm:w-5 shrink-0 items-center justify-center rounded border-2 transition-colors disabled:opacity-50 ${checked ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300 bg-white hover:border-brand-400 dark:border-slate-600 dark:bg-slate-900'}`}>
+            {checked && <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3" strokeWidth={3} />}
         </button>
     )
 }
@@ -37,80 +29,39 @@ function AssignModal({ staffMember, queues, assigning, onClose, onAssign, onUnas
 
     return (
         <>
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => !assigning && onClose()}
-                className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm"
-            />
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
-                >
-                    <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => !assigning && onClose()} className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm" />
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+                <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} onClick={(e) => e.stopPropagation()} className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+                    <div className="flex items-center justify-between border-b border-slate-100 px-4 sm:px-6 py-3 sm:py-4 dark:border-slate-800">
                         <div className="min-w-0">
-                            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                                Assign services
-                            </h3>
-                            <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                                {staffMember.fullName}
-                            </p>
+                            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Assign services</h3>
+                            <p className="truncate text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{staffMember.fullName}</p>
                         </div>
-                        <button
-                            onClick={() => !assigning && onClose()}
-                            disabled={assigning}
-                            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:hover:bg-slate-800"
-                        >
-                            <CloseIcon className="h-5 w-5" />
+                        <button onClick={() => !assigning && onClose()} disabled={assigning} className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:hover:bg-slate-800">
+                            <CloseIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
                     </div>
 
                     <div className="max-h-[60vh] overflow-y-auto p-2">
                         {queues.length === 0 ? (
-                            <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                                No services available. Create a queue first.
-                            </p>
+                            <p className="py-8 text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">No services available. Create a queue first.</p>
                         ) : (
                             queues.map((q) => {
                                 const isAssigned = (q.staff || []).some((s) => s.id === staffMember.id)
                                 return (
-                                    <div
-                                        key={q.id}
-                                        onClick={() => {
-                                            if (assigning) return
-                                            if (isAssigned) onUnassign(q.id, staffMember.id)
-                                            else onAssign(q.id)
-                                        }}
-                                        className={`flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
-                                            assigning ? 'pointer-events-none opacity-60' : ''
-                                        }`}
-                                    >
-                                        <div className="flex min-w-0 items-center gap-3">
-                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
-                                                <Building2 className="h-4 w-4 text-slate-500" />
+                                    <div key={q.id} onClick={() => { if (assigning) return; if (isAssigned) onUnassign(q.id, staffMember.id); else onAssign(q.id) }}
+                                         className={`flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-2 sm:px-3 sm:py-2.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 ${assigning ? 'pointer-events-none opacity-60' : ''}`}>
+                                        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+                                            <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
+                                                <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-500" />
                                             </div>
                                             <div className="min-w-0">
-                                                <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-                                                    {q.name}
-                                                </div>
-                                                {q.officeName && (
-                                                    <div className="truncate text-[11px] text-slate-500 dark:text-slate-400">
-                                                        {q.officeName}
-                                                    </div>
-                                                )}
+                                                <div className="truncate text-xs sm:text-sm font-medium text-slate-900 dark:text-slate-100">{q.name}</div>
+                                                {q.officeName && <div className="truncate text-[9px] sm:text-[11px] text-slate-500 dark:text-slate-400">{q.officeName}</div>}
                                             </div>
                                         </div>
                                         <div className="pointer-events-none">
-                                            <SelectCheckbox
-                                                checked={isAssigned}
-                                                onChange={() => {}}
-                                                disabled={assigning}
-                                            />
+                                            <SelectCheckbox checked={isAssigned} onChange={() => {}} disabled={assigning} />
                                         </div>
                                     </div>
                                 )
@@ -118,15 +69,8 @@ function AssignModal({ staffMember, queues, assigning, onClose, onAssign, onUnas
                         )}
                     </div>
 
-                    <div className="flex justify-end border-t border-slate-100 px-6 py-4 dark:border-slate-800">
-                        <Button
-                            variant="secondary"
-                            onClick={onClose}
-                            disabled={assigning}
-                            loading={assigning}
-                        >
-                            Done
-                        </Button>
+                    <div className="flex justify-end border-t border-slate-100 px-4 sm:px-6 py-3 sm:py-4 dark:border-slate-800">
+                        <Button variant="secondary" onClick={onClose} disabled={assigning} loading={assigning} className="w-full sm:w-auto text-xs sm:text-sm">Done</Button>
                     </div>
                 </motion.div>
             </div>
@@ -236,7 +180,7 @@ export default function Staff() {
 
     if (loading) {
         return (
-            <div className="space-y-6 pb-24">
+            <div className="space-y-6 pb-24 px-4 sm:px-6">
                 <SkeletonCard />
                 <SkeletonCard />
             </div>
@@ -244,41 +188,29 @@ export default function Staff() {
     }
 
     return (
-        <div className="space-y-8 pb-24">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-6 sm:space-y-8 pb-24 px-4 sm:px-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                        Staff Management
-                    </h1>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        Add staff and manage their service assignments.
-                    </p>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Staff Management</h1>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Add staff and manage their service assignments.</p>
                 </div>
-                <Button icon={Plus} onClick={() => setShowCreate(true)}>
-                    Add Staff
-                </Button>
+                <Button icon={Plus} onClick={() => setShowCreate(true)} className="w-full sm:w-auto justify-center">Add Staff</Button>
             </div>
 
             <AnimatePresence>
                 {showCreate && (
                     <motion.div variants={expand} initial="initial" animate="animate" exit="exit" className="overflow-hidden">
-                        <Card>
-                            <h3 className="mb-4 text-base font-bold text-slate-900 dark:text-slate-100">
-                                Add a new staff member
-                            </h3>
+                        <Card className="p-4 sm:p-6">
+                            <h3 className="mb-4 text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Add a new staff member</h3>
                             <form onSubmit={createStaff} className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <Input label="Full name" value={form.fullName} onChange={setField('fullName')} placeholder="Jane Doe" required />
                                 <Input label="Email" type="email" value={form.email} onChange={setField('email')} placeholder="jane.staff@university.edu.ng" required />
                                 <Input label="Password" type="password" value={form.password} onChange={setField('password')} placeholder="At least 8 characters" required />
                                 <Input label="Department" value={form.department} onChange={setField('department')} placeholder="e.g. Bursary" icon={Building2} />
                                 <Input label="Phone" value={form.phone} onChange={setField('phone')} placeholder="e.g. 08012345678" icon={Phone} />
-                                <div className="md:col-span-2 flex justify-end gap-2 pt-2">
-                                    <Button type="button" variant="secondary" onClick={() => setShowCreate(false)}>
-                                        Cancel
-                                    </Button>
-                                    <Button type="submit" loading={creating} disabled={creating}>
-                                        Create staff account
-                                    </Button>
+                                <div className="md:col-span-2 flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
+                                    <Button type="button" variant="secondary" onClick={() => setShowCreate(false)} className="w-full sm:w-auto">Cancel</Button>
+                                    <Button type="submit" loading={creating} disabled={creating} className="w-full sm:w-auto">Create staff account</Button>
                                 </div>
                             </form>
                         </Card>
@@ -286,93 +218,59 @@ export default function Staff() {
                 )}
             </AnimatePresence>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <div className="min-w-0 flex-1">
-                    <Input
-                        placeholder="Search by name, email, or department..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        icon={Search}
-                    />
+                    <Input placeholder="Search by name, email, or department..." value={search} onChange={(e) => setSearch(e.target.value)} icon={Search} />
                 </div>
-                <ExportButton
-                    rows={filteredStaff}
-                    columns={[{ key: 'fullName', label: 'Name' }, { key: 'email', label: 'Email' }]}
-                    filename="uniqueue-staff"
-                    label="Export"
-                />
+                <ExportButton rows={filteredStaff} columns={[{ key: 'fullName', label: 'Name' }, { key: 'email', label: 'Email' }]} filename="uniqueue-staff" label="Export" className="w-full sm:w-auto" />
             </div>
 
             {staff.length === 0 ? (
-                <EmptyState
-                    icon={Users}
-                    title="No staff members yet"
-                    description="Add your first staff member to begin."
-                    action={<Button onClick={() => setShowCreate(true)}>Add staff</Button>}
-                />
+                <EmptyState icon={Users} title="No staff members yet" description="Add your first staff member to begin." action={<Button onClick={() => setShowCreate(true)}>Add staff</Button>} />
             ) : filteredStaff.length === 0 ? (
-                <EmptyState
-                    icon={Search}
-                    title="No matches"
-                    description="Try a different search."
-                    action={<Button onClick={() => setSearch('')}>Clear search</Button>}
-                />
+                <EmptyState icon={Search} title="No matches" description="Try a different search." action={<Button onClick={() => setSearch('')}>Clear search</Button>} />
             ) : (
-                <motion.div variants={stagger(0, 0.05)} initial="initial" animate="animate" className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <motion.div variants={stagger(0, 0.05)} initial="initial" animate="animate" className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-5">
                     {filteredStaff.map((item) => {
                         const assigned = assignmentsByStaff.get(item.id) || []
                         const isSelected = selectedIds.has(item.id)
                         return (
                             <motion.div key={item.id} variants={staggerItem}>
-                                <Card className={`flex h-full flex-col relative transition-all group ${isSelected ? 'ring-2 ring-brand-500 border-transparent' : 'hover:shadow-md'}`}>
+                                <Card className={`flex h-full flex-col relative transition-all group p-4 sm:p-5 ${isSelected ? 'ring-2 ring-brand-500 border-transparent' : 'hover:shadow-md'}`}>
                                     <div className="mb-4 flex items-start justify-between">
-                                        <div className="flex gap-3 items-center">
-                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white shadow-sm">
+                                        <div className="flex gap-2 sm:gap-3 items-center">
+                                            <div className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-xs sm:text-sm font-bold text-white shadow-sm">
                                                 {item.fullName?.split(' ').map((n) => n[0]).slice(0, 2).join('')}
                                             </div>
                                             <div>
-                                                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                                                    {item.fullName}
-                                                </h3>
-                                                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
-                                                    <Mail className="h-3 w-3" />
-                                                    {item.email}
+                                                <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">{item.fullName}</h3>
+                                                <div className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
+                                                    <Mail className="h-3 w-3" />{item.email}
                                                 </div>
                                             </div>
                                         </div>
                                         <SelectCheckbox checked={isSelected} onChange={() => toggleSelect(item.id)} />
                                     </div>
 
-                                    <div className="flex flex-wrap gap-2 mt-2 flex-1 content-start">
+                                    <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 flex-1 content-start">
                                         {assigned.length === 0 ? (
-                                            <span className="text-xs font-medium text-slate-400">Not assigned to any service</span>
+                                            <span className="text-[10px] sm:text-xs font-medium text-slate-400">Not assigned to any service</span>
                                         ) : (
                                             assigned.map((a) => (
-                                                <span
-                                                    key={a.queueId}
-                                                    className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                                                >
+                                                <span key={a.queueId} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                                     {a.queueName}
-                                                    <button
-                                                        onClick={() => unassignFromQueue(a.queueId, item.id)}
-                                                        className="rounded-full p-0.5 hover:bg-slate-200 dark:hover:bg-slate-700"
-                                                    >
-                                                        <CloseIcon className="h-3 w-3" />
+                                                    <button onClick={() => unassignFromQueue(a.queueId, item.id)} className="rounded-full p-0.5 hover:bg-slate-200 dark:hover:bg-slate-700">
+                                                        <CloseIcon className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                                     </button>
                                                 </span>
                                             ))
                                         )}
                                     </div>
 
-                                    <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-                                        <Button size="sm" variant="secondary" icon={LinkIcon} onClick={() => setAssignTarget(item)}>
-                                            Assign
-                                        </Button>
-                                        <button
-                                            onClick={() => setDeleteTarget(item)}
-                                            className="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
+                                    <div className="mt-4 pt-3 sm:mt-5 sm:pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                                        <Button size="sm" variant="secondary" icon={LinkIcon} onClick={() => setAssignTarget(item)} className="text-xs sm:text-sm">Assign</Button>
+                                        <button onClick={() => setDeleteTarget(item)} className="p-1.5 sm:p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors">
+                                            <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                         </button>
                                     </div>
                                 </Card>
@@ -382,44 +280,26 @@ export default function Staff() {
                 </motion.div>
             )}
 
-            {/* 👇 THE FIX: Assign Modal now renders when a staff member is targeted */}
             <AnimatePresence>
                 {assignTarget && (
-                    <AssignModal
-                        staffMember={assignTarget}
-                        queues={queues}
-                        assigning={assigning}
-                        onClose={() => setAssignTarget(null)}
-                        onAssign={assignToQueue}
-                        onUnassign={unassignFromQueue}
-                    />
+                    <AssignModal staffMember={assignTarget} queues={queues} assigning={assigning} onClose={() => setAssignTarget(null)} onAssign={assignToQueue} onUnassign={unassignFromQueue} />
                 )}
             </AnimatePresence>
 
-            {/* Existing ConfirmDialog for delete - kept intact */}
             {deleteTarget && (
-                <ConfirmDialog
-                    open={!!deleteTarget}
-                    onClose={() => setDeleteTarget(null)}
-                    onConfirm={async () => {
-                        setDeleting(true)
-                        try {
-                            await api.delete(`/api/admin/staff/${deleteTarget.id}`)
-                            push({ type: 'success', message: 'Staff member removed' })
-                            setDeleteTarget(null)
-                            await load()
-                        } catch (err) {
-                            push({ type: 'error', message: err.message || 'Failed to delete' })
-                        } finally {
-                            setDeleting(false)
-                        }
-                    }}
-                    title={`Delete ${deleteTarget.fullName}?`}
-                    description="This will permanently remove the staff account and revoke their access."
-                    confirmLabel="Delete staff"
-                    variant="danger"
-                    loading={deleting}
-                />
+                <ConfirmDialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={async () => {
+                    setDeleting(true)
+                    try {
+                        await api.delete(`/api/admin/staff/${deleteTarget.id}`)
+                        push({ type: 'success', message: 'Staff member removed' })
+                        setDeleteTarget(null)
+                        await load()
+                    } catch (err) {
+                        push({ type: 'error', message: err.message || 'Failed to delete' })
+                    } finally {
+                        setDeleting(false)
+                    }
+                }} title={`Delete ${deleteTarget.fullName}?`} description="This will permanently remove the staff account and revoke their access." confirmLabel="Delete staff" variant="danger" loading={deleting} />
             )}
         </div>
     )
