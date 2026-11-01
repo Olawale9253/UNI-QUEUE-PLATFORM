@@ -158,7 +158,7 @@ export default function DashboardLayout({ tabs, title, description, action, chil
                 )}
             </AnimatePresence>
 
-            <main className="min-w-0 flex-1 overflow-y-auto bg-white dark:bg-slate-950">
+            <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-white dark:bg-slate-950">
                 <div className="mx-auto w-full max-w-[1680px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
                     {title && <PageHeader title={title} description={description} action={action} />}
                     {children}

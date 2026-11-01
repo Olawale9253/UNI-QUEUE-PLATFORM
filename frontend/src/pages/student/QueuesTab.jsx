@@ -17,6 +17,7 @@ import { useToastStore } from '../../store/toastStore'
 import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
 import { withAlpha } from '../../lib/colors'
 
+// Helper to infer category from queue/office name
 function inferCategory(queueName, officeName) {
     const name = `${queueName} ${officeName}`.toLowerCase()
     if (name.includes('bursary') || name.includes('finance') || name.includes('fee') || name.includes('payment') || name.includes('tuition')) return 'Financial'
@@ -26,6 +27,7 @@ function inferCategory(queueName, officeName) {
     return 'Other'
 }
 
+// Helper to get icon based on category
 function getCategoryIcon(category, name) {
     const n = (name || '').toLowerCase()
     if (n.includes('register')) return FileText
@@ -44,24 +46,48 @@ function getCategoryIcon(category, name) {
 
 const CATEGORIES = ['All Queues', 'Academic', 'Administrative', 'Student Support', 'Financial', 'Other']
 
+// 👇 PREMIUM ALERT MODAL COMPONENT
 function PremiumAlertModal({ isOpen, onClose, title, message, actionText, actionPath, primaryColor }) {
     const navigate = useNavigate()
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 text-center">
+            <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={onClose}
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            />
+
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 text-center"
+            >
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full mb-4 bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
                     <AlertTriangle className="h-7 w-7" />
                 </div>
+
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{title}</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{message}</p>
+
                 <div className="flex flex-col gap-2">
                     {actionText && actionPath && (
-                        <button onClick={() => { onClose(); navigate(actionPath); }} className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90" style={{ backgroundColor: primaryColor }}>{actionText}</button>
+                        <button
+                            onClick={() => { onClose(); navigate(actionPath); }}
+                            className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90"
+                            style={{ backgroundColor: primaryColor }}
+                        >
+                            {actionText}
+                        </button>
                     )}
-                    <button onClick={onClose} className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">Dismiss</button>
+                    <button
+                        onClick={onClose}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                    >
+                        Dismiss
+                    </button>
                 </div>
             </motion.div>
         </div>
@@ -84,6 +110,7 @@ export default function QueuesTab() {
     const [selectedQueueId, setSelectedQueueId] = useState(null)
     const [joining, setJoining] = useState(false)
 
+    // 👇 State for the Premium Alert Modal
     const [alertModal, setAlertModal] = useState(null)
 
     const primaryColor = university?.primaryColor || '#4f46e5'
@@ -117,7 +144,10 @@ export default function QueuesTab() {
     useAdaptivePoll(load, { fastMs: 5000, slowMs: 15000 })
 
     const enrichedQueues = useMemo(() => {
-        return queues.map(q => ({ ...q, category: inferCategory(q.name, q.officeName) }))
+        return queues.map(q => ({
+            ...q,
+            category: inferCategory(q.name, q.officeName)
+        }))
     }, [queues])
 
     const filteredQueues = useMemo(() => {
@@ -129,7 +159,11 @@ export default function QueuesTab() {
 
         if (search.trim()) {
             const s = search.toLowerCase()
-            result = result.filter(q => q.name.toLowerCase().includes(s) || q.officeName?.toLowerCase().includes(s) || q.description?.toLowerCase().includes(s))
+            result = result.filter(q =>
+                q.name.toLowerCase().includes(s) ||
+                q.officeName?.toLowerCase().includes(s) ||
+                q.description?.toLowerCase().includes(s)
+            )
         }
 
         result.sort((a, b) => {
@@ -148,7 +182,10 @@ export default function QueuesTab() {
 
     const selectedOffice = useMemo(() => {
         if (!selectedQueue) return null
-        return offices.find(o => (o.id && selectedQueue.officeId && String(o.id) === String(selectedQueue.officeId)) || o.name === selectedQueue.officeName)
+        return offices.find(o =>
+            (o.id && selectedQueue.officeId && String(o.id) === String(selectedQueue.officeId)) ||
+            o.name === selectedQueue.officeName
+        )
     }, [selectedQueue, offices])
 
     const handleJoinQueue = async (queueToJoin) => {
@@ -186,7 +223,7 @@ export default function QueuesTab() {
     }
 
     return (
-        <div className="bg-white dark:bg-slate-950 min-h-screen -m-4 p-4 sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
+        <div className="bg-white dark:bg-slate-950 min-h-screen p-4 sm:p-6 lg:p-8">
             <div className="max-w-[1600px] mx-auto pb-12">
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
                     <div>

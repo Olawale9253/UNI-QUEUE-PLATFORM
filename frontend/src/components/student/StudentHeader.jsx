@@ -6,8 +6,6 @@ import { useAuthStore } from '../../store/authStore'
 import HolidayStrip from '../student/HolidayStrip'
 
 function getGreeting() {
-    // Force the timezone to Africa/Lagos so it's always accurate for the university
-    // regardless of the user's laptop clock or timezone settings.
     const formatter = new Intl.DateTimeFormat('en-US', {
         timeZone: 'Africa/Lagos',
         hour: 'numeric',
@@ -21,9 +19,6 @@ function getGreeting() {
     return 'Good night'
 }
 
-/**
- * Sticky header shown on every student page.
- */
 export default function StudentHeader({ subtitle }) {
     const { user } = useAuthStore()
     const firstName = user?.fullName?.split(' ')[0] || 'there'
@@ -32,7 +27,6 @@ export default function StudentHeader({ subtitle }) {
     const [closedDates, setClosedDates] = useState(null)
 
     useEffect(() => {
-        // Update the greeting every minute
         const token = setInterval(() => setGreeting(getGreeting()), 60_000)
         return () => clearInterval(token)
     }, [])
@@ -62,7 +56,7 @@ export default function StudentHeader({ subtitle }) {
     }, [])
 
     return (
-        <div className="sticky top-16 z-30 -mx-3 -mt-4 mb-4 border-b border-slate-200 bg-white/95 px-3 py-2 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/95 sm:-mx-5 sm:-mt-6 sm:px-5 sm:py-2.5 lg:-mx-8 lg:-mt-8 lg:px-8 lg:py-3">
+        <div className="sticky top-16 z-30 mb-4 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/95 sm:px-6 sm:py-4">
             <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="flex w-fit items-center gap-2 rounded-full border border-brand-100 bg-brand-50/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-600 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-400">
                     <Sparkles className="h-3 w-3" />

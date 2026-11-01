@@ -41,10 +41,10 @@ export default function MobileTabSelect({ tabs }) {
     return (
         <div
             className="
-        sticky z-30 -mx-4 mb-6 border-b border-slate-200 bg-slate-50/95 px-4 pt-3 backdrop-blur-sm
+        sticky z-30 mb-6 border-b border-slate-200 bg-slate-50/95 px-4 pt-3 backdrop-blur-sm
         dark:border-slate-700 dark:bg-slate-900/95
-        sm:-mx-6 sm:px-6 sm:mb-8
-        lg:-mx-8 lg:px-8
+        sm:px-6 sm:mb-8
+        lg:px-8
       "
             style={{ top: '5rem' }}
         >

@@ -48,7 +48,7 @@ export default function AdminDashboard() {
     return (
         <DashboardLayout tabs={tabs}>
             {isHome && (
-                <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-4 bg-white px-3 pb-3 pt-4 dark:bg-slate-900 sm:-mx-5 sm:-mt-6 sm:px-5 sm:pt-6 sm:pb-4 lg:-mx-8 lg:-mt-8 lg:px-8 lg:pt-8 lg:pb-4">
+                <div className="sticky top-0 z-20 mb-4 bg-white px-4 pb-3 pt-4 dark:bg-slate-900 sm:px-6 sm:pt-6 sm:pb-4">
                     <PageHeader
                         workspace="Admin Workspace"
                         description="Everything you need to run your university today."

@@ -185,7 +185,7 @@ export default function AppointmentsTab() {
     }
 
     return (
-        <div className="bg-white dark:bg-slate-950 min-h-screen -m-4 p-4 sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
+        <div className="bg-white dark:bg-slate-950 min-h-screen p-4 sm:p-6 lg:p-8">
             <div className="max-w-[1600px] mx-auto pb-12">
 
                 {/* Header */}
