@@ -58,7 +58,6 @@ export default function UniversityRequests() {
     }
 
     return (
-        // 👇 ADDED px-4 sm:px-6 TO MATCH YOUR OTHER PAGES
         <div className="space-y-6 pb-12 px-4 sm:px-6">
             {loading ? (
                 <div className="py-12 text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">Loading requests...</div>

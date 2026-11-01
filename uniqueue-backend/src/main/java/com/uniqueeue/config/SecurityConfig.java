@@ -105,6 +105,7 @@ public class SecurityConfig {
                                 "/api/auth/verify-email",
                                 "/api/auth/resend-verification",
                                 "/api/auth/refresh",
+                                "/api/auth/request-university", // 👈 ADDED THIS LINE
                                 "/api/public/**",
                                 "/h2-console/**"
                         ).permitAll()
