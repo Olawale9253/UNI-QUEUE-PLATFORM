@@ -34,6 +34,7 @@ const tabs = [
     { to: '/super-admin/notifications', label: 'Notifications', icon: Bell },
     { to: '/super-admin/audit-logs', label: 'Audit Logs', icon: FileText },
     { to: '/super-admin/settings', label: 'Settings', icon: SettingsIcon },
+    { to: '/super-admin/requests', label: 'Uni Requests', icon: Building2 },
 ]
 
 export default function SuperAdminDashboard() {
