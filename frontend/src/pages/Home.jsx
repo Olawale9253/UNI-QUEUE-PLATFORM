@@ -151,7 +151,7 @@ function HeroCarousel() {
     return (
         <section
             ref={sectionRef}
-            className="relative isolate h-[85vh] min-h-[600px] w-full overflow-hidden bg-slate-900"
+            className="relative isolate h-[75vh] min-h-[500px] w-full overflow-hidden bg-slate-900 sm:h-[85vh] lg:min-h-[600px]"
             aria-roledescription="carousel"
             aria-label="Product highlights"
         >
@@ -216,39 +216,39 @@ function HeroCarousel() {
                             />
                             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
 
-                            <div className="absolute inset-0 z-10 mx-auto flex max-w-7xl flex-col justify-center px-6 sm:px-8 lg:px-12">
+                            <div className="absolute inset-0 z-10 mx-auto flex max-w-7xl flex-col justify-center px-4 sm:px-8 lg:px-12">
                                 <div className="max-w-2xl">
-                                    <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 py-1.5 pl-1.5 pr-4 shadow-xl shadow-black/25 backdrop-blur-md">
-                                        <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 shadow-md">
-                                            <item.eyebrow.icon className="relative h-3.5 w-3.5 text-white" />
+                                    <div className="mb-4 sm:mb-6 inline-flex items-center gap-2 sm:gap-3 rounded-full border border-white/20 bg-white/10 py-1 sm:py-1.5 pl-1 sm:pl-1.5 pr-3 sm:pr-4 shadow-xl shadow-black/25 backdrop-blur-md">
+                                        <span className="relative flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-brand-600 shadow-md">
+                                            <item.eyebrow.icon className="relative h-3 w-3 sm:h-3.5 sm:w-3.5 text-white" />
                                         </span>
-                                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">
+                                        <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-white">
                                             {item.eyebrow.label}
                                         </span>
                                     </div>
 
-                                    <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-white drop-shadow-xl sm:text-6xl lg:text-7xl">
+                                    <h1 className="text-3xl font-extrabold leading-[1.05] tracking-tight text-white drop-shadow-xl sm:text-6xl lg:text-7xl">
                                         {item.headline}
                                         <span className="block text-brand-300">
                                             {item.headlineAccent}
                                         </span>
                                     </h1>
 
-                                    <p className="mt-6 max-w-xl text-base leading-relaxed text-slate-200 drop-shadow-md sm:text-lg">
+                                    <p className="mt-4 sm:mt-6 max-w-xl text-sm leading-relaxed text-slate-200 drop-shadow-md sm:text-lg">
                                         {item.sub}
                                     </p>
 
-                                    <div className="mt-9 flex flex-wrap items-center gap-4">
+                                    <div className="mt-6 sm:mt-9 flex flex-wrap items-center gap-3 sm:gap-4">
                                         <Link
                                             to={dashboardHref || item.cta.to}
-                                            className="group inline-flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 text-sm font-bold text-slate-900 shadow-xl transition-all hover:bg-slate-50 hover:scale-105"
+                                            className="group inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 sm:px-7 sm:py-3.5 text-xs sm:text-sm font-bold text-slate-900 shadow-xl transition-all hover:bg-slate-50 hover:scale-105"
                                         >
                                             {dashboardHref ? 'Go to dashboard' : item.cta.label}
                                         </Link>
                                         {item.ctaSecondary && (
                                             <Link
                                                 to={item.ctaSecondary.to}
-                                                className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-7 py-3.5 text-sm font-bold text-white backdrop-blur-md transition-all hover:bg-white/20"
+                                                className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-2.5 sm:px-7 sm:py-3.5 text-xs sm:text-sm font-bold text-white backdrop-blur-md transition-all hover:bg-white/20"
                                             >
                                                 {item.ctaSecondary.label}
                                             </Link>
@@ -278,8 +278,8 @@ function HeroCarousel() {
                 <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
             </button>
 
-            <div className="absolute inset-x-0 bottom-8 z-20 flex flex-col items-center gap-3">
-                <div className="flex items-center gap-2.5">
+            <div className="absolute inset-x-0 bottom-6 sm:bottom-8 z-20 flex flex-col items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-2.5">
                     {SLIDES.map((itemValue, indexValue2) => {
                         const isActive = indexValue2 === index
                         return (
@@ -356,22 +356,22 @@ const FEATURES = [
 
 function Features() {
     return (
-        <section id="features" className="relative bg-[#f8fafc] py-24 dark:bg-slate-950 sm:py-32">
-            <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
+        <section id="features" className="relative bg-[#f8fafc] py-16 dark:bg-slate-950 sm:py-24 lg:py-32">
+            <div className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-12">
                 <div className="mx-auto max-w-2xl text-center">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-700 dark:border-brand-900/50 dark:bg-brand-950/40 dark:text-brand-400">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-brand-700 dark:border-brand-900/50 dark:bg-brand-950/40 dark:text-brand-400">
                         <Sparkles className="h-3 w-3" />
                         Everything you need
                     </span>
-                    <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-[#0f172a] dark:text-white sm:text-4xl">
+                    <h2 className="mt-4 sm:mt-6 text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0f172a] dark:text-white lg:text-4xl">
                         Built for how universities actually work
                     </h2>
-                    <p className="mt-4 text-base text-slate-600 dark:text-slate-400">
+                    <p className="mt-3 sm:mt-4 text-sm sm:text-base text-slate-600 dark:text-slate-400">
                         One platform for students, staff, and administrators, with the tools each role needs without the clutter.
                     </p>
                 </div>
 
-                <div className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="mt-10 sm:mt-16 grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {FEATURES.map((item, index) => {
                         const Icon = item.icon
                         return (
@@ -381,15 +381,15 @@ function Features() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true, margin: '-80px' }}
                                 transition={{ duration: 0.5, delay: index * 0.05 }}
-                                className="group relative rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition-all hover:-translate-y-1 hover:border-brand-300 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900 dark:hover:border-brand-700"
+                                className="group relative rounded-2xl border border-slate-200 bg-white p-5 sm:p-8 shadow-sm transition-all hover:-translate-y-1 hover:border-brand-300 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900 dark:hover:border-brand-700"
                             >
-                                <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-600 group-hover:text-white dark:bg-brand-950/40 dark:text-brand-400 dark:group-hover:bg-brand-600 dark:group-hover:text-white">
-                                    <Icon className="h-6 w-6" />
+                                <div className="mb-3 sm:mb-5 inline-flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-600 group-hover:text-white dark:bg-brand-950/40 dark:text-brand-400 dark:group-hover:bg-brand-600 dark:group-hover:text-white">
+                                    <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                                 </div>
-                                <h3 className="text-lg font-bold text-[#0f172a] dark:text-white">
+                                <h3 className="text-base sm:text-lg font-bold text-[#0f172a] dark:text-white">
                                     {item.title}
                                 </h3>
-                                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                <p className="mt-1 sm:mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                                     {item.body}
                                 </p>
                             </motion.div>
@@ -435,25 +435,25 @@ const STEPS = [
 
 function HowItWorks() {
     return (
-        <section id="how-it-works" className="relative overflow-hidden bg-white py-24 dark:bg-slate-900 sm:py-32">
+        <section id="how-it-works" className="relative overflow-hidden bg-white py-16 dark:bg-slate-900 sm:py-24 lg:py-32">
             <div className="pointer-events-none absolute -top-40 right-0 h-96 w-96 rounded-full bg-brand-500/5 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-40 left-0 h-96 w-96 rounded-full bg-brand-500/5 blur-3xl" />
 
-            <div className="relative mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
+            <div className="relative mx-auto max-w-7xl px-4 sm:px-8 lg:px-12">
                 <div className="mx-auto max-w-2xl text-center">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-brand-400">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-brand-400">
                         <ClipboardList className="h-3 w-3" />
                         Simple process
                     </span>
-                    <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-[#0f172a] dark:text-white sm:text-4xl">
+                    <h2 className="mt-4 sm:mt-6 text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0f172a] dark:text-white lg:text-4xl">
                         How UniQueue works
                     </h2>
-                    <p className="mt-4 text-base text-slate-600 dark:text-slate-400">
+                    <p className="mt-3 sm:mt-4 text-sm sm:text-base text-slate-600 dark:text-slate-400">
                         Five simple steps from your phone to the front of the line.
                     </p>
                 </div>
 
-                <div className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
+                <div className="mt-10 sm:mt-16 grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-5">
                     {STEPS.map((step, index) => {
                         const Icon = step.icon
                         return (
@@ -463,18 +463,18 @@ function HowItWorks() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true, margin: '-60px' }}
                                 transition={{ duration: 0.45, delay: index * 0.08 }}
-                                className="relative flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:shadow-md dark:border-slate-800 dark:bg-slate-950"
+                                className="relative flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:shadow-md dark:border-slate-800 dark:bg-slate-950"
                             >
-                                <div className="absolute -top-4 flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white shadow-md">
+                                <div className="absolute -top-3 sm:-top-4 flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-brand-600 text-xs sm:text-sm font-bold text-white shadow-md">
                                     {index + 1}
                                 </div>
-                                <div className="mt-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
-                                    <Icon className="h-6 w-6" />
+                                <div className="mt-3 sm:mt-4 flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
+                                    <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                                 </div>
-                                <h3 className="mt-5 text-base font-bold text-[#0f172a] dark:text-white">
+                                <h3 className="mt-4 sm:mt-5 text-sm sm:text-base font-bold text-[#0f172a] dark:text-white">
                                     {step.title}
                                 </h3>
-                                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                <p className="mt-1 sm:mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                                     {step.body}
                                 </p>
                             </motion.div>
@@ -502,29 +502,29 @@ function FinalCTA() {
     const dashboardHref = user ? dashboards[user.role] || '/' : null
 
     return (
-        <section className="relative overflow-hidden bg-[#0f172a] py-24 sm:py-32">
+        <section className="relative overflow-hidden bg-[#0f172a] py-16 sm:py-24 lg:py-32">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-brand-900/40 via-[#0f172a] to-[#0f172a]" />
-            <div className="relative mx-auto max-w-4xl px-6 text-center sm:px-8">
-                <div className="mx-auto mb-8 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 shadow-lg shadow-brand-500/30">
-                    <Building2 className="h-8 w-8 text-white" />
+            <div className="relative mx-auto max-w-4xl px-4 text-center sm:px-8">
+                <div className="mx-auto mb-6 sm:mb-8 inline-flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-brand-600 shadow-lg shadow-brand-500/30">
+                    <Building2 className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
                 </div>
-                <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white lg:text-5xl">
                     Ready to end the queue?
                 </h2>
-                <p className="mx-auto mt-6 max-w-xl text-base text-slate-300 sm:text-lg">
+                <p className="mx-auto mt-4 sm:mt-6 max-w-xl text-sm sm:text-base text-slate-300 lg:text-lg">
                     Join the universities using UniQueue to serve students faster, cut waiting-room chaos, and see every desk in real time.
                 </p>
 
-                <div className="mt-10 flex flex-col items-center justify-center gap-4">
+                <div className="mt-8 sm:mt-10 flex flex-col items-center justify-center gap-4">
                     <Link
                         to={dashboardHref || '/register'}
-                        className="group inline-flex items-center gap-2 rounded-xl bg-brand-600 px-8 py-4 text-sm font-bold text-white shadow-lg shadow-brand-600/30 transition-all hover:bg-brand-700 hover:scale-105"
+                        className="group inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 sm:px-8 sm:py-4 text-xs sm:text-sm font-bold text-white shadow-lg shadow-brand-600/30 transition-all hover:bg-brand-700 hover:scale-105"
                     >
                         {dashboardHref ? 'Go to dashboard' : 'Get started free'}
                     </Link>
                 </div>
 
-                <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm font-medium text-slate-400">
+                <div className="mt-8 sm:mt-12 flex flex-col sm:flex-row flex-wrap items-center justify-center gap-x-6 sm:gap-x-8 gap-y-3 sm:gap-y-4 text-xs sm:text-sm font-medium text-slate-400">
                     {['No credit card required', 'Free tier for small universities', 'Set up in under 10 minutes'].map(
                         (item) => (
                             <span key={item} className="inline-flex items-center gap-2">

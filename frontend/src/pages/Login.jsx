@@ -267,12 +267,12 @@ export default function Login() {
                     onImageError={() => setImageError(true)}
                 />
 
-                <div className="flex w-full items-start justify-center bg-white px-6 py-10 dark:bg-slate-950 sm:px-12 lg:h-full lg:overflow-y-auto lg:py-12">
+                <div className="flex w-full items-start justify-center bg-white px-4 py-8 dark:bg-slate-950 sm:px-12 lg:h-full lg:overflow-y-auto lg:py-12">
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, ease }}
-                        className="w-full max-w-[420px] mt-10 sm:mt-20"
+                        className="w-full max-w-[420px] mt-4 sm:mt-20"
                     >
 
                         <Link to="/" className="mb-8 flex w-fit items-center gap-2.5 transition-opacity hover:opacity-80 lg:hidden">

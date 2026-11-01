@@ -161,7 +161,6 @@ export default function Register() {
         return universities.filter(u => u.name.toLowerCase().includes(uniSearch.toLowerCase()))
     }, [universities, uniSearch])
 
-    // Derive selectedUni safely
     const selectedUni = useMemo(
         () => universities.find((u) => String(u.id) === String(form.universityId)) || null,
         [universities, form.universityId]
@@ -258,7 +257,7 @@ export default function Register() {
             <div className="flex min-h-full flex-col lg:grid lg:h-full lg:grid-cols-2">
                 <LeftPanel university={selectedUni} imageError={imageError} onImageError={() => setImageError(true)} />
 
-                <div className="flex w-full items-start justify-center bg-white px-6 py-10 dark:bg-slate-950 sm:px-12 lg:h-full lg:overflow-y-auto lg:py-12">
+                <div className="flex w-full items-start justify-center bg-white px-4 py-8 dark:bg-slate-950 sm:px-12 lg:h-full lg:overflow-y-auto lg:py-12">
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }} className="w-full max-w-[600px]">
 
                         <div className="mb-8 flex w-full items-center justify-between lg:hidden">
@@ -277,46 +276,46 @@ export default function Register() {
                             </Link>
                         </div>
 
-                        <div className="mb-8">
-                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
-                                <GraduationCap className="h-6 w-6" />
+                        <div className="mb-6 sm:mb-8">
+                            <div className="mb-4 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
+                                <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6" />
                             </div>
                             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Create your account</h1>
-                            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                            <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                                 {mode === 'fresher'
                                     ? 'For new students registering before receiving their matric number.'
                                     : 'Fill in the details below to register and get started.'}
                             </p>
                         </div>
 
-                        <form onSubmit={submit} className="space-y-8">
+                        <form onSubmit={submit} className="space-y-6 sm:space-y-8">
 
                             <section>
                                 <div className={sectionTitleClass}>
-                                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">1</span>
-                                    <h2 className="text-base font-bold text-slate-900 dark:text-white">Personal Information</h2>
+                                    <span className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] sm:text-xs font-bold text-white">1</span>
+                                    <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">Personal Information</h2>
                                     <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
                                 </div>
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                     <div>
                                         <label className={labelClass}>First name</label>
-                                        <input type="text" autoComplete="given-name" value={form.firstName} onChange={setField('firstName')} placeholder="Enter first name" required className={inputClass} />
+                                        <input type="text" autoComplete="given-name" value={form.firstName} onChange={setField('firstName')} placeholder="First name" required className={inputClass} />
                                     </div>
                                     <div>
                                         <label className={labelClass}>Middle name</label>
-                                        <input type="text" autoComplete="additional-name" value={form.middleName} onChange={setField('middleName')} placeholder="Enter middle name" required className={inputClass} />
+                                        <input type="text" autoComplete="additional-name" value={form.middleName} onChange={setField('middleName')} placeholder="Middle name" required className={inputClass} />
                                     </div>
                                     <div>
                                         <label className={labelClass}>Last name</label>
-                                        <input type="text" autoComplete="family-name" value={form.lastName} onChange={setField('lastName')} placeholder="Enter last name" required className={inputClass} />
+                                        <input type="text" autoComplete="family-name" value={form.lastName} onChange={setField('lastName')} placeholder="Last name" required className={inputClass} />
                                     </div>
                                 </div>
                             </section>
 
                             <section>
                                 <div className={sectionTitleClass}>
-                                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">2</span>
-                                    <h2 className="text-base font-bold text-slate-900 dark:text-white">Account Details</h2>
+                                    <span className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] sm:text-xs font-bold text-white">2</span>
+                                    <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">Account Details</h2>
                                     <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
                                 </div>
 
@@ -332,7 +331,7 @@ export default function Register() {
                                             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                                             <input
                                                 type="text"
-                                                placeholder="Search for your university..."
+                                                placeholder="Search university..."
                                                 value={uniSearch}
                                                 onChange={(e) => {
                                                     setUniSearch(e.target.value)
@@ -348,16 +347,16 @@ export default function Register() {
                                         {uniDropdownOpen && (
                                             <div className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-xl dark:border-slate-700 dark:bg-slate-800">
                                                 {loadingUnis ? (
-                                                    <div className="px-4 py-3 text-sm text-slate-500">Loading universities...</div>
+                                                    <div className="px-4 py-3 text-xs sm:text-sm text-slate-500">Loading universities...</div>
                                                 ) : filteredUniversities.length === 0 ? (
-                                                    <div className="px-4 py-3 text-sm text-slate-500">No universities found.</div>
+                                                    <div className="px-4 py-3 text-xs sm:text-sm text-slate-500">No universities found.</div>
                                                 ) : (
                                                     filteredUniversities.map((uni) => (
                                                         <button
                                                             key={uni.id}
                                                             type="button"
                                                             onClick={() => handleSelectUni(uni)}
-                                                            className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
+                                                            className="flex w-full items-center justify-between px-4 py-2 sm:py-2.5 text-left text-xs sm:text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
                                                         >
                                                             <span>{uni.name}</span>
                                                             {form.universityId === uni.id && <Check className="h-4 w-4 text-brand-600" />}
@@ -369,44 +368,39 @@ export default function Register() {
                                     </div>
                                 </div>
 
-                                {/* 👇 THIS ENTIRE BLOCK IS NOW HIDDEN UNTIL A UNIVERSITY IS SELECTED */}
                                 {selectedUni && (
-                                    <motion.div
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        className="overflow-hidden"
-                                    >
-                                        <div className="mt-5 mb-5 border-t border-slate-100 pt-5 dark:border-slate-800">
+                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="overflow-hidden">
+                                        <div className="mt-4 sm:mt-5 mb-4 sm:mb-5 border-t border-slate-100 pt-4 sm:pt-5 dark:border-slate-800">
                                             <label className={labelClass}>I am a...</label>
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="grid grid-cols-2 gap-2 sm:gap-3">
                                                 <button
                                                     type="button"
                                                     onClick={() => setMode('student')}
-                                                    className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-all ${
+                                                    className={`flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl border p-2.5 sm:p-3 text-[10px] sm:text-sm font-semibold transition-all ${
                                                         mode === 'student'
                                                             ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/40 dark:text-brand-300'
                                                             : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
                                                     }`}
                                                 >
-                                                    <User className="h-4 w-4" />
-                                                    Continuing Student
+                                                    <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                                                    Continuing
                                                 </button>
                                                 <button
                                                     type="button"
                                                     onClick={() => setMode('fresher')}
                                                     disabled={!fresherEnabled}
-                                                    className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-semibold transition-all ${
+                                                    className={`flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl border p-2.5 sm:p-3 text-[10px] sm:text-sm font-semibold transition-all ${
                                                         mode === 'fresher'
                                                             ? 'border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-500 dark:bg-brand-950/40 dark:text-brand-300'
                                                             : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
                                                     }`}
                                                 >
-                                                    <Sparkles className="h-4 w-4" />
-                                                    New Student (Fresher)
+                                                    <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                                                    Fresher
                                                 </button>
                                             </div>
                                             {!fresherEnabled && (
-                                                <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">
+                                                <p className="mt-2 text-[10px] sm:text-xs text-amber-600 dark:text-amber-500">
                                                     This university has disabled fresher registration. Please register as a continuing student.
                                                 </p>
                                             )}
@@ -468,7 +462,7 @@ export default function Register() {
                                 </div>
                             </section>
 
-                            <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 text-sm font-semibold text-white shadow-md shadow-brand-500/20 transition-all hover:bg-brand-700 hover:shadow-lg hover:shadow-brand-500/30 disabled:opacity-60">
+                            <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 text-xs sm:text-sm font-semibold text-white shadow-md shadow-brand-500/20 transition-all hover:bg-brand-700 hover:shadow-lg hover:shadow-brand-500/30 disabled:opacity-60">
                                 {loading ? (
                                     <>
                                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -480,10 +474,10 @@ export default function Register() {
                             </button>
                         </form>
 
-                        <div className="mt-8">
-                            <div className="mb-6 flex items-center">
+                        <div className="mt-6 sm:mt-8">
+                            <div className="mb-4 sm:mb-6 flex items-center">
                                 <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
-                                <span className="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                <span className="px-4 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                                     Already have an account?
                                 </span>
                                 <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
@@ -491,7 +485,7 @@ export default function Register() {
 
                             <Link
                                 to="/login"
-                                className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white py-3.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:text-brand-400 dark:hover:bg-slate-700"
+                                className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white py-3.5 text-xs sm:text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-800 dark:text-brand-400 dark:hover:bg-slate-700"
                             >
                                 Sign in instead
                             </Link>
