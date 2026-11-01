@@ -5,6 +5,7 @@ import { X as CloseIcon, Home as HomeIcon, LogOut } from 'lucide-react'
 import PageHeader from './PageHeader'
 import { useUIStore } from '../../store/uiStore'
 import { useAuthStore } from '../../store/authStore'
+import { useIdleLogout } from '../../hooks/useIdleLogout' // <-- Imported hook
 
 const ROLE_HOME = {
     SUPER_ADMIN: '/super-admin',
@@ -53,6 +54,9 @@ export default function DashboardLayout({ tabs, title, description, action, chil
     const { user, logout } = useAuthStore()
     const location = useLocation()
     const navigate = useNavigate()
+
+    // 👇 ACTIVATE THE IDLE LOGOUT HOOK HERE
+    useIdleLogout()
 
     useEffect(() => {
         closeMobileSidebar()
