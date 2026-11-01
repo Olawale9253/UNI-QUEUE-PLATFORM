@@ -19,7 +19,6 @@ export default function Feedback() {
     useEffect(() => {
         const load = async () => {
             try {
-                // Assuming you create a super-admin endpoint for all feedback
                 const res = await api.get('/api/super-admin/feedback')
                 setFeedback(res.data?.data || [])
             } catch (err) {
@@ -37,14 +36,14 @@ export default function Feedback() {
     )
 
     return (
-        <div className="space-y-6 pb-12">
+        <div className="space-y-6 pb-12 px-4 sm:px-6">
             <Card padded={false}>
-                <div className="border-b border-slate-100 p-4 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
+                <div className="border-b border-slate-100 p-4 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                     <div>
                         <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Platform Feedback</h2>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Review issues and ratings submitted by students.</p>
+                        <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">Review issues and ratings submitted by students.</p>
                     </div>
-                    <div className="w-full max-w-xs">
+                    <div className="w-full sm:max-w-xs">
                         <Input placeholder="Search by university or comment..." value={search} onChange={(e) => setSearch(e.target.value)} icon={Search} />
                     </div>
                 </div>
@@ -57,24 +56,24 @@ export default function Feedback() {
                     <div className="divide-y divide-slate-100 dark:divide-slate-800">
                         {filtered.map((item) => (
                             <div key={item.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:p-6 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
+                                <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[10px] sm:text-xs font-semibold text-white">
                                     {item.studentName?.split(' ').map(n => n[0]).slice(0, 2).join('') || 'ST'}
                                 </div>
-                                <div className="flex-1">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.studentName}</span>
-                                        <Badge variant="default">{item.universityName}</Badge>
-                                        <div className="flex items-center gap-0.5 ml-2">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                        <span className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{item.studentName}</span>
+                                        <Badge variant="default" className="text-[9px] sm:text-xs">{item.universityName}</Badge>
+                                        <div className="flex items-center gap-0.5 ml-1 sm:ml-2">
                                             {[1, 2, 3, 4, 5].map(star => (
-                                                <Star key={star} className={`h-3.5 w-3.5 ${star <= item.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`} />
+                                                <Star key={star} className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${star <= item.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-600'}`} />
                                             ))}
                                         </div>
                                     </div>
-                                    <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">"{item.comment}"</p>
-                                    <div className="mt-2 text-xs text-slate-500">{formatDateTime(item.createdAt)}</div>
+                                    <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 line-clamp-3">"{item.comment}"</p>
+                                    <div className="mt-2 text-[10px] sm:text-xs text-slate-500">{formatDateTime(item.createdAt)}</div>
                                 </div>
-                                <div className="shrink-0">
-                                    <Badge variant={item.resolved ? 'success' : 'warning'}>
+                                <div className="shrink-0 self-end sm:self-start">
+                                    <Badge variant={item.resolved ? 'success' : 'warning'} className="text-[9px] sm:text-xs">
                                         {item.resolved ? 'Resolved' : 'Pending'}
                                     </Badge>
                                 </div>

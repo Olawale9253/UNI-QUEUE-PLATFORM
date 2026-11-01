@@ -68,30 +68,26 @@ export default function FeedbackModal({ ticket, open, onClose, onSubmitted }) {
                             exit={{ opacity: 0, scale: 0.95, y: 8 }}
                             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                             onClick={(event) => event.stopPropagation()}
-                            className="relative w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl"
+                            className="relative w-full max-w-md rounded-xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900"
                         >
                             <button
                                 onClick={() => !submitting && onClose?.()}
-                                className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                                className="absolute right-3 top-3 sm:right-4 sm:top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                                 aria-label="Close"
                             >
                                 <CloseIcon className="h-4 w-4" />
                             </button>
 
-                            <h2 className="text-lg font-semibold text-slate-900">
+                            <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100">
                                 How was your experience?
                             </h2>
-                            <p className="mt-1 text-sm text-slate-500">
+                            <p className="mt-1 text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">
                                 Ticket <span className="font-mono font-medium">{ticket.ticketNumber}</span>
                                 {ticket.queueName ? ` · ${ticket.queueName}` : ''}
                             </p>
 
-                            {/* Star picker */}
-                            <div className="mt-6 flex flex-col items-center">
-                                <div
-                                    className="flex gap-1"
-                                    onMouseLeave={() => setHover(0)}
-                                >
+                            <div className="mt-4 sm:mt-6 flex flex-col items-center">
+                                <div className="flex gap-1" onMouseLeave={() => setHover(0)}>
                                     {[1, 2, 3, 4, 5].map((count) => (
                                         <button
                                             key={count}
@@ -102,26 +98,24 @@ export default function FeedbackModal({ ticket, open, onClose, onSubmitted }) {
                                             aria-label={`${count} star${count > 1 ? 's' : ''}`}
                                         >
                                             <Star
-                                                className={`h-9 w-9 transition-colors ${
+                                                className={`h-8 w-8 sm:h-9 sm:w-9 transition-colors ${
                                                     count <= active
                                                         ? 'fill-amber-400 text-amber-400'
-                                                        : 'text-slate-300'
+                                                        : 'text-slate-300 dark:text-slate-600'
                                                 }`}
                                             />
                                         </button>
                                     ))}
                                 </div>
-                                <div className="mt-2 h-5 text-sm font-medium text-slate-700">
+                                <div className="mt-1 sm:mt-2 h-4 sm:h-5 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
                                     {active > 0 ? RATING_LABELS[active] : '\u00A0'}
                                 </div>
                             </div>
 
-                            {/* Comment */}
-                            <div className="mt-5">
-                                <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                            <div className="mt-4 sm:mt-5">
+                                <label className="mb-1.5 flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
                                     <MessageSquare className="h-3.5 w-3.5" />
-                                    Comments{' '}
-                                    <span className="text-xs font-normal text-slate-500">(optional)</span>
+                                    Comments <span className="text-[10px] sm:text-xs font-normal text-slate-500">(optional)</span>
                                 </label>
                                 <textarea
                                     rows={3}
@@ -129,17 +123,17 @@ export default function FeedbackModal({ ticket, open, onClose, onSubmitted }) {
                                     onChange={(eventValue) => setComment(eventValue.target.value)}
                                     placeholder="Tell us what went well or what could be improved…"
                                     maxLength={2000}
-                                    className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20"
+                                    className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                 />
                             </div>
 
-                            {/* Actions */}
-                            <div className="mt-6 flex justify-end gap-2">
+                            <div className="mt-4 sm:mt-6 flex flex-col-reverse sm:flex-row justify-end gap-2">
                                 <Button
                                     variant="secondary"
                                     size="sm"
                                     onClick={() => !submitting && onClose?.()}
                                     disabled={submitting}
+                                    className="w-full sm:w-auto text-xs sm:text-sm justify-center"
                                 >
                                     Skip
                                 </Button>
@@ -148,6 +142,7 @@ export default function FeedbackModal({ ticket, open, onClose, onSubmitted }) {
                                     onClick={handleSubmit}
                                     loading={submitting}
                                     disabled={submitting || rating < 1}
+                                    className="w-full sm:w-auto text-xs sm:text-sm justify-center"
                                 >
                                     Submit feedback
                                 </Button>
