@@ -85,7 +85,7 @@ export default function DocumentReviewModal({ document: doc, onClose, onReviewed
     }
 
     const preview = async () => {
-        // Open tab SYNCHRONOUSLY, before any await — otherwise popup blocker kills it
+        // Open tab synchronously to prevent popup blocker
         const newTab = window.open('', '_blank')
         if (newTab) {
             newTab.document.write(
@@ -93,20 +93,19 @@ export default function DocumentReviewModal({ document: doc, onClose, onReviewed
             )
         }
         try {
-            // Fetch securely using the generic endpoint
-            const res = await api.get(`/api/documents/${doc.id}/download`, {
+            // 👇 USING THE STAFF-SPECIFIC ENDPOINT
+            const res = await api.get(`/api/staff/documents/${doc.id}/download`, {
                 params: { inline: true },
                 responseType: 'blob',
             })
 
-            // Ensure blob is created with the correct MIME type
+            // Ensure the browser knows it's an image/pdf
             const blob = new Blob([res.data], { type: doc.contentType || 'application/pdf' })
             const blobUrl = URL.createObjectURL(blob)
 
             if (newTab) {
                 newTab.location.href = blobUrl
             } else {
-                // Fallback if popup blocker is extremely aggressive
                 const documentValue = document.createElement('a')
                 documentValue.href = blobUrl
                 documentValue.target = '_blank'
@@ -114,17 +113,16 @@ export default function DocumentReviewModal({ document: doc, onClose, onReviewed
                 documentValue.click()
                 documentValue.remove()
             }
-            // Clean up memory after 1 minute
             setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000)
         } catch (err) {
             if (newTab) newTab.close()
-            push({ type: 'error', message: 'Preview failed. Please try downloading instead.' })
+            push({ type: 'error', message: 'Preview failed. File may be missing or deleted.' })
         }
     }
 
     const download = async () => {
         try {
-            const res = await api.get(`/api/documents/${doc.id}/download`, {
+            const res = await api.get(`/api/staff/documents/${doc.id}/download`, {
                 responseType: 'blob',
             })
             const blobUrl = URL.createObjectURL(res.data)
