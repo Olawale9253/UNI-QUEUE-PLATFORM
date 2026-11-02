@@ -117,10 +117,11 @@ export default function NotificationBell() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         transition={{ duration: 0.15, ease: 'easeOut' }}
-                        className="absolute right-0 mt-2 w-80 sm:w-96 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 ring-1 ring-black/5 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/40 z-50"
+                        // 👇 FIXED MOBILE POSITIONING HERE
+                        className="fixed top-[72px] inset-x-4 sm:absolute sm:inset-auto sm:right-0 sm:top-auto sm:mt-2 w-auto sm:w-96 max-h-[75vh] sm:max-h-[400px] flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 ring-1 ring-black/5 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/40 z-50"
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/50">
+                        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-4 py-3 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/50">
                             <div className="flex items-center gap-2">
                                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">Notifications</h3>
                                 {unreadCount > 0 && (
@@ -144,7 +145,7 @@ export default function NotificationBell() {
                         </div>
 
                         {/* List */}
-                        <div className="max-h-[400px] overflow-y-auto overscroll-contain">
+                        <div className="flex-1 overflow-y-auto overscroll-contain">
                             {loading ? (
                                 <div className="p-4 space-y-3">
                                     {[1, 2, 3].map(i => (
@@ -219,7 +220,7 @@ export default function NotificationBell() {
                         </div>
 
                         {/* Footer */}
-                        <div className="border-t border-slate-100 bg-slate-50/50 p-2 dark:border-slate-800 dark:bg-slate-900/50">
+                        <div className="shrink-0 border-t border-slate-100 bg-slate-50/50 p-2 dark:border-slate-800 dark:bg-slate-900/50">
                             <Link
                                 to="/student/notifications"
                                 onClick={() => setIsOpen(false)}

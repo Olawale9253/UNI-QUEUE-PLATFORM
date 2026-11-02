@@ -8,7 +8,6 @@ import {
     ChevronDown,
     Menu,
     Home,
-    Info,
     Building2,
     X,
 } from 'lucide-react'
@@ -39,7 +38,6 @@ export default function Navbar() {
     const hasLogo = !isSuperAdmin && !!university?.logoUrl && !logoFailed
     const initials = university?.code || university?.name?.slice(0, 2).toUpperCase() || 'UQ'
 
-    // 👇 Get just the first name
     const firstName = user?.fullName?.split(' ')[0] || 'User'
 
     const isDashboardRoute = DASHBOARD_PREFIXES.some((item) =>
@@ -221,7 +219,6 @@ export default function Navbar() {
                                 </div>
                                 <div className="hidden text-left xl:block pr-1">
                                     <div className="max-w-[120px] truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                        {/* 👇 Displaying first name only */}
                                         {firstName}
                                     </div>
                                 </div>
