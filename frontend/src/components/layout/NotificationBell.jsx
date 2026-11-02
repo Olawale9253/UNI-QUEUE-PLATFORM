@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, Check, CheckCircle2, Ticket, AlertCircle, Info, ExternalLink } from 'lucide-react'
+import { Bell, Check, CheckCircle2, Ticket, AlertCircle, Info, ExternalLink, Activity, Megaphone } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import api from '../../api/axios'
 import { useUniversityStore } from '../../store/universityStore'
@@ -30,6 +30,7 @@ function getNotificationIcon(title = '', type = '') {
     if (t.includes('complete') || t.includes('served')) return CheckCircle2
     if (t.includes('queue') || t.includes('joined')) return Ticket
     if (t.includes('alert') || t.includes('error') || t.includes('missed')) return AlertCircle
+    if (t.includes('broadcast') || t.includes('announcement')) return Megaphone
     return Info
 }
 
@@ -38,6 +39,7 @@ export default function NotificationBell() {
     const [isOpen, setIsOpen] = useState(false)
     const [notifications, setNotifications] = useState([])
     const [loading, setLoading] = useState(true)
+    const [activeTab, setActiveTab] = useState('ALL') // 👈 State for tabs
     const dropdownRef = useRef(null)
 
     const primaryColor = university?.primaryColor || '#4f46e5'
@@ -56,7 +58,6 @@ export default function NotificationBell() {
 
     useEffect(() => {
         fetchNotifications()
-        // Poll every 30 seconds
         const interval = setInterval(fetchNotifications, 30000)
         return () => clearInterval(interval)
     }, [])
@@ -74,13 +75,32 @@ export default function NotificationBell() {
 
     const unreadCount = notifications.filter(n => !n.isRead).length
 
+    // 👇 Filtering Logic based on tabs
+    const filteredNotifications = useMemo(() => {
+        return notifications.filter(n => {
+            if (activeTab === 'ALL') return true
+
+            const type = (n.type || '').toUpperCase()
+            const title = (n.title || '').toLowerCase()
+
+            if (activeTab === 'ACTIVITY') {
+                return type.includes('TICKET') || type.includes('QUEUE') || title.includes('ticket') || title.includes('queue')
+            }
+
+            if (activeTab === 'UPDATE') {
+                return type.includes('BROADCAST') || type.includes('WORKFLOW') || type.includes('SYSTEM') || title.includes('broadcast') || title.includes('update')
+            }
+
+            return true
+        })
+    }, [notifications, activeTab])
+
     const markAllAsRead = async () => {
-        // Optimistic UI update
         setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
         try {
             await api.post('/api/notifications/read-all')
         } catch {
-            fetchNotifications() // Revert if it fails
+            fetchNotifications()
         }
     }
 
@@ -117,8 +137,7 @@ export default function NotificationBell() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         transition={{ duration: 0.15, ease: 'easeOut' }}
-                        // 👇 FIXED MOBILE POSITIONING HERE
-                        className="fixed top-[72px] inset-x-4 sm:absolute sm:inset-auto sm:right-0 sm:top-auto sm:mt-2 w-auto sm:w-96 max-h-[75vh] sm:max-h-[400px] flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 ring-1 ring-black/5 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/40 z-50"
+                        className="fixed top-[72px] inset-x-4 sm:absolute sm:inset-auto sm:right-0 sm:top-auto sm:mt-2 w-auto sm:w-96 max-h-[75vh] sm:max-h-[450px] flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 ring-1 ring-black/5 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/40 z-50"
                     >
                         {/* Header */}
                         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-4 py-3 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/50">
@@ -144,6 +163,28 @@ export default function NotificationBell() {
                             )}
                         </div>
 
+                        {/* 👇 TABS */}
+                        <div className="flex px-2 pt-2 gap-1 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                            {[
+                                { id: 'ALL', label: 'All' },
+                                { id: 'ACTIVITY', label: 'Activity' },
+                                { id: 'UPDATE', label: 'Updates' }
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`flex-1 pb-2 text-xs font-semibold border-b-2 transition-colors ${
+                                        activeTab === tab.id
+                                            ? 'text-slate-900 border-slate-900 dark:text-white dark:border-white'
+                                            : 'text-slate-500 border-transparent hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                                    }`}
+                                    style={activeTab === tab.id ? { borderColor: primaryColor, color: primaryColor } : {}}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
                         {/* List */}
                         <div className="flex-1 overflow-y-auto overscroll-contain">
                             {loading ? (
@@ -158,17 +199,17 @@ export default function NotificationBell() {
                                         </div>
                                     ))}
                                 </div>
-                            ) : notifications.length === 0 ? (
+                            ) : filteredNotifications.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
                                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 mb-3">
                                         <Bell className="h-6 w-6 text-slate-400" />
                                     </div>
                                     <p className="text-sm font-semibold text-slate-900 dark:text-white">You're all caught up!</p>
-                                    <p className="text-xs text-slate-500 mt-1">No new notifications at the moment.</p>
+                                    <p className="text-xs text-slate-500 mt-1">No {activeTab !== 'ALL' ? activeTab.toLowerCase() : ''} notifications found.</p>
                                 </div>
                             ) : (
                                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                                    {notifications.map((notification) => {
+                                    {filteredNotifications.map((notification) => {
                                         const Icon = getNotificationIcon(notification.title, notification.type)
                                         const isUnread = !notification.isRead
 
@@ -182,7 +223,6 @@ export default function NotificationBell() {
                                                         : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
                                                 }`}
                                             >
-                                                {/* Unread indicator line */}
                                                 {isUnread && (
                                                     <div
                                                         className="absolute left-0 top-0 bottom-0 w-1 rounded-r-full"
