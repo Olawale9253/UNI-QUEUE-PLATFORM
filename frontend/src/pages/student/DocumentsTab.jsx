@@ -15,6 +15,7 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import { SkeletonRow } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
 import { useUniversityStore } from '../../store/universityStore'
+import { withAlpha } from '../../lib/colors'
 
 // Map DB types to UI categories
 const CATEGORY_MAPPING = {
@@ -38,11 +39,11 @@ const DOC_TYPES = [
 ]
 
 const CATEGORIES = [
-    { id: 'Academic', icon: GraduationCap, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
-    { id: 'Identity', icon: UserSquare2, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-    { id: 'Financial', icon: Wallet, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100' },
-    { id: 'Accommodation', icon: Home, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100' },
-    { id: 'Medical', icon: Cross, color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-100' },
+    { id: 'Academic', icon: GraduationCap },
+    { id: 'Identity', icon: UserSquare2 },
+    { id: 'Financial', icon: Wallet },
+    { id: 'Accommodation', icon: Home },
+    { id: 'Medical', icon: Cross },
 ]
 
 const STATUS_VARIANTS = { PENDING: 'warning', APPROVED: 'success', REJECTED: 'danger' }
@@ -63,6 +64,9 @@ function formatDateTime(dt) {
 export default function DocumentsTab() {
     const { push } = useToastStore()
     const { university } = useUniversityStore()
+
+    // Get the school's primary color (fallback to indigo if not set)
+    const primaryColor = university?.primaryColor || '#4f46e5'
 
     const [docs, setDocs] = useState([])
     const [loading, setLoading] = useState(true)
@@ -196,26 +200,31 @@ export default function DocumentsTab() {
                 </p>
             </div>
 
-            {/* Banner */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0b1f45] via-[#123263] to-[#1e4a8a] p-6 sm:p-8 text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
+            {/* Banner (Dynamic School Color) */}
+            <div
+                className="relative overflow-hidden rounded-2xl p-6 sm:p-8 text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-6"
+                style={{
+                    background: `linear-gradient(135deg, ${primaryColor} 0%, ${withAlpha(primaryColor, 0.8)} 100%)`
+                }}
+            >
                 <div className="relative z-10 max-w-lg">
                     <h2 className="text-xl sm:text-2xl font-bold">Keep your documents ready!</h2>
-                    <p className="mt-2 text-sm text-blue-100">
+                    <p className="mt-2 text-sm text-white/90">
                         Upload and manage your documents for a smooth university experience.
                     </p>
                 </div>
                 <div className="relative z-10 flex gap-4 sm:gap-6 text-xs sm:text-sm font-medium">
                     <div className="space-y-3">
-                        <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Fast verification</div>
-                        <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Easy access</div>
+                        <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-white" /> Fast verification</div>
+                        <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-white" /> Easy access</div>
                     </div>
                     <div className="space-y-3">
-                        <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Seamless processes</div>
+                        <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-white" /> Seamless processes</div>
                     </div>
                 </div>
                 {/* Decorative background circles */}
-                <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/5 blur-2xl" />
-                <div className="absolute right-20 -bottom-10 h-32 w-32 rounded-full bg-blue-400/20 blur-xl" />
+                <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+                <div className="absolute right-20 -bottom-10 h-32 w-32 rounded-full bg-white/20 blur-xl" />
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6 items-start">
@@ -223,25 +232,35 @@ export default function DocumentsTab() {
                 <div className="space-y-6 min-w-0">
                     {/* Category Cards */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                        {CATEGORIES.map((cat) => (
-                            <button
-                                key={cat.id}
-                                onClick={() => setActiveCategory(activeCategory === cat.id ? 'ALL' : cat.id)}
-                                className={`flex flex-col items-start p-3 sm:p-4 rounded-xl border text-left transition-all ${
-                                    activeCategory === cat.id
-                                        ? 'ring-2 ring-brand-500 border-transparent bg-white dark:bg-slate-800 shadow-md'
-                                        : `bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700`
-                                }`}
-                            >
-                                <div className={`p-2 rounded-lg ${cat.bg} ${cat.color} mb-3`}>
-                                    <cat.icon className="h-5 w-5" />
-                                </div>
-                                <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 leading-tight">
-                                    {cat.id} Documents
-                                </h3>
-                                <p className="text-[10px] sm:text-xs text-slate-500 mt-1">{counts[cat.id] || 0} files</p>
-                            </button>
-                        ))}
+                        {CATEGORIES.map((cat) => {
+                            const isActive = activeCategory === cat.id
+                            return (
+                                <button
+                                    key={cat.id}
+                                    onClick={() => setActiveCategory(isActive ? 'ALL' : cat.id)}
+                                    className={`flex flex-col items-start p-3 sm:p-4 rounded-xl border text-left transition-all ${
+                                        isActive
+                                            ? 'ring-2 border-transparent bg-white dark:bg-slate-800 shadow-md'
+                                            : `bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700`
+                                    }`}
+                                    style={isActive ? { '--tw-ring-color': primaryColor } : {}}
+                                >
+                                    <div
+                                        className="p-2 rounded-lg mb-3"
+                                        style={{
+                                            backgroundColor: withAlpha(primaryColor, 0.1),
+                                            color: primaryColor
+                                        }}
+                                    >
+                                        <cat.icon className="h-5 w-5" />
+                                    </div>
+                                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                                        {cat.id} Documents
+                                    </h3>
+                                    <p className="text-[10px] sm:text-xs text-slate-500 mt-1">{counts[cat.id] || 0} files</p>
+                                </button>
+                            )
+                        })}
                     </div>
 
                     {/* Drag & Drop Upload Zone */}
@@ -251,12 +270,16 @@ export default function DocumentsTab() {
                         onDrop={handleDrop}
                         className={`relative flex flex-col sm:flex-row items-center justify-between p-4 sm:p-6 rounded-xl border-2 border-dashed transition-colors ${
                             isDragging
-                                ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20'
+                                ? 'bg-slate-50 dark:bg-slate-900/50'
                                 : 'border-slate-300 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-900/50'
                         }`}
+                        style={isDragging ? { borderColor: primaryColor } : {}}
                     >
                         <div className="flex items-center gap-4 mb-4 sm:mb-0">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                            <div
+                                className="flex h-12 w-12 items-center justify-center rounded-full shrink-0"
+                                style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
+                            >
                                 <Upload className="h-6 w-6" />
                             </div>
                             <div>
@@ -268,7 +291,7 @@ export default function DocumentsTab() {
                             <select
                                 value={selectedType}
                                 onChange={(e) => setSelectedType(e.target.value)}
-                                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                             >
                                 {DOC_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                             </select>
@@ -276,7 +299,8 @@ export default function DocumentsTab() {
                             <Button
                                 onClick={() => fileInputRef.current?.click()}
                                 loading={uploading}
-                                className="whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white shadow-none"
+                                className="whitespace-nowrap shadow-none text-white"
+                                style={{ backgroundColor: primaryColor }}
                             >
                                 <Upload className="mr-2 h-4 w-4" /> Upload Document
                             </Button>
@@ -288,22 +312,28 @@ export default function DocumentsTab() {
                         {/* Table Filters */}
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                             <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-hide">
-                                {['ALL', 'APPROVED', 'PENDING', 'REJECTED'].map((status) => (
-                                    <button
-                                        key={status}
-                                        onClick={() => setActiveStatus(status)}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap ${
-                                            activeStatus === status
-                                                ? 'bg-blue-600 text-white shadow-sm'
-                                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-400'
-                                        }`}
-                                    >
-                                        {status === 'ALL' ? 'All Documents' : status.charAt(0) + status.slice(1).toLowerCase()}
-                                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeStatus === status ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800'}`}>
-                                            {counts[status] || 0}
-                                        </span>
-                                    </button>
-                                ))}
+                                {['ALL', 'APPROVED', 'PENDING', 'REJECTED'].map((status) => {
+                                    const isActive = activeStatus === status
+                                    return (
+                                        <button
+                                            key={status}
+                                            onClick={() => setActiveStatus(status)}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap ${
+                                                isActive
+                                                    ? 'text-white shadow-sm'
+                                                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-400'
+                                            }`}
+                                            style={isActive ? { backgroundColor: primaryColor } : {}}
+                                        >
+                                            {status === 'ALL' ? 'All Documents' : status.charAt(0) + status.slice(1).toLowerCase()}
+                                            <span
+                                                className={`px-1.5 py-0.5 rounded-full text-[10px] ${isActive ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800'}`}
+                                            >
+                                                {counts[status] || 0}
+                                            </span>
+                                        </button>
+                                    )
+                                })}
                             </div>
 
                             <div className="flex items-center gap-2 w-full lg:w-auto">
@@ -314,7 +344,8 @@ export default function DocumentsTab() {
                                         placeholder="Search documents..."
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-xs focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                                        className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-xs focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                                        style={{ focusBorderColor: primaryColor }}
                                     />
                                 </div>
                                 <Button variant="secondary" className="shrink-0 text-xs px-3 py-2 border-slate-200 dark:border-slate-700">
@@ -353,7 +384,10 @@ export default function DocumentsTab() {
                                                 <tr key={doc.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                                     <td className="px-5 py-4">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-600 shrink-0">
+                                                            <div
+                                                                className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0"
+                                                                style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
+                                                            >
                                                                 <FileText className="h-4 w-4" />
                                                             </div>
                                                             <span className="font-medium text-slate-900 dark:text-slate-100 truncate max-w-[200px]" title={doc.originalFilename}>
@@ -400,7 +434,12 @@ export default function DocumentsTab() {
                                     <span>Showing 1 – {filtered.length} of {filtered.length} documents</span>
                                     <div className="flex gap-1">
                                         <button className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-50" disabled>&lt;</button>
-                                        <button className="px-3 py-1 rounded bg-blue-600 text-white font-medium">1</button>
+                                        <button
+                                            className="px-3 py-1 rounded text-white font-medium"
+                                            style={{ backgroundColor: primaryColor }}
+                                        >
+                                            1
+                                        </button>
                                         <button className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-50" disabled>&gt;</button>
                                     </div>
                                 </div>
@@ -414,7 +453,7 @@ export default function DocumentsTab() {
                     {/* Guidelines */}
                     <Card className="p-5 border-slate-200 dark:border-slate-800">
                         <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-slate-100 mb-4">
-                            <FileCheck className="h-4 w-4 text-blue-600" /> Document Guidelines
+                            <FileCheck className="h-4 w-4" style={{ color: primaryColor }} /> Document Guidelines
                         </h3>
                         <ul className="space-y-3 text-xs text-slate-600 dark:text-slate-400">
                             <li className="flex gap-2">
@@ -437,9 +476,15 @@ export default function DocumentsTab() {
                     </Card>
 
                     {/* Help */}
-                    <Card className="p-5 border-slate-200 dark:border-slate-800 bg-blue-50/50 dark:bg-blue-900/10">
+                    <Card
+                        className="p-5 border-slate-200 dark:border-slate-800"
+                        style={{ backgroundColor: withAlpha(primaryColor, 0.05) }}
+                    >
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-blue-100 text-blue-600 rounded-full">
+                            <div
+                                className="p-2 rounded-full"
+                                style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}
+                            >
                                 <HelpCircle className="h-5 w-5" />
                             </div>
                             <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Need Help?</h3>
@@ -447,7 +492,11 @@ export default function DocumentsTab() {
                         <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
                             Contact support for assistance with your documents.
                         </p>
-                        <Button variant="secondary" className="w-full justify-center border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/30">
+                        <Button
+                            variant="secondary"
+                            className="w-full justify-center hover:opacity-90"
+                            style={{ borderColor: primaryColor, color: primaryColor, backgroundColor: 'transparent' }}
+                        >
                             Contact Support
                         </Button>
                     </Card>
@@ -459,9 +508,14 @@ export default function DocumentsTab() {
                         </h3>
                         <div className="space-y-1">
                             {['View Document Requirements', 'Frequently Asked Questions', 'Official Student Handbook'].map((link) => (
-                                <a key={link} href="#" className="flex items-center justify-between py-2 text-xs font-medium text-slate-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 group">
+                                <a
+                                    key={link}
+                                    href="#"
+                                    className="flex items-center justify-between py-2 text-xs font-medium text-slate-600 hover:opacity-80 dark:text-slate-400 group"
+                                    style={{ color: primaryColor }}
+                                >
                                     {link}
-                                    <ChevronRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 transition-transform group-hover:translate-x-0.5" />
+                                    <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                                 </a>
                             ))}
                         </div>
