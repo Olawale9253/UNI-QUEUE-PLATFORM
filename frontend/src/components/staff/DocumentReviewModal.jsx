@@ -93,12 +93,13 @@ export default function DocumentReviewModal({ document: doc, onClose, onReviewed
             )
         }
         try {
+            // Fetch securely using the generic endpoint
             const res = await api.get(`/api/documents/${doc.id}/download`, {
                 params: { inline: true },
                 responseType: 'blob',
             })
 
-            // Ensure the blob has the right content type
+            // Ensure blob is created with the correct MIME type
             const blob = new Blob([res.data], { type: doc.contentType || 'application/pdf' })
             const blobUrl = URL.createObjectURL(blob)
 
@@ -109,16 +110,15 @@ export default function DocumentReviewModal({ document: doc, onClose, onReviewed
                 const documentValue = document.createElement('a')
                 documentValue.href = blobUrl
                 documentValue.target = '_blank'
-                documentValue.rel = 'noopener noreferrer'
                 document.body.appendChild(documentValue)
                 documentValue.click()
                 documentValue.remove()
             }
             // Clean up memory after 1 minute
             setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000)
-        } catch {
+        } catch (err) {
             if (newTab) newTab.close()
-            push({ type: 'error', message: 'Preview failed' })
+            push({ type: 'error', message: 'Preview failed. Please try downloading instead.' })
         }
     }
 
