@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-    Upload, FileText, Trash2, Download, AlertCircle,
-    CheckCircle2, Clock, XCircle, Filter,
+    Upload, FileText, Trash2, Download, AlertCircle, Eye,
+    CheckCircle2, Clock, XCircle, Search, Filter,
+    GraduationCap, UserSquare2, Wallet, Home, Cross,
+    ShieldCheck, HelpCircle, FileQuestion, FileCheck, ChevronRight
 } from 'lucide-react'
 import api from '../../api/axios'
 import Card from '../../components/ui/Card'
@@ -12,112 +14,94 @@ import EmptyState from '../../components/ui/EmptyState'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import { SkeletonRow } from '../../components/ui/Skeleton'
 import { useToastStore } from '../../store/toastStore'
-import { useAdaptivePoll } from '../../hooks/useAdaptivePoll'
+import { useUniversityStore } from '../../store/universityStore'
+
+// Map DB types to UI categories
+const CATEGORY_MAPPING = {
+    'TRANSCRIPT': 'Academic',
+    'CERTIFICATE': 'Academic',
+    'ADMISSION_LETTER': 'Academic',
+    'ID_CARD': 'Identity',
+    'PAYMENT_PROOF': 'Financial',
+    'MEDICAL_REPORT': 'Medical',
+    'OTHER': 'Accommodation' // Defaulting OTHER to Accommodation for the 5th card
+}
 
 const DOC_TYPES = [
-    { value: 'PAYMENT_PROOF', label: 'Payment proof' },
-    { value: 'TRANSCRIPT', label: 'Transcript' },
-    { value: 'ID_CARD', label: 'ID card' },
-    { value: 'ADMISSION_LETTER', label: 'Admission letter' },
-    { value: 'MEDICAL_REPORT', label: 'Medical report' },
+    { value: 'TRANSCRIPT', label: 'Academic Transcript' },
     { value: 'CERTIFICATE', label: 'Certificate' },
-    { value: 'OTHER', label: 'Other' },
+    { value: 'ADMISSION_LETTER', label: 'Admission Letter' },
+    { value: 'ID_CARD', label: 'Student ID Card' },
+    { value: 'PAYMENT_PROOF', label: 'School Fee Receipt' },
+    { value: 'MEDICAL_REPORT', label: 'Medical Report' },
+    { value: 'OTHER', label: 'Accommodation Form' },
 ]
 
-const STATUS_VARIANTS = {
-    PENDING: 'warning',
-    APPROVED: 'success',
-    REJECTED: 'danger',
-}
-
-const STATUS_LABELS = {
-    PENDING: 'Pending review',
-    APPROVED: 'Approved',
-    REJECTED: 'Rejected',
-}
-
-const STATUS_ICONS = {
-    PENDING: Clock,
-    APPROVED: CheckCircle2,
-    REJECTED: XCircle,
-}
-
-const FILTERS = [
-    { value: 'ALL', label: 'All' },
-    { value: 'PENDING', label: 'Pending' },
-    { value: 'APPROVED', label: 'Approved' },
-    { value: 'REJECTED', label: 'Rejected' },
+const CATEGORIES = [
+    { id: 'Academic', icon: GraduationCap, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
+    { id: 'Identity', icon: UserSquare2, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
+    { id: 'Financial', icon: Wallet, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100' },
+    { id: 'Accommodation', icon: Home, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100' },
+    { id: 'Medical', icon: Cross, color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-100' },
 ]
+
+const STATUS_VARIANTS = { PENDING: 'warning', APPROVED: 'success', REJECTED: 'danger' }
+const STATUS_ICONS = { PENDING: Clock, APPROVED: CheckCircle2, REJECTED: XCircle }
 
 function formatSize(bytes) {
     if (!bytes) return '—'
     if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 function formatDateTime(dt) {
     if (!dt) return '—'
-    try {
-        return new Date(dt).toLocaleString([], {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        })
-    } catch {
-        return '—'
-    }
+    return new Date(dt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 export default function DocumentsTab() {
     const { push } = useToastStore()
+    const { university } = useUniversityStore()
+
     const [docs, setDocs] = useState([])
     const [loading, setLoading] = useState(true)
     const [uploading, setUploading] = useState(false)
-    const [uploadOpen, setUploadOpen] = useState(false)
-    const [filter, setFilter] = useState('ALL')
     const [deleteTarget, setDeleteTarget] = useState(null)
     const [deleting, setDeleting] = useState(false)
 
-    const [type, setType] = useState('OTHER')
-    const [file, setFile] = useState(null)
+    const [search, setSearch] = useState('')
+    const [activeStatus, setActiveStatus] = useState('ALL')
+    const [activeCategory, setActiveCategory] = useState('ALL')
+
+    const [selectedType, setSelectedType] = useState('OTHER')
     const fileInputRef = useRef(null)
+    const [isDragging, setIsDragging] = useState(false)
 
     const load = useCallback(async () => {
         try {
             const res = await api.get('/api/user/documents')
             setDocs(res.data?.data || [])
         } catch (err) {
-            push({ type: 'error', message: err.message || 'Failed to load documents' })
+            push({ type: 'error', message: 'Failed to load documents' })
         } finally {
             setLoading(false)
         }
     }, [push])
 
     useEffect(() => { load() }, [load])
-    useAdaptivePoll(load, { fastMs: 10000, slowMs: 30000 })
-    const upload = async (event) => {
-        event.preventDefault()
-        if (!file) {
-            push({ type: 'error', message: 'Select a file first' })
-            return
-        }
+
+    // --- UPLOAD HANDLING ---
+    const processFile = async (file) => {
+        if (!file) return
         setUploading(true)
         try {
             const form = new FormData()
             form.append('file', file)
-            form.append('type', type)
-
-            // Axios will now automatically detect FormData and set the right boundary
+            form.append('type', selectedType)
             await api.post('/api/user/documents', form)
-
-            push({ type: 'success', message: 'Document uploaded' })
-            setFile(null)
-            setType('OTHER')
+            push({ type: 'success', message: 'Document uploaded successfully' })
             if (fileInputRef.current) fileInputRef.current.value = ''
-            setUploadOpen(false)
             await load()
         } catch (err) {
             push({ type: 'error', message: err.message || 'Upload failed' })
@@ -125,6 +109,45 @@ export default function DocumentsTab() {
             setUploading(false)
         }
     }
+
+    const handleDrop = (e) => {
+        e.preventDefault()
+        setIsDragging(false)
+        const file = e.dataTransfer.files?.[0]
+        if (file) processFile(file)
+    }
+
+    const handleFileChange = (e) => {
+        const file = e.target.files?.[0]
+        if (file) processFile(file)
+    }
+
+    // --- FILTERING ---
+    const filtered = useMemo(() => {
+        return docs.filter(doc => {
+            const category = CATEGORY_MAPPING[doc.type] || 'Other'
+
+            const matchSearch = doc.originalFilename.toLowerCase().includes(search.toLowerCase())
+            const matchStatus = activeStatus === 'ALL' || doc.status === activeStatus
+            const matchCategory = activeCategory === 'ALL' || category === activeCategory
+
+            return matchSearch && matchStatus && matchCategory
+        })
+    }, [docs, search, activeStatus, activeCategory])
+
+    const counts = useMemo(() => {
+        return {
+            ALL: docs.length,
+            PENDING: docs.filter(d => d.status === 'PENDING').length,
+            APPROVED: docs.filter(d => d.status === 'APPROVED').length,
+            REJECTED: docs.filter(d => d.status === 'REJECTED').length,
+            Academic: docs.filter(d => CATEGORY_MAPPING[d.type] === 'Academic').length,
+            Identity: docs.filter(d => CATEGORY_MAPPING[d.type] === 'Identity').length,
+            Financial: docs.filter(d => CATEGORY_MAPPING[d.type] === 'Financial').length,
+            Accommodation: docs.filter(d => CATEGORY_MAPPING[d.type] === 'Accommodation').length,
+            Medical: docs.filter(d => CATEGORY_MAPPING[d.type] === 'Medical').length,
+        }
+    }, [docs])
 
     const destroy = async () => {
         if (!deleteTarget) return
@@ -135,7 +158,7 @@ export default function DocumentsTab() {
             setDeleteTarget(null)
             await load()
         } catch (err) {
-            push({ type: 'error', message: err.message || 'Failed to delete' })
+            push({ type: 'error', message: 'Failed to delete' })
         } finally {
             setDeleting(false)
         }
@@ -143,250 +166,308 @@ export default function DocumentsTab() {
 
     const download = async (doc) => {
         try {
-            const res = await api.get(`/api/documents/${doc.id}/download`, {
-                responseType: 'blob',
-            })
-            const blobUrl = URL.createObjectURL(res.data)
-            const documentValue = document.createElement('a')
-            documentValue.href = blobUrl
-            documentValue.download = doc.originalFilename || 'document'
-            document.body.appendChild(documentValue)
-            documentValue.click()
-            documentValue.remove()
-            URL.revokeObjectURL(blobUrl)
+            const res = await api.get(`/api/documents/${doc.id}/download`, { responseType: 'blob' })
+            const url = URL.createObjectURL(res.data)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = doc.originalFilename || 'document'
+            a.click()
+            URL.revokeObjectURL(url)
         } catch {
             push({ type: 'error', message: 'Download failed' })
         }
     }
 
-    const filtered = useMemo(() => {
-        if (filter === 'ALL') return docs
-        return docs.filter((doc) => doc.status === filter)
-    }, [docs, filter])
-
-    const counts = useMemo(() => ({
-        ALL: docs.length,
-        PENDING: docs.filter((doc) => doc.status === 'PENDING').length,
-        APPROVED: docs.filter((docValue) => docValue.status === 'APPROVED').length,
-        REJECTED: docs.filter((docValue2) => docValue2.status === 'REJECTED').length,
-    }), [docs])
-
     if (loading) {
         return (
-            <div className="px-4 sm:px-6">
-                <div className="mb-5">
-                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Documents</h2>
-                </div>
-                <Card padded={false}>
-                    {Array.from({ length: 4 }).map((unusedValue, index) => <SkeletonRow key={index} />)}
-                </Card>
+            <div className="px-4 sm:px-6 py-8">
+                <Card padded={false}>{[1, 2, 3, 4].map(i => <SkeletonRow key={i} />)}</Card>
             </div>
         )
     }
 
     return (
-        <div className="px-4 sm:px-6 pb-12">
-            <div className="mb-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                        Documents
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        Upload documents for staff review. You'll be notified when they're approved or rejected.
-                    </p>
-                </div>
-                <Button
-                    icon={Upload}
-                    onClick={() => setUploadOpen((item) => !item)}
-                    variant={uploadOpen ? 'secondary' : 'primary'}
-                    className="w-full sm:w-auto justify-center"
-                >
-                    {uploadOpen ? 'Cancel' : 'Upload document'}
-                </Button>
+        <div className="space-y-6 pb-12 px-4 sm:px-6">
+            {/* Header */}
+            <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Documents</h1>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    Upload, manage and access your important university documents.
+                </p>
             </div>
 
-            <AnimatePresence>
-                {uploadOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="mb-5 overflow-hidden"
-                    >
-                        <Card>
-                            <form onSubmit={upload} className="space-y-4">
-                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                    <div>
-                                        <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                            Document type
-                                        </label>
-                                        <select
-                                            value={type}
-                                            onChange={(eventValue) => setType(eventValue.target.value)}
-                                            className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                                        >
-                                            {DOC_TYPES.map((item) => (
-                                                <option key={item.value} value={item.value}>{item.label}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                            File
-                                        </label>
-                                        <input
-                                            ref={fileInputRef}
-                                            type="file"
-                                            accept=".pdf,.jpg,.jpeg,.png,.webp"
-                                            onChange={(eventValue2) => setFile(eventValue2.target.files?.[0] || null)}
-                                            className="w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-brand-700 hover:file:bg-brand-100 dark:text-slate-400 dark:file:bg-brand-950/40 dark:file:text-brand-300"
-                                        />
-                                    </div>
-                                </div>
+            {/* Banner */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0b1f45] via-[#123263] to-[#1e4a8a] p-6 sm:p-8 text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="relative z-10 max-w-lg">
+                    <h2 className="text-xl sm:text-2xl font-bold">Keep your documents ready!</h2>
+                    <p className="mt-2 text-sm text-blue-100">
+                        Upload and manage your documents for a smooth university experience.
+                    </p>
+                </div>
+                <div className="relative z-10 flex gap-4 sm:gap-6 text-xs sm:text-sm font-medium">
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Fast verification</div>
+                        <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Easy access</div>
+                    </div>
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Seamless processes</div>
+                    </div>
+                </div>
+                {/* Decorative background circles */}
+                <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/5 blur-2xl" />
+                <div className="absolute right-20 -bottom-10 h-32 w-32 rounded-full bg-blue-400/20 blur-xl" />
+            </div>
 
-                                <div className="flex flex-col sm:flex-row justify-end gap-2">
-                                    <Button type="button" variant="secondary" onClick={() => setUploadOpen(false)} disabled={uploading} className="w-full sm:w-auto">
-                                        Cancel
-                                    </Button>
-                                    <Button type="submit" loading={uploading} disabled={uploading || !file} className="w-full sm:w-auto">
-                                        {uploading ? 'Uploading…' : 'Upload'}
-                                    </Button>
-                                </div>
-                            </form>
-                        </Card>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {docs.length > 0 && (
-                <div className="mb-5 flex overflow-x-auto whitespace-nowrap gap-1.5 pb-2 scrollbar-hide">
-                    {FILTERS.map((itemValue) => {
-                        const isActive = filter === itemValue.value
-                        return (
+            <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6 items-start">
+                {/* LEFT COLUMN */}
+                <div className="space-y-6 min-w-0">
+                    {/* Category Cards */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                        {CATEGORIES.map((cat) => (
                             <button
-                                key={itemValue.value}
-                                type="button"
-                                onClick={() => setFilter(itemValue.value)}
-                                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] sm:text-xs font-medium transition-colors shrink-0 ${
-                                    isActive
-                                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+                                key={cat.id}
+                                onClick={() => setActiveCategory(activeCategory === cat.id ? 'ALL' : cat.id)}
+                                className={`flex flex-col items-start p-3 sm:p-4 rounded-xl border text-left transition-all ${
+                                    activeCategory === cat.id
+                                        ? 'ring-2 ring-brand-500 border-transparent bg-white dark:bg-slate-800 shadow-md'
+                                        : `bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700`
                                 }`}
                             >
-                                {itemValue.label}
-                                <span className={`text-[9px] sm:text-[10px] font-bold ${isActive ? 'opacity-80' : 'opacity-60'}`}>
-                  {counts[itemValue.value] ?? 0}
-                </span>
+                                <div className={`p-2 rounded-lg ${cat.bg} ${cat.color} mb-3`}>
+                                    <cat.icon className="h-5 w-5" />
+                                </div>
+                                <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                                    {cat.id} Documents
+                                </h3>
+                                <p className="text-[10px] sm:text-xs text-slate-500 mt-1">{counts[cat.id] || 0} files</p>
                             </button>
-                        )
-                    })}
-                </div>
-            )}
+                        ))}
+                    </div>
 
-            {docs.length === 0 ? (
-                <EmptyState
-                    icon={FileText}
-                    title="No documents yet"
-                    description="Upload your first document. Staff will review it shortly."
-                    action={<Button icon={Upload} onClick={() => setUploadOpen(true)}>Upload document</Button>}
-                />
-            ) : filtered.length === 0 ? (
-                <EmptyState
-                    icon={Filter}
-                    title={`No ${filter.toLowerCase()} documents`}
-                    description="Try a different filter."
-                    action={<Button variant="secondary" onClick={() => setFilter('ALL')}>Show all</Button>}
-                />
-            ) : (
-                <div className="space-y-3">
-                    {filtered.map((itemValue2, idx) => {
-                        const StatusIcon = STATUS_ICONS[itemValue2.status] || Clock
-                        return (
-                            <motion.div
-                                key={itemValue2.id}
-                                initial={{ opacity: 0, y: 4 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: idx * 0.02 }}
+                    {/* Drag & Drop Upload Zone */}
+                    <div
+                        onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+                        onDragLeave={() => setIsDragging(false)}
+                        onDrop={handleDrop}
+                        className={`relative flex flex-col sm:flex-row items-center justify-between p-4 sm:p-6 rounded-xl border-2 border-dashed transition-colors ${
+                            isDragging
+                                ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20'
+                                : 'border-slate-300 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-900/50'
+                        }`}
+                    >
+                        <div className="flex items-center gap-4 mb-4 sm:mb-0">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                                <Upload className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Drag and drop your files here, or click to upload</p>
+                                <p className="text-xs text-slate-500 mt-1">Supported formats: PDF, JPG, PNG | Max size: 5MB per file</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <select
+                                value={selectedType}
+                                onChange={(e) => setSelectedType(e.target.value)}
+                                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                             >
-                                <Card>
-                                    <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                        <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
-                                            <div className={`flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl ${
-                                                itemValue2.status === 'APPROVED'
-                                                    ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
-                                                    : itemValue2.status === 'REJECTED'
-                                                        ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
-                                                        : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
-                                            }`}>
-                                                <StatusIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                                            </div>
+                                {DOC_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                            </select>
+                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" id="doc-upload" />
+                            <Button
+                                onClick={() => fileInputRef.current?.click()}
+                                loading={uploading}
+                                className="whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white shadow-none"
+                            >
+                                <Upload className="mr-2 h-4 w-4" /> Upload Document
+                            </Button>
+                        </div>
+                    </div>
 
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    <h3 className="truncate text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100">
-                                                        {itemValue2.originalFilename}
-                                                    </h3>
-                                                    <Badge variant={STATUS_VARIANTS[itemValue2.status] || 'default'} className="text-[10px] sm:text-xs">
-                                                        {STATUS_LABELS[itemValue2.status] || itemValue2.status}
-                                                    </Badge>
-                                                </div>
+                    {/* Table Section */}
+                    <div className="space-y-4">
+                        {/* Table Filters */}
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                            <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-hide">
+                                {['ALL', 'APPROVED', 'PENDING', 'REJECTED'].map((status) => (
+                                    <button
+                                        key={status}
+                                        onClick={() => setActiveStatus(status)}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap ${
+                                            activeStatus === status
+                                                ? 'bg-blue-600 text-white shadow-sm'
+                                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-400'
+                                        }`}
+                                    >
+                                        {status === 'ALL' ? 'All Documents' : status.charAt(0) + status.slice(1).toLowerCase()}
+                                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeStatus === status ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                                            {counts[status] || 0}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
 
-                                                <div className="mt-1 flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
-                                                    <span>{DOC_TYPES.find((itemValue3) => itemValue3.value === itemValue2.type)?.label || itemValue2.type}</span>
-                                                    <span>·</span>
-                                                    <span>{formatSize(itemValue2.sizeBytes)}</span>
-                                                    <span>·</span>
-                                                    <span>Uploaded {formatDateTime(itemValue2.createdAt)}</span>
-                                                </div>
+                            <div className="flex items-center gap-2 w-full lg:w-auto">
+                                <div className="relative flex-1 lg:w-64">
+                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search documents..."
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-xs focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                                    />
+                                </div>
+                                <Button variant="secondary" className="shrink-0 text-xs px-3 py-2 border-slate-200 dark:border-slate-700">
+                                    <Filter className="mr-1.5 h-3.5 w-3.5" /> Filter
+                                </Button>
+                            </div>
+                        </div>
 
-                                                {itemValue2.status === 'REJECTED' && itemValue2.reviewNotes && (
-                                                    <div className="mt-3 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2 sm:p-3 text-[10px] sm:text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
-                                                        <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                                                        <div>
-                                                            <span className="font-semibold">Reason: </span>
-                                                            {itemValue2.reviewNotes}
-                                                            {itemValue2.reviewedByName && (
-                                                                <div className="mt-0.5 text-[9px] sm:text-[10px] opacity-70">
-                                                                    Reviewed by {itemValue2.reviewedByName} on {formatDateTime(itemValue2.reviewedAt)}
-                                                                </div>
+                        {/* Data Table */}
+                        <Card padded={false} className="overflow-hidden border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                            <div className="overflow-x-auto">
+                                <table className="w-full min-w-[700px] text-left text-sm">
+                                    <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                                    <tr>
+                                        <th className="px-5 py-3 font-semibold text-slate-600 dark:text-slate-300">Document Name</th>
+                                        <th className="px-5 py-3 font-semibold text-slate-600 dark:text-slate-300">Category</th>
+                                        <th className="px-5 py-3 font-semibold text-slate-600 dark:text-slate-300">File Size</th>
+                                        <th className="px-5 py-3 font-semibold text-slate-600 dark:text-slate-300">Uploaded On</th>
+                                        <th className="px-5 py-3 font-semibold text-slate-600 dark:text-slate-300">Status</th>
+                                        <th className="px-5 py-3 font-semibold text-slate-600 dark:text-slate-300 text-center">Action</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                    {filtered.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={6} className="px-5 py-12 text-center">
+                                                <EmptyState icon={FileText} title="No documents found" description="Try changing your filters or upload a new document." bordered={false} />
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        filtered.map((doc) => {
+                                            const category = CATEGORY_MAPPING[doc.type] || 'Other'
+                                            const StatusIcon = STATUS_ICONS[doc.status] || Clock
+
+                                            return (
+                                                <tr key={doc.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                                    <td className="px-5 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-600 shrink-0">
+                                                                <FileText className="h-4 w-4" />
+                                                            </div>
+                                                            <span className="font-medium text-slate-900 dark:text-slate-100 truncate max-w-[200px]" title={doc.originalFilename}>
+                                                                    {doc.originalFilename}
+                                                                </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-5 py-4">
+                                                        <Badge variant="default" className="bg-slate-100 text-slate-600 font-medium">
+                                                            {category}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="px-5 py-4 text-slate-500">{formatSize(doc.sizeBytes)}</td>
+                                                    <td className="px-5 py-4 text-slate-500 text-xs">{formatDateTime(doc.createdAt)}</td>
+                                                    <td className="px-5 py-4">
+                                                        <Badge variant={STATUS_VARIANTS[doc.status] || 'default'} className="flex w-fit items-center gap-1">
+                                                            <StatusIcon className="h-3 w-3" />
+                                                            {doc.status === 'PENDING' ? 'Under Review' : doc.status.charAt(0) + doc.status.slice(1).toLowerCase()}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="px-5 py-4">
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <button onClick={() => download(doc)} className="p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 rounded-md" title="Download">
+                                                                <Download className="h-4 w-4" />
+                                                            </button>
+                                                            {doc.status !== 'APPROVED' && (
+                                                                <button onClick={() => setDeleteTarget(doc)} className="p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 rounded-md" title="Delete">
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </button>
                                                             )}
                                                         </div>
-                                                    </div>
-                                                )}
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })
+                                    )}
+                                    </tbody>
+                                </table>
+                            </div>
 
-                                                {itemValue2.status === 'APPROVED' && itemValue2.reviewedByName && (
-                                                    <div className="mt-2 sm:mt-3 text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400">
-                                                        Approved by {itemValue2.reviewedByName} · {formatDateTime(itemValue2.reviewedAt)}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="flex shrink-0 items-center justify-end gap-2 sm:flex-col sm:items-end sm:gap-1 mt-2 sm:mt-0">
-                                            <button
-                                                onClick={() => download(itemValue2)}
-                                                className="rounded-lg p-1.5 sm:p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-300"
-                                                title="Download"
-                                            >
-                                                <Download className="h-4 w-4" />
-                                            </button>
-                                            {itemValue2.status !== 'APPROVED' && (
-                                                <button
-                                                    onClick={() => setDeleteTarget(itemValue2)}
-                                                    className="rounded-lg p-1.5 sm:p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
-                                            )}
-                                        </div>
+                            {/* Table Footer */}
+                            {filtered.length > 0 && (
+                                <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 px-5 py-3 text-xs text-slate-500">
+                                    <span>Showing 1 – {filtered.length} of {filtered.length} documents</span>
+                                    <div className="flex gap-1">
+                                        <button className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-50" disabled>&lt;</button>
+                                        <button className="px-3 py-1 rounded bg-blue-600 text-white font-medium">1</button>
+                                        <button className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700 disabled:opacity-50" disabled>&gt;</button>
                                     </div>
-                                </Card>
-                            </motion.div>
-                        )
-                    })}
+                                </div>
+                            )}
+                        </Card>
+                    </div>
                 </div>
-            )}
+
+                {/* RIGHT SIDEBAR */}
+                <div className="space-y-4">
+                    {/* Guidelines */}
+                    <Card className="p-5 border-slate-200 dark:border-slate-800">
+                        <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-slate-100 mb-4">
+                            <FileCheck className="h-4 w-4 text-blue-600" /> Document Guidelines
+                        </h3>
+                        <ul className="space-y-3 text-xs text-slate-600 dark:text-slate-400">
+                            <li className="flex gap-2">
+                                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                                Accepted formats: PDF, JPG, PNG
+                            </li>
+                            <li className="flex gap-2">
+                                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                                Maximum file size: 5MB per file
+                            </li>
+                            <li className="flex gap-2">
+                                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                                Ensure clear and readable files
+                            </li>
+                            <li className="flex gap-2">
+                                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                                Upload original documents only
+                            </li>
+                        </ul>
+                    </Card>
+
+                    {/* Help */}
+                    <Card className="p-5 border-slate-200 dark:border-slate-800 bg-blue-50/50 dark:bg-blue-900/10">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-blue-100 text-blue-600 rounded-full">
+                                <HelpCircle className="h-5 w-5" />
+                            </div>
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Need Help?</h3>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+                            Contact support for assistance with your documents.
+                        </p>
+                        <Button variant="secondary" className="w-full justify-center border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/30">
+                            Contact Support
+                        </Button>
+                    </Card>
+
+                    {/* Quick Links */}
+                    <Card className="p-5 border-slate-200 dark:border-slate-800">
+                        <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-slate-100 mb-4">
+                            <FileQuestion className="h-4 w-4 text-slate-500" /> Quick Links
+                        </h3>
+                        <div className="space-y-1">
+                            {['View Document Requirements', 'Frequently Asked Questions', 'Official Student Handbook'].map((link) => (
+                                <a key={link} href="#" className="flex items-center justify-between py-2 text-xs font-medium text-slate-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 group">
+                                    {link}
+                                    <ChevronRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 transition-transform group-hover:translate-x-0.5" />
+                                </a>
+                            ))}
+                        </div>
+                    </Card>
+                </div>
+            </div>
 
             <ConfirmDialog
                 open={!!deleteTarget}
