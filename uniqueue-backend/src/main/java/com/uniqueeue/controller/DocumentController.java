@@ -36,7 +36,7 @@ public class DocumentController {
             @PathVariable Long id,
             @RequestParam(value = "inline", defaultValue = "false") boolean inline,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return buildDownload(documentService.getForAnyAuthorizedUser(principal, id), false);
+        return buildDownload(documentService.getForAnyAuthorizedUser(principal, id), inline);
     }
 
     // ---------- STUDENT ----------
@@ -82,8 +82,9 @@ public class DocumentController {
     @PreAuthorize("hasAnyRole('USER', 'FRESHER')")
     public ResponseEntity<Resource> downloadMine(
             @PathVariable Long id,
+            @RequestParam(value = "inline", defaultValue = "false") boolean inline,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return buildDownload(documentService.getOwnedRaw(principal.getId(), id), false);
+        return buildDownload(documentService.getOwnedRaw(principal.getId(), id), inline);
     }
 
     // ---------- STAFF ----------
@@ -128,12 +129,14 @@ public class DocumentController {
                 documentService.reject(principal.getId(), id, notes)));
     }
 
+    // 👇 FIXED: Added @RequestParam inline to this method
     @GetMapping("/staff/documents/{id}/download")
     @PreAuthorize("hasRole('STAFF')")
     public ResponseEntity<Resource> downloadForStaff(
             @PathVariable Long id,
+            @RequestParam(value = "inline", defaultValue = "false") boolean inline,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return buildDownload(documentService.getForStaffRaw(principal.getId(), id), false);
+        return buildDownload(documentService.getForStaffRaw(principal.getId(), id), inline);
     }
 
     @GetMapping("/staff/tickets/{ticketId}/documents")
@@ -159,10 +162,11 @@ public class DocumentController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Resource> downloadForAdmin(
             @PathVariable Long id,
+            @RequestParam(value = "inline", defaultValue = "false") boolean inline,
             @AuthenticationPrincipal UserPrincipal principal) {
         return buildDownload(
                 documentService.getForUniversityRaw(principal.getUniversityId(), id),
-                false);
+                inline);
     }
 
     // ---------- SUPER ADMIN ----------
@@ -171,8 +175,9 @@ public class DocumentController {
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Resource> downloadAsSuperAdmin(
             @PathVariable Long id,
+            @RequestParam(value = "inline", defaultValue = "false") boolean inline,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return buildDownload(documentService.getForAnyAuthorizedUser(principal, id), false);
+        return buildDownload(documentService.getForAnyAuthorizedUser(principal, id), inline);
     }
 
     // ---------- HELPER ----------

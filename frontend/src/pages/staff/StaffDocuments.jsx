@@ -89,6 +89,43 @@ export default function StaffDocuments() {
         )
     }, [docs, search])
 
+    const handlePreview = async (doc) => {
+        // Open tab synchronously to avoid popup blockers
+        const newTab = window.open('', '_blank')
+        if (newTab) {
+            newTab.document.write(
+                '<p style="font-family:sans-serif;padding:24px;color:#64748b">Loading document preview…</p>'
+            )
+        }
+
+        try {
+            // Fetch securely as a Blob
+            const res = await api.get(`/api/staff/documents/${doc.id}/download`, {
+                params: { inline: true },
+                responseType: 'blob',
+            });
+
+            const blob = new Blob([res.data], { type: doc.contentType || 'application/pdf' });
+            const blobUrl = URL.createObjectURL(blob);
+
+            if (newTab) {
+                newTab.location.href = blobUrl;
+            } else {
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            }
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+        } catch (err) {
+            if (newTab) newTab.close();
+            push({ type: 'error', message: 'Preview failed. File may be missing.' });
+        }
+    };
+
     const download = async (doc) => {
         try {
             const res = await api.get(`/api/documents/${doc.id}/download`, {
@@ -261,16 +298,25 @@ export default function StaffDocuments() {
 
                                         <div className="flex shrink-0 items-center justify-end gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
                                             <button
+                                                onClick={() => handlePreview(itemValue)}
+                                                className="rounded-lg border border-slate-200 bg-white p-1.5 sm:p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                                                title="Preview Document"
+                                            >
+                                                <Eye className="h-4 w-4" />
+                                            </button>
+
+                                            <button
                                                 onClick={() => download(itemValue)}
                                                 className="rounded-lg border border-slate-200 bg-white p-1.5 sm:p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
                                                 title="Download"
                                             >
                                                 <Download className="h-4 w-4" />
                                             </button>
+
                                             {isPending && (
                                                 <Button
                                                     size="sm"
-                                                    icon={Eye}
+                                                    icon={FileCheck}
                                                     onClick={() => setSelected(itemValue)}
                                                     className="text-xs sm:text-sm"
                                                 >

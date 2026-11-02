@@ -86,9 +86,9 @@ export default function DocumentReviewModal({ document: doc, onClose, onReviewed
 
     const preview = async () => {
         // Open tab SYNCHRONOUSLY, before any await — otherwise popup blocker kills it
-        const tab = window.open('', '_blank', 'noopener,noreferrer')
-        if (tab) {
-            tab.document.write(
+        const newTab = window.open('', '_blank')
+        if (newTab) {
+            newTab.document.write(
                 '<p style="font-family:sans-serif;padding:24px;color:#64748b">Loading preview…</p>'
             )
         }
@@ -97,10 +97,15 @@ export default function DocumentReviewModal({ document: doc, onClose, onReviewed
                 params: { inline: true },
                 responseType: 'blob',
             })
-            const blobUrl = URL.createObjectURL(res.data)
-            if (tab) {
-                tab.location.href = blobUrl
+
+            // Ensure the blob has the right content type
+            const blob = new Blob([res.data], { type: doc.contentType || 'application/pdf' })
+            const blobUrl = URL.createObjectURL(blob)
+
+            if (newTab) {
+                newTab.location.href = blobUrl
             } else {
+                // Fallback if popup blocker is extremely aggressive
                 const documentValue = document.createElement('a')
                 documentValue.href = blobUrl
                 documentValue.target = '_blank'
@@ -109,9 +114,10 @@ export default function DocumentReviewModal({ document: doc, onClose, onReviewed
                 documentValue.click()
                 documentValue.remove()
             }
+            // Clean up memory after 1 minute
             setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000)
         } catch {
-            if (tab) tab.close()
+            if (newTab) newTab.close()
             push({ type: 'error', message: 'Preview failed' })
         }
     }
@@ -286,7 +292,6 @@ export default function DocumentReviewModal({ document: doc, onClose, onReviewed
                         </Button>
                     </div>
                 </motion.div>
-
             </div>
         </>
     )
