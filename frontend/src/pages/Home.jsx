@@ -14,10 +14,6 @@ import {
     Ticket,
     GraduationCap,
     CheckCircle2,
-    Activity,
-    UserPlus,
-    ClipboardList,
-    BadgeCheck,
     ArrowRight,
     Check,
     X,
@@ -29,6 +25,7 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import Footer from '../components/layout/Footer'
+import Process3DAnimation from '../components/landing/Process3DAnimation'
 
 // ═══════════════════════════════════════════════════════════
 //  HERO CAROUSEL
@@ -933,91 +930,6 @@ function RoleShowcase() {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  HOW IT WORKS
-// ═══════════════════════════════════════════════════════════
-
-const STEPS = [
-    {
-        icon: Building2,
-        title: 'Pick a service',
-        body: 'Browse Bursary, Library, Admissions, or Faculty departments in one clean list.',
-    },
-    {
-        icon: UserPlus,
-        title: 'Join the queue',
-        body: 'Get a digital ticket number with estimated wait times from anywhere on campus.',
-    },
-    {
-        icon: Activity,
-        title: 'Go about your day',
-        body: 'Relax in your hostel or attend class. Your position updates live with zero refreshing.',
-    },
-    {
-        icon: Bell,
-        title: 'Get notified',
-        body: 'We ring a chime and send a push notification when you are 3 slots away.',
-    },
-    {
-        icon: BadgeCheck,
-        title: 'Walk in & get served',
-        body: 'Arrive right on time, show your digital ticket, and get served in minutes.',
-    },
-]
-
-function HowItWorks() {
-    return (
-        <section id="how-it-works" className="relative overflow-hidden bg-white py-16 dark:bg-slate-900 sm:py-24 lg:py-32 border-t border-slate-200 dark:border-slate-800">
-            <div className="pointer-events-none absolute -top-40 right-0 h-96 w-96 rounded-full bg-brand-500/5 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-40 left-0 h-96 w-96 rounded-full bg-brand-500/5 blur-3xl" />
-
-            <div className="relative mx-auto max-w-7xl px-4 sm:px-8 lg:px-12">
-                <div className="mx-auto max-w-2xl text-center">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-brand-700 dark:border-slate-700 dark:bg-slate-800 dark:text-brand-400">
-                        <ClipboardList className="h-3 w-3" />
-                        Simple 5-Step Process
-                    </span>
-                    <h2 className="mt-4 sm:mt-6 text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0f172a] dark:text-white lg:text-4xl">
-                        How UniQueue Works
-                    </h2>
-                    <p className="mt-3 sm:mt-4 text-sm sm:text-base text-slate-600 dark:text-slate-400">
-                        Five simple steps from your phone to the front of the line.
-                    </p>
-                </div>
-
-                <div className="mt-12 sm:mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
-                    {STEPS.map((step, index) => {
-                        const Icon = step.icon
-                        return (
-                            <motion.div
-                                key={step.title}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true, margin: '-60px' }}
-                                transition={{ duration: 0.45, delay: index * 0.08 }}
-                                className="relative flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-950"
-                            >
-                                <div className="absolute -top-4 flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white shadow-md">
-                                    {index + 1}
-                                </div>
-                                <div className="mt-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
-                                    <Icon className="h-6 w-6" />
-                                </div>
-                                <h3 className="mt-5 text-base font-bold text-[#0f172a] dark:text-white">
-                                    {step.title}
-                                </h3>
-                                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                                    {step.body}
-                                </p>
-                            </motion.div>
-                        )
-                    })}
-                </div>
-            </div>
-        </section>
-    )
-}
-
-// ═══════════════════════════════════════════════════════════
 //  FREQUENTLY ASKED QUESTIONS
 // ═══════════════════════════════════════════════════════════
 
@@ -1194,7 +1106,7 @@ export default function Home() {
             <OldWayVsNewWay />
             <Features />
             <RoleShowcase />
-            <HowItWorks />
+            <Process3DAnimation />
             <FAQSection />
             <FinalCTA />
             <Footer />
