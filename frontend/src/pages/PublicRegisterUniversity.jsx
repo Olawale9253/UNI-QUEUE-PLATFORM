@@ -15,24 +15,26 @@ import api from '../api/axios'
 import { useToastStore } from '../store/toastStore'
 import Footer from '../components/layout/Footer'
 
-const BG_IMAGE = 'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&q=80&w=2000'
-
 const INSTITUTIONAL_BENEFITS = [
     {
         title: 'Campus Safety & Orderly Spaces',
-        description: 'Eliminate chaotic crowds and long physical lines outside bursary and registry offices, keeping corridors quiet and safe.',
+        description:
+            'Eliminate overcrowded, chaotic corridors outside bursary and registry offices, keeping campus buildings quiet, safe, and organized.',
     },
     {
         title: 'Verifiable Clearance Workflows',
-        description: 'Sequence departmental approvals from Department Head to Library, Bursary, and Registry with permanent digital audit logs.',
+        description:
+            'Sequence departmental sign offs from Department Head to Library, Bursary, and Registry with permanent, timestamped digital logs.',
     },
     {
         title: 'Day One Fresher Support',
-        description: 'Enable newly admitted students to register with their JAMB details immediately, ensuring zero orientation delays.',
+        description:
+            'Enable newly admitted students to register with their JAMB details immediately, ensuring zero orientation delays.',
     },
     {
         title: 'Actionable Desk Analytics',
-        description: 'Track average wait times, desk throughput, and peak congestion hours across every faculty to deploy staff effectively.',
+        description:
+            'Track average wait times, desk throughput, and peak congestion hours across every faculty to deploy staff effectively.',
     },
 ]
 
@@ -120,8 +122,8 @@ export default function PublicRegisterUniversity() {
     }
 
     const inputClass =
-        'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 transition-colors'
-    const labelClass = 'mb-1.5 block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300'
+        'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 transition-all'
+    const labelClass = 'mb-1.5 block text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200'
 
     // ═══════════════════════════════════════════════════════════
     //  SUCCESS SCREEN
@@ -129,41 +131,41 @@ export default function PublicRegisterUniversity() {
 
     if (submitted) {
         return (
-            <div className="flex h-full overflow-y-auto items-center justify-center bg-slate-950 px-4 py-12 sm:px-6">
+            <div className="flex h-full overflow-y-auto items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 py-12 sm:px-6">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.96 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="w-full max-w-xl rounded-3xl border border-slate-800 bg-slate-900 p-8 sm:p-10 text-center shadow-2xl text-white"
+                    className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 sm:p-12 text-center shadow-xl dark:border-slate-800 dark:bg-slate-900"
                 >
-                    <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                    <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/40 text-emerald-600 dark:text-emerald-400">
                         <CheckCircle2 className="h-10 w-10" />
                     </div>
 
-                    <span className="rounded-full bg-emerald-500/10 px-3.5 py-1 text-xs font-semibold text-emerald-400">
+                    <span className="inline-block rounded-full bg-emerald-50 px-3.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
                         Application Received
                     </span>
 
-                    <h1 className="mt-4 text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                    <h1 className="mt-4 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                         Thank you for applying
                     </h1>
 
-                    <p className="mt-3 text-sm text-slate-300 leading-relaxed max-w-md mx-auto">
+                    <p className="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-md mx-auto">
                         We have registered the setup request for <strong>{form.universityName}</strong>. Our university deployment team will review your institution credentials and email your onboarding setup link to:
                     </p>
 
-                    <div className="mt-4 inline-block rounded-xl bg-slate-800 px-4 py-2 font-mono text-xs sm:text-sm font-bold text-brand-300 border border-slate-700">
+                    <div className="mt-4 inline-block rounded-xl bg-slate-100 dark:bg-slate-800 px-4 py-2 font-mono text-xs sm:text-sm font-bold text-brand-700 dark:text-brand-300 border border-slate-200 dark:border-slate-700">
                         {form.adminEmail}
                     </div>
 
-                    <div className="mt-8 border-t border-slate-800 pt-6 text-xs text-slate-400 space-y-1">
+                    <div className="mt-8 border-t border-slate-100 dark:border-slate-800 pt-6 text-xs text-slate-500 dark:text-slate-400 space-y-1">
                         <div>Expected deployment window: <strong>Under 24 hours</strong></div>
-                        <div>Questions? Contact our team at <a href="mailto:support@uniqueue.edu" className="text-brand-400 hover:underline">support@uniqueue.edu</a></div>
+                        <div>Questions? Contact our team at <a href="mailto:support@uniqueue.edu" className="text-brand-600 dark:text-brand-400 hover:underline">support@uniqueue.edu</a></div>
                     </div>
 
                     <div className="mt-8">
                         <Link
                             to="/"
-                            className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-brand-500 transition-all hover:scale-105"
+                            className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-7 py-3.5 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-brand-700 transition-all hover:scale-105"
                         >
                             <ArrowLeft className="h-4 w-4" /> Return to Homepage
                         </Link>
@@ -178,28 +180,24 @@ export default function PublicRegisterUniversity() {
     // ═══════════════════════════════════════════════════════════
 
     return (
-        <div className="h-full overflow-y-auto bg-slate-950 text-white">
+        <div className="h-full overflow-y-auto bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
 
-            {/* ═══ 1. HERO & VALUE PROPOSITION ═══ */}
-            <section className="relative overflow-hidden bg-slate-950 pt-16 pb-20 sm:pt-24 sm:pb-28">
-                {/* Background Campus Image with Deep Vignette */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
-                    <img src={BG_IMAGE} alt="University Campus Architecture" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-slate-950/80 mix-blend-multiply" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
-                </div>
+            {/* ═══ 1. HERO SECTION (Bright, Clean, Welcoming) ═══ */}
+            <section className="relative overflow-hidden bg-white border-b border-slate-200/80 dark:bg-slate-900 dark:border-slate-800 pt-14 pb-16 sm:pt-20 sm:pb-24">
+                {/* Subtle soft gradient background */}
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-50/60 via-transparent to-transparent dark:from-brand-950/20" />
 
                 <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-3xl text-center">
-                        <span className="inline-flex items-center gap-2 rounded-full border border-brand-400/30 bg-brand-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-brand-300 backdrop-blur-md">
+                        <span className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-xs font-semibold text-brand-700 dark:border-brand-900/60 dark:bg-brand-950/50 dark:text-brand-300">
                             <Building2 className="h-3.5 w-3.5" /> Institutional Campus Platform
                         </span>
 
-                        <h1 className="mt-5 text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.1]">
+                        <h1 className="mt-5 text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
                             Modernize student queues and clearance across your campus
                         </h1>
 
-                        <p className="mt-5 text-sm sm:text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto">
+                        <p className="mt-5 text-sm sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto">
                             UniQueue eliminates physical lines, noisy hallways, and manual clearance marathons. Deploy a protected digital queue workspace for your university in under 24 hours.
                         </p>
 
@@ -207,35 +205,35 @@ export default function PublicRegisterUniversity() {
                             <button
                                 type="button"
                                 onClick={scrollToForm}
-                                className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-brand-600/30 hover:bg-brand-500 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                                className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700 hover:scale-105 active:scale-95 transition-all cursor-pointer"
                             >
                                 Request Campus Workspace <ArrowRight className="h-4 w-4" />
                             </button>
                             <Link
                                 to="/"
-                                className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/10 transition-all"
+                                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-all"
                             >
                                 View Student Experience
                             </Link>
                         </div>
 
-                        {/* Top Trust Metrics */}
-                        <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4 border-t border-slate-800/80 pt-8 text-left">
-                            <div>
-                                <div className="text-xl sm:text-2xl font-black text-brand-400">Under 24 Hours</div>
-                                <div className="text-xs text-slate-400 mt-0.5">Turnkey cloud deployment</div>
+                        {/* Top Trust Metrics Cards */}
+                        <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4 text-left">
+                            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                                <div className="text-xl sm:text-2xl font-black text-brand-600 dark:text-brand-400">Under 24 Hours</div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Turnkey cloud deployment</div>
                             </div>
-                            <div>
-                                <div className="text-xl sm:text-2xl font-black text-brand-400">Zero Hardware</div>
-                                <div className="text-xs text-slate-400 mt-0.5">No local server installations</div>
+                            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                                <div className="text-xl sm:text-2xl font-black text-brand-600 dark:text-brand-400">Zero Hardware</div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">No local server installations</div>
                             </div>
-                            <div>
-                                <div className="text-xl sm:text-2xl font-black text-brand-400">Protected Data</div>
-                                <div className="text-xs text-slate-400 mt-0.5">Isolated campus workspace</div>
+                            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                                <div className="text-xl sm:text-2xl font-black text-brand-600 dark:text-brand-400">Protected Data</div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Isolated campus workspace</div>
                             </div>
-                            <div>
-                                <div className="text-xl sm:text-2xl font-black text-brand-400">Free Starting Tier</div>
-                                <div className="text-xs text-slate-400 mt-0.5">Trial before scaling campus wide</div>
+                            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                                <div className="text-xl sm:text-2xl font-black text-brand-600 dark:text-brand-400">Free Starting Tier</div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Pilot before scaling campus wide</div>
                             </div>
                         </div>
                     </div>
@@ -243,16 +241,16 @@ export default function PublicRegisterUniversity() {
             </section>
 
             {/* ═══ 2. INSTITUTIONAL BENEFITS ═══ */}
-            <section className="relative bg-slate-900 py-16 sm:py-24 border-y border-slate-800">
+            <section className="relative bg-slate-50 py-16 sm:py-24 dark:bg-slate-950">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-2xl text-center">
-                        <span className="text-xs font-bold uppercase tracking-wider text-brand-400">
+                        <span className="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
                             Institutional Value
                         </span>
-                        <h2 className="mt-2 text-2xl sm:text-4xl font-extrabold text-white">
+                        <h2 className="mt-2 text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white">
                             Why universities choose UniQueue
                         </h2>
-                        <p className="mt-3 text-sm sm:text-base text-slate-400">
+                        <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-400">
                             Designed to address the real logistical challenges faced by university management, desk officers, and students.
                         </p>
                     </div>
@@ -261,15 +259,15 @@ export default function PublicRegisterUniversity() {
                         {INSTITUTIONAL_BENEFITS.map((item, index) => (
                             <div
                                 key={index}
-                                className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 shadow-sm transition-all hover:border-slate-700 hover:-translate-y-1"
+                                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-slate-300 hover:shadow-md hover:-translate-y-1 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
                             >
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400 border border-brand-500/20 font-bold text-sm">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/60 dark:text-brand-400 font-bold text-sm">
                                     0{index + 1}
                                 </div>
-                                <h3 className="mt-4 text-base font-bold text-white">
+                                <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-white">
                                     {item.title}
                                 </h3>
-                                <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed">
+                                <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                                     {item.description}
                                 </p>
                             </div>
@@ -279,16 +277,16 @@ export default function PublicRegisterUniversity() {
             </section>
 
             {/* ═══ 3. DEPLOYMENT TIMELINE ═══ */}
-            <section className="py-16 sm:py-24 bg-slate-950">
+            <section className="py-16 sm:py-24 bg-white border-y border-slate-200/80 dark:bg-slate-900 dark:border-slate-800">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-2xl text-center">
-                        <span className="text-xs font-bold uppercase tracking-wider text-brand-400">
+                        <span className="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
                             Frictionless Onboarding
                         </span>
-                        <h2 className="mt-2 text-2xl sm:text-4xl font-extrabold text-white">
+                        <h2 className="mt-2 text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white">
                             Live on your campus in three steps
                         </h2>
-                        <p className="mt-3 text-sm sm:text-base text-slate-400">
+                        <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-400">
                             No complex IT projects or lengthy implementation cycles.
                         </p>
                     </div>
@@ -297,15 +295,15 @@ export default function PublicRegisterUniversity() {
                         {DEPLOYMENT_STEPS.map((step) => (
                             <div
                                 key={step.step}
-                                className="relative rounded-2xl border border-slate-800 bg-slate-900/60 p-6 text-center"
+                                className="relative rounded-2xl border border-slate-200 bg-slate-50/70 p-6 text-center shadow-sm dark:border-slate-800 dark:bg-slate-950/60"
                             >
                                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-base font-bold text-white shadow-md">
                                     {step.step}
                                 </div>
-                                <h3 className="mt-4 text-base font-bold text-white">
+                                <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-white">
                                     {step.title}
                                 </h3>
-                                <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed">
+                                <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                                     {step.desc}
                                 </p>
                             </div>
@@ -315,21 +313,21 @@ export default function PublicRegisterUniversity() {
             </section>
 
             {/* ═══ 4. THE APPLICATION FORM SECTION ═══ */}
-            <section id="apply-form" className="relative py-16 sm:py-24 bg-slate-900 border-t border-slate-800">
+            <section id="apply-form" className="relative py-16 sm:py-24 bg-slate-50 dark:bg-slate-950">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16 items-start">
 
                         {/* Left Side: Summary of Institutional Inclusions */}
                         <div className="lg:col-span-5 space-y-6">
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-400/30 bg-brand-500/10 px-3.5 py-1 text-xs font-semibold text-brand-300">
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3.5 py-1 text-xs font-semibold text-brand-700 dark:border-brand-900/50 dark:bg-brand-950/50 dark:text-brand-300">
                                 Institutional Request
                             </span>
 
-                            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
+                            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
                                 Request a managed workspace for your institution
                             </h2>
 
-                            <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+                            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
                                 Complete this short application. Our deployment team will review your institution and send setup instructions within 24 hours.
                             </p>
 
@@ -342,8 +340,8 @@ export default function PublicRegisterUniversity() {
                                     'Real time wait time and throughput analytics',
                                     'Optional official email domain verification',
                                 ].map((item, idx) => (
-                                    <div key={idx} className="flex items-start gap-3 text-xs sm:text-sm text-slate-300">
-                                        <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-xs">
+                                    <div key={idx} className="flex items-start gap-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                                        <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-bold text-xs">
                                             ✓
                                         </div>
                                         <span>{item}</span>
@@ -351,9 +349,9 @@ export default function PublicRegisterUniversity() {
                                 ))}
                             </div>
 
-                            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4 text-xs text-slate-400 space-y-2">
-                                <div className="flex items-center gap-2 text-slate-200 font-semibold">
-                                    <Shield className="h-4 w-4 text-brand-400" />
+                            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 text-xs text-slate-600 dark:text-slate-400 space-y-2">
+                                <div className="flex items-center gap-2 text-slate-900 dark:text-slate-200 font-semibold text-sm">
+                                    <Shield className="h-4 w-4 text-brand-600 dark:text-brand-400" />
                                     <span>Protected University Privacy</span>
                                 </div>
                                 <p className="leading-relaxed">
@@ -362,24 +360,24 @@ export default function PublicRegisterUniversity() {
                             </div>
                         </div>
 
-                        {/* Right Side: Professional Form */}
+                        {/* Right Side: Professional Clean Form Card */}
                         <div className="lg:col-span-7">
                             <motion.div
                                 initial={{ opacity: 0, y: 16 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="rounded-3xl border border-slate-800 bg-slate-950 p-6 sm:p-10 shadow-2xl"
+                                className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-10 shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
                             >
-                                <div className="border-b border-slate-800 pb-5">
-                                    <h3 className="text-lg sm:text-xl font-bold text-white">
+                                <div className="border-b border-slate-100 dark:border-slate-800 pb-5">
+                                    <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
                                         Campus Application Form
                                     </h3>
-                                    <p className="mt-1 text-xs sm:text-sm text-slate-400">
+                                    <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                                         Please provide accurate institutional details for account verification.
                                     </p>
                                 </div>
 
                                 {error && (
-                                    <div className="mt-5 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-xs sm:text-sm text-rose-300">
+                                    <div className="mt-5 rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-xs sm:text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-300">
                                         {error}
                                     </div>
                                 )}
@@ -426,7 +424,7 @@ export default function PublicRegisterUniversity() {
                                         </div>
                                     </div>
 
-                                    <hr className="my-5 border-slate-800" />
+                                    <hr className="my-5 border-slate-100 dark:border-slate-800" />
 
                                     {/* Contact Person Details */}
                                     <div className="space-y-4">
@@ -476,7 +474,7 @@ export default function PublicRegisterUniversity() {
                                                 required
                                                 className={inputClass}
                                             />
-                                            <span className="mt-1 block text-[11px] text-slate-500">
+                                            <span className="mt-1.5 block text-[11px] text-slate-500 dark:text-slate-400">
                                                 Setup instructions and initial admin credentials will be sent to this email.
                                             </span>
                                         </div>
@@ -496,7 +494,7 @@ export default function PublicRegisterUniversity() {
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-brand-600/30 hover:bg-brand-500 active:scale-98 transition-all disabled:opacity-50 cursor-pointer"
+                                        className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-brand-600/25 hover:bg-brand-700 active:scale-98 transition-all disabled:opacity-50 cursor-pointer"
                                     >
                                         {loading ? (
                                             <>
@@ -511,7 +509,7 @@ export default function PublicRegisterUniversity() {
                                         )}
                                     </button>
 
-                                    <div className="text-center text-[11px] text-slate-500 pt-1">
+                                    <div className="text-center text-xs text-slate-500 dark:text-slate-400 pt-1">
                                         No credit card required. Free tier available to start.
                                     </div>
                                 </form>
@@ -523,16 +521,16 @@ export default function PublicRegisterUniversity() {
             </section>
 
             {/* ═══ 5. INSTITUTIONAL FAQ ═══ */}
-            <section className="py-16 sm:py-24 bg-slate-950 border-t border-slate-800">
+            <section className="py-16 sm:py-24 bg-white border-t border-slate-200/80 dark:bg-slate-900 dark:border-slate-800">
                 <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
                     <div className="text-center">
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-800 bg-slate-900 px-3.5 py-1 text-xs font-semibold text-brand-300">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1 text-xs font-semibold text-brand-700 dark:border-slate-800 dark:bg-slate-800 dark:text-brand-300">
                             <HelpCircle className="h-3.5 w-3.5" /> Institutional Questions
                         </span>
-                        <h2 className="mt-3 text-2xl sm:text-4xl font-extrabold text-white">
+                        <h2 className="mt-3 text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white">
                             Frequently Asked Questions
                         </h2>
-                        <p className="mt-2 text-sm text-slate-400">
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                             Everything campus leadership needs to know about deploying UniQueue.
                         </p>
                     </div>
@@ -543,17 +541,17 @@ export default function PublicRegisterUniversity() {
                             return (
                                 <div
                                     key={idx}
-                                    className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60 transition-all"
+                                    className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-950/60 transition-all"
                                 >
                                     <button
                                         type="button"
                                         onClick={() => setOpenFaq(isOpen ? null : idx)}
-                                        className="flex w-full items-center justify-between p-5 text-left text-sm sm:text-base font-bold text-white hover:text-brand-300 transition-colors cursor-pointer"
+                                        className="flex w-full items-center justify-between p-5 text-left text-sm sm:text-base font-bold text-slate-900 hover:text-brand-600 dark:text-white dark:hover:text-brand-400 transition-colors cursor-pointer"
                                     >
                                         <span className="pr-4">{faq.q}</span>
                                         <ChevronDown
                                             className={`h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200 ${
-                                                isOpen ? 'rotate-180 text-brand-400' : ''
+                                                isOpen ? 'rotate-180 text-brand-600 dark:text-brand-400' : ''
                                             }`}
                                         />
                                     </button>
@@ -565,7 +563,7 @@ export default function PublicRegisterUniversity() {
                                                 exit={{ height: 0, opacity: 0 }}
                                                 transition={{ duration: 0.2 }}
                                             >
-                                                <div className="border-t border-slate-800 px-5 pb-5 pt-2 text-xs sm:text-sm text-slate-400 leading-relaxed">
+                                                <div className="border-t border-slate-200/70 dark:border-slate-800 px-5 pb-5 pt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                                                     {faq.a}
                                                 </div>
                                             </motion.div>
