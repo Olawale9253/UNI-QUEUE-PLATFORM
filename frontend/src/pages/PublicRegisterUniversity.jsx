@@ -16,7 +16,7 @@ import { useToastStore } from '../store/toastStore'
 import Footer from '../components/layout/Footer'
 
 const CAMPUS_HEADER_IMAGE =
-    'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&q=80&w=2000'
+    'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=2000'
 
 const INSTITUTIONAL_BENEFITS = [
     {
@@ -187,16 +187,16 @@ export default function PublicRegisterUniversity() {
 
             {/* ═══ 1. HERO SECTION WITH UNIVERSITY CAMPUS BACKGROUND ═══ */}
             <section className="relative overflow-hidden bg-slate-100 border-b border-slate-200/80 dark:bg-slate-950 dark:border-slate-800 pt-16 pb-20 sm:pt-24 sm:pb-28">
-                {/* University Campus Background Image with Luminous Overlay */}
+                {/* University Campus Exterior Background Image */}
                 <div className="absolute inset-0 pointer-events-none overflow-hidden">
                     <img
                         src={CAMPUS_HEADER_IMAGE}
-                        alt="University campus architecture"
+                        alt="University campus quad and collegiate building"
                         className="h-full w-full object-cover object-center"
                     />
-                    {/* Balanced translucent veil for high text contrast in both light and dark mode */}
-                    <div className="absolute inset-0 bg-white/85 backdrop-blur-[2px] dark:bg-slate-950/85" />
-                    <div className="absolute inset-0 bg-gradient-to-b from-white/50 via-white/80 to-slate-50 dark:from-slate-950/50 dark:via-slate-950/80 dark:to-slate-950" />
+                    {/* Balanced translucent overlay for crisp text contrast without blur distortion */}
+                    <div className="absolute inset-0 bg-white/75 dark:bg-slate-950/80" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-white/65 to-slate-50 dark:from-slate-950/40 dark:via-slate-950/75 dark:to-slate-950" />
                 </div>
 
                 <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
