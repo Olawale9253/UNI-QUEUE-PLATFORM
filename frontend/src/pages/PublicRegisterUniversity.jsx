@@ -15,6 +15,9 @@ import api from '../api/axios'
 import { useToastStore } from '../store/toastStore'
 import Footer from '../components/layout/Footer'
 
+const CAMPUS_HEADER_IMAGE =
+    'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&q=80&w=2000'
+
 const INSTITUTIONAL_BENEFITS = [
     {
         title: 'Campus Safety & Orderly Spaces',
@@ -182,14 +185,23 @@ export default function PublicRegisterUniversity() {
     return (
         <div className="h-full overflow-y-auto bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
 
-            {/* ═══ 1. HERO SECTION (Bright, Clean, Welcoming) ═══ */}
-            <section className="relative overflow-hidden bg-white border-b border-slate-200/80 dark:bg-slate-900 dark:border-slate-800 pt-14 pb-16 sm:pt-20 sm:pb-24">
-                {/* Subtle soft gradient background */}
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-50/60 via-transparent to-transparent dark:from-brand-950/20" />
+            {/* ═══ 1. HERO SECTION WITH UNIVERSITY CAMPUS BACKGROUND ═══ */}
+            <section className="relative overflow-hidden bg-slate-100 border-b border-slate-200/80 dark:bg-slate-950 dark:border-slate-800 pt-16 pb-20 sm:pt-24 sm:pb-28">
+                {/* University Campus Background Image with Luminous Overlay */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    <img
+                        src={CAMPUS_HEADER_IMAGE}
+                        alt="University campus architecture"
+                        className="h-full w-full object-cover object-center"
+                    />
+                    {/* Balanced translucent veil for high text contrast in both light and dark mode */}
+                    <div className="absolute inset-0 bg-white/85 backdrop-blur-[2px] dark:bg-slate-950/85" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-white/50 via-white/80 to-slate-50 dark:from-slate-950/50 dark:via-slate-950/80 dark:to-slate-950" />
+                </div>
 
                 <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-3xl text-center">
-                        <span className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-xs font-semibold text-brand-700 dark:border-brand-900/60 dark:bg-brand-950/50 dark:text-brand-300">
+                        <span className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/95 px-4 py-1.5 text-xs font-semibold text-brand-700 shadow-sm backdrop-blur-md dark:border-brand-900/60 dark:bg-slate-900/90 dark:text-brand-300">
                             <Building2 className="h-3.5 w-3.5" /> Institutional Campus Platform
                         </span>
 
@@ -197,7 +209,7 @@ export default function PublicRegisterUniversity() {
                             Modernize student queues and clearance across your campus
                         </h1>
 
-                        <p className="mt-5 text-sm sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto">
+                        <p className="mt-5 text-sm sm:text-lg text-slate-700 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto font-medium">
                             UniQueue eliminates physical lines, noisy hallways, and manual clearance marathons. Deploy a protected digital queue workspace for your university in under 24 hours.
                         </p>
 
@@ -211,7 +223,7 @@ export default function PublicRegisterUniversity() {
                             </button>
                             <Link
                                 to="/"
-                                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-all"
+                                className="inline-flex items-center gap-2 rounded-xl border border-slate-300/80 bg-white/90 px-6 py-3.5 text-sm font-semibold text-slate-800 hover:bg-white hover:border-slate-400 shadow-sm dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-200 dark:hover:bg-slate-800 transition-all"
                             >
                                 View Student Experience
                             </Link>
@@ -219,21 +231,21 @@ export default function PublicRegisterUniversity() {
 
                         {/* Top Trust Metrics Cards */}
                         <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4 text-left">
-                            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                            <div className="rounded-2xl border border-slate-200/90 bg-white/90 backdrop-blur-md p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
                                 <div className="text-xl sm:text-2xl font-black text-brand-600 dark:text-brand-400">Under 24 Hours</div>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Turnkey cloud deployment</div>
+                                <div className="text-xs text-slate-600 dark:text-slate-400 mt-1 font-medium">Turnkey cloud deployment</div>
                             </div>
-                            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                            <div className="rounded-2xl border border-slate-200/90 bg-white/90 backdrop-blur-md p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
                                 <div className="text-xl sm:text-2xl font-black text-brand-600 dark:text-brand-400">Zero Hardware</div>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">No local server installations</div>
+                                <div className="text-xs text-slate-600 dark:text-slate-400 mt-1 font-medium">No local server installations</div>
                             </div>
-                            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                            <div className="rounded-2xl border border-slate-200/90 bg-white/90 backdrop-blur-md p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
                                 <div className="text-xl sm:text-2xl font-black text-brand-600 dark:text-brand-400">Protected Data</div>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Isolated campus workspace</div>
+                                <div className="text-xs text-slate-600 dark:text-slate-400 mt-1 font-medium">Isolated campus workspace</div>
                             </div>
-                            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                            <div className="rounded-2xl border border-slate-200/90 bg-white/90 backdrop-blur-md p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
                                 <div className="text-xl sm:text-2xl font-black text-brand-600 dark:text-brand-400">Free Starting Tier</div>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Pilot before scaling campus wide</div>
+                                <div className="text-xs text-slate-600 dark:text-slate-400 mt-1 font-medium">Pilot before scaling campus wide</div>
                             </div>
                         </div>
                     </div>
