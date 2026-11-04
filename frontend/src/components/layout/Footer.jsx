@@ -65,10 +65,10 @@ export default function Footer() {
                         {/* Trust highlights */}
                         <div className="pt-2 flex flex-wrap gap-4 text-xs text-slate-400">
                             <span className="inline-flex items-center gap-1.5">
-                                <Shield className="h-3.5 w-3.5 text-brand-400" /> Multi-Tenant Isolation
+                                <Shield className="h-3.5 w-3.5 text-brand-400" /> Protected Campus Isolation
                             </span>
                             <span className="inline-flex items-center gap-1.5">
-                                <Clock className="h-3.5 w-3.5 text-brand-400" /> &lt;5s Live Sync
+                                <Clock className="h-3.5 w-3.5 text-brand-400" /> Live Position Updates
                             </span>
                         </div>
                     </div>
@@ -111,8 +111,8 @@ export default function Footer() {
                                 </li>
                                 <li>
                                     <a
-                                        href="#how-it-works"
-                                        onClick={scrollToSection('how-it-works')}
+                                        href="#process"
+                                        onClick={scrollToSection('process')}
                                         className="text-slate-400 hover:text-white transition-colors"
                                     >
                                         How It Works
@@ -212,7 +212,7 @@ export default function Footer() {
                                 </li>
                                 <li>
                                     <span className="text-slate-500 cursor-default">
-                                        Multi-Campus Tenants
+                                        Multiple Campus Locations
                                     </span>
                                 </li>
                                 <li>
