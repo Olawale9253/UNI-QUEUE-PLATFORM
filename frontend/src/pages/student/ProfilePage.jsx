@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Pencil, User, Mail, Phone, Building2, GraduationCap } from 'lucide-react'
+import { Pencil, Mail, Phone, Building2, GraduationCap } from 'lucide-react'
 import api from '../../api/axios'
 import { useAuthStore } from '../../store/authStore'
 import { useUniversityStore } from '../../store/universityStore'
@@ -77,13 +77,13 @@ export default function ProfilePage() {
                                     {data.fullName || 'Student Name'}
                                 </h2>
                                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
-                                    <span className="flex items-center gap-1.5">
-                                        <GraduationCap className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                                        {data.matricNumber || 'No matric number'}
+                                    <span className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-200">
+                                        <GraduationCap className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-brand-600 dark:text-brand-400" />
+                                        {data.matricNumber ? `Matric: ${data.matricNumber}` : data.jambNumber ? `JAMB: ${data.jambNumber}` : 'Student'}
                                     </span>
                                     <span className="flex items-center gap-1.5">
                                         <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                                        {data.department || 'No department'}
+                                        {data.department || 'General Academic'}
                                     </span>
                                 </div>
                             </div>

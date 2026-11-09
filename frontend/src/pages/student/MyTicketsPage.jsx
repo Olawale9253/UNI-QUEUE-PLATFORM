@@ -456,8 +456,8 @@ export default function MyTicketsPage() {
                                                 <div className="flex items-center gap-2 sm:gap-3">
                                                     <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}><ServiceIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" /></div>
                                                     <div className="min-w-0">
-                                                        <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate max-w-[120px]">{item.queueName || 'Appointment'}</div>
-                                                        <div className="text-[10px] sm:text-xs text-slate-500 truncate max-w-[120px]">{item.officeName || item.staffName || 'University Office'}</div>
+                                                        <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate max-w-[180px] sm:max-w-[260px]">{item.queueName || 'Appointment'}</div>
+                                                        <div className="text-[10px] sm:text-xs text-slate-500 truncate max-w-[180px] sm:max-w-[260px]">{item.officeName || item.staffName || 'University Office'}</div>
                                                     </div>
                                                 </div>
                                             </td>

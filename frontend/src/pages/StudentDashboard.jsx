@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import {
     ListOrdered, History, Calendar, Route as RouteIcon, FileText, Building2,
-    Settings, Ticket, Bell, User, Search,
+    Settings, Ticket, Bell, User,
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import PageHeader from '../components/layout/PageHeader'
@@ -52,10 +52,10 @@ export default function StudentDashboard() {
     return (
         <DashboardLayout tabs={tabs}>
             {isHome && (
-                <div className="sticky top-0 z-20 mb-4 bg-white px-4 pb-3 pt-4 dark:bg-slate-900 sm:px-6 sm:pt-6 sm:pb-4">
+                <div className="mb-2 px-4 sm:px-6">
                     <PageHeader
                         workspace="Student Workspace"
-                        description="Join a queue, track your position, and manage your tickets."
+                        description="Join a queue, track your position, and manage your tickets with real-time updates."
                     />
                 </div>
             )}

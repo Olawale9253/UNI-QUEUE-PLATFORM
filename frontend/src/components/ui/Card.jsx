@@ -26,7 +26,7 @@ export default function Card({
     return (
         <Comp
             {...motionProps}
-            className={`rounded-xl border border-slate-200 bg-white shadow-sm ${
+            className={`rounded-2xl border border-slate-200/90 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 ${
                 padded ? 'p-6' : ''
             } ${className}`}
         >

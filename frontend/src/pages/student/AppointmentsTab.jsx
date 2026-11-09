@@ -185,33 +185,30 @@ export default function AppointmentsTab() {
     }
 
     return (
-        <div className="bg-white dark:bg-slate-950 min-h-screen p-4 sm:p-6 lg:p-8">
-            <div className="max-w-[1600px] mx-auto pb-12">
-
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Appointments</h1>
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
-                            Book appointments with university staff. Choose from available slots created by staff members.
-                        </p>
-                    </div>
-
-                    <a
-                        href="mailto:support@uniqueue.com"
-                        className="hidden md:flex items-center gap-3 rounded-xl border px-4 py-3 transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer bg-white dark:bg-slate-900 dark:border-slate-800"
-                        style={{ borderColor: withAlpha(primaryColor, 0.3), boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}
-                    >
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: withAlpha(primaryColor, 0.1), color: primaryColor }}>
-                            <HelpCircle className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Need help?</div>
-                            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Contact our support team</div>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-slate-300 ml-2" />
-                    </a>
+        <div className="space-y-6 pb-12">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-2">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Appointments</h1>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
+                        Schedule dedicated 1-on-1 sessions with university advisors, departmental heads, and support staff.
+                    </p>
                 </div>
+
+                <a
+                    href="mailto:support@uniqueue.com"
+                    className="hidden md:flex items-center gap-3 rounded-2xl border border-slate-200/90 px-4 py-3 transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer bg-white dark:bg-slate-900 dark:border-slate-800"
+                >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/50 dark:text-brand-400">
+                        <HelpCircle className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Need help?</div>
+                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Contact appointment support</div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-slate-300 ml-2" />
+                </a>
+            </div>
 
                 {/* Top Tabs */}
                 <div className="flex items-center gap-1 p-1 mb-6 bg-slate-50 border border-slate-200 rounded-xl overflow-x-auto whitespace-nowrap scrollbar-hide dark:bg-slate-900 dark:border-slate-800">
@@ -625,6 +622,5 @@ export default function AppointmentsTab() {
                     </Card>
                 )}
             </div>
-        </div>
     )
 }

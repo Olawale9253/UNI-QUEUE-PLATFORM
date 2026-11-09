@@ -176,18 +176,17 @@ export default function OfficesTab() {
     }
 
     return (
-        <div className="bg-white dark:bg-slate-950 min-h-screen p-4 sm:p-6 lg:p-8">
-            <div className="space-y-6 pb-12 max-w-[1600px] mx-auto">
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                            Campus Offices
-                        </h1>
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
-                            View university offices and staff details. Find the right office, get contact information, and know who to see for your needs.
-                        </p>
-                    </div>
+        <div className="space-y-6 pb-12">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                        Campus Offices
+                    </h1>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
+                        View university offices, staff details, and active counters. Find the right department, get contact information, and navigate campus services with ease.
+                    </p>
                 </div>
+            </div>
 
                 {offices.length === 0 ? (
                     <EmptyState
@@ -463,7 +462,6 @@ export default function OfficesTab() {
                         </AnimatePresence>
                     </div>
                 )}
-            </div>
 
             {/* --- Contact Modal --- */}
             <AnimatePresence>

@@ -369,8 +369,8 @@ export default function HistoryTab() {
                                                     <ServiceIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate max-w-[120px]">{item.queueName || 'Appointment'}</div>
-                                                    <div className="text-[10px] sm:text-xs text-slate-500 truncate max-w-[120px]">{item.officeName || item.staffName || 'University Office'}</div>
+                                                    <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate max-w-[180px] sm:max-w-[260px]">{item.queueName || 'Appointment'}</div>
+                                                    <div className="text-[10px] sm:text-xs text-slate-500 truncate max-w-[180px] sm:max-w-[260px]">{item.officeName || item.staffName || 'University Office'}</div>
                                                 </div>
                                             </div>
                                         </td>
