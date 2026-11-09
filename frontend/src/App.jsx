@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import Navbar from './components/layout/Navbar'
 import ToastContainer from './components/ui/Toast'
 import ErrorBoundary from './components/common/ErrorBoundary'
@@ -164,6 +165,7 @@ export default function App() {
                         </Routes>
                     </main>
                     <ToastContainer />
+                    <Analytics />
                 </div>
             </ThemeProvider>
         </ErrorBoundary>
