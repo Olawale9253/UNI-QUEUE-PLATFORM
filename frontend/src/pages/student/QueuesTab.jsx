@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Search, HelpCircle, GraduationCap,
-    Users, Building2, Banknote, Clock,
-    ArrowRight, AlertTriangle,
+    Users, Building2, Banknote, Clock, MapPin, Phone,
+    ArrowRight, AlertTriangle, CheckCircle2, ChevronRight,
     FileText, BookOpen, Monitor, ListOrdered, Info, Lock
 } from 'lucide-react'
 import api from '../../api/axios'
