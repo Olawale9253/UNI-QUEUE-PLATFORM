@@ -35,11 +35,10 @@ public class AppointmentResponse {
 
     private String officeName;
 
-
     public static AppointmentResponse from(Appointment appointment) {
         return AppointmentResponse.builder()
                 .id(appointment.getId())
-                .status(appointment.getStatus())
+                .status(appointment.getStatusEnum())         // ← uses enum accessor
                 .slotId(appointment.getSlot() != null ? appointment.getSlot().getId() : null)
                 .officeName(appointment.getSlot() != null ? appointment.getSlot().getDepartment() : null)
                 .slotTitle(appointment.getSlot() != null ? appointment.getSlot().getTitle() : null)

@@ -30,16 +30,14 @@ public class Appointment {
     @JoinColumn(name = "student_id", nullable = false)
     private User student;
 
-    @Enumerated(EnumType.STRING)
+    // Stored as String to survive stale enum values in DB
     @Column(nullable = false, length = 20, columnDefinition = "VARCHAR(20)")
     @Builder.Default
-    private AppointmentStatus status = AppointmentStatus.BOOKED;
+    private String status = "BOOKED";
 
-    /** Student's reason / topic for the appointment. */
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    /** Staff's post-appointment notes. */
     @Column(name = "staff_notes", columnDefinition = "TEXT")
     private String staffNotes;
 
@@ -52,4 +50,21 @@ public class Appointment {
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
+
+    /** Safe enum accessor — falls back to BOOKED if stored value is unknown. */
+    @Transient
+    public AppointmentStatus getStatusEnum() {
+        if (status == null) return AppointmentStatus.BOOKED;
+        try {
+            return AppointmentStatus.valueOf(status);
+        } catch (IllegalArgumentException e) {
+            return AppointmentStatus.BOOKED;
+        }
+    }
+
+    /** Safe enum setter — stores the enum name as a String. */
+    @Transient
+    public void setStatusEnum(AppointmentStatus s) {
+        this.status = (s == null) ? null : s.name();
+    }
 }
