@@ -62,7 +62,7 @@ public class AppointmentSlotResponse {
                 .id(appointmentSlot.getId())
                 .title(appointmentSlot.getTitle())
                 .description(appointmentSlot.getDescription())
-                .category(appointmentSlot.getCategory())
+                .category(appointmentSlot.getCategoryEnum())
                 .officeName(computeOfficeName(appointmentSlot))
                 .faculty(appointmentSlot.getFaculty())
                 .department(appointmentSlot.getDepartment())

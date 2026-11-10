@@ -38,10 +38,10 @@ public class AppointmentSlot {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Enumerated(EnumType.STRING)
+    // Stored as String to survive stale enum values in the DB
     @Column(length = 50, columnDefinition = "VARCHAR(50)")
     @Builder.Default
-    private AppointmentCategory category = AppointmentCategory.OTHER;
+    private String category = "OTHER";
 
     @Column(length = 255)
     private String faculty;
@@ -86,4 +86,20 @@ public class AppointmentSlot {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    /** Safe enum accessor — falls back to OTHER if stored value is unknown. */
+    @Transient
+    public AppointmentCategory getCategoryEnum() {
+        if (category == null) return AppointmentCategory.OTHER;
+        try {
+            return AppointmentCategory.valueOf(category);
+        } catch (IllegalArgumentException e) {
+            return AppointmentCategory.OTHER;
+        }
+    }
+
+    @Transient
+    public void setCategoryEnum(AppointmentCategory c) {
+        this.category = (c == null) ? null : c.name();
+    }
 }

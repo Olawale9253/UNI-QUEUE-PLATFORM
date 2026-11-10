@@ -13,7 +13,6 @@ import com.uniqueeue.exception.BadRequestException;
 import com.uniqueeue.exception.ResourceNotFoundException;
 import com.uniqueeue.model.Appointment;
 import com.uniqueeue.model.AppointmentSlot;
-import com.uniqueeue.model.University;
 import com.uniqueeue.model.User;
 import com.uniqueeue.repository.AppointmentRepository;
 import com.uniqueeue.repository.AppointmentSlotRepository;
@@ -66,8 +65,8 @@ public class AppointmentService {
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .category(request.getCategory() != null
-                        ? request.getCategory()
-                        : com.uniqueeue.enums.AppointmentCategory.OTHER)
+                        ? request.getCategory().name()
+                        : "OTHER")
                 .faculty(request.getFaculty())
                 .department(request.getDepartment())
                 .location(request.getLocation())
@@ -103,7 +102,6 @@ public class AppointmentService {
         AppointmentSlot slot = slotRepository.findById(slotId)
                 .orElseThrow(() -> new ResourceNotFoundException("Slot not found"));
 
-        // Tenant isolation — user must be in the same university as the slot.
         User requester = userRepository.findById(requestingUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Slot not found"));
 
@@ -178,7 +176,6 @@ public class AppointmentService {
                 .toList();
     }
 
-
     // ============================================================
     //  BOOKINGS — student
     // ============================================================
@@ -190,9 +187,8 @@ public class AppointmentService {
         AppointmentSlot slot = slotRepository.findById(request.getSlotId())
                 .orElseThrow(() -> new ResourceNotFoundException("Slot not found"));
 
-        // ─── Block double-booking: student can only have ONE upcoming appointment ───
-        java.util.List<Appointment> upcoming = appointmentRepository.findUpcomingByStudent(
-                studentId, java.time.LocalDateTime.now());
+        List<Appointment> upcoming = appointmentRepository.findUpcomingByStudent(
+                studentId, LocalDateTime.now());
         if (!upcoming.isEmpty()) {
             throw new BadRequestException(
                     "You already have an upcoming appointment. "
@@ -215,7 +211,6 @@ public class AppointmentService {
             throw new BadRequestException("Slot is full");
         }
 
-        // Prevent student from having overlapping appointments
         long overlap = appointmentRepository.countOverlapping(
                 studentId, slot.getStartTime(), slot.getEndTime());
         if (overlap > 0) {
@@ -225,19 +220,17 @@ public class AppointmentService {
         Appointment appt = Appointment.builder()
                 .slot(slot)
                 .student(student)
-                .status(AppointmentStatus.BOOKED)
+                .status("BOOKED")
                 .notes(request.getNotes())
                 .build();
 
         Appointment saved = appointmentRepository.save(appt);
 
-        // Notify student
         notificationService.notify(student, NotificationType.SYSTEM,
                 "Appointment booked",
                 "You booked " + slot.getTitle() + " with " + slot.getStaff().getFullName()
                         + " on " + slot.getStartTime() + " at " + slot.getLocation() + ".");
 
-        // Notify staff
         notificationService.notify(slot.getStaff(), NotificationType.SYSTEM,
                 "New appointment booking",
                 student.getFullName() + " (" + student.getMatricNumber() + ") booked your slot \""
@@ -273,14 +266,14 @@ public class AppointmentService {
             throw new ResourceNotFoundException("Appointment not found");
         }
 
-        if (appt.getStatus() != AppointmentStatus.BOOKED) {
+        if (appt.getStatusEnum() != AppointmentStatus.BOOKED) {
             throw new BadRequestException("Cannot cancel an appointment that is " + appt.getStatus());
         }
         if (appt.getSlot().getStartTime().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("Cannot cancel — appointment has already started");
         }
 
-        appt.setStatus(AppointmentStatus.CANCELLED);
+        appt.setStatusEnum(AppointmentStatus.CANCELLED);
         appt.setCancelledAt(LocalDateTime.now());
         Appointment saved = appointmentRepository.save(appt);
 
@@ -304,7 +297,8 @@ public class AppointmentService {
         AppointmentSlot slot = slotRepository.findById(slotId)
                 .orElseThrow(() -> new ResourceNotFoundException("Slot not found"));
         if (!slot.getStaff().getId().equals(staffId)) {
-            throw new ResourceNotFoundException("Slot not found");        }
+            throw new ResourceNotFoundException("Slot not found");
+        }
         return appointmentRepository.findBySlotIdOrderByBookedAtAsc(slotId).stream()
                 .map(AppointmentResponse::from)
                 .toList();
@@ -313,10 +307,10 @@ public class AppointmentService {
     @Transactional
     public AppointmentResponse completeByStaff(Long staffId, Long appointmentId, String staffNotes) {
         Appointment appt = mustOwn(staffId, appointmentId);
-        if (appt.getStatus() != AppointmentStatus.BOOKED) {
+        if (appt.getStatusEnum() != AppointmentStatus.BOOKED) {
             throw new BadRequestException("Only BOOKED appointments can be completed");
         }
-        appt.setStatus(AppointmentStatus.COMPLETED);
+        appt.setStatusEnum(AppointmentStatus.COMPLETED);
         appt.setCompletedAt(LocalDateTime.now());
         if (staffNotes != null) appt.setStaffNotes(staffNotes);
         Appointment saved = appointmentRepository.save(appt);
@@ -334,10 +328,10 @@ public class AppointmentService {
     @Transactional
     public AppointmentResponse noShowByStaff(Long staffId, Long appointmentId) {
         Appointment appt = mustOwn(staffId, appointmentId);
-        if (appt.getStatus() != AppointmentStatus.BOOKED) {
+        if (appt.getStatusEnum() != AppointmentStatus.BOOKED) {
             throw new BadRequestException("Only BOOKED appointments can be marked no-show");
         }
-        appt.setStatus(AppointmentStatus.NO_SHOW);
+        appt.setStatusEnum(AppointmentStatus.NO_SHOW);
         appt.setCompletedAt(LocalDateTime.now());
         Appointment saved = appointmentRepository.save(appt);
 
@@ -381,7 +375,7 @@ public class AppointmentService {
     // ============================================================
 
     private long bookedCount(Long slotId) {
-        return appointmentRepository.countBySlotIdAndStatus(slotId, AppointmentStatus.BOOKED);
+        return appointmentRepository.countBySlotIdAndStatus(slotId, "BOOKED");
     }
 
     private Appointment mustOwn(Long staffId, Long appointmentId) {
