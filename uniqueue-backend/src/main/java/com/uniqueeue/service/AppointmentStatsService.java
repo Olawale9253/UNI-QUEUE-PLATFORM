@@ -26,19 +26,19 @@ public class AppointmentStatsService {
         LocalDateTime now = LocalDateTime.now();
 
         long todayCount = all.stream()
-                .filter(appointmentValue -> appointmentValue.getStatus() == AppointmentStatus.BOOKED)
+                .filter(appointmentValue -> appointmentValue.getStatusEnum() == AppointmentStatus.BOOKED)
                 .filter(appointmentValue2 -> appointmentValue2.getSlot() != null && appointmentValue2.getSlot().getStartTime() != null)
                 .filter(appointmentValue3 -> appointmentValue3.getSlot().getStartTime().toLocalDate().equals(today))
                 .count();
 
         long upcoming = all.stream()
-                .filter(appointmentValue4 -> appointmentValue4.getStatus() == AppointmentStatus.BOOKED)
+                .filter(appointmentValue4 -> appointmentValue4.getStatusEnum() == AppointmentStatus.BOOKED)
                 .filter(appointmentValue5 -> appointmentValue5.getSlot() != null && appointmentValue5.getSlot().getStartTime() != null)
                 .filter(appointmentValue6 -> appointmentValue6.getSlot().getStartTime().isAfter(now))
                 .count();
 
         Appointment next = all.stream()
-                .filter(appointmentValue7 -> appointmentValue7.getStatus() == AppointmentStatus.BOOKED)
+                .filter(appointmentValue7 -> appointmentValue7.getStatusEnum() == AppointmentStatus.BOOKED)
                 .filter(appointmentValue8 -> appointmentValue8.getSlot() != null && appointmentValue8.getSlot().getStartTime() != null)
                 .filter(appointmentValue9 -> appointmentValue9.getSlot().getStartTime().isAfter(now))
                 .min(Comparator.comparing(appointmentValue10 -> appointmentValue10.getSlot().getStartTime()))
@@ -49,10 +49,10 @@ public class AppointmentStatsService {
                 .today(todayCount)
                 .upcoming(upcoming)
                 .completed(all.stream()
-                        .filter(appointmentValue11 -> appointmentValue11.getStatus() == AppointmentStatus.COMPLETED)
+                        .filter(appointmentValue11 -> appointmentValue11.getStatusEnum() == AppointmentStatus.COMPLETED)
                         .count())
                 .cancelled(all.stream()
-                        .filter(appointmentValue12 -> appointmentValue12.getStatus() == AppointmentStatus.CANCELLED)
+                        .filter(appointmentValue12 -> appointmentValue12.getStatusEnum() == AppointmentStatus.CANCELLED)
                         .count())
                 .nextStartTime(next != null ? next.getSlot().getStartTime().toString() : null)
                 .nextStudentName(next != null && next.getStudent() != null
@@ -72,7 +72,7 @@ public class AppointmentStatsService {
                 .count();
 
         long upcoming = all.stream()
-                .filter(appointmentValue15 -> appointmentValue15.getStatus() == AppointmentStatus.BOOKED)
+                .filter(appointmentValue15 -> appointmentValue15.getStatusEnum() == AppointmentStatus.BOOKED)
                 .filter(appointmentValue16 -> appointmentValue16.getSlot() != null && appointmentValue16.getSlot().getStartTime() != null)
                 .filter(appointmentValue17 -> appointmentValue17.getSlot().getStartTime().isAfter(now))
                 .count();
@@ -82,10 +82,10 @@ public class AppointmentStatsService {
                 .today(todayCount)
                 .upcoming(upcoming)
                 .completed(all.stream()
-                        .filter(appointmentValue18 -> appointmentValue18.getStatus() == AppointmentStatus.COMPLETED)
+                        .filter(appointmentValue18 -> appointmentValue18.getStatusEnum() == AppointmentStatus.COMPLETED)
                         .count())
                 .cancelled(all.stream()
-                        .filter(appointmentValue19 -> appointmentValue19.getStatus() == AppointmentStatus.CANCELLED)
+                        .filter(appointmentValue19 -> appointmentValue19.getStatusEnum() == AppointmentStatus.CANCELLED)
                         .count())
                 .build();
     }
