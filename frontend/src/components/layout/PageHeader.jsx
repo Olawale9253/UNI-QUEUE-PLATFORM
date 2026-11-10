@@ -112,11 +112,14 @@ export default function PageHeader({ workspace, title, description, action }) {
                 transition={{ duration: 0.3 }}
                 className="relative overflow-hidden rounded-3xl border border-slate-800/80 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-6 text-white shadow-xl shadow-slate-950/20 sm:p-7"
             >
+                {/* ⬇️ PREMIUM BRAND ACCENT EDGE ⬇️ */}
+                <div className="absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b from-brand-400 via-brand-500 to-brand-600 shadow-[0_0_15px_rgba(var(--brand-500),0.5)] z-20" />
+
                 {/* Ambient glow effects */}
-                <div className="pointer-events-none absolute -right-12 -top-12 h-64 w-64 rounded-full bg-brand-500/15 blur-3xl" />
+                <div className="pointer-events-none absolute -right-12 -top-12 h-64 w-64 rounded-full bg-brand-500/20 blur-3xl" />
                 <div className="pointer-events-none absolute -bottom-12 -left-12 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
 
-                <div className="relative z-10 space-y-4">
+                <div className="relative z-10 space-y-4 pl-2">
                     {/* Top tags row */}
                     <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
                         <div className="flex w-fit items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-brand-200 backdrop-blur-md">
@@ -145,7 +148,7 @@ export default function PageHeader({ workspace, title, description, action }) {
                     {/* Greeting & description */}
                     <div className="pt-1">
                         <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl lg:text-4xl">
-                            {greeting}, {firstName}
+                            {greeting}, <span className="text-brand-300">{firstName}</span>
                         </h1>
                         {description && (
                             <p className="mt-1.5 max-w-3xl text-xs sm:text-sm leading-relaxed text-slate-300">
@@ -155,7 +158,7 @@ export default function PageHeader({ workspace, title, description, action }) {
                     </div>
 
                     {/* Bottom user badge strip */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/10 text-xs text-slate-300">
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/10 text-xs text-slate-300">
                         <div className="flex flex-wrap items-center gap-3">
                             <span className="inline-flex items-center gap-1.5 font-semibold text-slate-200">
                                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
