@@ -52,7 +52,7 @@ export default function StudentDashboard() {
     return (
         <DashboardLayout tabs={tabs}>
             {isHome && (
-                <div className="mb-2 px-4 sm:px-6">
+                <div className="mb-4 px-4 sm:px-6">
                     <PageHeader
                         workspace="Student Workspace"
                         description="Join a queue, track your position, and manage your tickets with real-time updates."

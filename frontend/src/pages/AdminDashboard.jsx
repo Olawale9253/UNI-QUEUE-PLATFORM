@@ -48,10 +48,10 @@ export default function AdminDashboard() {
     return (
         <DashboardLayout tabs={tabs}>
             {isHome && (
-                <div className="sticky top-0 z-20 mb-4 bg-white px-4 pb-3 pt-4 dark:bg-slate-900 sm:px-6 sm:pt-6 sm:pb-4">
+                <div className="mb-4 px-4 sm:px-6">
                     <PageHeader
                         workspace="Admin Workspace"
-                        description="Everything you need to run your university today."
+                        description="Everything you need to run your university operations, staff assignments, and campus services today."
                     />
                 </div>
             )}

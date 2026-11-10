@@ -124,7 +124,7 @@ export default function StudentHome() {
                                 <div className="flex items-center gap-1.5">
                                     <Users className="h-4 w-4 text-brand-200" />
                                     <span>
-                                        Queue Position: <strong className="text-white">#{activeTicket.position ?? '—'}</strong>
+                                        Queue Position: <strong className="text-white">Spot {activeTicket.position ?? '—'}</strong>
                                     </span>
                                 </div>
                             </div>
@@ -349,9 +349,9 @@ export default function StudentHome() {
                                                     </p>
                                                 </div>
                                             </div>
-                                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">
+                                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">
                                                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                                Position #{activeTicket.position ?? 1}
+                                                Position {activeTicket.position ?? 1}
                                             </span>
                                         </div>
 
@@ -361,9 +361,9 @@ export default function StudentHome() {
                                             </span>
                                             <button
                                                 onClick={() => navigate('/student/my-tickets')}
-                                                className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400"
+                                                className="inline-flex items-center gap-1 text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400"
                                             >
-                                                Track live →
+                                                Track live <ChevronRight className="h-3 w-3" />
                                             </button>
                                         </div>
                                     </div>
@@ -380,9 +380,9 @@ export default function StudentHome() {
                                         </p>
                                         <button
                                             onClick={() => navigate('/student/queues')}
-                                            className="mt-3 text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400"
+                                            className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400"
                                         >
-                                            View Open Queues →
+                                            View Open Queues <ArrowRight className="h-3.5 w-3.5" />
                                         </button>
                                     </div>
                                 )}
@@ -560,9 +560,9 @@ export default function StudentHome() {
                         <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-center">
                             <Link
                                 to="/student/queues"
-                                className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 hover:underline"
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 hover:underline"
                             >
-                                Browse All Campus Services →
+                                Browse All Campus Services <ArrowRight className="h-3.5 w-3.5" />
                             </Link>
                         </div>
                     </div>
