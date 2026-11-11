@@ -89,46 +89,47 @@ export default function PageHeader({ workspace, title, description, action }) {
     const activeWorkspace = workspace || 'Workspace'
 
     return (
-        // Sticky wrapper with solid background to cover scrolling content
-        <div className="sticky top-0 z-30 -mx-4 mb-6 bg-white px-4 pt-4 pb-2 dark:bg-slate-950 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-            <div className="relative overflow-hidden rounded-2xl border border-slate-200 border-l-4 border-l-brand-500 bg-white shadow-sm dark:border-slate-800 dark:border-l-brand-500 dark:bg-slate-900">
-                <div className="relative z-10 p-5 sm:p-6">
-                    <div className="space-y-3">
+        // Reduced top padding (pt-4) and bottom margin (mb-4) to make it compact
+        <div className="sticky top-0 z-30 -mx-4 mb-4 bg-white/95 px-4 pt-4 pb-2 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 dark:bg-slate-950/95">
+            <div className="relative overflow-hidden rounded-xl border border-slate-200 border-l-4 border-l-brand-500 bg-white shadow-sm dark:border-slate-800 dark:border-l-brand-500 dark:bg-slate-900">
+                {/* Reduced internal padding to p-4/p-5 to make it shorter */}
+                <div className="relative z-10 p-4 sm:p-5">
+                    <div className="space-y-2">
                         {/* Top tags row */}
-                        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
-                            <div className="flex w-fit items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-brand-700 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-300">
-                                <Sparkles className="h-3.5 w-3.5" />
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                            <div className="flex w-fit items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-700 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-300">
+                                <Sparkles className="h-3 w-3" />
                                 {activeWorkspace}
                             </div>
 
                             {campusName && (
-                                <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                    <Building2 className="h-3.5 w-3.5 text-slate-400" />
+                                <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                    <Building2 className="h-3 w-3 text-slate-400" />
                                     {campusName}
                                 </div>
                             )}
 
-                            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                                <Calendar className="h-3.5 w-3.5" />
+                            <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                <Calendar className="h-3 w-3" />
                                 {formatDate(now)}
                             </div>
                         </div>
 
-                        {/* Greeting & description */}
-                        <div className="pt-1">
-                            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl lg:text-4xl">
+                        {/* Greeting & description - slightly smaller text */}
+                        <div className="pt-0.5">
+                            <h1 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-2xl lg:text-3xl">
                                 {greeting}, <span className="text-brand-600 dark:text-brand-400">{firstName}</span>
                             </h1>
                             {description && (
-                                <p className="mt-1.5 max-w-3xl text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                <p className="mt-1 max-w-3xl text-[11px] sm:text-xs leading-relaxed text-slate-600 dark:text-slate-400">
                                     {description}
                                 </p>
                             )}
                         </div>
 
-                        {/* Holiday Strip */}
+                        {/* Holiday Strip - tighter margin */}
                         {closedDates && (
-                            <div className="pt-2">
+                            <div className="pt-1">
                                 <HolidayStrip closedDates={closedDates} />
                             </div>
                         )}
