@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -107,11 +107,15 @@ export default function QueuesTab() {
 
     const [search, setSearch] = useState('')
     const [activeCategory, setActiveCategory] = useState('All Queues')
+
+    // Initialized to null so no queue is selected by default
     const [selectedQueueId, setSelectedQueueId] = useState(null)
     const [joining, setJoining] = useState(false)
 
-    // 👇 State for the Premium Alert Modal
     const [alertModal, setAlertModal] = useState(null)
+
+    // Ref for smooth scrolling on mobile
+    const detailRef = useRef(null)
 
     const primaryColor = university?.primaryColor || '#4f46e5'
     const isFresher = user?.role === 'FRESHER'
@@ -130,10 +134,7 @@ export default function QueuesTab() {
             setOffices(fetchedOffices)
             setActiveTicket(tokenRes.data?.data || null)
 
-            setSelectedQueueId(prev => {
-                if (prev) return prev
-                return fetchedQueues.length > 0 ? fetchedQueues[0].id : null
-            })
+            // REMOVED THE AUTO-SELECTION LOGIC HERE
         } catch (err) {
             push({ type: 'error', message: err.message || 'Failed to load queues' })
         } finally {
@@ -188,6 +189,16 @@ export default function QueuesTab() {
         )
     }, [selectedQueue, offices])
 
+    // Smooth scroll to details on mobile
+    const handleQueueSelect = (id) => {
+        setSelectedQueueId(id)
+        if (window.innerWidth < 1024) {
+            setTimeout(() => {
+                detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }, 100)
+        }
+    }
+
     const handleJoinQueue = async (queueToJoin) => {
         if (activeTicket) {
             setAlertModal({
@@ -240,167 +251,168 @@ export default function QueuesTab() {
                 </div>
             </div>
 
-                <div className="flex items-center gap-2 mb-6 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
-                    {CATEGORIES.map(cat => {
-                        const isActive = activeCategory === cat
-                        return (
-                            <button key={cat} onClick={() => setActiveCategory(cat)} className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all border shrink-0 ${isActive ? 'text-white shadow-sm border-transparent' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800'}`} style={isActive ? { backgroundColor: primaryColor } : undefined}>
-                                {cat === 'All Queues' && <ListOrdered className="h-4 w-4" />}
-                                {cat === 'Academic' && <GraduationCap className="h-4 w-4" />}
-                                {cat === 'Administrative' && <Building2 className="h-4 w-4" />}
-                                {cat === 'Student Support' && <Users className="h-4 w-4" />}
-                                {cat === 'Financial' && <Banknote className="h-4 w-4" />}
-                                {cat === 'Other' && <Clock className="h-4 w-4" />}
-                                {cat}
-                            </button>
-                        )
-                    })}
-                </div>
+            <div className="flex items-center gap-2 mb-6 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
+                {CATEGORIES.map(cat => {
+                    const isActive = activeCategory === cat
+                    return (
+                        <button key={cat} onClick={() => setActiveCategory(cat)} className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all border shrink-0 ${isActive ? 'text-white shadow-sm border-transparent' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800'}`} style={isActive ? { backgroundColor: primaryColor } : undefined}>
+                            {cat === 'All Queues' && <ListOrdered className="h-4 w-4" />}
+                            {cat === 'Academic' && <GraduationCap className="h-4 w-4" />}
+                            {cat === 'Administrative' && <Building2 className="h-4 w-4" />}
+                            {cat === 'Student Support' && <Users className="h-4 w-4" />}
+                            {cat === 'Financial' && <Banknote className="h-4 w-4" />}
+                            {cat === 'Other' && <Clock className="h-4 w-4" />}
+                            {cat}
+                        </button>
+                    )
+                })}
+            </div>
 
-                <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.2fr_1fr]">
-                    <div className="space-y-4">
-                        <div className="relative">
-                            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by queue name, office or service..." className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" style={{ '--tw-ring-color': withAlpha(primaryColor, 0.2) }} />
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.2fr_1fr]">
+                <div className="space-y-4">
+                    <div className="relative">
+                        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by queue name, office or service..." className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" style={{ '--tw-ring-color': withAlpha(primaryColor, 0.2) }} />
+                    </div>
+
+                    {filteredQueues.length === 0 ? (
+                        <EmptyState icon={Search} title="No queues found" description="Try adjusting your search or category filter." />
+                    ) : (
+                        <div className="space-y-3">
+                            {filteredQueues.map(queue => {
+                                const isSelected = String(selectedQueueId) === String(queue.id)
+                                const Icon = getCategoryIcon(queue.category, queue.name)
+                                const isOpen = queue.isOpen === true
+                                const isLocked = isFresher && queue.matricRequired
+                                const isDisabled = !isOpen || isLocked
+
+                                return (
+                                    <div key={queue.id} onClick={() => handleQueueSelect(queue.id)} className={`w-full text-left flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl transition-all duration-200 border-2 bg-white dark:bg-slate-900 cursor-pointer ${isSelected ? 'shadow-md' : 'border-slate-100 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700'}`} style={isSelected ? { borderColor: primaryColor } : undefined}>
+                                        <div className="flex items-start gap-3 sm:gap-4 flex-1">
+                                            <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: isSelected ? withAlpha(primaryColor, 0.15) : '#f1f5f9', color: isSelected ? primaryColor : '#64748b' }}>
+                                                <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">{queue.name}</h3>
+                                                    <Badge variant="default" className="bg-slate-100 text-slate-600 text-[10px]">{queue.category}</Badge>
+                                                    <Badge variant={isOpen ? 'success' : 'danger'} className="flex items-center gap-1 text-[10px]">{isOpen && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}{isOpen ? 'Open' : 'Closed'}</Badge>
+                                                    {isLocked && <Badge variant="warning" className="flex items-center gap-1 bg-amber-100 text-amber-700 text-[10px]"><Lock className="h-3 w-3" /> Matric Required</Badge>}
+                                                </div>
+                                                <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-1">{queue.description || 'No description provided.'}</p>
+                                                <div className="mt-2 flex items-center gap-3 text-[10px] sm:text-xs font-semibold text-slate-500">
+                                                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {queue.estimatedMinutes || 0} mins</span>
+                                                    <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {queue.waitingCount || 0} ahead</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="shrink-0 flex items-center justify-end sm:pl-4 mt-2 sm:mt-0 sm:border-l border-slate-100 dark:border-slate-800">
+                                            <button type="button" onClick={(e) => { e.stopPropagation(); if (!isDisabled) handleJoinQueue(queue); }} disabled={isDisabled || joining} className={`inline-flex w-full sm:w-auto items-center justify-center gap-1.5 sm:gap-2 rounded-xl px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-bold shadow-sm transition-all disabled:cursor-not-allowed ${isDisabled ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500' : 'text-white hover:shadow-md'}`} style={!isDisabled ? { backgroundColor: primaryColor } : undefined}>
+                                                {isLocked ? <><Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Update Profile</> : !isOpen ? 'Closed' : <>Join <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" /></>}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )
+                            })}
                         </div>
-
-                        {filteredQueues.length === 0 ? (
-                            <EmptyState icon={Search} title="No queues found" description="Try adjusting your search or category filter." />
-                        ) : (
-                            <div className="space-y-3">
-                                {filteredQueues.map(queue => {
-                                    const isSelected = String(selectedQueueId) === String(queue.id)
-                                    const Icon = getCategoryIcon(queue.category, queue.name)
-                                    const isOpen = queue.isOpen === true
-                                    const isLocked = isFresher && queue.matricRequired
-                                    const isDisabled = !isOpen || isLocked
-
-                                    return (
-                                        <div key={queue.id} onClick={() => setSelectedQueueId(queue.id)} className={`w-full text-left flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl transition-all duration-200 border-2 bg-white dark:bg-slate-900 cursor-pointer ${isSelected ? 'shadow-md' : 'border-slate-100 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700'}`} style={isSelected ? { borderColor: primaryColor } : undefined}>
-                                            <div className="flex items-start gap-3 sm:gap-4 flex-1">
-                                                <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: isSelected ? withAlpha(primaryColor, 0.15) : '#f1f5f9', color: isSelected ? primaryColor : '#64748b' }}>
-                                                    <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
-                                                </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <div className="flex flex-wrap items-center gap-2">
-                                                        <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">{queue.name}</h3>
-                                                        <Badge variant="default" className="bg-slate-100 text-slate-600 text-[10px]">{queue.category}</Badge>
-                                                        <Badge variant={isOpen ? 'success' : 'danger'} className="flex items-center gap-1 text-[10px]">{isOpen && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}{isOpen ? 'Open' : 'Closed'}</Badge>
-                                                        {isLocked && <Badge variant="warning" className="flex items-center gap-1 bg-amber-100 text-amber-700 text-[10px]"><Lock className="h-3 w-3" /> Matric Required</Badge>}
-                                                    </div>
-                                                    <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-1">{queue.description || 'No description provided.'}</p>
-                                                    <div className="mt-2 flex items-center gap-3 text-[10px] sm:text-xs font-semibold text-slate-500">
-                                                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {queue.estimatedMinutes || 0} mins</span>
-                                                        <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {queue.waitingCount || 0} ahead</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="shrink-0 flex items-center justify-end sm:pl-4 mt-2 sm:mt-0 sm:border-l border-slate-100 dark:border-slate-800">
-                                                <button type="button" onClick={(e) => { e.stopPropagation(); if (!isDisabled) handleJoinQueue(queue); }} disabled={isDisabled || joining} className={`inline-flex w-full sm:w-auto items-center justify-center gap-1.5 sm:gap-2 rounded-xl px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-bold shadow-sm transition-all disabled:cursor-not-allowed ${isDisabled ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500' : 'text-white hover:shadow-md'}`} style={!isDisabled ? { backgroundColor: primaryColor } : undefined}>
-                                                    {isLocked ? <><Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Update Profile</> : !isOpen ? 'Closed' : <>Join <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" /></>}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="sticky top-24 hidden lg:block">
-                        {selectedQueue ? (
-                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={selectedQueue.id}>
-                                <Card padded={false} className="overflow-hidden shadow-lg border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900">
-                                    <div className="p-6 relative overflow-hidden text-white" style={{ backgroundColor: primaryColor }}>
-                                        <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-transparent to-black/20 pointer-events-none" />
-                                        <div className="flex items-start justify-between gap-4 relative z-10">
-                                            <div className="flex items-start gap-4">
-                                                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md shadow-inner border border-white/20 text-white">
-                                                    {(() => { const Icon = getCategoryIcon(selectedQueue.category, selectedQueue.name); return <Icon className="h-8 w-8" /> })()}
-                                                </div>
-                                                <div>
-                                                    <h2 className="text-2xl font-bold text-white leading-tight drop-shadow-md">{selectedQueue.name}</h2>
-                                                    <p className="mt-1 text-sm font-medium text-white/80">{selectedQueue.officeName || 'University Office'}</p>
-                                                </div>
-                                            </div>
-                                            <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 shrink-0 backdrop-blur-sm">{selectedQueue.category}</Badge>
-                                        </div>
-                                        <p className="mt-4 text-sm text-white/90 relative z-10 max-w-md">{selectedQueue.description || 'Join this queue to get served.'}</p>
-                                    </div>
-
-                                    <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100 dark:divide-slate-800 dark:border-slate-800 bg-white dark:bg-slate-900">
-                                        <div className="p-4 text-center">
-                                            <div className="flex justify-center mb-1 text-slate-400"><Clock className="h-4 w-4" /></div>
-                                            <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{selectedQueue.estimatedMinutes || 0} mins</div>
-                                            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Est. Wait</div>
-                                        </div>
-                                        <div className="p-4 text-center">
-                                            <div className="flex justify-center mb-1 text-slate-400"><Users className="h-4 w-4" /></div>
-                                            <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{selectedQueue.waitingCount || 0}</div>
-                                            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Ahead</div>
-                                        </div>
-                                        <div className="p-4 text-center">
-                                            <div className="flex justify-center mb-1 text-slate-400"><CheckCircle2 className="h-4 w-4" /></div>
-                                            <Badge variant={selectedQueue.isOpen ? 'success' : 'danger'} className="text-xs">{selectedQueue.isOpen ? 'Open' : 'Closed'}</Badge>
-                                            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mt-1">Status</div>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-6 space-y-5">
-                                        <div className="space-y-3">
-                                            <div className="flex items-start gap-3">
-                                                <MapPin className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
-                                                <div>
-                                                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Location</div>
-                                                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{selectedOffice?.location || selectedQueue.location || 'Main Administrative Building'}</div>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-start gap-3">
-                                                <Clock className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
-                                                <div>
-                                                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Working Hours</div>
-                                                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{selectedQueue.workingHours || 'Mon – Fri: 8:00 AM – 4:00 PM'}</div>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-start gap-3">
-                                                <Phone className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
-                                                <div>
-                                                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Contact</div>
-                                                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{selectedOffice?.phone || selectedQueue.phone || 'Not assigned'}</div>
-                                                    {(selectedOffice?.email || selectedQueue.email) && <div className="text-xs text-slate-500 mt-0.5">{selectedOffice?.email || selectedQueue.email}</div>}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="pt-5 border-t border-slate-100 dark:border-slate-800">
-                                            <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3">Services Included</h4>
-                                            <ul className="space-y-2">
-                                                <li className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"><CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />{selectedQueue.name} processing</li>
-                                                {selectedQueue.description && <li className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"><CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />{selectedQueue.description}</li>}
-                                                {selectedOffice?.name && <li className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"><CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />Managed by {selectedOffice.name}</li>}
-                                            </ul>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-6 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 space-y-3">
-                                        {isFresher && selectedQueue.matricRequired ? (
-                                            <button type="button" onClick={() => navigate('/student/profile')} className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700 shadow-sm transition-all hover:bg-amber-100 border border-amber-200"><Lock className="h-4 w-4" /> Update Profile to Join</button>
-                                        ) : !selectedQueue.isOpen ? (
-                                            <button type="button" disabled className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-400 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed">Queue is Closed</button>
-                                        ) : (
-                                            <button type="button" onClick={() => handleJoinQueue(selectedQueue)} disabled={joining} className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-md transition-all hover:shadow-lg disabled:opacity-50" style={{ backgroundColor: primaryColor }}><Users className="h-4 w-4" />{joining ? 'Joining...' : 'Join Queue'}{!joining && <ChevronRight className="h-4 w-4" />}</button>
-                                        )}
-                                        <button type="button" onClick={() => navigate('/student/offices')} className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"><Building2 className="h-4 w-4" /> View Office Details <ChevronRight className="h-4 w-4" /></button>
-                                    </div>
-                                </Card>
-                            </motion.div>
-                        ) : (
-                            <Card className="h-full min-h-[500px] flex items-center justify-center border-dashed border-2 border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20 rounded-2xl">
-                                <EmptyState icon={Info} variant="info" size="lg" bordered={false} title="Select a queue" description="Pick a queue from the list to see its details and join." />
-                            </Card>
-                        )}
-                    </div>
+                    )}
                 </div>
+
+                {/* DETAILS PANEL WITH REF AND SCROLL SUPPORT */}
+                <div ref={detailRef} className="lg:sticky lg:top-24 scroll-mt-24">
+                    {selectedQueue ? (
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={selectedQueue.id}>
+                            <Card padded={false} className="overflow-hidden shadow-lg border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900">
+                                <div className="p-6 relative overflow-hidden text-white" style={{ backgroundColor: primaryColor }}>
+                                    <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-transparent to-black/20 pointer-events-none" />
+                                    <div className="flex items-start justify-between gap-4 relative z-10">
+                                        <div className="flex items-start gap-4">
+                                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md shadow-inner border border-white/20 text-white">
+                                                {(() => { const Icon = getCategoryIcon(selectedQueue.category, selectedQueue.name); return <Icon className="h-8 w-8" /> })()}
+                                            </div>
+                                            <div>
+                                                <h2 className="text-2xl font-bold text-white leading-tight drop-shadow-md">{selectedQueue.name}</h2>
+                                                <p className="mt-1 text-sm font-medium text-white/80">{selectedQueue.officeName || 'University Office'}</p>
+                                            </div>
+                                        </div>
+                                        <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 shrink-0 backdrop-blur-sm">{selectedQueue.category}</Badge>
+                                    </div>
+                                    <p className="mt-4 text-sm text-white/90 relative z-10 max-w-md">{selectedQueue.description || 'Join this queue to get served.'}</p>
+                                </div>
+
+                                <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100 dark:divide-slate-800 dark:border-slate-800 bg-white dark:bg-slate-900">
+                                    <div className="p-4 text-center">
+                                        <div className="flex justify-center mb-1 text-slate-400"><Clock className="h-4 w-4" /></div>
+                                        <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{selectedQueue.estimatedMinutes || 0} mins</div>
+                                        <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Est. Wait</div>
+                                    </div>
+                                    <div className="p-4 text-center">
+                                        <div className="flex justify-center mb-1 text-slate-400"><Users className="h-4 w-4" /></div>
+                                        <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{selectedQueue.waitingCount || 0}</div>
+                                        <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Ahead</div>
+                                    </div>
+                                    <div className="p-4 text-center">
+                                        <div className="flex justify-center mb-1 text-slate-400"><CheckCircle2 className="h-4 w-4" /></div>
+                                        <Badge variant={selectedQueue.isOpen ? 'success' : 'danger'} className="text-xs">{selectedQueue.isOpen ? 'Open' : 'Closed'}</Badge>
+                                        <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mt-1">Status</div>
+                                    </div>
+                                </div>
+
+                                <div className="p-6 space-y-5">
+                                    <div className="space-y-3">
+                                        <div className="flex items-start gap-3">
+                                            <MapPin className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
+                                            <div>
+                                                <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Location</div>
+                                                <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{selectedOffice?.location || selectedQueue.location || 'Main Administrative Building'}</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <Clock className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
+                                            <div>
+                                                <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Working Hours</div>
+                                                <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{selectedQueue.workingHours || 'Mon – Fri: 8:00 AM – 4:00 PM'}</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <Phone className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
+                                            <div>
+                                                <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Contact</div>
+                                                <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{selectedOffice?.phone || selectedQueue.phone || 'Not assigned'}</div>
+                                                {(selectedOffice?.email || selectedQueue.email) && <div className="text-xs text-slate-500 mt-0.5">{selectedOffice?.email || selectedQueue.email}</div>}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-5 border-t border-slate-100 dark:border-slate-800">
+                                        <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3">Services Included</h4>
+                                        <ul className="space-y-2">
+                                            <li className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"><CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />{selectedQueue.name} processing</li>
+                                            {selectedQueue.description && <li className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"><CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />{selectedQueue.description}</li>}
+                                            {selectedOffice?.name && <li className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"><CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />Managed by {selectedOffice.name}</li>}
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div className="p-6 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                                    {isFresher && selectedQueue.matricRequired ? (
+                                        <button type="button" onClick={() => navigate('/student/profile')} className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700 shadow-sm transition-all hover:bg-amber-100 border border-amber-200"><Lock className="h-4 w-4" /> Update Profile to Join</button>
+                                    ) : !selectedQueue.isOpen ? (
+                                        <button type="button" disabled className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-400 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed">Queue is Closed</button>
+                                    ) : (
+                                        <button type="button" onClick={() => handleJoinQueue(selectedQueue)} disabled={joining} className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-md transition-all hover:shadow-lg disabled:opacity-50" style={{ backgroundColor: primaryColor }}><Users className="h-4 w-4" />{joining ? 'Joining...' : 'Join Queue'}{!joining && <ChevronRight className="h-4 w-4" />}</button>
+                                    )}
+                                    <button type="button" onClick={() => navigate('/student/offices')} className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"><Building2 className="h-4 w-4" /> View Office Details <ChevronRight className="h-4 w-4" /></button>
+                                </div>
+                            </Card>
+                        </motion.div>
+                    ) : (
+                        <Card className="h-full min-h-[500px] flex items-center justify-center border-dashed border-2 border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20 rounded-2xl">
+                            <EmptyState icon={Info} variant="info" size="lg" bordered={false} title="Select a queue" description="Pick a queue from the list to see its details and join." />
+                        </Card>
+                    )}
+                </div>
+            </div>
 
             <AnimatePresence>
                 {alertModal && <PremiumAlertModal {...alertModal} onClose={() => setAlertModal(null)} primaryColor={primaryColor} />}
