@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import {
     ListOrdered, History, Calendar, Route as RouteIcon, FileText, Building2,
-    Settings, Ticket, Bell, User,
+    Settings, Ticket, Bell, User, Search, // <-- Added Search here
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import PageHeader from '../components/layout/PageHeader'
@@ -30,7 +30,7 @@ export default function StudentDashboard() {
         { to: '/student/queues', label: 'Browse Queues', icon: ListOrdered },
         { to: '/student/offices', label: 'Offices', icon: Building2 },
         { to: '/student/history', label: 'History', icon: History },
-        { to: '/student/join-queue', label: 'Join Queue', icon: Search }, // Added Search here if missing
+        { to: '/student/join-queue', label: 'Join Queue', icon: Search }, // <-- Now Search is defined
         { to: '/student/my-tickets', label: 'My Tickets', icon: Ticket },
         { to: '/student/notifications', label: 'Notifications', icon: Bell },
         { to: '/student/profile', label: 'Profile', icon: User },
@@ -50,7 +50,6 @@ export default function StudentDashboard() {
 
     return (
         <DashboardLayout tabs={tabs}>
-            {/* Header is rendered outside the padded div, so it sticks to the top of <main> */}
             {isHome && (
                 <PageHeader
                     workspace="Student Workspace"
@@ -58,7 +57,6 @@ export default function StudentDashboard() {
                 />
             )}
 
-            {/* Only the content inside this div scrolls */}
             <div className="mx-auto w-full max-w-[1400px] px-4 pt-6 pb-8 sm:px-6 lg:px-8">
                 <Routes>
                     <Route index element={<StudentHome />} />
