@@ -14,15 +14,28 @@
   />
   <meta name="description" content="UniQueue — Multi-tenant queue management for universities" />
   <meta name="theme-color" content="#4f46e5" />
-  <meta name="color-scheme" content="light dark" />
+  <!-- FIXED: Force the browser to start with a light canvas -->
+  <meta name="color-scheme" content="light" />
+
+  <!-- FIXED: Set default background colors immediately -->
+  <style>
+    html {
+      background-color: #f8fafc; /* slate-50 */
+    }
+    html.dark {
+      background-color: #020617; /* slate-950 */
+    }
+  </style>
 
   <!-- 1. Prevent flash of dark mode before React mounts -->
   <script>
     (function () {
       try {
-        // FIXED: Using the correct key 'uniqueue_theme' to match the store
+        // Use the correct key 'uniqueue_theme' to match the store
         var savedTheme = localStorage.getItem('uniqueue_theme');
         var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        // If saved is dark, OR if nothing is saved and system is dark -> use dark
         if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
           document.documentElement.classList.add('dark');
         } else {
@@ -37,7 +50,7 @@
     (function () {
       try {
         // ⚠️ IMPORTANT: Change this string every time you deploy a major update!
-        var APP_VERSION = '1.0.1';
+        var APP_VERSION = '1.0.2'; // Bumped version
         var cachedVersion = localStorage.getItem('app-version');
 
         if (cachedVersion && cachedVersion !== APP_VERSION) {
