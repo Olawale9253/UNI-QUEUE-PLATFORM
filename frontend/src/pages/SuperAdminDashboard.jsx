@@ -7,6 +7,8 @@ import {
 import DashboardLayout from '../components/layout/DashboardLayout'
 import PageHeader from '../components/layout/PageHeader'
 
+// Import your actual Home component here
+import SuperAdminHome from './super-admin/SuperAdminHome'
 import UniversityApplications from './super-admin/UniversityApplications'
 import Users from './super-admin/Users'
 import SystemAnalytics from './super-admin/SystemAnalytics'
@@ -43,7 +45,8 @@ export default function SuperAdminDashboard() {
             {/* The scrollable content starts here */}
             <div className="mx-auto w-full max-w-[1400px] px-4 pt-6 pb-8 sm:px-6 lg:px-8">
                 <Routes>
-                    <Route index element={<Navigate to="/super-admin/analytics" replace />} />
+                    {/* Changed this to render SuperAdminHome instead of redirecting */}
+                    <Route index element={<SuperAdminHome />} />
                     <Route path="universities" element={<UniversityApplications />} />
                     <Route path="users" element={<Users />} />
                     <Route path="analytics" element={<SystemAnalytics />} />
@@ -52,7 +55,7 @@ export default function SuperAdminDashboard() {
                     <Route path="broadcast" element={<Broadcast />} />
                     <Route path="audit-logs" element={<AuditLogs />} />
                     <Route path="settings" element={<Settings />} />
-                    <Route path="*" element={<Navigate to="/super-admin/analytics" replace />} />
+                    <Route path="*" element={<Navigate to="/super-admin" replace />} />
                 </Routes>
             </div>
         </DashboardLayout>
