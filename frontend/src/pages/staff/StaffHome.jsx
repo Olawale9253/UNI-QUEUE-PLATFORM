@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-    ListOrdered, CalendarCheck, FileText, ArrowRight, Ticket,
+    ListOrdered, CalendarCheck, FileText, Ticket,
     Clock, ChevronRight,
 } from 'lucide-react'
 import api from '../../api/axios'
@@ -77,7 +77,6 @@ export default function StaffHome() {
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-1.5">
                                             <h3 className="truncate text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">{item.label}</h3>
-                                            <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-600" />
                                         </div>
                                         <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">{item.description}</p>
                                     </div>

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     LayoutGrid, ListOrdered, Users, Building2, BarChart3,
-    ArrowRight, CalendarCheck,
+    CalendarCheck,
 } from 'lucide-react'
 import Card from '../../components/ui/Card'
 import AdminStatsCards from '../../components/admin/AdminStatsCards'
@@ -49,7 +49,6 @@ export default function AdminHome() {
                                                 <h3 className="truncate text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
                                                     {item.label}
                                                 </h3>
-                                                <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-brand-600" />
                                             </div>
                                             <p className="mt-1 text-[10px] sm:text-sm leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2">
                                                 {item.description}

@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     Calendar, Building2, Ticket, CheckCircle2,
-    FileText, Users, ArrowRight, ChevronRight, Bell,
+    FileText, Users, ChevronRight, Bell,
     Clock, Sparkles, ArrowUpRight, Activity, ShieldCheck
 } from 'lucide-react'
 import api from '../../api/axios'
@@ -142,7 +142,6 @@ export default function StudentHome() {
                                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3.5 text-sm font-bold text-brand-900 shadow-md transition-all hover:bg-brand-50 hover:shadow-lg active:scale-[0.99]"
                             >
                                 Track Ticket
-                                <ArrowRight className="h-4 w-4" />
                             </button>
                         </div>
                     </div>
@@ -168,7 +167,6 @@ export default function StudentHome() {
                             className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm transition-all hover:bg-brand-700 hover:shadow-md"
                         >
                             Browse Queues
-                            <ArrowRight className="h-4 w-4" />
                         </button>
                     </div>
                 </div>
@@ -382,7 +380,7 @@ export default function StudentHome() {
                                             onClick={() => navigate('/student/queues')}
                                             className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400"
                                         >
-                                            View Open Queues <ArrowRight className="h-3.5 w-3.5" />
+                                            View Open Queues
                                         </button>
                                     </div>
                                 )}
@@ -562,7 +560,7 @@ export default function StudentHome() {
                                 to="/student/queues"
                                 className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 hover:underline"
                             >
-                                Browse All Campus Services <ArrowRight className="h-3.5 w-3.5" />
+                                Browse All Campus Services
                             </Link>
                         </div>
                     </div>
