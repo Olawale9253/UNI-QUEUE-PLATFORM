@@ -89,7 +89,8 @@ export default function DashboardLayout({ tabs, children }) {
     )
 
     return (
-        <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-white dark:bg-slate-950">
+        // Changed 100vh to 100dvh to fix mobile viewport issues
+        <div className="flex h-[calc(100dvh-4rem)] w-full overflow-hidden bg-white dark:bg-slate-950">
             <aside className="hidden h-full w-64 shrink-0 border-r border-slate-200 md:block dark:border-slate-800">
                 <SidebarContent />
             </aside>
@@ -113,7 +114,6 @@ export default function DashboardLayout({ tabs, children }) {
                 )}
             </AnimatePresence>
 
-            {/* Main content area is the only scrollable part */}
             <main className="min-w-0 flex-1 overflow-y-auto">
                 {children}
             </main>

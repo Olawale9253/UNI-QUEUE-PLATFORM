@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import {
     ListOrdered, History, Calendar, Route as RouteIcon, FileText, Building2,
-    Settings, Ticket, Bell, User, Search, // <-- Added Search here
+    Settings, Ticket, Bell, User, Search,
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import PageHeader from '../components/layout/PageHeader'
@@ -18,6 +18,7 @@ import StudentWorkflowProgress from './student/StudentWorkflowProgress'
 import StudentSettings from './student/StudentSettings'
 import MyTicketsPage from './student/MyTicketsPage'
 import ProfilePage from './student/ProfilePage'
+import NotificationsPage from './student/NotificationsPage' // <-- ADDED
 
 import { useUniversityStore } from '../store/universityStore'
 
@@ -30,7 +31,7 @@ export default function StudentDashboard() {
         { to: '/student/queues', label: 'Browse Queues', icon: ListOrdered },
         { to: '/student/offices', label: 'Offices', icon: Building2 },
         { to: '/student/history', label: 'History', icon: History },
-        { to: '/student/join-queue', label: 'Join Queue', icon: Search }, // <-- Now Search is defined
+        { to: '/student/join-queue', label: 'Join Queue', icon: Search },
         { to: '/student/my-tickets', label: 'My Tickets', icon: Ticket },
         { to: '/student/notifications', label: 'Notifications', icon: Bell },
         { to: '/student/profile', label: 'Profile', icon: User },
@@ -71,6 +72,7 @@ export default function StudentDashboard() {
                     <Route path="settings" element={<StudentSettings />} />
                     <Route path="my-tickets" element={<MyTicketsPage />} />
                     <Route path="profile" element={<ProfilePage />} />
+                    <Route path="notifications" element={<NotificationsPage />} /> {/* <-- ADDED */}
                     <Route path="*" element={<Navigate to="/student" replace />} />
                 </Routes>
             </div>
