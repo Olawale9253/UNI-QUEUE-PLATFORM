@@ -32,16 +32,13 @@ export default function PageHeader({ workspace, title, description, action }) {
     const [now, setNow] = useState(new Date())
     const [closedDates, setClosedDates] = useState(null)
 
-    // Tick every 60 seconds so greeting + date stay in sync with the clock
     useEffect(() => {
         const token = setInterval(() => setNow(new Date()), 60_000)
         return () => clearInterval(token)
     }, [])
 
-    // Fetch closed dates on mount and refresh every 5 minutes
     useEffect(() => {
         let cancelled = false
-
         const fetchClosedDates = () => {
             api.get('/api/closed-dates')
                 .then((res) => {
@@ -63,17 +60,14 @@ export default function PageHeader({ workspace, title, description, action }) {
                     }
                 })
         }
-
         fetchClosedDates()
         const interval = setInterval(fetchClosedDates, 5 * 60_000)
-
         return () => {
             cancelled = true
             clearInterval(interval)
         }
     }, [])
 
-    // If it's a subpage header with only a title, render clean layout header
     if (title && !workspace) {
         return (
             <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -96,13 +90,14 @@ export default function PageHeader({ workspace, title, description, action }) {
     const activeWorkspace = workspace || 'Workspace'
 
     return (
-        <div className="mb-6">
+        // Sticky wrapper to keep the header fixed while scrolling
+        <div className="sticky top-0 z-30 -mx-4 -mt-4 mb-6 bg-white/95 px-4 pt-4 pb-2 backdrop-blur-md sm:-mx-6 sm:-mt-6 sm:px-6 lg:-mx-8 lg:-mt-8 lg:px-8 dark:bg-slate-950/95">
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                // The entire card now has a brand-colored border instead of just the left side
-                className="relative overflow-hidden rounded-2xl border-2 border-brand-500 bg-white shadow-sm dark:border-brand-600 dark:bg-slate-900"
+                // Thick left bar, thin border elsewhere
+                className="relative overflow-hidden rounded-2xl border border-slate-200 border-l-4 border-l-brand-500 bg-white shadow-sm dark:border-slate-800 dark:border-l-brand-500 dark:bg-slate-900"
             >
                 <div className="relative z-10 p-5 sm:p-6">
                     <div className="space-y-3">
