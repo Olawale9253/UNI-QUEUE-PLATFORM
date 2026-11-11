@@ -89,9 +89,8 @@ export default function DashboardLayout({ tabs, children }) {
     )
 
     return (
-        // Changed bg-[#f8fafc] to bg-white here
-        <div className="flex min-h-[calc(100vh-4rem)] w-full bg-white dark:bg-slate-950">
-            <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 self-start border-r border-slate-200 md:block dark:border-slate-800">
+        <div className="flex h-[calc(100vh-4rem)] w-full bg-white dark:bg-slate-950">
+            <aside className="hidden h-full w-64 shrink-0 border-r border-slate-200 md:block dark:border-slate-800">
                 <SidebarContent />
             </aside>
 
@@ -114,7 +113,8 @@ export default function DashboardLayout({ tabs, children }) {
                 )}
             </AnimatePresence>
 
-            <main className="min-w-0 flex-1">
+            {/* THIS IS THE KEY FIX FOR SCROLLING: overflow-y-auto */}
+            <main className="min-w-0 flex-1 overflow-y-auto">
                 <div className="mx-auto w-full max-w-[1400px] px-4 py-8 sm:px-6 lg:px-8">
                     {children}
                 </div>

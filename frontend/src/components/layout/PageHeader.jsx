@@ -101,7 +101,7 @@ export default function PageHeader({ workspace, title, description, action }) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                // Added full brand border: border-2 border-brand-500
+                // The entire card now has a brand-colored border instead of just the left side
                 className="relative overflow-hidden rounded-2xl border-2 border-brand-500 bg-white shadow-sm dark:border-brand-600 dark:bg-slate-900"
             >
                 <div className="relative z-10 p-5 sm:p-6">
