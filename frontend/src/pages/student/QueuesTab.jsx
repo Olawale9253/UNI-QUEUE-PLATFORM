@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     Search, HelpCircle, GraduationCap,
     Users, Building2, Banknote, Clock, MapPin, Phone,
-    ArrowRight, AlertTriangle, CheckCircle2, ChevronRight,
+    AlertTriangle, CheckCircle2,
     FileText, BookOpen, Monitor, ListOrdered, Info, Lock
 } from 'lucide-react'
 import api from '../../api/axios'
@@ -108,13 +108,11 @@ export default function QueuesTab() {
     const [search, setSearch] = useState('')
     const [activeCategory, setActiveCategory] = useState('All Queues')
 
-    // Initialized to null so no queue is selected by default
     const [selectedQueueId, setSelectedQueueId] = useState(null)
     const [joining, setJoining] = useState(false)
 
     const [alertModal, setAlertModal] = useState(null)
 
-    // Ref for smooth scrolling on mobile
     const detailRef = useRef(null)
 
     const primaryColor = university?.primaryColor || '#4f46e5'
@@ -133,8 +131,6 @@ export default function QueuesTab() {
             setQueues(fetchedQueues)
             setOffices(fetchedOffices)
             setActiveTicket(tokenRes.data?.data || null)
-
-            // REMOVED THE AUTO-SELECTION LOGIC HERE
         } catch (err) {
             push({ type: 'error', message: err.message || 'Failed to load queues' })
         } finally {
@@ -189,7 +185,6 @@ export default function QueuesTab() {
         )
     }, [selectedQueue, offices])
 
-    // Smooth scroll to details on mobile
     const handleQueueSelect = (id) => {
         setSelectedQueueId(id)
         if (window.innerWidth < 1024) {
@@ -307,8 +302,9 @@ export default function QueuesTab() {
                                             </div>
                                         </div>
                                         <div className="shrink-0 flex items-center justify-end sm:pl-4 mt-2 sm:mt-0 sm:border-l border-slate-100 dark:border-slate-800">
+                                            {/* REMOVED ARROW HERE */}
                                             <button type="button" onClick={(e) => { e.stopPropagation(); if (!isDisabled) handleJoinQueue(queue); }} disabled={isDisabled || joining} className={`inline-flex w-full sm:w-auto items-center justify-center gap-1.5 sm:gap-2 rounded-xl px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-bold shadow-sm transition-all disabled:cursor-not-allowed ${isDisabled ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500' : 'text-white hover:shadow-md'}`} style={!isDisabled ? { backgroundColor: primaryColor } : undefined}>
-                                                {isLocked ? <><Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Update Profile</> : !isOpen ? 'Closed' : <>Join <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" /></>}
+                                                {isLocked ? <><Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Update Profile</> : !isOpen ? 'Closed' : 'Join'}
                                             </button>
                                         </div>
                                     </div>
@@ -318,7 +314,6 @@ export default function QueuesTab() {
                     )}
                 </div>
 
-                {/* DETAILS PANEL WITH REF AND SCROLL SUPPORT */}
                 <div ref={detailRef} className="lg:sticky lg:top-24 scroll-mt-24">
                     {selectedQueue ? (
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={selectedQueue.id}>
@@ -400,9 +395,10 @@ export default function QueuesTab() {
                                     ) : !selectedQueue.isOpen ? (
                                         <button type="button" disabled className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-400 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed">Queue is Closed</button>
                                     ) : (
-                                        <button type="button" onClick={() => handleJoinQueue(selectedQueue)} disabled={joining} className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-md transition-all hover:shadow-lg disabled:opacity-50" style={{ backgroundColor: primaryColor }}><Users className="h-4 w-4" />{joining ? 'Joining...' : 'Join Queue'}{!joining && <ChevronRight className="h-4 w-4" />}</button>
+                                        // REMOVED ARROW HERE TOO
+                                        <button type="button" onClick={() => handleJoinQueue(selectedQueue)} disabled={joining} className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-md transition-all hover:shadow-lg disabled:opacity-50" style={{ backgroundColor: primaryColor }}><Users className="h-4 w-4" />{joining ? 'Joining...' : 'Join Queue'}</button>
                                     )}
-                                    <button type="button" onClick={() => navigate('/student/offices')} className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"><Building2 className="h-4 w-4" /> View Office Details <ChevronRight className="h-4 w-4" /></button>
+                                    <button type="button" onClick={() => navigate('/student/offices')} className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"><Building2 className="h-4 w-4" /> View Office Details</button>
                                 </div>
                             </Card>
                         </motion.div>
