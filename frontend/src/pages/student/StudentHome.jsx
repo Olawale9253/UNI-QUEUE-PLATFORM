@@ -76,7 +76,7 @@ export default function StudentHome() {
     const departmentName = user?.department || 'General Academic'
 
     return (
-        <div className="space-y-6 px-4 sm:px-6">
+        <div className="space-y-6 px-4 sm:px-6 pt-2">
             {/* ACTIVE TICKET BANNER */}
             {activeTicket ? (
                 <motion.div
