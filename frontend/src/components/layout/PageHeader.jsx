@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Sparkles, Calendar, Building2, ShieldCheck } from 'lucide-react'
+import { Sparkles, Calendar, Building2 } from 'lucide-react'
 import api from '../../api/axios'
 import { useAuthStore } from '../../store/authStore'
 import { useUniversityStore } from '../../store/universityStore'
@@ -23,19 +23,10 @@ function formatDate(now) {
     })
 }
 
-const ROLE_BADGES = {
-    SUPER_ADMIN: 'Platform Super Admin',
-    ADMIN: 'Campus Administrator',
-    STAFF: 'Staff Officer',
-    USER: 'Enrolled Student',
-    FRESHER: 'Fresher Admission',
-}
-
 export default function PageHeader({ workspace, title, description, action }) {
     const { user } = useAuthStore()
     const { university } = useUniversityStore()
     const firstName = user?.fullName?.split(' ')[0] || 'there'
-    const roleLabel = (user?.role && ROLE_BADGES[user.role]) || user?.role || 'User'
     const campusName = university?.name || university?.code
 
     const [now, setNow] = useState(new Date())
@@ -110,13 +101,11 @@ export default function PageHeader({ workspace, title, description, action }) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="relative overflow-hidden rounded-2xl border border-brand-200 bg-white shadow-sm dark:border-brand-900/50 dark:bg-slate-900"
+                // Added full brand border: border-2 border-brand-500
+                className="relative overflow-hidden rounded-2xl border-2 border-brand-500 bg-white shadow-sm dark:border-brand-600 dark:bg-slate-900"
             >
-                {/* Left edge accent bar */}
-                <div className="absolute left-0 top-0 h-full w-1.5 bg-brand-600" />
-
-                <div className="relative z-10 p-6 pl-7 sm:p-7 sm:pl-8">
-                    <div className="space-y-4">
+                <div className="relative z-10 p-5 sm:p-6">
+                    <div className="space-y-3">
                         {/* Top tags row */}
                         <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
                             <div className="flex w-fit items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-brand-700 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-300">
@@ -149,31 +138,13 @@ export default function PageHeader({ workspace, title, description, action }) {
                             )}
                         </div>
 
-                        {/* Bottom user badge strip */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400">
-                            <div className="flex flex-wrap items-center gap-3">
-                                <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
-                                    <ShieldCheck className="h-3.5 w-3.5 text-brand-500" />
-                                    {roleLabel}
-                                </span>
-                                {user?.department && (
-                                    <span className="text-slate-500 dark:text-slate-400">
-                                        Dept: <strong className="text-slate-700 dark:text-slate-300">{user.department}</strong>
-                                    </span>
-                                )}
-                                {user?.matricNumber && (
-                                    <span className="text-slate-500 dark:text-slate-400 font-mono">
-                                        Matric: <strong className="text-slate-700 dark:text-slate-300">{user.matricNumber}</strong>
-                                    </span>
-                                )}
+                        {/* Holiday Strip moved up directly under description */}
+                        {closedDates && (
+                            <div className="pt-2">
+                                <HolidayStrip closedDates={closedDates} />
                             </div>
-                            {action && <div className="shrink-0">{action}</div>}
-                        </div>
+                        )}
                     </div>
-
-                    {closedDates && (
-                        <HolidayStrip closedDates={closedDates} className="mt-4" />
-                    )}
                 </div>
             </motion.div>
         </div>
