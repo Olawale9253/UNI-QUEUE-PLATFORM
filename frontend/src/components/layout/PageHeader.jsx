@@ -110,78 +110,71 @@ export default function PageHeader({ workspace, title, description, action }) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="relative overflow-hidden rounded-3xl border border-slate-800/80 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-6 text-white shadow-xl shadow-slate-950/20 sm:p-7"
+                className="relative overflow-hidden rounded-2xl border border-brand-200 bg-white shadow-sm dark:border-brand-900/50 dark:bg-slate-900"
             >
-                {/* ⬇️ PREMIUM BRAND ACCENT EDGE ⬇️ */}
-                <div className="absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b from-brand-400 via-brand-500 to-brand-600 shadow-[0_0_15px_rgba(var(--brand-500),0.5)] z-20" />
+                {/* Left edge accent bar */}
+                <div className="absolute left-0 top-0 h-full w-1.5 bg-brand-600" />
 
-                {/* Ambient glow effects */}
-                <div className="pointer-events-none absolute -right-12 -top-12 h-64 w-64 rounded-full bg-brand-500/20 blur-3xl" />
-                <div className="pointer-events-none absolute -bottom-12 -left-12 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
-
-                <div className="relative z-10 space-y-4 pl-2">
-                    {/* Top tags row */}
-                    <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
-                        <div className="flex w-fit items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-brand-200 backdrop-blur-md">
-                            <Sparkles className="h-3.5 w-3.5 text-brand-300" />
-                            {activeWorkspace}
-                        </div>
-
-                        {campusName && (
-                            <div className="flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold text-slate-200 backdrop-blur-md">
-                                <Building2 className="h-3.5 w-3.5 text-indigo-300" />
-                                {campusName}
+                <div className="relative z-10 p-6 pl-7 sm:p-7 sm:pl-8">
+                    <div className="space-y-4">
+                        {/* Top tags row */}
+                        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+                            <div className="flex w-fit items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-brand-700 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-300">
+                                <Sparkles className="h-3.5 w-3.5" />
+                                {activeWorkspace}
                             </div>
-                        )}
 
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-300">
-                            <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                            {formatDate(now)}
-                        </div>
-
-                        <div className="ml-auto hidden items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 sm:flex">
-                            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                            <span>Workspace Active</span>
-                        </div>
-                    </div>
-
-                    {/* Greeting & description */}
-                    <div className="pt-1">
-                        <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl lg:text-4xl">
-                            {greeting}, <span className="text-brand-300">{firstName}</span>
-                        </h1>
-                        {description && (
-                            <p className="mt-1.5 max-w-3xl text-xs sm:text-sm leading-relaxed text-slate-300">
-                                {description}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Bottom user badge strip */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/10 text-xs text-slate-300">
-                        <div className="flex flex-wrap items-center gap-3">
-                            <span className="inline-flex items-center gap-1.5 font-semibold text-slate-200">
-                                <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-                                {roleLabel}
-                            </span>
-                            {user?.department && (
-                                <span className="text-slate-400">
-                                    Dept: <strong className="text-slate-200">{user.department}</strong>
-                                </span>
+                            {campusName && (
+                                <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                    <Building2 className="h-3.5 w-3.5 text-slate-400" />
+                                    {campusName}
+                                </div>
                             )}
-                            {user?.matricNumber && (
-                                <span className="text-slate-400 font-mono">
-                                    Matric: <strong className="text-slate-200">{user.matricNumber}</strong>
-                                </span>
+
+                            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                                <Calendar className="h-3.5 w-3.5" />
+                                {formatDate(now)}
+                            </div>
+                        </div>
+
+                        {/* Greeting & description */}
+                        <div className="pt-1">
+                            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl lg:text-4xl">
+                                {greeting}, <span className="text-brand-600 dark:text-brand-400">{firstName}</span>
+                            </h1>
+                            {description && (
+                                <p className="mt-1.5 max-w-3xl text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                    {description}
+                                </p>
                             )}
                         </div>
-                        {action && <div className="shrink-0">{action}</div>}
+
+                        {/* Bottom user badge strip */}
+                        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400">
+                            <div className="flex flex-wrap items-center gap-3">
+                                <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
+                                    <ShieldCheck className="h-3.5 w-3.5 text-brand-500" />
+                                    {roleLabel}
+                                </span>
+                                {user?.department && (
+                                    <span className="text-slate-500 dark:text-slate-400">
+                                        Dept: <strong className="text-slate-700 dark:text-slate-300">{user.department}</strong>
+                                    </span>
+                                )}
+                                {user?.matricNumber && (
+                                    <span className="text-slate-500 dark:text-slate-400 font-mono">
+                                        Matric: <strong className="text-slate-700 dark:text-slate-300">{user.matricNumber}</strong>
+                                    </span>
+                                )}
+                            </div>
+                            {action && <div className="shrink-0">{action}</div>}
+                        </div>
                     </div>
+
+                    {closedDates && (
+                        <HolidayStrip closedDates={closedDates} className="mt-4" />
+                    )}
                 </div>
-
-                {closedDates && (
-                    <HolidayStrip closedDates={closedDates} className="mt-4 relative z-10" />
-                )}
             </motion.div>
         </div>
     )
