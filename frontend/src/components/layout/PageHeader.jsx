@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
 import { Sparkles, Calendar, Building2 } from 'lucide-react'
 import api from '../../api/axios'
 import { useAuthStore } from '../../store/authStore'
@@ -90,15 +89,11 @@ export default function PageHeader({ workspace, title, description, action }) {
     const activeWorkspace = workspace || 'Workspace'
 
     return (
-        // Sticky wrapper with pt-6 (padding top) instead of negative margins to prevent clipping
+        // Removed negative margins (-mt-4, -mt-6, etc.)
+        // Added pt-6 (padding top) so when it sticks, it has a nice gap from the top edge
+        // Added top-0 so it sticks directly under the navbar
         <div className="sticky top-0 z-30 -mx-4 mb-6 bg-white/95 px-4 pt-6 pb-2 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 dark:bg-slate-950/95">
-            <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                // Full border with a thick left brand bar
-                className="relative overflow-hidden rounded-2xl border border-slate-200 border-l-4 border-l-brand-500 bg-white shadow-sm dark:border-slate-800 dark:border-l-brand-500 dark:bg-slate-900"
-            >
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200 border-l-4 border-l-brand-500 bg-white shadow-sm dark:border-slate-800 dark:border-l-brand-500 dark:bg-slate-900">
                 <div className="relative z-10 p-5 sm:p-6">
                     <div className="space-y-3">
                         {/* Top tags row */}
@@ -133,7 +128,7 @@ export default function PageHeader({ workspace, title, description, action }) {
                             )}
                         </div>
 
-                        {/* Holiday Strip moved up directly under description */}
+                        {/* Holiday Strip */}
                         {closedDates && (
                             <div className="pt-2">
                                 <HolidayStrip closedDates={closedDates} />
@@ -141,7 +136,7 @@ export default function PageHeader({ workspace, title, description, action }) {
                         )}
                     </div>
                 </div>
-            </motion.div>
+            </div>
         </div>
     )
 }
