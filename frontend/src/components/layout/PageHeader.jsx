@@ -89,22 +89,24 @@ export default function PageHeader({ workspace, title, description, action }) {
     const activeWorkspace = workspace || 'Workspace'
 
     return (
-        // Sticky wrapper aligned to the left side of the content area
-        <div className="sticky top-0 z-30 -mx-4 border-b border-slate-200 bg-white/95 px-4 pt-4 pb-2 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 dark:border-slate-800 dark:bg-slate-950/95">
-            {/* Removed the mx-auto max-w-[1400px] so it aligns left */}
+        // Sticky container with a solid background to prevent scrolling glitches
+        <div className="sticky top-0 z-30 -mx-4 border-b border-slate-200 bg-white px-4 pt-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 dark:border-slate-800 dark:bg-slate-950">
             <div className="flex flex-col">
-                {/* Row 1: Badges and Date */}
+                {/* Row 1: Badges, Campus Name, and Date */}
                 <div className="flex flex-wrap items-center gap-3 mb-1.5">
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">
                         <Sparkles className="h-3.5 w-3.5" />
                         {activeWorkspace}
                     </span>
+
                     {campusName && (
-                        <span className="text-[11px] font-medium text-slate-400">
+                        // Changed to brand color
+                        <span className="text-[11px] font-bold text-brand-600 dark:text-brand-400">
                             • {campusName}
                         </span>
                     )}
-                    <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
+
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-brand-600 dark:text-brand-400">
                         <Calendar className="h-3 w-3" />
                         {formatDate(now)}
                     </span>
@@ -122,7 +124,7 @@ export default function PageHeader({ workspace, title, description, action }) {
                     </p>
                 )}
 
-                {/* Row 4: Holiday Strip with reduced top margin (mt-3 instead of mt-4) */}
+                {/* Row 4: Holiday Strip */}
                 {closedDates && (
                     <div className="mt-3">
                         <HolidayStrip closedDates={closedDates} />
