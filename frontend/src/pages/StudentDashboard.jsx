@@ -18,7 +18,6 @@ import StudentWorkflowProgress from './student/StudentWorkflowProgress'
 import StudentSettings from './student/StudentSettings'
 import MyTicketsPage from './student/MyTicketsPage'
 import ProfilePage from './student/ProfilePage'
-import Notifications from './Notifications'
 
 import { useUniversityStore } from '../store/universityStore'
 
@@ -28,9 +27,10 @@ export default function StudentDashboard() {
     const isHome = location.pathname === '/student' || location.pathname === '/student/'
 
     const tabs = [
-        { to: '/student/queues', label: 'Join Queue', icon: ListOrdered },
+        { to: '/student/queues', label: 'Browse Queues', icon: ListOrdered },
         { to: '/student/offices', label: 'Offices', icon: Building2 },
         { to: '/student/history', label: 'History', icon: History },
+        { to: '/student/join-queue', label: 'Join Queue', icon: Search }, // Added Search here if missing
         { to: '/student/my-tickets', label: 'My Tickets', icon: Ticket },
         { to: '/student/notifications', label: 'Notifications', icon: Bell },
         { to: '/student/profile', label: 'Profile', icon: User },
@@ -41,8 +41,7 @@ export default function StudentDashboard() {
     }
     if (!university || university.featureWorkflows !== false) {
         tabs.push({ to: '/student/clearance', label: 'My Progress', icon: RouteIcon })
-        // 👇 Changed label to 'Student Workflows'
-        tabs.push({ to: '/student/workflows', label: 'Student Workflows', icon: ListOrdered })
+        tabs.push({ to: '/student/workflows', label: 'Workflows', icon: ListOrdered })
     }
     if (!university || university.featureDocuments !== false) {
         tabs.push({ to: '/student/documents', label: 'Documents', icon: FileText })
@@ -51,30 +50,32 @@ export default function StudentDashboard() {
 
     return (
         <DashboardLayout tabs={tabs}>
+            {/* Header is rendered outside the padded div, so it sticks to the top of <main> */}
             {isHome && (
-                <div className="mb-4 px-4 sm:px-6">
-                    <PageHeader
-                        workspace="Student Workspace"
-                        description="Join a queue, track your position, and manage your tickets with real-time updates."
-                    />
-                </div>
+                <PageHeader
+                    workspace="Student Workspace"
+                    description="Join a queue, track your position, and manage your tickets with real-time updates."
+                />
             )}
-            <Routes>
-                <Route index element={<StudentHome />} />
-                <Route path="queues" element={<QueuesTab />} />
-                <Route path="offices" element={<OfficesTab />} />
-                <Route path="history" element={<HistoryTab />} />
-                <Route path="appointments" element={<AppointmentsTab />} />
-                <Route path="workflows" element={<WorkflowsTab />} />
-                <Route path="workflows/:id" element={<MyClearancePage />} />
-                <Route path="clearance" element={<StudentWorkflowProgress />} />
-                <Route path="documents" element={<DocumentsTab />} />
-                <Route path="settings" element={<StudentSettings />} />
-                <Route path="my-tickets" element={<MyTicketsPage />} />
-                <Route path="notifications" element={<Notifications />} />
-                <Route path="profile" element={<ProfilePage />} />
-                <Route path="*" element={<Navigate to="/student" replace />} />
-            </Routes>
+
+            {/* Only the content inside this div scrolls */}
+            <div className="mx-auto w-full max-w-[1400px] px-4 pt-6 pb-8 sm:px-6 lg:px-8">
+                <Routes>
+                    <Route index element={<StudentHome />} />
+                    <Route path="queues" element={<QueuesTab />} />
+                    <Route path="offices" element={<OfficesTab />} />
+                    <Route path="history" element={<HistoryTab />} />
+                    <Route path="appointments" element={<AppointmentsTab />} />
+                    <Route path="workflows" element={<WorkflowsTab />} />
+                    <Route path="workflows/:id" element={<MyClearancePage />} />
+                    <Route path="clearance" element={<StudentWorkflowProgress />} />
+                    <Route path="documents" element={<DocumentsTab />} />
+                    <Route path="settings" element={<StudentSettings />} />
+                    <Route path="my-tickets" element={<MyTicketsPage />} />
+                    <Route path="profile" element={<ProfilePage />} />
+                    <Route path="*" element={<Navigate to="/student" replace />} />
+                </Routes>
+            </div>
         </DashboardLayout>
     )
 }

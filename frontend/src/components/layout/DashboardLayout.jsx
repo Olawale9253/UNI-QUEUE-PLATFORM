@@ -113,11 +113,9 @@ export default function DashboardLayout({ tabs, children }) {
                 )}
             </AnimatePresence>
 
-            {/* Main scroll container. Removed vertical padding so sticky works perfectly */}
+            {/* Main content area is the only scrollable part */}
             <main className="min-w-0 flex-1 overflow-y-auto">
-                <div className="mx-auto w-full max-w-[1400px] px-4 pb-8 sm:px-6 lg:px-8">
-                    {children}
-                </div>
+                {children}
             </main>
         </div>
     )

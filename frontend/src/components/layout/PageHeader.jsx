@@ -89,47 +89,49 @@ export default function PageHeader({ workspace, title, description, action }) {
     const activeWorkspace = workspace || 'Workspace'
 
     return (
-        // Sticky container with a solid background to prevent scrolling glitches
-        <div className="sticky top-0 z-30 -mx-4 border-b border-slate-200 bg-white px-4 pt-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 dark:border-slate-800 dark:bg-slate-950">
-            <div className="flex flex-col">
-                {/* Row 1: Badges, Campus Name, and Date */}
-                <div className="flex flex-wrap items-center gap-3 mb-1.5">
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">
-                        <Sparkles className="h-3.5 w-3.5" />
-                        {activeWorkspace}
-                    </span>
-
-                    {campusName && (
-                        // Changed to brand color
-                        <span className="text-[11px] font-bold text-brand-600 dark:text-brand-400">
-                            • {campusName}
+        // Sticky wrapper that spans the full width of the main content area
+        <div className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/95">
+            <div className="mx-auto w-full max-w-[1400px] px-4 py-4 sm:px-6 lg:px-8">
+                <div className="flex flex-col">
+                    {/* Row 1: Badges, Campus Name, and Date */}
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">
+                            <Sparkles className="h-3.5 w-3.5" />
+                            {activeWorkspace}
                         </span>
+
+                        {campusName && (
+                            // School Name in Primary Color
+                            <span className="text-[11px] font-bold text-brand-600 dark:text-brand-400">
+                                • {campusName}
+                            </span>
+                        )}
+
+                        <span className="flex items-center gap-1 text-[11px] font-bold text-brand-600 dark:text-brand-400">
+                            <Calendar className="h-3 w-3" />
+                            {formatDate(now)}
+                        </span>
+                    </div>
+
+                    {/* Row 2: Greeting with Primary Color Name */}
+                    <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+                        {greeting}, <span className="text-brand-600 dark:text-brand-400">{firstName}</span>
+                    </h1>
+
+                    {/* Row 3: Description */}
+                    {description && (
+                        <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                            {description}
+                        </p>
                     )}
 
-                    <span className="flex items-center gap-1 text-[11px] font-bold text-brand-600 dark:text-brand-400">
-                        <Calendar className="h-3 w-3" />
-                        {formatDate(now)}
-                    </span>
+                    {/* Row 4: Holiday Strip (reduced spacing) */}
+                    {closedDates && (
+                        <div className="mt-3">
+                            <HolidayStrip closedDates={closedDates} />
+                        </div>
+                    )}
                 </div>
-
-                {/* Row 2: Greeting with Primary Color Name */}
-                <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-                    {greeting}, <span className="text-brand-600 dark:text-brand-400">{firstName}</span>
-                </h1>
-
-                {/* Row 3: Description */}
-                {description && (
-                    <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                        {description}
-                    </p>
-                )}
-
-                {/* Row 4: Holiday Strip */}
-                {closedDates && (
-                    <div className="mt-3">
-                        <HolidayStrip closedDates={closedDates} />
-                    </div>
-                )}
             </div>
         </div>
     )
