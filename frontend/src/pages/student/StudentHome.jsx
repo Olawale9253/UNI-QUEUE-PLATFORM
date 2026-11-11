@@ -3,8 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     Calendar, Building2, Ticket, CheckCircle2,
-    FileText, Users, ChevronRight, Bell,
-    Clock, Sparkles, ArrowUpRight, Activity, ShieldCheck
+    FileText, Users, Bell, Clock, Sparkles, Activity, ShieldCheck
 } from 'lucide-react'
 import api from '../../api/axios'
 import { useAuthStore } from '../../store/authStore'
@@ -78,7 +77,7 @@ export default function StudentHome() {
 
     return (
         <div className="space-y-6 px-4 sm:px-6">
-            {/* ACTIVE TICKET BANNER OR WELCOME SPOTLIGHT */}
+            {/* ACTIVE TICKET BANNER */}
             {activeTicket ? (
                 <motion.div
                     initial={{ opacity: 0, y: 12 }}
@@ -172,10 +171,9 @@ export default function StudentHome() {
                 </div>
             )}
 
-            {/* MAIN DASHBOARD CONTENT & RIGHT RAIL */}
+            {/* MAIN DASHBOARD CONTENT */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
                 <div className="space-y-6">
-
                     {/* QUICK ACTIONS */}
                     <div>
                         <div className="flex items-center justify-between mb-3.5">
@@ -186,42 +184,10 @@ export default function StudentHome() {
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
                             {[
-                                {
-                                    label: 'Join Queue',
-                                    desc: 'Take an instant ticket for any office',
-                                    icon: Users,
-                                    color: 'text-blue-600 dark:text-blue-400',
-                                    bg: 'bg-blue-50 dark:bg-blue-950/50',
-                                    ring: 'group-hover:border-blue-200 dark:group-hover:border-blue-800',
-                                    path: '/student/queues'
-                                },
-                                {
-                                    label: 'Book Appointment',
-                                    desc: 'Schedule dedicated time with officers',
-                                    icon: Calendar,
-                                    color: 'text-emerald-600 dark:text-emerald-400',
-                                    bg: 'bg-emerald-50 dark:bg-emerald-950/50',
-                                    ring: 'group-hover:border-emerald-200 dark:group-hover:border-emerald-800',
-                                    path: '/student/appointments'
-                                },
-                                {
-                                    label: 'Campus Offices',
-                                    desc: 'View hours, active desks and staff',
-                                    icon: Building2,
-                                    color: 'text-purple-600 dark:text-purple-400',
-                                    bg: 'bg-purple-50 dark:bg-purple-950/50',
-                                    ring: 'group-hover:border-purple-200 dark:group-hover:border-purple-800',
-                                    path: '/student/offices'
-                                },
-                                {
-                                    label: 'My Tickets',
-                                    desc: 'Track live spot and ticket history',
-                                    icon: Ticket,
-                                    color: 'text-amber-600 dark:text-amber-400',
-                                    bg: 'bg-amber-50 dark:bg-amber-950/50',
-                                    ring: 'group-hover:border-amber-200 dark:group-hover:border-amber-800',
-                                    path: '/student/my-tickets'
-                                },
+                                { label: 'Join Queue', desc: 'Take an instant ticket for any office', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', ring: 'group-hover:border-blue-200', path: '/student/queues' },
+                                { label: 'Book Appointment', desc: 'Schedule dedicated time with officers', icon: Calendar, color: 'text-emerald-600', bg: 'bg-emerald-50', ring: 'group-hover:border-emerald-200', path: '/student/appointments' },
+                                { label: 'Campus Offices', desc: 'View hours, active desks and staff', icon: Building2, color: 'text-purple-600', bg: 'bg-purple-50', ring: 'group-hover:border-purple-200', path: '/student/offices' },
+                                { label: 'My Tickets', desc: 'Track live spot and ticket history', icon: Ticket, color: 'text-amber-600', bg: 'bg-amber-50', ring: 'group-hover:border-amber-200', path: '/student/my-tickets' },
                             ].map((action, i) => (
                                 <button
                                     key={i}
@@ -237,71 +203,51 @@ export default function StudentHome() {
                                     <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 mb-3 line-clamp-2 leading-relaxed">
                                         {action.desc}
                                     </p>
-                                    <div className="mt-auto flex items-center gap-1 text-[11px] font-bold text-slate-400 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                                    <div className="mt-auto flex items-center gap-1 text-[11px] font-bold text-slate-400 group-hover:text-brand-600 transition-colors">
                                         <span>Open</span>
-                                        <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
                                     </div>
                                 </button>
                             ))}
                         </div>
                     </div>
 
-                    {/* STATS OVERVIEW ROW */}
+                    {/* STATS */}
                     <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
-                        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm dark:bg-slate-900 dark:border-slate-800 flex items-center justify-between">
+                        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex items-center justify-between dark:bg-slate-900 dark:border-slate-800">
                             <div>
                                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Ticket</p>
-                                <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">
-                                    {activeTicket ? 1 : 0}
-                                </p>
-                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                    {activeTicket ? 'Currently waiting' : 'No active queue'}
-                                </p>
+                                <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">{activeTicket ? 1 : 0}</p>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{activeTicket ? 'Currently waiting' : 'No active queue'}</p>
                             </div>
                             <div className="h-11 w-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center dark:bg-blue-950/50 dark:text-blue-400">
                                 <Ticket className="h-5 w-5" />
                             </div>
                         </div>
-
-                        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm dark:bg-slate-900 dark:border-slate-800 flex items-center justify-between">
+                        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex items-center justify-between dark:bg-slate-900 dark:border-slate-800">
                             <div>
                                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Appointments</p>
-                                <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">
-                                    {upcomingAppts}
-                                </p>
-                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                    {upcomingAppts === 1 ? '1 scheduled' : `${upcomingAppts} scheduled`}
-                                </p>
+                                <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">{upcomingAppts}</p>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{upcomingAppts === 1 ? '1 scheduled' : `${upcomingAppts} scheduled`}</p>
                             </div>
                             <div className="h-11 w-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center dark:bg-emerald-950/50 dark:text-emerald-400">
                                 <Calendar className="h-5 w-5" />
                             </div>
                         </div>
-
-                        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm dark:bg-slate-900 dark:border-slate-800 flex items-center justify-between">
+                        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex items-center justify-between dark:bg-slate-900 dark:border-slate-800">
                             <div>
                                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Services</p>
-                                <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">
-                                    {queues.length}
-                                </p>
-                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                    Available on campus
-                                </p>
+                                <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">{queues.length}</p>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Available on campus</p>
                             </div>
                             <div className="h-11 w-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center dark:bg-purple-950/50 dark:text-purple-400">
                                 <FileText className="h-5 w-5" />
                             </div>
                         </div>
-
-                        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm dark:bg-slate-900 dark:border-slate-800 flex items-center justify-between">
+                        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex items-center justify-between dark:bg-slate-900 dark:border-slate-800">
                             <div>
                                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Alerts</p>
-                                <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">
-                                    {unreadNotifs}
-                                </p>
-                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                    {unreadNotifs === 0 ? 'All caught up' : 'Unread updates'}
-                                </p>
+                                <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">{unreadNotifs}</p>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{unreadNotifs === 0 ? 'All caught up' : 'Unread updates'}</p>
                             </div>
                             <div className="h-11 w-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center dark:bg-amber-950/50 dark:text-amber-400">
                                 <Bell className="h-5 w-5" />
@@ -309,27 +255,16 @@ export default function StudentHome() {
                         </div>
                     </div>
 
-                    {/* DUAL SECTION: UPCOMING QUEUES & RECENT ACTIVITY */}
+                    {/* QUEUES & ACTIVITY */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                        {/* QUEUE ACTIVITY */}
                         <div className="rounded-2xl border border-slate-200/90 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden shadow-sm flex flex-col">
                             <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800/80">
                                 <div>
-                                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                                        Upcoming Queues
-                                    </h3>
-                                    <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-                                        Your active ticket and queue progress
-                                    </p>
+                                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">Upcoming Queues</h3>
+                                    <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">Your active ticket and queue progress</p>
                                 </div>
-                                <Link
-                                    to="/student/my-tickets"
-                                    className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 hover:underline flex items-center gap-1"
-                                >
-                                    View All <ChevronRight className="h-3 w-3" />
-                                </Link>
+                                <Link to="/student/my-tickets" className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 hover:underline">View All</Link>
                             </div>
-
                             <div className="p-3 sm:p-4 flex-1">
                                 {activeTicket ? (
                                     <div className="rounded-xl border border-slate-200/80 p-3.5 bg-slate-50/50 dark:bg-slate-800/40 dark:border-slate-800">
@@ -339,12 +274,8 @@ export default function StudentHome() {
                                                     <Ticket className="h-4 w-4" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                                                        {activeTicket.queueName}
-                                                    </p>
-                                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                                        {activeTicket.officeName}
-                                                    </p>
+                                                    <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">{activeTicket.queueName}</p>
+                                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{activeTicket.officeName}</p>
                                                 </div>
                                             </div>
                                             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">
@@ -352,17 +283,9 @@ export default function StudentHome() {
                                                 Position {activeTicket.position ?? 1}
                                             </span>
                                         </div>
-
                                         <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-xs">
-                                            <span className="text-slate-500 dark:text-slate-400">
-                                                Estimated Wait: <strong className="text-slate-800 dark:text-slate-200">{activeTicket.estimatedMinutes ? `${activeTicket.estimatedMinutes} mins` : 'Brief'}</strong>
-                                            </span>
-                                            <button
-                                                onClick={() => navigate('/student/my-tickets')}
-                                                className="inline-flex items-center gap-1 text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400"
-                                            >
-                                                Track live <ChevronRight className="h-3 w-3" />
-                                            </button>
+                                            <span className="text-slate-500 dark:text-slate-400">Estimated Wait: <strong className="text-slate-800 dark:text-slate-200">{activeTicket.estimatedMinutes ? `${activeTicket.estimatedMinutes} mins` : 'Brief'}</strong></span>
+                                            <button onClick={() => navigate('/student/my-tickets')} className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400">Track live</button>
                                         </div>
                                     </div>
                                 ) : (
@@ -370,70 +293,37 @@ export default function StudentHome() {
                                         <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-2">
                                             <Clock className="h-5 w-5" />
                                         </div>
-                                        <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                            No active queue tickets
-                                        </p>
-                                        <p className="text-[11px] text-slate-400 mt-0.5 max-w-xs">
-                                            Join any open department queue anytime from your phone or laptop.
-                                        </p>
-                                        <button
-                                            onClick={() => navigate('/student/queues')}
-                                            className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400"
-                                        >
-                                            View Open Queues
-                                        </button>
+                                        <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">No active queue tickets</p>
+                                        <p className="text-[11px] text-slate-400 mt-0.5 max-w-xs">Join any open department queue anytime from your phone or laptop.</p>
+                                        <button onClick={() => navigate('/student/queues')} className="mt-3 text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400">View Open Queues</button>
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        {/* RECENT ACTIVITY */}
                         <div className="rounded-2xl border border-slate-200/90 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden shadow-sm flex flex-col">
                             <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800/80">
                                 <div>
-                                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                                        Recent Activity
-                                    </h3>
-                                    <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-                                        Completed visits and queue history
-                                    </p>
+                                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">Recent Activity</h3>
+                                    <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">Completed visits and queue history</p>
                                 </div>
-                                <Link
-                                    to="/student/history"
-                                    className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 hover:underline flex items-center gap-1"
-                                >
-                                    View History <ChevronRight className="h-3 w-3" />
-                                </Link>
+                                <Link to="/student/history" className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 hover:underline">View History</Link>
                             </div>
-
                             <div className="p-3 sm:p-4 flex-1">
                                 {recentActivity.length > 0 ? (
                                     <div className="space-y-2">
                                         {recentActivity.map((item, index) => {
                                             const isCompleted = item.status === 'COMPLETED'
                                             return (
-                                                <div
-                                                    key={index}
-                                                    className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                                                >
-                                                    <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
-                                                        isCompleted
-                                                            ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400'
-                                                            : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                                                    }`}>
+                                                <div key={index} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                                    <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${isCompleted ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
                                                         <CheckCircle2 className="h-4 w-4" />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
-                                                            {item.queueName || 'Campus Service'}
-                                                        </p>
-                                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                                                            {item.officeName || 'Office'} • {item.ticketNumber || 'Ticket'}
-                                                        </p>
+                                                        <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">{item.queueName || 'Campus Service'}</p>
+                                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{item.officeName || 'Office'} • {item.ticketNumber || 'Ticket'}</p>
                                                     </div>
-                                                    <span className="text-[10px] font-semibold text-slate-400 shrink-0">
-                                                        {formatActivityDate(item.createdAt || item.joinedAt)}
-                                                    </span>
+                                                    <span className="text-[10px] font-semibold text-slate-400 shrink-0">{formatActivityDate(item.createdAt || item.joinedAt)}</span>
                                                 </div>
                                             )
                                         })}
@@ -443,12 +333,7 @@ export default function StudentHome() {
                                         <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-2">
                                             <Activity className="h-5 w-5" />
                                         </div>
-                                        <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                            No recent activity logged
-                                        </p>
-                                        <p className="text-[11px] text-slate-400 mt-0.5">
-                                            Your completed tickets and appointments will show up here.
-                                        </p>
+                                        <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">No recent activity logged</p>
                                     </div>
                                 )}
                             </div>
@@ -456,27 +341,19 @@ export default function StudentHome() {
                     </div>
                 </div>
 
-                {/* RIGHT SIDEBAR COLUMN */}
+                {/* RIGHT SIDEBAR */}
                 <div className="space-y-4 sm:space-y-6">
-                    {/* STUDENT ID CARD CARD */}
                     <div className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-800">
                         <div className="flex items-center gap-3.5 mb-4">
-                            <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-lg sm:text-xl font-bold text-brand-700 ring-2 ring-brand-500/15 dark:bg-brand-950/60 dark:text-brand-300">
+                            <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-lg sm:text-xl font-bold text-brand-700 ring-2 ring-brand-500/15">
                                 {getInitials(user?.fullName)}
                             </div>
                             <div className="min-w-0 flex-1">
-                                <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
-                                    {user?.fullName || 'Student'}
-                                </h3>
-                                <p className="text-xs text-brand-600 dark:text-brand-400 font-semibold truncate">
-                                    {studentIdentifier}
-                                </p>
-                                <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                                    {departmentName}
-                                </p>
+                                <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">{user?.fullName || 'Student'}</h3>
+                                <p className="text-xs text-brand-600 dark:text-brand-400 font-semibold truncate">{studentIdentifier}</p>
+                                <p className="text-[11px] text-slate-400 truncate mt-0.5">{departmentName}</p>
                             </div>
                         </div>
-
                         <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60 space-y-1.5 text-xs">
                             <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
                                 <span>Institution:</span>
@@ -490,90 +367,52 @@ export default function StudentHome() {
                                 </span>
                             </div>
                         </div>
-
-                        <Link
-                            to="/student/profile"
-                            className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                        >
+                        <Link to="/student/profile" className="mt-4 flex w-full items-center justify-center rounded-xl border border-slate-200 py-2.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
                             View Full Student Profile
-                            <ChevronRight className="h-3.5 w-3.5" />
                         </Link>
                     </div>
 
-                    {/* LIVE QUEUES MONITOR */}
                     <div className="rounded-2xl border border-slate-200/90 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden shadow-sm">
                         <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
                             <div>
-                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                                    Live Campus Queues
-                                </h3>
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Live Campus Queues</h3>
                                 <p className="text-[11px] text-slate-400">Real-time desk loads</p>
                             </div>
-                            <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 dark:text-emerald-400 px-2 py-0.5 rounded-full">
+                            <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
                                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                 Live
                             </span>
                         </div>
-
                         <div className="p-2 space-y-1">
-                            {topQueues.length > 0 ? (
-                                topQueues.map(q => (
-                                    <div
-                                        key={q.id}
-                                        onClick={() => navigate('/student/queues')}
-                                        className="group flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors"
-                                    >
-                                        <div className="flex items-center gap-2.5 min-w-0">
-                                            <div className="h-8 w-8 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0 group-hover:bg-brand-50 group-hover:text-brand-600 dark:group-hover:bg-brand-950/60 dark:group-hover:text-brand-400 transition-colors">
-                                                <Users className="h-4 w-4" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-                                                    {q.name}
-                                                </p>
-                                                <p className="text-[10px] text-slate-400 truncate">
-                                                    {q.officeName || 'Campus Desk'}
-                                                </p>
-                                            </div>
+                            {topQueues.length > 0 ? topQueues.map(q => (
+                                <div key={q.id} onClick={() => navigate('/student/queues')} className="group flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors">
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        <div className="h-8 w-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 shrink-0 group-hover:bg-brand-50 group-hover:text-brand-600 transition-colors">
+                                            <Users className="h-4 w-4" />
                                         </div>
-
-                                        <div className="text-right shrink-0">
-                                            <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                                q.isOpen
-                                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
-                                                    : 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400'
-                                            }`}>
-                                                {q.isOpen ? `${q.waitingCount || 0} waiting` : 'Closed'}
-                                            </span>
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-brand-600 transition-colors">{q.name}</p>
+                                            <p className="text-[10px] text-slate-400 truncate">{q.officeName || 'Campus Desk'}</p>
                                         </div>
                                     </div>
-                                ))
-                            ) : (
-                                <div className="p-4 text-center text-xs text-slate-400">
-                                    No campus queues currently active.
+                                    <div className="text-right shrink-0">
+                                        <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${q.isOpen ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                                            {q.isOpen ? `${q.waitingCount || 0} waiting` : 'Closed'}
+                                        </span>
+                                    </div>
                                 </div>
-                            )}
+                            )) : <div className="p-4 text-center text-xs text-slate-400">No campus queues currently active.</div>}
                         </div>
-
                         <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-center">
-                            <Link
-                                to="/student/queues"
-                                className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 hover:underline"
-                            >
-                                Browse All Campus Services
-                            </Link>
+                            <Link to="/student/queues" className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 hover:underline">Browse All Campus Services</Link>
                         </div>
                     </div>
 
-                    {/* USEFUL CAMPUS RESOURCES */}
                     <div className="rounded-2xl border border-slate-200/90 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 sm:p-5 shadow-sm">
                         <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                                Student Resources
-                            </h3>
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Student Resources</h3>
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Links</span>
                         </div>
-
                         <div className="space-y-1">
                             {[
                                 { name: 'Campus Portal', href: 'https://lautech.edu.ng' },
@@ -581,15 +420,8 @@ export default function StudentHome() {
                                 { name: 'Student Handbook & Policies', href: '#' },
                                 { name: 'ICT Helpdesk & Support', href: '#' },
                             ].map((res, idx) => (
-                                <a
-                                    key={idx}
-                                    href={res.href}
-                                    target={res.href.startsWith('http') ? '_blank' : '_self'}
-                                    rel="noreferrer"
-                                    className="flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
-                                >
+                                <a key={idx} href={res.href} target={res.href.startsWith('http') ? '_blank' : '_self'} rel="noreferrer" className="flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
                                     <span>{res.name}</span>
-                                    <ArrowUpRight className="h-3.5 w-3.5 text-slate-400" />
                                 </a>
                             ))}
                         </div>

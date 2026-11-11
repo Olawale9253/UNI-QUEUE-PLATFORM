@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
 import {
-    CheckCircle2, Circle, Loader2, AlertTriangle, ArrowRight, ArrowLeft,
+    CheckCircle2, Circle, Loader2, AlertTriangle,
     MapPin, CalendarDays, RefreshCw, PartyPopper, Route, XCircle
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -65,11 +64,9 @@ function ProgressHeader({ data, onCancel, cancelling }) {
                     </span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                    <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${data.progressPercent}%` }}
-                        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                        className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-600"
+                    <div
+                        className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-600 transition-all duration-700 ease-out"
+                        style={{ width: `${data.progressPercent}%` }}
                     />
                 </div>
             </div>
@@ -81,15 +78,10 @@ function NextActionCard({ action }) {
     if (!action) return null
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="rounded-xl border-2 border-brand-300 bg-gradient-to-br from-brand-50 to-white p-5 dark:border-brand-700 dark:from-brand-950/40 dark:to-slate-900"
-        >
+        <div className="rounded-xl border-2 border-brand-300 bg-gradient-to-br from-brand-50 to-white p-5 dark:border-brand-700 dark:from-brand-950/40 dark:to-slate-900">
             <div className="flex items-start gap-3">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white shadow-sm">
-                    <ArrowRight className="h-4 w-4" strokeWidth={2.4} />
+                    <Route className="h-4 w-4" strokeWidth={2.4} />
                 </div>
                 <div className="min-w-0 flex-1">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">
@@ -115,7 +107,7 @@ function NextActionCard({ action }) {
                     </Link>
                 )}
             </div>
-        </motion.div>
+        </div>
     )
 }
 
@@ -185,9 +177,7 @@ function StepRow({ step, isLast }) {
     return (
         <div className="relative flex gap-3">
             <div className="flex flex-col items-center">
-                <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${styles.dot}`}
-                >
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${styles.dot}`}>
                     <Icon className={`h-4 w-4 ${iconColor}`} strokeWidth={2.4} />
                 </div>
                 {!isLast && <div className={`mt-1 w-0.5 flex-1 ${styles.line}`} />}
@@ -201,9 +191,7 @@ function StepRow({ step, isLast }) {
                                 Step {step.order}
                             </span>
                             {styles.badge && (
-                                <span
-                                    className={`inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${styles.badge.cls}`}
-                                >
+                                <span className={`inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${styles.badge.cls}`}>
                                     {styles.badge.text}
                                 </span>
                             )}
@@ -257,7 +245,6 @@ function EmptyState({ message }) {
                 className="mt-5 inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700"
             >
                 Browse workflows
-                <ArrowRight className="h-3.5 w-3.5" />
             </Link>
         </div>
     )
@@ -282,7 +269,6 @@ export default function StudentWorkflowProgress() {
             const res = await api.get('/api/student/workflows/my-progress')
             const workflowData = res.data.data
 
-            // 👇 FIX: Check if the workflow is abandoned
             if (workflowData && workflowData.status === 'ABANDONED') {
                 setError('NONE')
                 setData(null)
@@ -306,7 +292,6 @@ export default function StudentWorkflowProgress() {
     }, [])
 
     const handleCancelWorkflow = async () => {
-        // 👇 FIX: Use enrollmentId or id to be safe
         const targetId = data?.enrollmentId || data?.id
         if (!targetId) return
         setCancelling(true)
@@ -364,7 +349,6 @@ export default function StudentWorkflowProgress() {
                 to="/student/workflows"
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400"
             >
-                <ArrowLeft className="h-3 w-3" />
                 Browse all workflows
             </Link>
 
@@ -386,9 +370,7 @@ export default function StudentWorkflowProgress() {
                         disabled={refreshing}
                         className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800"
                     >
-                        <RefreshCw
-                            className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`}
-                        />
+                        <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
                         Refresh
                     </button>
                 </div>
