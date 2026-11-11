@@ -2,16 +2,12 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import {
     Building2, Users as UsersIcon, Activity,
     Settings as SettingsIcon,
-    Shield, FileText, Megaphone, CreditCard, Clock,
-    MessageSquare, Bell, Mail
+    Shield, FileText, Megaphone, CreditCard,
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import PageHeader from '../components/layout/PageHeader'
 
-import SuperAdminHome from './super-admin/SuperAdminHome'
-import Universities from './super-admin/Universities'
 import UniversityApplications from './super-admin/UniversityApplications'
-import UniversityRequests from './super-admin/UniversityRequests' // 👈 ADDED IMPORT
 import Users from './super-admin/Users'
 import SystemAnalytics from './super-admin/SystemAnalytics'
 import TiersAndFeatures from './super-admin/TiersAndFeatures'
@@ -19,25 +15,16 @@ import AuditLogs from './super-admin/AuditLogs'
 import Settings from './super-admin/Settings'
 import Broadcast from './super-admin/Broadcast'
 import Plans from './super-admin/Plans'
-import Feedback from './super-admin/Feedback'
-import Notifications from './Notifications'
-import Profile from './Profile'
-import Greetings from './super-admin/Greetings'
 
 const tabs = [
     { to: '/super-admin/universities', label: 'Universities', icon: Building2 },
-    { to: '/super-admin/pending-requests', label: 'Pending Requests', icon: Clock },
-    { to: '/super-admin/requests', label: 'Uni Requests', icon: Building2 }, // 👈 ADDED TAB (Moved higher for visibility)
     { to: '/super-admin/users', label: 'Users', icon: UsersIcon },
-    { to: '/super-admin/feedback', label: 'Feedback', icon: MessageSquare },
     { to: '/super-admin/analytics', label: 'System Analytics', icon: Activity },
     { to: '/super-admin/tiers', label: 'Tiers & Features', icon: Shield },
     { to: '/super-admin/plans', label: 'Plans', icon: CreditCard },
     { to: '/super-admin/broadcast', label: 'Broadcast', icon: Megaphone },
-    { to: '/super-admin/notifications', label: 'Notifications', icon: Bell },
     { to: '/super-admin/audit-logs', label: 'Audit Logs', icon: FileText },
     { to: '/super-admin/settings', label: 'Settings', icon: SettingsIcon },
-    { to: '/super-admin/greetings', label: 'Holiday Greetings', icon: Mail },
 ]
 
 export default function SuperAdminDashboard() {
@@ -47,32 +34,27 @@ export default function SuperAdminDashboard() {
     return (
         <DashboardLayout tabs={tabs}>
             {isHome && (
-                <div className="mb-4 px-4 sm:px-6">
-                    <PageHeader
-                        workspace="Platform Console"
-                        description="Manage the entire UniQueue multi-tenant platform, institutional deployments, and system health."
-                    />
-                </div>
+                <PageHeader
+                    workspace="Platform Console"
+                    description="Manage the entire UniQueue multi-tenant platform."
+                />
             )}
-            <Routes>
-                <Route index element={<SuperAdminHome />} />
-                <Route path="universities" element={<Universities />} />
-                <Route path="pending-requests" element={<UniversityApplications />} />
-                <Route path="requests" element={<UniversityRequests />} /> {/* 👈 ADDED ROUTE */}
-                <Route path="users" element={<Users />} />
-                <Route path="feedback" element={<Feedback />} />
-                <Route path="analytics" element={<SystemAnalytics />} />
-                <Route path="tiers" element={<TiersAndFeatures />} />
-                <Route path="plans" element={<Plans />} />
-                <Route path="broadcast" element={<Broadcast />} />
-                <Route path="notifications" element={<Notifications />} />
-                <Route path="audit-logs" element={<AuditLogs />} />
-                <Route path="settings" element={<Settings />} />
-                <Route path="profile" element={<Profile />} />
-                <Route path="greetings" element={<Greetings />} />
-                <Route path="*" element={<Navigate to="/super-admin" replace />} />
 
-            </Routes>
+            {/* The scrollable content starts here */}
+            <div className="mx-auto w-full max-w-[1400px] px-4 pt-6 pb-8 sm:px-6 lg:px-8">
+                <Routes>
+                    <Route index element={<Navigate to="/super-admin/analytics" replace />} />
+                    <Route path="universities" element={<UniversityApplications />} />
+                    <Route path="users" element={<Users />} />
+                    <Route path="analytics" element={<SystemAnalytics />} />
+                    <Route path="tiers" element={<TiersAndFeatures />} />
+                    <Route path="plans" element={<Plans />} />
+                    <Route path="broadcast" element={<Broadcast />} />
+                    <Route path="audit-logs" element={<AuditLogs />} />
+                    <Route path="settings" element={<Settings />} />
+                    <Route path="*" element={<Navigate to="/super-admin/analytics" replace />} />
+                </Routes>
+            </div>
         </DashboardLayout>
     )
 }

@@ -2,7 +2,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import {
     LayoutGrid, BarChart3, Star, ListOrdered, Users, Route as RouteIcon,
     Settings as SettingsIcon, Building2, CalendarCheck, Activity, History,
-    ShieldCheck, GraduationCap, Bell,
+    ShieldCheck, GraduationCap,
 } from 'lucide-react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import PageHeader from '../components/layout/PageHeader'
@@ -21,12 +21,10 @@ import AuditLog from './admin/AuditLog'
 import Settings from './admin/Settings'
 import Verification from './admin/Verification'
 import Students from './admin/Students'
-import Notifications from './Notifications'
-import Profile from './Profile'   // 👈 ADDED
 
 const tabs = [
-    { to: '/admin/overview', label: 'Live Overview', icon: LayoutGrid },
-    { to: '/admin/analytics', label: 'Reports & Trends', icon: BarChart3 },
+    { to: '/admin/overview', label: 'Overview', icon: LayoutGrid },
+    { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     { to: '/admin/appointments', label: 'Appointments', icon: CalendarCheck },
     { to: '/admin/feedback', label: 'Feedback', icon: Star },
     { to: '/admin/queues', label: 'Services', icon: ListOrdered },
@@ -36,7 +34,6 @@ const tabs = [
     { to: '/admin/workload', label: 'Workload', icon: Activity },
     { to: '/admin/workflows', label: 'Workflows', icon: RouteIcon },
     { to: '/admin/verification', label: 'Verifications', icon: ShieldCheck },
-    { to: '/admin/notifications', label: 'Notifications', icon: Bell },
     { to: '/admin/audit-logs', label: 'Audit Logs', icon: History },
     { to: '/admin/settings', label: 'Settings', icon: SettingsIcon },
 ]
@@ -48,32 +45,32 @@ export default function AdminDashboard() {
     return (
         <DashboardLayout tabs={tabs}>
             {isHome && (
-                <div className="mb-4 px-4 sm:px-6">
-                    <PageHeader
-                        workspace="Admin Workspace"
-                        description="Everything you need to run your university operations, staff assignments, and campus services today."
-                    />
-                </div>
+                <PageHeader
+                    workspace="Admin Workspace"
+                    description="Everything you need to run your university today."
+                />
             )}
-            <Routes>
-                <Route index element={<AdminHome />} />
-                <Route path="overview" element={<Overview />} />
-                <Route path="analytics" element={<Analytics />} />
-                <Route path="appointments" element={<Appointments />} />
-                <Route path="feedback" element={<Feedback />} />
-                <Route path="queues" element={<Queues />} />
-                <Route path="offices" element={<Offices />} />
-                <Route path="staff" element={<Staff />} />
-                <Route path="students" element={<Students />} />
-                <Route path="workload" element={<Workload />} />
-                <Route path="workflows" element={<Workflows />} />
-                <Route path="verification" element={<Verification />} />
-                <Route path="notifications" element={<Notifications />} />
-                <Route path="audit-logs" element={<AuditLog />} />
-                <Route path="settings" element={<Settings />} />
-                <Route path="profile" element={<Profile />} />   {/* 👈 ADDED */}
-                <Route path="*" element={<Navigate to="/admin" replace />} />
-            </Routes>
+
+            {/* The scrollable content starts here */}
+            <div className="mx-auto w-full max-w-[1400px] px-4 pt-6 pb-8 sm:px-6 lg:px-8">
+                <Routes>
+                    <Route index element={<AdminHome />} />
+                    <Route path="overview" element={<Overview />} />
+                    <Route path="analytics" element={<Analytics />} />
+                    <Route path="appointments" element={<Appointments />} />
+                    <Route path="feedback" element={<Feedback />} />
+                    <Route path="queues" element={<Queues />} />
+                    <Route path="offices" element={<Offices />} />
+                    <Route path="staff" element={<Staff />} />
+                    <Route path="students" element={<Students />} />
+                    <Route path="workload" element={<Workload />} />
+                    <Route path="workflows" element={<Workflows />} />
+                    <Route path="verification" element={<Verification />} />
+                    <Route path="audit-logs" element={<AuditLog />} />
+                    <Route path="settings" element={<Settings />} />
+                    <Route path="*" element={<Navigate to="/admin" replace />} />
+                </Routes>
+            </div>
         </DashboardLayout>
     )
 }
