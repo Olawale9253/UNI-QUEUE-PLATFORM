@@ -9,7 +9,12 @@ import { withAlpha } from '../../lib/colors'
 // Helper to format relative time (e.g., "2h ago")
 function timeAgo(dateString) {
     if (!dateString) return ''
-    const date = new Date(dateString)
+    // FIX: Append 'Z' if the string doesn't have a timezone offset,
+    // so the browser parses it as UTC instead of local time.
+    const hasTz = /(?:Z|[+-]\d{2}:?\d{2})$/.test(dateString)
+    const isoString = hasTz ? dateString : `${dateString}Z`
+
+    const date = new Date(isoString)
     const now = new Date()
     const diffInSeconds = Math.floor((now - date) / 1000)
 
@@ -39,7 +44,7 @@ export default function NotificationBell() {
     const [isOpen, setIsOpen] = useState(false)
     const [notifications, setNotifications] = useState([])
     const [loading, setLoading] = useState(true)
-    const [activeTab, setActiveTab] = useState('ALL') // 👈 State for tabs
+    const [activeTab, setActiveTab] = useState('ALL')
     const dropdownRef = useRef(null)
 
     const primaryColor = university?.primaryColor || '#4f46e5'
@@ -75,7 +80,7 @@ export default function NotificationBell() {
 
     const unreadCount = notifications.filter(n => !n.isRead).length
 
-    // 👇 Filtering Logic based on tabs
+    // Filtering Logic based on tabs
     const filteredNotifications = useMemo(() => {
         return notifications.filter(n => {
             if (activeTab === 'ALL') return true
@@ -163,7 +168,7 @@ export default function NotificationBell() {
                             )}
                         </div>
 
-                        {/* 👇 TABS */}
+                        {/* TABS */}
                         <div className="flex px-2 pt-2 gap-1 border-b border-slate-100 dark:border-slate-800 shrink-0">
                             {[
                                 { id: 'ALL', label: 'All' },
