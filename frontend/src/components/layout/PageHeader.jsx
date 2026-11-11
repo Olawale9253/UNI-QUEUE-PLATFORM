@@ -89,9 +89,10 @@ export default function PageHeader({ workspace, title, description, action }) {
     const activeWorkspace = workspace || 'Workspace'
 
     return (
-        // Clean sticky header, no card, just text on the background with a bottom border
-        <div className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-4 py-4 backdrop-blur-md sm:px-6 lg:px-8 dark:border-slate-800 dark:bg-slate-950/95">
-            <div className="mx-auto w-full max-w-[1400px]">
+        // Sticky wrapper aligned to the left side of the content area
+        <div className="sticky top-0 z-30 -mx-4 border-b border-slate-200 bg-white/95 px-4 pt-4 pb-2 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 dark:border-slate-800 dark:bg-slate-950/95">
+            {/* Removed the mx-auto max-w-[1400px] so it aligns left */}
+            <div className="flex flex-col">
                 {/* Row 1: Badges and Date */}
                 <div className="flex flex-wrap items-center gap-3 mb-1.5">
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">
@@ -109,9 +110,9 @@ export default function PageHeader({ workspace, title, description, action }) {
                     </span>
                 </div>
 
-                {/* Row 2: Greeting (Name is now black) */}
+                {/* Row 2: Greeting with Primary Color Name */}
                 <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-                    {greeting}, {firstName}
+                    {greeting}, <span className="text-brand-600 dark:text-brand-400">{firstName}</span>
                 </h1>
 
                 {/* Row 3: Description */}
@@ -121,9 +122,9 @@ export default function PageHeader({ workspace, title, description, action }) {
                     </p>
                 )}
 
-                {/* Row 4: Holiday Strip */}
+                {/* Row 4: Holiday Strip with reduced top margin (mt-3 instead of mt-4) */}
                 {closedDates && (
-                    <div className="mt-4">
+                    <div className="mt-3">
                         <HolidayStrip closedDates={closedDates} />
                     </div>
                 )}
